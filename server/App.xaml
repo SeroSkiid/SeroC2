@@ -1,0 +1,152 @@
+<Application x:Class="SeroServer.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="UI/ServerWindow.xaml">
+    <Application.Resources>
+        <!-- Colors -->
+        <Color x:Key="BgColor">#0d1117</Color>
+        <Color x:Key="SurfaceColor">#161b22</Color>
+        <Color x:Key="CardColor">#1c2333</Color>
+        <Color x:Key="AccentColor">#21262d</Color>
+        <Color x:Key="BorderColor">#30363d</Color>
+        <Color x:Key="GreenColor">#3fb950</Color>
+        <Color x:Key="RedColor">#f85149</Color>
+        <Color x:Key="CyanColor">#58a6ff</Color>
+        <Color x:Key="YellowColor">#d29922</Color>
+        <Color x:Key="PurpleColor">#bc8cff</Color>
+        <Color x:Key="TextColor">#e6edf3</Color>
+        <Color x:Key="DimColor">#8b949e</Color>
+
+        <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}" />
+        <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}" />
+        <SolidColorBrush x:Key="CardBrush" Color="{StaticResource CardColor}" />
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}" />
+        <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+        <SolidColorBrush x:Key="GreenBrush" Color="{StaticResource GreenColor}" />
+        <SolidColorBrush x:Key="RedBrush" Color="{StaticResource RedColor}" />
+        <SolidColorBrush x:Key="CyanBrush" Color="{StaticResource CyanColor}" />
+        <SolidColorBrush x:Key="YellowBrush" Color="{StaticResource YellowColor}" />
+        <SolidColorBrush x:Key="PurpleBrush" Color="{StaticResource PurpleColor}" />
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}" />
+        <SolidColorBrush x:Key="DimBrush" Color="{StaticResource DimColor}" />
+
+        <!-- Button -->
+        <Style x:Key="SBtn" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="14,7" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="{StaticResource CardBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SGreenBtn" TargetType="Button" BasedOn="{StaticResource SBtn}">
+            <Setter Property="Background" Value="#238636" />
+            <Setter Property="BorderBrush" Value="#2ea043" />
+        </Style>
+
+        <Style x:Key="SRedBtn" TargetType="Button" BasedOn="{StaticResource SBtn}">
+            <Setter Property="Background" Value="#8b1a1a" />
+            <Setter Property="BorderBrush" Value="#f85149" />
+        </Style>
+
+        <!-- TextBox -->
+        <Style x:Key="STxt" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="CaretBrush" Value="{StaticResource CyanBrush}" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#cccccc" />
+                    <Setter Property="Foreground" Value="#666666" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- CheckBox -->
+        <Style x:Key="SChk" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+
+        <!-- Section Label -->
+        <Style x:Key="SLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource CyanBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,6" />
+        </Style>
+
+        <!-- Field Label -->
+        <Style x:Key="SFieldLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Margin" Value="0,0,0,4" />
+        </Style>
+
+        <!-- ListBox -->
+        <Style x:Key="SListBox" TargetType="ListBox">
+            <Setter Property="Background" Value="{StaticResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="4" />
+            <Setter Property="FontSize" Value="12" />
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#cccccc" />
+                    <Setter Property="Foreground" Value="#666666" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ComboBox -->
+        <Style x:Key="SCombo" TargetType="ComboBox">
+            <Setter Property="Background" Value="#f0f0f0" />
+            <Setter Property="Foreground" Value="#000000" />
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="8,6" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#f0f0f0" />
+                        <Setter Property="Foreground" Value="#000000" />
+                        <Setter Property="Padding" Value="8,4" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#cccccc" />
+                    <Setter Property="Foreground" Value="#666666" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Application.Resources>
+</Application>

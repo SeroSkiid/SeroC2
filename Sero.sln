@@ -1,0 +1,76 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroStub", "stub\SeroStub.csproj", "{A1B2C3D4-1111-2222-3333-444455556666}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroServer", "server\SeroServer.csproj", "{A1B2C3D4-1111-2222-3333-444455557777}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroPlugin.Abstractions", "shared\SeroPlugin.Abstractions\SeroPlugin.Abstractions.csproj", "{A1B2C3D4-1111-2222-3333-444455558888}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroPlugin.Desktop", "plugins\SeroPlugin.Desktop\SeroPlugin.Desktop.csproj", "{A1B2C3D4-1111-2222-3333-444455559999}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroPlugin.Audio", "plugins\SeroPlugin.Audio\SeroPlugin.Audio.csproj", "{A1B2C3D4-1111-2222-3333-44445555AAAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SeroPlugin.Webcam", "plugins\SeroPlugin.Webcam\SeroPlugin.Webcam.csproj", "{A1B2C3D4-1111-2222-3333-44445555BBBB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1B2C3D4-1111-2222-3333-444455556666}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455556666}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455556666}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455556666}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455556666}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455556666}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455556666}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455556666}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455557777}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455557777}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455557777}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455557777}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455557777}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455557777}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455557777}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455557777}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455558888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455558888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455558888}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455558888}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455558888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455558888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455558888}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455558888}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455559999}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455559999}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455559999}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455559999}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-444455559999}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455559999}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-444455559999}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-444455559999}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-44445555AAAA}.Release|x64.Build.0 = Release|x64
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Debug|x64.ActiveCfg = Debug|x64
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Debug|x64.Build.0 = Debug|x64
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Release|x64.ActiveCfg = Release|x64
+		{A1B2C3D4-1111-2222-3333-44445555BBBB}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+EndGlobal

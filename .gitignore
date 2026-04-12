@@ -1,0 +1,54 @@
+# Build artifacts
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# Visual Studio
+.vs/
+.vscode/
+*.sln.user
+*.vcxproj.user
+*.user
+
+# User-specific files
+.DS_Store
+.env
+*.swp
+*.swo
+*~
+
+# Dependencies
+node_modules/
+packages/
+.nuget/
+
+# IDE
+.idea/
+*.iml
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Temp files
+*.tmp
+*.temp
+*.log
+
+# Build output
+dist/
+publish/
+
+# Certificate files (if sensitive)
+*.key
+*.pem
+*.pfx
+*.cer
+
+# Cache
+.cache/
+pe-union-master/
