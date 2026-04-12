@@ -265,7 +265,7 @@ dotnet publish -r win-x64
 
 **CRYPTER**
 - Wrap le stub dans un loader GZip+AES polymorphique
-- Disponible en NativeAOT (~3MB) ou SingleFile fallback
+- Disponible en NativeAOT ou SingleFile fallback
 
 ## Structure du Projet
 
