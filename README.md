@@ -212,13 +212,6 @@ Toutes les protections sont configurables indépendamment dans le Builder. Si un
 
 ## Build et Optimisation
 
-### Tailles de sortie
-
-| Mode | Sans crypter | Avec crypter |
-|------|-------------|--------------|
-| SingleFile | ~11MB | ~7MB (loader + stub GZip) |
-| NativeAOT | ~4MB | ~3MB (loader natif + stub GZip) |
-
 ### SingleFile (sans injection)
 ```
 dotnet publish -r win-x64 --self-contained
@@ -226,7 +219,7 @@ dotnet publish -r win-x64 --self-contained
   -p:InvariantGlobalization=true -p:EnableCompressionInSingleFile=true
 ```
 - Trimming agressif + compression des assemblies embarquées
-- Taille typique ~11MB (stub seul) / ~7MB (avec crypter)
+- Fichier plus lourd
 
 ### NativeAOT + RunPE
 ```
@@ -236,7 +229,7 @@ dotnet publish -r win-x64
 ```
 - Code machine natif — impossible à décompiler avec dnSpy/ILDasm
 - Process hollowing dans un processus légitime configurable
-- Taille typique ~4MB (stub seul) / ~3MB (avec crypter)
+- Taille typique ~4MB 
 
 ## Plateformes Supportées
 
