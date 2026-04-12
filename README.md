@@ -175,12 +175,6 @@ Le loader est un **binaire C++ compilé avec MSVC** (~150KB) — zéro metadata 
 - BuildId GUID unique compilé dans le stub (hash binaire différent même avec sources identiques)
 - Ordre des appels junk shufflé aléatoirement
 
-### Compilation du loader
-Le serveur détecte automatiquement MSVC via `vswhere.exe` et compile le loader C++ :
-- **MSVC requis** — installer "VS Build Tools 2022" avec composant "Développement Desktop C++"
-- **Fallback C# NativeAOT** si MSVC absent (~3MB, moins furtif)
-- **Fallback C# SingleFile** si linker absent (~7MB)
-
 ## Protections Anti-Analyse
 
 Toutes les protections sont configurables indépendamment dans le Builder. Si une protection détecte un environnement suspect, le stub se termine silencieusement sans connexion.
