@@ -15,7 +15,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 > | Stub empaqueté (avec crypter) | **12 / 72** |
 
 #### Sans crypter — 0/71
-<img width="700" alt="Sans crypter - 0/71" src="https://github.com/user-attachments/assets/eefd55fd-a573-4dfc-8d89-3c7fe1a3072f" />
+<img width="700" alt="Sans crypter - 0/71" src="https://github.com/user-attachments/assets/940de15a-d1c6-4de4-a23c-d39df459a34b" />
 
 #### Avec crypter — 12/72
 <img width="700" alt="Avec crypter - 12/72" src="https://github.com/user-attachments/assets/54b29137-051c-4772-b3b6-fbef76e301f1" />
