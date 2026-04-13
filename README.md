@@ -18,7 +18,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 <img width="700" alt="Sans crypter - 0/71" src="https://github.com/user-attachments/assets/940de15a-d1c6-4de4-a23c-d39df459a34b" />
 
 #### Avec crypter — 12/72
-<img width="700" alt="Avec crypter - 12/72" src="https://github.com/user-attachments/assets/54b29137-051c-4772-b3b6-fbef76e301f1" />
+<img width="700" alt="Avec crypter - 12/72" src="https://github.com/user-attachments/assets/976cdf42-0c51-4d18-a6be-c49af5a84386" />
 
 ---
 
