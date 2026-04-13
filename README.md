@@ -97,7 +97,7 @@ Le stub se copie dans `%AppData%\Roaming\<PersistName>\<HiddenFileName>` avec no
 | Méthode | Visibilité | Implémentation |
 |---------|-----------|----------------|
 | Registry `HKCU\Run` | Visible onglet Démarrage | `RegSetValue` |
-| Startup Folder `.lnk` | Invisible onglet Démarrage | COM WScript.Shell via PowerShell |
+| Startup Folder `.lnk` | Visible onglet Démarrage | COM WScript.Shell via PowerShell |
 | Scheduled Task | Invisible onglet Démarrage | `Register-ScheduledTask` AtLogOn |
 
 ### Watchdog de Persistance
