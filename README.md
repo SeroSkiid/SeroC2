@@ -7,7 +7,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 > [!WARNING]
 > **Problème connu — Entropie du crypter**
 >
-> Le crypter C++ augmente paradoxalement le score de détection en raison de la haute entropie générée par le chiffrement AES-256 du payload. Le stub seul n'est pas détecté, mais une fois empaqueté il l'est davantage.
+> Le crypter C++ augmente paradoxalement le score de détection en raison de la haute entropie générée par le chiffrement AES-256 du payload. Le stub seul n'est pas détecté, mais une fois empaqueté il l'est davantage. Pour baisser l'entropie au lieu d'encoder avec des bytes on pourrait encoder avec des mots anglais.
 >
 > | Configuration | Score VirusTotal |
 > |---|---|
