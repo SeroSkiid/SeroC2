@@ -56,7 +56,7 @@ public class TlsServer
         _listener?.Stop();
         IsRunning = false;
 
-        foreach (var client in ConnectedClients.Values)
+        foreach (var client in ConnectedClients.Values.ToList())
         {
             try { client.Cts.Cancel(); client.Stream?.Close(); } catch { }
         }
@@ -275,7 +275,8 @@ public class TlsServer
         {
             if (client is { PendingUninstall: true })
                 Log($"[+] Client {client.Id} ({client.Username}@{ip}) uninstalled successfully.");
-            else
+            else if (!ex.Message.Contains("decryption operation failed", StringComparison.OrdinalIgnoreCase)
+                  && !ex.Message.Contains("authentication failed", StringComparison.OrdinalIgnoreCase))
                 Log($"Client {ip} error: {ex.Message}");
         }
         finally

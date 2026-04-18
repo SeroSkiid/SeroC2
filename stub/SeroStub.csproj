@@ -28,4 +28,9 @@
     <InformationalVersion>1.0.0.0</InformationalVersion>
     <Platforms>AnyCPU;x64</Platforms>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="PluginHost.cs" />
+    <Compile Remove="ISeroPlugin.cs" />
+  </ItemGroup>
 </Project>

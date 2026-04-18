@@ -133,3 +133,9 @@ public class ElevationResultData
     public string Message { get; set; } = string.Empty;
 }
 
+public class PluginLoadData
+{
+    public string Name { get; set; } = string.Empty;
+    public string DllBase64 { get; set; } = string.Empty;
+}
+

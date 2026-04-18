@@ -4,21 +4,10 @@
 
 Framework complet et hautement configurable de commande et contrôle (C2) avec serveur WPF et client stub avancé. Offre des capacités de persistance multi-vecteurs, de protections anti-analyse sophistiquées, un crypter intégré polymorphique et une communication sécurisée via TLS pinning.
 
-> [!WARNING]
-> **Problème connu — Entropie du crypter**
+> [!NOTE]
+> **Crypter — Entropie résolue**
 >
-> Le crypter C++ augmente paradoxalement le score de détection en raison de la haute entropie générée par le chiffrement AES-256 du payload. Le stub seul n'est pas détecté, mais une fois empaqueté il l'est davantage. Pour baisser l'entropie au lieu d'encoder avec des bytes on pourrait encoder avec des mots anglais.
->
-> | Configuration | Score VirusTotal |
-> |---|---|
-> | Stub seul (sans crypter) | **0 / 71** |
-> | Stub empaqueté (avec crypter) | **12 / 72** |
-
-#### Sans crypter — 0/71
-<img width="700" alt="Sans crypter - 0/71" src="https://github.com/user-attachments/assets/940de15a-d1c6-4de4-a23c-d39df459a34b" />
-
-#### Avec crypter — 12/72
-<img width="700" alt="Avec crypter - 12/72" src="https://github.com/user-attachments/assets/976cdf42-0c51-4d18-a6be-c49af5a84386" />
+> Le payload AES-256 est encodé en mots anglais (256 mots, un par ligne) — l'entropie chute de ~8.0 bits/byte (AES brut) à ~3.5 bits/byte. L'overlay ressemble à du texte naturel dans PE Bear / strings.
 
 ---
 
@@ -67,9 +56,15 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 - Exécution d'un PE arbitraire en mémoire via process hollowing
 - Injecte dans un processus cible configurable sans écriture disque
 
-### Élévation UAC
+### Élévation UAC (runtime stub)
 - Demande d'élévation avec retry loop optionnel
 - Résultat retourné au serveur (succès/échec + message)
+
+### UAC Bypass + SYSTEM (crypter loader)
+- **Étape 1 — fodhelper bypass** : hijack `HKCU\Software\Classes\ms-settings\Shell\Open\command` + `DelegateExecute` → fodhelper.exe se lance élevé, reexécute le loader
+- **Étape 2 — SYSTEM elevation** : `SeDebugPrivilege` → trouve le PID de winlogon.exe → duplique son token → `CreateProcessWithTokenW` avec le token SYSTEM
+- Toutes les strings sensibles AES-chiffrées, advapi32/shell32 chargés dynamiquement (absents de l'IAT)
+- `TerminateProcess(GetCurrentProcess(),0)` après le bypass — évite la boîte de dialogue "saturation mémoire tampon" du CRT
 
 ### Update Client
 - Remplacement du stub en cours d'exécution par une nouvelle version
@@ -124,14 +119,7 @@ Le stub se copie dans `%AppData%\Roaming\<PersistName>\<HiddenFileName>` avec no
 | G4 | `SearchProtocolHost.exe`, parent=Explorer |
 
 **Mode SingleFile :**
-| Guardian | Apparence dans le gestionnaire de tâches |
-|----------|------------------------------------------|
-| G1 | `RuntimeBroker.exe` (copie déguisée), parent=Explorer |
-| G2 | `SearchProtocolHost.exe` (copie déguisée), parent=Explorer |
-| G3 | `svchost.exe` (copie déguisée), parent=Explorer |
-| G4 | `dllhost.exe` (copie déguisée), parent=Explorer |
-
-Les copies déguisées sont stockées dans `%LocalAppData%\Microsoft\CoreRuntime\` (attributs Hidden+System).
+Les guardians sont des copies du stub lancées avec PPID spoofing vers Explorer. Moins furtifs que le mode RunPE (pas d'injection dans un processus système), mais protégés par DACL anti-terminate. Le filet de secours **WMI** (`root\subscription`) relance le client même si tous les processus sont tués simultanément (nécessite droits admin).
 
 - **Spawn échelonné** : 150ms entre chaque guardian — fenêtre de kill simultané quasi impossible
 - **Mutex d'arbitrage** — si deux guardians détectent la mort du main simultanément, un seul relance
@@ -152,20 +140,21 @@ Les copies déguisées sont stockées dans `%LocalAppData%\Microsoft\CoreRuntime
 Le Builder génère un **loader C++ natif** polymorphique qui chiffre et lance le stub de manière furtive.
 
 ### Pipeline de chiffrement
-1. **GZip** compresse le stub (~35-50% de réduction)
-2. **AES-256-CBC** chiffre le payload compressé avec clé/IV aléatoires par build
-3. Le payload chiffré est appended en overlay au loader (format : `MAGIC(8) + KEY(32) + IV(16) + ENCLEN(4) + ENCRYPTED`)
-4. Le loader déchiffre en mémoire au runtime et lance le stub
+1. **AES-256-CBC** chiffre le payload avec clé/IV aléatoires par build
+2. Key+IV+payload sont **word-encodés** : chaque byte → 1 mot anglais sur sa propre ligne (256 mots shufflés par build)
+3. L'overlay est appended au loader : `MAGIC(8) + TOTAL_BYTES(4) + MOTS_TEXTE`
+4. Le loader lit l'overlay, décode les mots → bytes, déchiffre AES en mémoire, lance le stub
 
 ### Loader C++ natif
 Le loader est un **binaire C++ compilé avec MSVC** (~150KB) — zéro metadata .NET, zéro runtime, surface d'attaque minimale :
 
-- **Toutes les strings sensibles chiffrées en AES** (noms d'APIs, DLLs) — invisibles dans PE Bear
-- **Chargement dynamique** de toutes les APIs via `GetProcAddress` — table d'imports vide de toute API suspecte (`OpenProcess`, `VirtualAlloc`, `CreateProcessW`, etc.)
-- **`user32.dll` absent de la table d'imports** — compilé sans CRT (`/NODEFAULTLIB /EHs-c-`), aucun import user32 résiduel
-- **Explorer PID via `GetShellWindow()`** — aucune string `"explorer"` dans le binaire
-- **PPID spoofing vers Explorer** au lancement — le processus n'apparaît pas dans l'arbre du loader
-- **Anti-sandbox** : `Sleep(2000)` + vérification que ≥1400ms se sont réellement écoulés
+- **Toutes les strings sensibles chiffrées en AES** (noms d'APIs, DLLs, chemins) — invisibles dans `strings` / PE Bear
+- **Chargement dynamique** de toutes les APIs via export-table walk (PEB + `PeGetProc`) — table d'imports vide de toute API suspecte
+- **UAC bypass** : `advapi32.dll`, `shell32.dll` et leurs fonctions (`OpenProcessToken`, `AdjustTokenPrivileges`, `DuplicateTokenEx`, `RegCreateKeyExW`, `ShellExecuteExW`, etc.) chargés dynamiquement — absents de l'IAT
+- **Strings UAC chiffrées** : `fodhelper.exe`, `ms-settings\Shell\Open\command`, `winlogon.exe`, `SeDebugPrivilege`, `DelegateExecute` — toutes AES-chiffrées, construites en mémoire au runtime
+- **Overlay mot par ligne** : chaque byte du payload AES est encodé en un mot anglais séparé par `\n` — entropie ~3.5 bits/byte, aspect texte naturel dans `strings`
+- **`user32.dll` absent de la table d'imports** — compilé sans CRT (`/NODEFAULTLIB /EHs-c-`)
+- **Anti-sandbox** : uptime > 5min + vérification timing spin-loop (emulateurs ignorent le spin)
 - **8 fonctions mortes** générées aléatoirement à chaque build (noms et corps différents)
 
 ### Polymorphisme
@@ -264,7 +253,8 @@ dotnet publish -r win-x64
 - Process Hollowing (NativeAOT uniquement)
 
 **CRYPTER**
-- Wrap le stub dans un loader GZip+AES polymorphique
+- Wrap le stub dans un loader AES+word-encoding polymorphique (entropie ~3.5 bits/byte)
+- Option **UAC Bypass + SYSTEM elevation** : fodhelper + vol de token winlogon — toutes les strings/APIs obfusquées
 - Disponible en NativeAOT ou SingleFile fallback
 
 ## Structure du Projet
