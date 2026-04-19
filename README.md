@@ -67,7 +67,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 
 ### UAC Bypass + SYSTEM (crypter loader)
 
-![UAC Bypass Demo](https://github.com/SeroSkiid/SeroC2/raw/main/uacbypdemo.mp4)
+![UAC Bypass Demo](./uacbypdemo-ezgif.com-optimize.gif)
 
 - **Étape 1 — computerdefaults bypass** : hijack `HKCU\Software\Classes\ms-settings\Shell\Open\command` + `DelegateExecute` → `computerdefaults.exe` se lance élevé (moins détecté que fodhelper), reexécute le loader
 - **Étape 2 — SYSTEM elevation** : `SeDebugPrivilege` → trouve le PID de winlogon.exe → duplique son token → `CreateProcessWithTokenW` avec le token SYSTEM
