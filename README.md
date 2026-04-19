@@ -7,7 +7,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 > [!NOTE]
 > **Crypter — Packer LZNT1 intégré**
 >
-> Le payload est compressé LZNT1 puis chiffré AES-256-CBC. NativeAOT + crypter ≈ **3 MB** (vs 22 MB en word-encoding). Décompression via `ntdll!RtlDecompressBuffer` — pas de dépendance externe, absent de l'IAT.
+> Le payload est compressé LZNT1 puis chiffré AES-256-CBC. NativeAOT + crypter ≈ **2,5MB** (vs 22 MB en word-encoding). Décompression via `ntdll!RtlDecompressBuffer` — pas de dépendance externe, absent de l'IAT.
 
 ---
 
