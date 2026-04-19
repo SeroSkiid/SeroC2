@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Resource Include="sero.ico" />
+    <Resource Include="icone.png" />
   </ItemGroup>
 
   <ItemGroup>

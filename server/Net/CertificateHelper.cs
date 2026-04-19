@@ -137,6 +137,51 @@ public static class CertificateHelper
     }
 
     /// <summary>
+    /// Export cert + auth key together as a JSON backup.
+    /// No PFX password needed on import.
+    /// </summary>
+    public static void ExportServerBackup(string destinationPath, string authKey)
+    {
+        if (!File.Exists(CertPath))
+            GenerateAndSave();
+
+        var cert = X509CertificateLoader.LoadPkcs12FromFile(CertPath, CertPassword,
+            X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+        var certB64 = Convert.ToBase64String(cert.Export(X509ContentType.Pfx, ""));
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            new { cert = certB64, authKey },
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = false });
+        File.WriteAllText(destinationPath, json);
+    }
+
+    /// <summary>
+    /// Import a server backup JSON file (cert + auth key).
+    /// Returns the embedded auth key, or null if the file has none.
+    /// </summary>
+    public static string? ImportServerBackup(string backupPath)
+    {
+        var json = File.ReadAllText(backupPath);
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        var root = doc.RootElement;
+
+        if (!root.TryGetProperty("cert", out var certProp))
+            throw new InvalidOperationException("Invalid backup file: missing cert field.");
+
+        var certBytes = Convert.FromBase64String(certProp.GetString()!);
+        var cert = X509CertificateLoader.LoadPkcs12(certBytes, "",
+            X509KeyStorageFlags.Exportable | X509KeyStorageFlags.PersistKeySet);
+
+        if (!cert.HasPrivateKey)
+            throw new InvalidOperationException("The certificate must contain a private key.");
+
+        Directory.CreateDirectory(CertDir);
+        File.WriteAllBytes(CertPath, cert.Export(X509ContentType.Pfx, CertPassword));
+
+        string? authKey = root.TryGetProperty("authKey", out var keyProp) ? keyProp.GetString() : null;
+        return authKey;
+    }
+
+    /// <summary>
     /// Export the public key for embedding in the client.
     /// </summary>
     public static byte[] ExportPublicKey()

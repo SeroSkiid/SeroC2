@@ -5,24 +5,29 @@
 Framework complet et hautement configurable de commande et contrôle (C2) avec serveur WPF et client stub avancé. Offre des capacités de persistance multi-vecteurs, de protections anti-analyse sophistiquées, un crypter intégré polymorphique et une communication sécurisée via TLS pinning.
 
 > [!NOTE]
-> **Crypter — Entropie résolue**
+> **Crypter — Packer LZNT1 intégré**
 >
-> Le payload AES-256 est encodé en mots anglais (256 mots, un par ligne) — l'entropie chute de ~8.0 bits/byte (AES brut) à ~3.5 bits/byte. L'overlay ressemble à du texte naturel dans PE Bear / strings.
+> Le payload est compressé LZNT1 puis chiffré AES-256-CBC. NativeAOT + crypter ≈ **3 MB** (vs 22 MB en word-encoding). Décompression via `ntdll!RtlDecompressBuffer` — pas de dépendance externe, absent de l'IAT.
 
 ---
 
-<img width="700" alt="Dashboard SERO" src="https://github.com/user-attachments/assets/807b8b3c-4ffd-4ee7-9908-086d11e199e7" />
+<div align="center">
+  <img width="49%" alt="image" src="dashboard.png" />
+  <img width="49%" alt="Dashboard SERO" src="builder.png" />
+</div>
+
 
 
 ## Caractéristiques Principales
 
 ### Serveur
-- Interface WPF moderne avec thème sombre
+- Interface WPF moderne avec thème sombre et icône projet dans le header
 - Gestion multi-clients avec déduplication par HWID et InstanceId
-- Panel de clients en temps réel avec affichage des statuts
+- Panel de clients en temps réel — uptime rafraîchi toutes les secondes
+- `INotifyPropertyChanged` sur `ConnectedClient` — plus de `Items.Refresh()` global, zéro freeze avec des milliers de clients
 - AutoTask — Exécution conditionnelle de commandes par HWID
-- Gestion de certificats TLS avec export/import et auto-génération
-- Configuration persistante en JSON
+- **Backup serveur `.sero`** : export/import cert TLS + clé d'auth en un seul fichier — restauration complète sur nouvelle machine en un clic
+- Configuration persistante en JSON — sauvegarde uniquement via bouton Save (plus d'auto-save à la fermeture)
 - Logs détaillés de toutes les connexions et actions
 - Virtualisation DataGrid pour gérer des milliers de clients
 - Builder intégré avec compilation NativeAOT + SingleFile
@@ -34,7 +39,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 - Persistance configurable multi-vecteurs
 - Protections anti-analyse avancées
 - Watchdog anti-kill avec guardians multi-processus
-- Crypter polymorphique avec GZip + AES-256-CBC
+- Crypter polymorphique **LZNT1 + AES-256-CBC** — NativeAOT+crypter ~3 MB (vs ~22 MB avant)
 - Process Hollowing 64bit (NativeAOT uniquement)
 - Icône personnalisable et métadonnées assembly copiables
 - BuildId unique par build (hash différent même avec sources identiques)
@@ -61,10 +66,14 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 - Résultat retourné au serveur (succès/échec + message)
 
 ### UAC Bypass + SYSTEM (crypter loader)
-- **Étape 1 — fodhelper bypass** : hijack `HKCU\Software\Classes\ms-settings\Shell\Open\command` + `DelegateExecute` → fodhelper.exe se lance élevé, reexécute le loader
+
+https://github.com/SeroSkiid/SeroC2/raw/main/uacbypdemo.mp4
+
+- **Étape 1 — computerdefaults bypass** : hijack `HKCU\Software\Classes\ms-settings\Shell\Open\command` + `DelegateExecute` → `computerdefaults.exe` se lance élevé (moins détecté que fodhelper), reexécute le loader
 - **Étape 2 — SYSTEM elevation** : `SeDebugPrivilege` → trouve le PID de winlogon.exe → duplique son token → `CreateProcessWithTokenW` avec le token SYSTEM
 - Toutes les strings sensibles AES-chiffrées, advapi32/shell32 chargés dynamiquement (absents de l'IAT)
 - `TerminateProcess(GetCurrentProcess(),0)` après le bypass — évite la boîte de dialogue "saturation mémoire tampon" du CRT
+- **Note** : avec UAC Bypass activé, le loader ne se connecte au C2 qu'une fois élevé — si l'élévation échoue le process se termine
 
 ### Update Client
 - Remplacement du stub en cours d'exécution par une nouvelle version
@@ -140,19 +149,21 @@ Les guardians sont des copies du stub lancées avec PPID spoofing vers Explorer.
 Le Builder génère un **loader C++ natif** polymorphique qui chiffre et lance le stub de manière furtive.
 
 ### Pipeline de chiffrement
-1. **AES-256-CBC** chiffre le payload avec clé/IV aléatoires par build
-2. Key+IV+payload sont **word-encodés** : chaque byte → 1 mot anglais sur sa propre ligne (256 mots shufflés par build)
-3. L'overlay est appended au loader : `MAGIC(8) + TOTAL_BYTES(4) + MOTS_TEXTE`
-4. Le loader lit l'overlay, décode les mots → bytes, déchiffre AES en mémoire, lance le stub
+1. **LZNT1** compresse le payload via `ntdll!RtlCompressBuffer` (ratio ~50% sur NativeAOT)
+2. **AES-256-CBC** chiffre le payload compressé avec clé/IV aléatoires par build
+3. L'overlay est appended au loader en **bytes bruts** : `MAGIC(8) + TOTAL_RAW(4) + ORIG_SIZE(4) + key(32) + iv(16) + encrypted`
+4. Le loader lit l'overlay, déchiffre AES, décompresse via `ntdll!RtlDecompressBuffer`, lance le stub
+
+**Taille output typique** : NativeAOT (~5 MB) → LZNT1 (~2.5 MB) → AES → **~3 MB final**
 
 ### Loader C++ natif
-Le loader est un **binaire C++ compilé avec MSVC** (~150KB) — zéro metadata .NET, zéro runtime, surface d'attaque minimale :
+Le loader est un **binaire C++ compilé avec MSVC** (~150 KB) — zéro metadata .NET, zéro runtime, surface d'attaque minimale :
 
 - **Toutes les strings sensibles chiffrées en AES** (noms d'APIs, DLLs, chemins) — invisibles dans `strings` / PE Bear
 - **Chargement dynamique** de toutes les APIs via export-table walk (PEB + `PeGetProc`) — table d'imports vide de toute API suspecte
 - **UAC bypass** : `advapi32.dll`, `shell32.dll` et leurs fonctions (`OpenProcessToken`, `AdjustTokenPrivileges`, `DuplicateTokenEx`, `RegCreateKeyExW`, `ShellExecuteExW`, etc.) chargés dynamiquement — absents de l'IAT
-- **Strings UAC chiffrées** : `fodhelper.exe`, `ms-settings\Shell\Open\command`, `winlogon.exe`, `SeDebugPrivilege`, `DelegateExecute` — toutes AES-chiffrées, construites en mémoire au runtime
-- **Overlay mot par ligne** : chaque byte du payload AES est encodé en un mot anglais séparé par `\n` — entropie ~3.5 bits/byte, aspect texte naturel dans `strings`
+- **Strings UAC chiffrées** : `computerdefaults.exe`, `ms-settings\Shell\Open\command`, `winlogon.exe`, `SeDebugPrivilege`, `DelegateExecute` — toutes AES-chiffrées, construites en mémoire au runtime
+- **Décompression LZNT1** via `ntdll!RtlDecompressBuffer` — toujours disponible, absent de l'IAT (chargé via PEB walk)
 - **`user32.dll` absent de la table d'imports** — compilé sans CRT (`/NODEFAULTLIB /EHs-c-`)
 - **Anti-sandbox** : uptime > 5min + vérification timing spin-loop (emulateurs ignorent le spin)
 - **8 fonctions mortes** générées aléatoirement à chaque build (noms et corps différents)
@@ -161,8 +172,10 @@ Le loader est un **binaire C++ compilé avec MSVC** (~150KB) — zéro metadata 
 - Noms des fonctions junk générés aléatoirement à chaque build
 - Clé AES des strings différente à chaque build (splitée en 3 parties dans le binaire)
 - Clé/IV AES du payload différents à chaque build
+- Magic bytes overlay 8 octets aléatoires par build (pas de signature statique)
 - BuildId GUID unique compilé dans le stub (hash binaire différent même avec sources identiques)
 - Ordre des appels junk shufflé aléatoirement
+
 
 ## Protections Anti-Analyse
 
@@ -182,7 +195,8 @@ Toutes les protections sont configurables indépendamment dans le Builder. Si un
 
 ### Anti-Detect
 - Scan de tous les processus en cours contre une liste noire : ollydbg, x64dbg, x32dbg, ida, ida64, windbg, dnspy, dotpeek, processhacker, procmon, procexp, wireshark, fiddler, charles, tcpview, pestudio, die, lordpe, pe-bear, sandboxie, cuckoo, regmon, filemon, autoruns, httpdebugger, resourcehacker
-- Scan du nom d'utilisateur courant contre une liste de noms suspects (sandbox, virus, malware, analyst, timmy, etc.)
+- Scan du nom d'utilisateur courant contre une liste de noms suspects (sandbox, virus, malware, analyst, etc.) — comparaison insensible à la casse
+- Détection de région via registre Windows (`HKCU\Control Panel\International\LocaleName`) — compatible `InvariantGlobalization=true`
 - Scoring : fichiers récents < 3 **et** disque < 40GB → flaggé (double condition pour éviter les faux positifs)
 
 ### Anti-Sandbox
@@ -298,11 +312,14 @@ sero/
 └── README.md
 ```
 
-## Limitations
+## Limitations & Bugs Connus
 
 - `SetCriticalProcess` (BSOD) nécessite droits administrateur
 - Le Process Hollowing avec élévation UAC nécessite au moins une persistence activée (le stub ne peut pas retrouver son propre exe via `Environment.ProcessPath` qui retourne le processus hôte)
 - Le watchdog WMI peut être détecté par les EDR qui surveillent `root\subscription`
+- **Multi-host failover non-fonctionnel** : le Builder ne compile que le premier host dans `Config.Host` — les hosts supplémentaires de l'UI ne sont pas utilisés par le stub
+- **HWID instable (SessionId)** : `GetHwid()` inclut le `SessionId` — une reconnexion RDP ou déconnexion Windows génère un nouveau HWID, créant un doublon client dans le panel
+- **`UpdateClient` en mode RunPE** : le script BAT attend la mort du PID de l'hôte (`dllhost.exe` etc.) qui ne se termine jamais — la mise à jour est bloquée indéfiniment en mode hollowing
 
 ## Conditions d'Utilisation
 

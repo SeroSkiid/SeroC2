@@ -62,7 +62,7 @@ public class Packet
         }
 
         int length = BitConverter.ToInt32(lengthBuf, 0);
-        if (length <= 0 || length > 500 * 1024 * 1024) return null; // 500 MB max
+        if (length <= 0 || length > 100 * 1024 * 1024) return null; // 100 MB max
 
         var dataBuf = new byte[length];
         read = 0;

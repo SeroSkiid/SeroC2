@@ -73,7 +73,7 @@
         </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="48" />
+                <RowDefinition Height="64" />
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
@@ -83,12 +83,28 @@
             <Border Grid.Row="0" Background="#0b0f15" CornerRadius="12,12,0,0">
                 <Grid Margin="18,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <Border Width="24" Height="24" CornerRadius="6" Background="#1a2742" Margin="0,0,10,0">
-                            <TextBlock Text="S" FontSize="13" FontWeight="Bold" Foreground="{StaticResource CyanBrush}"
-                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
-                        <TextBlock Text="SɆⱤØ₮Ø₦ł₦Ɇ" FontSize="14" FontWeight="Bold" Foreground="{StaticResource CyanBrush}" />
-                        <TextBlock Text="  v1.0" FontSize="11" Foreground="{StaticResource DimBrush}" VerticalAlignment="Bottom" Margin="0,0,0,1" />
+                        <Image Source="/icone.png" Width="54" Height="54"
+                               Margin="0,0,12,0" VerticalAlignment="Center"
+                               RenderOptions.BitmapScalingMode="HighQuality">
+                            <Image.Clip>
+                                <RectangleGeometry RadiusX="10" RadiusY="10" Rect="0,0,54,54" />
+                            </Image.Clip>
+                        </Image>
+                        <TextBlock Text="SɆⱤØ₮Ø₦ł₦Ɇ" FontSize="14" FontWeight="Bold"
+                                   Foreground="{StaticResource CyanBrush}"
+                                   VerticalAlignment="Center" Margin="0,0,0,0" />
+                        <TextBlock Text=" C2" FontSize="22" FontWeight="Bold"
+                                   VerticalAlignment="Center" Margin="2,0,0,0">
+                            <TextBlock.Foreground>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                    <GradientStop Color="#FFFFFF" Offset="0"/>
+                                    <GradientStop Color="#D0D0D0" Offset="0.2"/>
+                                    <GradientStop Color="#686868" Offset="0.5"/>
+                                    <GradientStop Color="#D0D0D0" Offset="0.8"/>
+                                    <GradientStop Color="#F8F8F8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </TextBlock.Foreground>
+                        </TextBlock>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Ellipse x:Name="TitleDot" Width="8" Height="8" Fill="{StaticResource RedBrush}" Margin="0,0,12,0" />
@@ -127,8 +143,12 @@
                     <Button Grid.Column="3" x:Name="BtnStartStop" Content="START"
                             Style="{StaticResource SGreenBtn}" Click="StartStop_Click" Width="80" />
 
-                    <Button Grid.Column="4" Content="Export Cert" Style="{StaticResource SBtn}"
-                            Click="ExportCert_Click" Margin="8,0,0,0" />
+                    <StackPanel Grid.Column="4" Orientation="Horizontal">
+                        <Button Content="Backup" Style="{StaticResource SBtn}"
+                                Click="ExportBackup_Click" Margin="8,0,0,0" ToolTip="Export cert + auth key (.sero)" />
+                        <Button Content="Import" Style="{StaticResource SBtn}"
+                                Click="ImportBackup_Click" Margin="4,0,0,0" ToolTip="Import .sero backup or .pfx cert" />
+                    </StackPanel>
                 </Grid>
             </Border>
 
@@ -139,24 +159,31 @@
                     <Style TargetType="TabItem">
                         <Setter Property="Foreground" Value="{StaticResource DimBrush}" />
                         <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="Padding" Value="16,10" />
+                        <Setter Property="Padding" Value="18,10" />
                         <Setter Property="FontSize" Value="12" />
                         <Setter Property="FontWeight" Value="Medium" />
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="TabItem">
                                     <Border x:Name="bd" Background="Transparent" Padding="{TemplateBinding Padding}"
-                                            BorderThickness="0,0,0,2" BorderBrush="Transparent" Cursor="Hand">
+                                            BorderThickness="0,0,0,2" BorderBrush="Transparent"
+                                            CornerRadius="6,6,0,0" Cursor="Hand" Margin="1,0">
                                         <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" />
                                     </Border>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsSelected" Value="True">
                                             <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource CyanBrush}" />
+                                            <Setter TargetName="bd" Property="Background" Value="#0d1a2a" />
                                             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
                                         </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
+                                        <MultiTrigger>
+                                            <MultiTrigger.Conditions>
+                                                <Condition Property="IsMouseOver" Value="True" />
+                                                <Condition Property="IsSelected" Value="False" />
+                                            </MultiTrigger.Conditions>
+                                            <Setter TargetName="bd" Property="Background" Value="#0a1520" />
                                             <Setter Property="Foreground" Value="{StaticResource TextBrush}" />
-                                        </Trigger>
+                                        </MultiTrigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
                             </Setter.Value>
