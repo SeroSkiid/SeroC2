@@ -343,6 +343,6 @@ sero/
 
 **Développé par** : SeroSkiid  
 **Version** : 2.0  
-**Dernière mise à jour** : Avril 2026
+**Dernière mise à jour** : Avril 2026  
+**Crédit pour le process hollowing** : Hydra48 aKa le Maitre de l'API win32 (https://github.com/hydra48/process-hollowing-24h2)
 
-**Crédit pour le process hollowing** : Hydra48 aKa le Maitre de l'API win32 https://github.com/hydra48/process-hollowing-24h2 
