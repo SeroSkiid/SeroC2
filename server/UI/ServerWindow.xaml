@@ -453,8 +453,8 @@
                                     <!-- Obfuscation -->
                                     <TextBlock Text="OBFUSCATION" Style="{StaticResource SLabel}" FontSize="11" />
                                     <CheckBox x:Name="BldEncrypt" Content="Crypter (AES-256, junk code, polymorphic, pumped)" Style="{StaticResource SChk}" IsChecked="False" />
-                                    <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper + winlogon token)" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,16"
-                                              ToolTip="① fodhelper UAC bypass (HKCU\Software\Classes\ms-settings hijack) pour obtenir droits admin. ② SeDebugPrivilege + vol de token winlogon.exe pour élévation SYSTEM." />
+                                    <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (computerdefaults + winlogon token)" Style="{StaticResource SChk}" IsChecked="False" Margin="0,0,0,16"
+                                              ToolTip="① computerdefaults UAC bypass (HKCU\Software\Classes\ms-settings hijack) pour obtenir droits admin. ② SeDebugPrivilege + vol de token winlogon.exe pour élévation SYSTEM." />
 
                                     <!-- Persistence -->
                                     <TextBlock Text="PERSISTENCE (AppData/Roaming)" Style="{StaticResource SLabel}" FontSize="11" />
