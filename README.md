@@ -73,7 +73,6 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 - **Étape 2 — SYSTEM elevation** : `SeDebugPrivilege` → trouve le PID de winlogon.exe → duplique son token → `CreateProcessWithTokenW` avec le token SYSTEM
 - Toutes les strings sensibles AES-chiffrées, advapi32/shell32 chargés dynamiquement (absents de l'IAT)
 - `TerminateProcess(GetCurrentProcess(),0)` après le bypass — évite la boîte de dialogue "saturation mémoire tampon" du CRT
-- **Note** : avec UAC Bypass activé, le loader ne se connecte au C2 qu'une fois élevé — si l'élévation échoue le process se termine
 
 ### Update Client
 - Remplacement du stub en cours d'exécution par une nouvelle version
@@ -343,6 +342,4 @@ sero/
 
 **Développé par** : SeroSkiid  
 **Version** : 2.0  
-**Dernière mise à jour** : Avril 2026  
-**Crédit pour le process hollowing** : Hydra48 aKa le Maitre de l'API win32 (https://github.com/hydra48/process-hollowing-24h2)
-
+**Dernière mise à jour** : Avril 2026
