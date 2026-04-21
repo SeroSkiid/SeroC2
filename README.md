@@ -13,7 +13,7 @@ Framework complet et hautement configurable de commande et contrôle (C2) avec s
 
 <div align="center">
   <img width="49%" alt="image" src="dashboard.png" />
-  <img width="49%" alt="Dashboard SERO" src="builder.png" />
+  <img width="49%" alt="Dashboard SERO" src="builder1.png" />
 </div>
 
 
