@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>SeroServer</RootNamespace>
+    <Platforms>AnyCPU;x64</Platforms>
+    <ApplicationIcon>sero.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Resource Include="sero.ico" />
+    <Resource Include="icone.png" />
+    <Resource Include="photo.png" />
+    <Resource Include="telegram.png" />
+    <Resource Include="serofondtransparent.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiscordRichPresence" Version="1.6.1.70" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <!-- Copy plugin DLLs from server/Plugins/ to output dir after every build.
+       Uses an explicit Target so it works with any Platform (x64, AnyCPU, etc.) -->
+  <Target Name="CopyPluginDlls" AfterTargets="Build">
+    <ItemGroup>
+      <_PluginDlls Include="$(MSBuildProjectDirectory)\Plugins\*.dll" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutputPath)\Plugins"
+             Condition="'@(_PluginDlls)' != '' And Exists('$(MSBuildProjectDirectory)\Plugins')" />
+    <Copy SourceFiles="@(_PluginDlls)"
+          DestinationFolder="$(OutputPath)\Plugins"
+          SkipUnchangedFiles="true"
+          Condition="'@(_PluginDlls)' != ''" />
+  </Target>
+
+</Project>

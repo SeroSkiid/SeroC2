@@ -1,0 +1,61 @@
+# Build artifacts
+bin/
+obj/
+*.pdb
+*.obj
+*.pch
+*.iobj
+*.ipdb
+*.exp
+*.lib
+*.dll.recipe
+Release/
+x64/
+*.tlog
+*.so
+*.dylib
+
+# Sensitive implementation — not distributed
+server/Builder/Crypter.cs
+server/Stubs/loader.cpp
+
+# Plugin DLL cache (compiled on-demand at runtime)
+plugin_cache/
+
+# Visual Studio / IDE
+.vs/
+.vscode/
+*.sln.user
+*.vcxproj.user
+*.user
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp / logs
+*.tmp
+*.temp
+*.log
+*.swp
+*~
+
+# NuGet
+packages/
+.nuget/
+
+# Publish output
+dist/
+publish/
+
+# Certificates (sensitive)
+*.key
+*.pem
+*.pfx
+*.cer
+
+# Misc
+pe-union-master/
+.cache/
