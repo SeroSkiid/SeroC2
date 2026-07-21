@@ -1978,7 +1978,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="140" MinWidth="100" MaxWidth="300"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="110" MinWidth="80" MaxWidth="150" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="80" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="180" MinWidth="80" MaxWidth="300" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2286,7 +2286,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="50" MaxWidth="120" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="80" SortMemberPath="Tag">
+                                    <DataGridTemplateColumn Header="TAG" Width="180" MinWidth="80" MaxWidth="300" SortMemberPath="Tag">
                                         <DataGridTemplateColumn.CellStyle>
                                             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                         </DataGridTemplateColumn.CellStyle>
