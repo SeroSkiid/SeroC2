@@ -1830,7 +1830,12 @@
                             </Border>
 
                             <Grid Grid.Row="1">
-                                <DataGrid x:Name="GridClients"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <DataGrid Grid.Column="0" x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
@@ -2219,7 +2224,13 @@
                                     </Border>
                                 </Grid>
                             </Border>
-                            <DataGrid Grid.Row="1" x:Name="GridAllClients"
+                            <Grid Grid.Row="1">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <DataGrid Grid.Column="0" x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
@@ -2316,6 +2327,7 @@
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
                             </DataGrid>
+                            </Grid>
 
                             <!-- Empty state overlay for All Clients -->
                             <Grid Grid.Row="1" IsHitTestVisible="False">
