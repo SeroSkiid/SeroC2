@@ -2291,7 +2291,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="50" MaxWidth="120" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" SortMemberPath="Tag">
+                                    <DataGridTemplateColumn Header="TAG" Width="*" SortMemberPath="Tag" CanUserResize="True">
                                         <DataGridTemplateColumn.CellStyle>
                                             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                         </DataGridTemplateColumn.CellStyle>
