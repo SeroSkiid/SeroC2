@@ -23,7 +23,7 @@ internal static class FeatureContextMenu
 
         // ── Administration ──────────────────────────────────────────────
         var admin = MakeParent(Lang.Get("FEAT_GRP_ADMIN"), "SvgImages/Icon Builder/Security_Key.svg");
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_SHELL"),    "SvgImages/Icon Builder/Actions_Send.svg", () =>
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_SHELL"),    "shell.png", () =>
         {
             var clients = new System.Collections.Generic.List<Data.ConnectedClient>();
             if (server.ConnectedClients.TryGetValue(clientId, out var c)) clients.Add(c);
@@ -35,7 +35,7 @@ internal static class FeatureContextMenu
         admin.Items.Add(MakeItem(Lang.Get("FEAT_TCP_CONN"),        "SvgImages/Icon Builder/Electronics_Router.svg",     () => mainWindow.OpenFeatureWindow<TcpManagerWindow>(clientId,       () => new TcpManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_SERVICE_MGR"),     "SvgImages/Icon Builder/Actions_BlockContact.svg",   () => mainWindow.OpenFeatureWindow<ServiceManagerWindow>(clientId,   () => new ServiceManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_WINDOW_MGR"),      "SvgImages/Icon Builder/Actions_Window.svg",         () => mainWindow.OpenFeatureWindow<WindowManagerWindow>(clientId,    () => new WindowManagerWindow(server, clientId, clientId))));
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_REGISTRY_EDITOR"), "SvgImages/Icon Builder/Actions_Settings.svg",      () => mainWindow.OpenFeatureWindow<RegistryEditorWindow>(clientId,  () => new RegistryEditorWindow(server, clientId, clientId))));
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_REGISTRY_EDITOR"), "registry.png",      () => mainWindow.OpenFeatureWindow<RegistryEditorWindow>(clientId,  () => new RegistryEditorWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_INSTALLED_APPS"),  "SvgImages/Icon Builder/Shopping_Box.svg",           () => mainWindow.OpenFeatureWindow<InstalledAppsWindow>(clientId,   () => new InstalledAppsWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_DEVICE_MGR"),      "SvgImages/Icon Builder/Electronics_Mouse.svg",          () => mainWindow.OpenFeatureWindow<DeviceManagerWindow>(clientId,   () => new DeviceManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_SOCKS5"),          "SvgImages/Icon Builder/Business_World.svg",         () => mainWindow.OpenFeatureWindow<Socks5Window>(clientId,          () => new Socks5Window(server, clientId, clientId))));
@@ -67,7 +67,7 @@ internal static class FeatureContextMenu
         // ── Monitoring ──────────────────────────────────────────────────
         var monitoring = MakeParent(Lang.Get("FEAT_GRP_MONITORING"), "SvgImages/Chart/ChartType_SwiftPlot.svg");
         if (excludeWindowType != "RemoteDesktopWindow")
-            monitoring.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_DESKTOP"), "SvgImages/Icon Builder/Electronics_Monitor.svg", () => mainWindow.OpenFeatureWindow<RemoteDesktopWindow>(clientId,      () => new RemoteDesktopWindow(server, clientId))));
+            monitoring.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_DESKTOP"), "rdp.png", () => mainWindow.OpenFeatureWindow<RemoteDesktopWindow>(clientId,      () => new RemoteDesktopWindow(server, clientId))));
         if (excludeWindowType != "WebcamWindow")
             monitoring.Items.Add(MakeItem(Lang.Get("FEAT_WEBCAM"),         "SvgImages/Icon Builder/Electronics_Video.svg",          () => mainWindow.OpenFeatureWindow<WebcamWindow>(clientId,             () => new WebcamWindow(server, clientId))));
         if (excludeWindowType != "HvncWindow")
@@ -102,7 +102,7 @@ internal static class FeatureContextMenu
         var fun = MakeParent(Lang.Get("FEAT_GRP_FUN"), "Resources/Icons/laughing.svg");
         fun.Items.Add(MakeItem(Lang.Get("FEAT_FUN_PANEL"),  "SvgImages/Icon Builder/Shopping_Gift.svg",            () => mainWindow.OpenFeatureWindow<FunWindow>(clientId,     () => new FunWindow(server, clientId, clientId))));
         fun.Items.Add(new Separator());
-        fun.Items.Add(MakeItem(Lang.Get("FEAT_TIKTOK_BOT"), "SvgImages/Icon Builder/Business_UserGroup.svg", () => mainWindow.OpenFeatureWindow<TikTokWindow>(clientId, () => new TikTokWindow(server))));
+        fun.Items.Add(MakeItem(Lang.Get("FEAT_TIKTOK_BOT"), "tiktok.png", () => mainWindow.OpenFeatureWindow<TikTokWindow>(clientId, () => new TikTokWindow(server))));
         menu.Items.Add(fun);
 
         menu.Items.Add(new Separator());

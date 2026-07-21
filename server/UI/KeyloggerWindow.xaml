@@ -62,7 +62,7 @@
                     <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
                             Style="{StaticResource SBtn}" FontSize="11" ToolTip="Actions" Click="BtnMenu_Click">
                         <StackPanel Orientation="Horizontal">
-                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_More.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Keyboard.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Actions" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
