@@ -2002,6 +2002,8 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
+                                        <!-- Empty column to fill remaining space -->
+                                        <DataGridTextColumn Width="*" MinWidth="0"/>
                                     </DataGrid.Columns>
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
@@ -2310,6 +2312,8 @@
                                             </DataTemplate>
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
+                                        <!-- Empty column to fill remaining space -->
+                                        <DataGridTextColumn Width="*" MinWidth="0"/>
                                 </DataGrid.Columns>
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
