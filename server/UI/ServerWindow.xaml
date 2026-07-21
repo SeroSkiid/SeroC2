@@ -1978,7 +1978,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44" MaxWidth="280"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" MaxWidth="130" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="120" MinWidth="80" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="Auto" MinWidth="44" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2010,7 +2010,7 @@
                                                 <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Key.svg'}" Width="14" Height="14"/></MenuItem.Icon>
                                                 <MenuItem x:Name="MenuItemRemoteShell"    Header="Remote Shell"       Click="RemoteShell_Click">    <MenuItem.Icon><Image Source="pack://application:,,,/shell.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemFileManager"    Header="File Manager"       Click="FileManager_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                                                <MenuItem x:Name="MenuItemProcessMgr"     Header="Process Manager"    Click="ProcessManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/ProcessDesign_Process.svg'}"            Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemProcessMgr"     Header="Process Manager"    Click="ProcessManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Dashboard.svg'}"            Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemStartupMgr"     Header="Startup Manager"    Click="StartupManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemTcpConn"        Header="TCP Connections"    Click="TcpManager_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemSvcMgr"         Header="Service Manager"    Click="ServiceManager_Click"> <MenuItem.Icon><dx:DXImage Source="pack://application:,,,/Resources/Icons/services.svg"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
@@ -2284,7 +2284,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="56"  MinWidth="36" MaxWidth="140" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="108" MinWidth="60" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="108" MinWidth="60" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="120" MinWidth="80" SortMemberPath="Tag">
+                                    <DataGridTemplateColumn Header="TAG" Width="Auto" MinWidth="44" SortMemberPath="Tag">
                                         <DataGridTemplateColumn.CellStyle>
                                             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                         </DataGridTemplateColumn.CellStyle>

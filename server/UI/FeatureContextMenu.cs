@@ -30,7 +30,7 @@ internal static class FeatureContextMenu
             mainWindow.OpenFeatureWindow<RemoteShellWindow>(clientId, () => new RemoteShellWindow(server, clients));
         }));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_FILE_MANAGER"),    "SvgImages/Icon Builder/Actions_FolderOpen.svg",     () => mainWindow.OpenFeatureWindow<FileManagerWindow>(clientId,      () => new FileManagerWindow(server, clientId, clientId))));
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_PROCESS_MGR"),     "SvgImages/Icon Builder/ProcessDesign_Process.svg",  () => mainWindow.OpenFeatureWindow<ProcessManagerWindow>(clientId,   () => new ProcessManagerWindow(server, clientId, clientId))));
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_PROCESS_MGR"),     "SvgImages/Business Objects/BO_Dashboard.svg",  () => mainWindow.OpenFeatureWindow<ProcessManagerWindow>(clientId,   () => new ProcessManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_STARTUP_MGR"),     "SvgImages/Icon Builder/Actions_Clock.svg",          () => mainWindow.OpenFeatureWindow<StartupManagerWindow>(clientId,   () => new StartupManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_TCP_CONN"),        "SvgImages/Icon Builder/Electronics_Router.svg",     () => mainWindow.OpenFeatureWindow<TcpManagerWindow>(clientId,       () => new TcpManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_SERVICE_MGR"),     "SvgImages/Icon Builder/Actions_BlockContact.svg",   () => mainWindow.OpenFeatureWindow<ServiceManagerWindow>(clientId,   () => new ServiceManagerWindow(server, clientId, clientId))));
