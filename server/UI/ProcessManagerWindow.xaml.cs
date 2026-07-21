@@ -325,8 +325,9 @@ public partial class ProcessManagerWindow : ThemedWindow
                 .Select(sd => new SortDescription(sd.PropertyName, sd.Direction)).ToList();
             var savedArrows = GridProcs.Columns.Select(c => c.SortDirection).ToList();
 
-            _view = new ObservableCollection<ProcEntryVM>(list);
-            GridProcs.ItemsSource = _view;
+            _view.Clear();
+            foreach (var vm in list)
+                _view.Add(vm);
 
             foreach (var sd in savedSorts)
                 GridProcs.Items.SortDescriptions.Add(sd);

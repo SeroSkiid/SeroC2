@@ -165,23 +165,11 @@
                 <DataGridTemplateColumn x:Name="ColCpu" Header="CPU" Width="90" SortMemberPath="CpuUsage">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Border x:Name="CpuBorder" Background="{Binding CpuHeatBrush}" Margin="-10,-5">
+                            <Border Background="{Binding CpuHeatBrush}" Margin="-10,-5">
                                 <TextBlock Text="{Binding CpuDisplay}"
                                            Foreground="{Binding CpuTextBrush}"
                                            FontFamily="Consolas" FontSize="11"
                                            VerticalAlignment="Center" Margin="10,5"/>
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
                             </Border>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
@@ -190,23 +178,11 @@
                 <DataGridTemplateColumn x:Name="ColMem" Header="MEMORY" Width="110" SortMemberPath="Memory">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Border x:Name="MemBorder" Background="{Binding MemHeatBrush}" Margin="-10,-5">
+                            <Border Background="{Binding MemHeatBrush}" Margin="-10,-5">
                                 <TextBlock Text="{Binding MemDisplay}"
                                            Foreground="{Binding MemTextBrush}"
                                            FontFamily="Consolas" FontSize="11"
                                            VerticalAlignment="Center" Margin="10,5"/>
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                            </DataTrigger>
-                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                                <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
                             </Border>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
