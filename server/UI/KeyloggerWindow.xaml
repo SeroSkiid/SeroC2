@@ -1,0 +1,213 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.KeyloggerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Keylogger"
+        Width="900" Height="620" MinWidth="700" MinHeight="440"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+    <dx:ThemedWindow.Resources>
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource WindowBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SectionBorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+                            <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.7" Color="#000"/></Border.Effect>
+                            <ItemsPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </dx:ThemedWindow.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Title bar -->
+        <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
+                    <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"
+                            Background="{DynamicResource AccentBrush}" BorderBrush="{DynamicResource AccentBrush}" BorderThickness="1"
+                            Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="5" Height="5" Fill="White" VerticalAlignment="Center" Margin="0,0,5,0">
+                                <Ellipse.Effect><DropShadowEffect Color="White" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                            </Ellipse>
+                            <TextBlock Text="CAPTURING" Foreground="White" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Height="28" Padding="10,0" Margin="0,0,6,0"
+                            Style="{StaticResource SBtn}" FontSize="11" Click="BtnRefresh_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtBtnKlRefresh" Text="Refresh" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                    <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
+                            Style="{StaticResource SBtn}" FontSize="11" ToolTip="Actions" Click="BtnMenu_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_More.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Actions" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+                            <Grid>
+<TextBlock x:Name="TxtStatus" Text="Starting..."
+                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
+                       VerticalAlignment="Center" Margin="14,0"/>
+            </Grid>
+        </Border>
+
+        <!-- Content: left file list + right viewer -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="220" MinWidth="160"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left: file list -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,1,0">
+                <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+                        <Grid>
+                            <TextBlock Text="LOG FILES" Foreground="{DynamicResource FieldLabelBrush}" FontSize="9"
+                                       FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Download" Height="22" Padding="8,0" Margin="0,0,4,0"
+                                        Style="{StaticResource SBtn}" FontSize="9" Click="BtnDownload_Click"/>
+                                <Button Content="Delete" Height="22" Padding="8,0"
+                                        Style="{StaticResource SRedBtn}" FontSize="9" Click="BtnDelete_Click"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                    <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
+                             Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" FontSize="12"
+                             SelectionChanged="ListFiles_SelectionChanged">
+                        <ListBox.ContextMenu>
+                            <ContextMenu>
+                                <MenuItem x:Name="MnuKlDownload"  Header="Download"  Click="BtnDownload_Click">
+                                    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_FileAttachment.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem x:Name="MnuKlDelete"    Header="Delete"    Click="BtnDelete_Click">
+                                    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                </MenuItem>
+                                <Separator />
+                                <MenuItem x:Name="MnuKlCopyName"  Header="Copy Name" Click="ListFiles_CopyName_Click">
+                                    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Copy.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                </MenuItem>
+                                <MenuItem x:Name="MnuKlRefresh"   Header="Refresh"   Click="BtnRefresh_Click">
+                                    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                </MenuItem>
+                            </ContextMenu>
+                        </ListBox.ContextMenu>
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="10,6"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DateDisplay}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding SizeDisplay}" FontSize="10" Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </Border>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="4" Background="{DynamicResource WindowBgBrush}"
+                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Cursor="SizeWE"/>
+
+            <!-- Right: log viewer -->
+            <Border Grid.Column="2" Background="{DynamicResource WindowBgBrush}">
+                <DockPanel LastChildFill="True">
+                    <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+                        <Grid>
+                            <TextBlock x:Name="TxtViewerTitle" Text="Select a log file to view"
+                                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <Button Content="Save as .txt" Height="22" Padding="10,0" HorizontalAlignment="Right"
+                                    Style="{StaticResource SBtn}" FontSize="9" Click="BtnSave_Click"/>
+                        </Grid>
+                    </Border>
+                    <TextBox x:Name="TxtLog"
+                             Background="{DynamicResource WindowBgBrush}"
+                             Foreground="{DynamicResource ContentTextBrush}"
+                             FontFamily="Consolas" FontSize="12"
+                             BorderThickness="0" Padding="12,10"
+                             IsReadOnly="True" TextWrapping="Wrap"
+                             VerticalScrollBarVisibility="Auto"
+                             HorizontalScrollBarVisibility="Disabled"
+                             AcceptsReturn="True"
+                             CaretBrush="{DynamicResource AccentBrush}"
+                             SelectionBrush="{DynamicResource AccentBrush}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                              Background="Transparent"
+                                                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+    </DockPanel>
+</dx:ThemedWindow>

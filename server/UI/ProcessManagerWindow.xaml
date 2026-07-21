@@ -1,0 +1,223 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.ProcessManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Process Manager"
+        Width="980" Height="600" MinWidth="700" MinHeight="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+    <Window.Resources>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsClient}" Value="True">
+                    <Setter Property="BorderBrush" Value="#F59E0B"/>
+                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="CellBd" Background="Transparent" Padding="10,4" BorderThickness="0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsClient}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="#20F59E0B"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background" Value="{DynamicResource WindowBgBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SectionBorderBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
+                            <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.7" Color="#000"/></Border.Effect>
+                            <ItemsPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Toolbar: client label + action buttons -->
+        <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtCount" FontSize="11" Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas" Margin="8,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,0">
+                    <Button Height="27" Width="30" Margin="0,0,4,0"
+                            Style="{StaticResource SBtn}" Padding="0" Click="BtnRefresh_Click"
+                            ToolTip="Refresh">
+                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/>
+                    </Button>
+                    <Button x:Name="BtnTree" Height="27" Padding="8,0"
+                            Style="{StaticResource SBtn}" FontSize="11" Click="BtnTree_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Organization.svg'}" Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtBtnTree" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Search toolbar -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource InputBgBrush}" BorderThickness="0,0,0,1" Padding="12,6">
+            <TextBox x:Name="TxtSearch" Height="28"
+                     Style="{StaticResource STxt}" FontSize="12" TextChanged="TxtSearch_TextChanged"/>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="26" Background="{DynamicResource WindowBgBrush}"
+                BorderBrush="{DynamicResource InputBgBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="TxtStatus" Text=""
+                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
+                       VerticalAlignment="Center" Margin="12,0"/>
+        </Border>
+
+        <!-- Process list -->
+        <DataGrid x:Name="GridProcs"
+                  AutoGenerateColumns="False" IsReadOnly="True"
+                  Background="{DynamicResource WindowBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                  BorderThickness="0" RowBackground="Transparent"
+                  AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                  HeadersVisibility="Column"
+                  FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow"
+                  CanUserAddRows="False" CanUserResizeRows="False"
+                  ColumnHeaderHeight="30"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                  ColumnHeaderStyle="{StaticResource SColHeader}"
+                  PreviewKeyDown="GridProcs_PreviewKeyDown">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="MnuProcKill"     Click="BtnKill_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}"      Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuProcSuspend"  Click="BtnSuspend_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Lock.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuProcResume"   Click="BtnResume_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Unlock.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuProcCopyPid"  Click="GridProcs_CopyPid_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuProcCopyName" Click="GridProcs_CopyName_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuProcCopyPath" Click="GridProcs_CopyPath_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Lead.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuProcRefresh"  Click="BtnRefresh_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <!-- Name + icon -->
+                <DataGridTemplateColumn x:Name="ColProcName" Width="*" SortMemberPath="Name" MinWidth="150">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center"
+                                        Margin="{Binding TreeIndent}">
+                                <TextBlock Text="{Binding TreePrefix}" Foreground="{DynamicResource FieldLabelBrush}"
+                                           FontFamily="Consolas" FontSize="10"
+                                           VerticalAlignment="Center" Margin="0,0,2,0"/>
+                                <Image Source="{Binding IconImage}" Width="15" Height="15"
+                                       VerticalAlignment="Center" Margin="2,0,7,0"
+                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                       SnapsToDevicePixels="True"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- PID -->
+                <DataGridTextColumn x:Name="ColPid" Header="PID" Binding="{Binding Pid}" Width="65" FontFamily="Consolas" FontSize="11"/>
+                <!-- CPU heat-map column -->
+                <DataGridTemplateColumn x:Name="ColCpu" Header="CPU" Width="90" SortMemberPath="CpuUsage">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border x:Name="CpuBorder" Background="{Binding CpuHeatBrush}" Margin="-10,-5">
+                                <TextBlock Text="{Binding CpuDisplay}"
+                                           Foreground="{Binding CpuTextBrush}"
+                                           FontFamily="Consolas" FontSize="11"
+                                           VerticalAlignment="Center" Margin="10,5"/>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- RAM heat-map column -->
+                <DataGridTemplateColumn x:Name="ColMem" Header="MEMORY" Width="110" SortMemberPath="Memory">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Border x:Name="MemBorder" Background="{Binding MemHeatBrush}" Margin="-10,-5">
+                                <TextBlock Text="{Binding MemDisplay}"
+                                           Foreground="{Binding MemTextBrush}"
+                                           FontFamily="Consolas" FontSize="11"
+                                           VerticalAlignment="Center" Margin="10,5"/>
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                                <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                            </Border>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- Remote IPs (ESTABLISHED connections) -->
+                <DataGridTextColumn x:Name="ColNet" Header="NETWORK" Binding="{Binding NetDisplay}" Width="180"
+                                    FontFamily="Consolas" FontSize="11"/>
+                <!-- Title -->
+                <DataGridTextColumn x:Name="ColTitle" Header="TITLE" Binding="{Binding Title}" Width="200" FontSize="11"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+    </DockPanel>
+</dx:ThemedWindow>

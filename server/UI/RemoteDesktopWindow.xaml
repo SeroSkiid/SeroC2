@@ -1,0 +1,268 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.RemoteDesktopWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Remote Desktop"
+        Width="940" Height="580" MinWidth="440" MinHeight="320"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+    <Window.Resources>
+
+        <!-- Toolbar checkbox style — plain DevExpress-themed, text on title background -->
+        <Style x:Key="TbarChk" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource TitleTextBrush}"/>
+            <Setter Property="FontSize"   Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor"     Value="Hand"/>
+        </Style>
+
+        <!-- Gradient slider -->
+        <Style x:Key="SlimSlider" TargetType="Slider">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor"            Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Slider">
+                        <Grid Cursor="Hand" ClipToBounds="True">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Track x:Name="PART_Track" Grid.Row="1">
+                                <Track.DecreaseRepeatButton>
+                                    <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" Cursor="Hand">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="3" CornerRadius="1.5" Cursor="Hand">
+                                                    <Border.Background>
+                                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                                            <GradientStop Color="{DynamicResource AccentColor}" Offset="0"/>
+                                                            <GradientStop Color="#7C5CE8" Offset="1"/>
+                                                        </LinearGradientBrush>
+                                                    </Border.Background>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb Width="12" Height="12" Cursor="Hand">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Ellipse x:Name="tb" Width="12" Height="12" Fill="{DynamicResource AccentBrush}">
+                                                    <Ellipse.Effect>
+                                                        <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="5" ShadowDepth="0" Opacity="0.5"/>
+                                                    </Ellipse.Effect>
+                                                </Ellipse>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="tb" Property="Fill" Value="{DynamicResource AccentBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsDragging" Value="True">
+                                                        <Setter TargetName="tb" Property="Fill" Value="{DynamicResource AccentBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton>
+                                    <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" Cursor="Hand">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Height="3" Background="{DynamicResource SectionBorderBrush}" CornerRadius="1.5" Cursor="Hand"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
+                                </Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+        <DockPanel LastChildFill="True">
+
+            <!-- Title bar -->
+            <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="14,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TitleTextBrush}" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="TxtClientId_MouseLeftButtonUp" ToolTip="Click to copy ID"/>
+                        <Border x:Name="LiveBadge" Margin="12,0,0,0" CornerRadius="3"
+                                Background="#0C2016" BorderBrush="#1A6040" BorderThickness="1"
+                                Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                                    <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                                </Ellipse>
+                                <TextBlock Text="LIVE" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource FieldLabelBrush}"
+                                           FontSize="10" FontFamily="Segoe UI Mono" MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource FieldLabelBrush}"
+                                           FontSize="10" FontFamily="Segoe UI Mono" MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource FieldLabelBrush}"
+                                           FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Right" Margin="0,0,8,0"/>
+                            </StackPanel>
+                        </Border>
+                        <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
+                                Style="{StaticResource SBtn}" FontSize="11" ToolTip="Actions" Click="BtnMenu_Click">
+                            <StackPanel Orientation="Horizontal">
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_More.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Actions" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Toolbar -->
+            <Border DockPanel.Dock="Top" x:Name="CtrlBorder" Background="{DynamicResource TitleBgBrush}" Padding="14,8"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1">
+                <DockPanel LastChildFill="False">
+
+                    <!-- Right: START / STOP -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button x:Name="BtnStart" Content="START" Width="76" Height="26"
+                                Style="{StaticResource SGreenBtn}" Click="BtnStart_Click"
+                                FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
+                        <Button x:Name="BtnStop" Content="STOP" Width="70" Height="26" Margin="5,0,0,0"
+                                Style="{StaticResource SRedBtn}" Click="BtnStop_Click"
+                                IsEnabled="False" Opacity="0.35"
+                                FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
+                    </StackPanel>
+
+                    <!-- Left: monitor + quality + resolution -->
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
+                        <!-- Monitor selector -->
+                        <TextBlock Text="MONITOR" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="CmbMonitor" MinWidth="200" Width="Auto" MaxWidth="360" Height="26"
+                                  Style="{StaticResource SCombo}"
+                                  SelectionChanged="CmbMonitor_Changed"/>
+
+                        <Rectangle Width="1" Height="16" Margin="16,0" Fill="{DynamicResource SectionBorderBrush}"/>
+
+                        <!-- Quality -->
+                        <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider x:Name="SldQuality" Minimum="60" Maximum="95" Value="90" Width="80"
+                                Style="{StaticResource SlimSlider}"/>
+                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                            <TextBlock x:Name="TxtQuality" Text="90" Foreground="{DynamicResource LabelBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                        </Border>
+
+                        <Rectangle Width="1" Height="16" Margin="16,0" Fill="{DynamicResource SectionBorderBrush}"/>
+
+                        <!-- Resolution scale -->
+                        <TextBlock Text="SCALE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider x:Name="SldScale" Minimum="25" Maximum="100" Value="100" Width="70"
+                                Style="{StaticResource SlimSlider}"/>
+                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                            <TextBlock x:Name="TxtScale" Text="100%" Foreground="{DynamicResource LabelBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" Width="30" TextAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+
+                </DockPanel>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="14,0">
+                    <!-- Left: status -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="{DynamicResource InputBorderBrush}"
+                                 VerticalAlignment="Center" Margin="0,0,7,0"/>
+                        <TextBlock x:Name="TxtStatus" Text="Connecting..."
+                                   Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <!-- Center: input toggles -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <CheckBox x:Name="ChkClicks"    Content="CLICKS"    Style="{StaticResource TbarChk}" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="ChkCursor"    Content="CURSOR"    Style="{StaticResource TbarChk}" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="ChkKeyboard"  Content="KEYBOARD"  Style="{StaticResource TbarChk}" Margin="0,0,8,0"/>
+                        <CheckBox x:Name="ChkClipboard" Content="CLIPBOARD" Style="{StaticResource TbarChk}"/>
+                    </StackPanel>
+                    <!-- Right: resolution -->
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtResolution" Text=""
+                                   Foreground="{DynamicResource LabelBrush}" FontSize="9" FontFamily="Segoe UI Mono"
+                                   VerticalAlignment="Center" Margin="0,0,4,0"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Video area -->
+            <Grid>
+                <Rectangle Fill="#020306"/>
+                <Image x:Name="ImgFrame"
+                       Stretch="Fill"
+                       RenderOptions.BitmapScalingMode="NearestNeighbor"
+                       RenderOptions.EdgeMode="Aliased"
+                       Cursor="Arrow"
+                       HorizontalAlignment="Stretch" VerticalAlignment="Stretch"
+                       MouseMove="Img_MouseMove" MouseDown="Img_MouseDown"
+                       MouseUp="Img_MouseUp" MouseWheel="Img_MouseWheel"
+                       Focusable="True"
+                       KeyDown="Img_KeyDown" KeyUp="Img_KeyUp"
+                       Loaded="Img_Loaded"/>
+                <StackPanel x:Name="PnlNoSession" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
+                    <TextBlock Text="No active session"
+                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="14" FontWeight="SemiBold"
+                               FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Select a monitor and click START"
+                               Foreground="{DynamicResource SectionBorderBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                </StackPanel>
+
+                <!-- Same-machine warning (server and client on same host) -->
+                <Border x:Name="LocalhostWarning" Visibility="Collapsed" IsHitTestVisible="False"
+                        VerticalAlignment="Top" HorizontalAlignment="Stretch"
+                        Background="#CC7C3AED" Padding="10,6">
+                    <TextBlock Text="⚠  Running server and client on the same machine — screen will mirror recursively. This is normal during local testing."
+                               Foreground="#FFFFFF" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               TextWrapping="Wrap" HorizontalAlignment="Center"/>
+                </Border>
+
+                <!-- Reconnecting overlay -->
+                <Grid x:Name="ReconnectOverlay" Visibility="Collapsed" IsHitTestVisible="False">
+                    <Rectangle Fill="#CC000000"/>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtReconnectIcon" Text="⟳" FontSize="36" Foreground="#60A5FA"
+                                   HorizontalAlignment="Center" Margin="0,0,0,12">
+                            <TextBlock.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard>
+                                        <Storyboard>
+                                            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                             From="0.3" To="1.0" Duration="0:0:0.8"
+                                                             AutoReverse="True" RepeatBehavior="Forever"/>
+                                        </Storyboard>
+                                    </BeginStoryboard>
+                                </EventTrigger>
+                            </TextBlock.Triggers>
+                        </TextBlock>
+                        <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
+                                   FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
+                                   Foreground="#94A3B8" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Grid>
+            </Grid>
+
+        </DockPanel>
+</dx:ThemedWindow>
