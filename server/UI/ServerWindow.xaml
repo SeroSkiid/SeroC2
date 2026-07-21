@@ -1979,7 +1979,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="140" MinWidth="100" MaxWidth="300"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="110" MinWidth="80" MaxWidth="150" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="180" MinWidth="80" MaxWidth="300" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="80" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2003,8 +2003,6 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <!-- Empty column to fill remaining space -->
-                                        <DataGridTextColumn Width="*" MinWidth="0" MaxWidth="Infinity"/>
                                     </DataGrid.Columns>
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
