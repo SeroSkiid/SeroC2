@@ -2227,9 +2227,10 @@
                             <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
 
-                                <DataGrid x:Name="GridAllClients"
+                                <DataGrid Grid.Column="0" x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
