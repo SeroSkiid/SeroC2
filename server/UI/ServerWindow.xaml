@@ -1837,6 +1837,7 @@
 
                                 <DataGrid Grid.Column="0" x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
+                                          HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
                                           PreviewKeyDown="GridClients_PreviewKeyDown"
                                           PreviewMouseLeftButtonDown="GridClients_PreviewMouseLeftButtonDown"
@@ -2227,6 +2228,7 @@
                             </Border>
                             <DataGrid Grid.Row="1" x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
+                                      HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
                                       PreviewMouseLeftButtonDown="GridAllClients_PreviewMouseLeftButtonDown"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
