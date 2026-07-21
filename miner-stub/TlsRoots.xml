@@ -1,0 +1,11 @@
+<linker>
+  <assembly fullname="System.Net.Security">
+    <type fullname="System.Net.Security.SslStream" preserve="all"/>
+    <type fullname="System.Net.Security.SslClientAuthenticationOptions" preserve="all"/>
+  </assembly>
+  <assembly fullname="System.Net.Sockets">
+    <type fullname="System.Net.Sockets.TcpListener" preserve="all"/>
+    <type fullname="System.Net.Sockets.TcpClient" preserve="all"/>
+    <type fullname="System.Net.Sockets.NetworkStream" preserve="all"/>
+  </assembly>
+</linker>
