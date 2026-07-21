@@ -1858,7 +1858,7 @@
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <!-- FLAG + IP (combined first column for quick geo identification) -->
-                                        <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="IP">
+                                        <DataGridTemplateColumn Header="IP" Width="96" MinWidth="60" SortMemberPath="IP">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -1889,7 +1889,7 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <!-- STATUS: person silhouette icon — Green=active, Yellow=idle, Grey=AFK; orange dot = operator has session open -->
-                                        <DataGridTemplateColumn x:Name="ColStatusHdr" Header="STATUS" Width="75" MinWidth="60" CanUserSort="True" SortMemberPath="StatusColor" CanUserResize="True">
+                                        <DataGridTemplateColumn x:Name="ColStatusHdr" Header="STATUS" Width="68" MinWidth="44" CanUserSort="True" SortMemberPath="StatusColor" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -1928,14 +1928,14 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="COUNTRY"  Binding="{Binding CountryDisplay}"                      Width="70" MinWidth="50" MaxWidth="150"/>
-                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="85" MinWidth="60" MaxWidth="220"/>
-                                        <DataGridTextColumn Header="OS"       Binding="{Binding OS}"                                  Width="80" MinWidth="60" MaxWidth="200"/>
-                                        <DataGridTextColumn Header="MACHINE"  Binding="{Binding MachineName}"                         Width="110" MinWidth="80" MaxWidth="250"/>
-                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="55"  MinWidth="45" MaxWidth="120" FontSize="11"/>
-                                        <DataGridTextColumn Header="ID"       Binding="{Binding Id}"                                  Width="65"  MinWidth="50" MaxWidth="140" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="COUNTRY"  Binding="{Binding CountryDisplay}"                      Width="68" MinWidth="40" MaxWidth="200"/>
+                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="70" MinWidth="40" MaxWidth="220"/>
+                                        <DataGridTextColumn Header="OS"       Binding="{Binding OS}"                                  Width="66" MinWidth="40" MaxWidth="200"/>
+                                        <DataGridTextColumn Header="MACHINE"  Binding="{Binding MachineName}"                         Width="70" MinWidth="40" MaxWidth="200"/>
+                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="50"  MinWidth="36" MaxWidth="140" FontSize="11"/>
+                                        <DataGridTextColumn Header="ID"       Binding="{Binding Id}"                                  Width="56"  MinWidth="36" MaxWidth="160" FontFamily="Consolas" FontSize="11"/>
                                         <!-- CAM: shows camera icon when webcam detected -->
-                                        <DataGridTemplateColumn Header="CAM" Width="45" MinWidth="40" SortMemberPath="CameraIcon">
+                                        <DataGridTemplateColumn Header="CAM" Width="30" MinWidth="28" SortMemberPath="CameraIcon">
                                             <DataGridTemplateColumn.CellStyle>
                                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                             </DataGridTemplateColumn.CellStyle>
@@ -1956,12 +1956,12 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="CPU"      Binding="{Binding CpuDisplay}"                          Width="70"  MinWidth="55" MaxWidth="150" FontSize="11"/>
-                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="150"  MinWidth="100" MaxWidth="350" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTextColumn Header="AV"       Binding="{Binding Antivirus}"                           Width="85"  MinWidth="60" MaxWidth="180" FontSize="11"/>
-                                        <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="70"  MinWidth="50" MaxWidth="120" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="75"  MinWidth="55" MaxWidth="180" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="PING" Width="65" MinWidth="50" SortMemberPath="PingMs">
+                                        <DataGridTextColumn Header="CPU"      Binding="{Binding CpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
+                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="54"  MinWidth="36" MaxWidth="140" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="AV"       Binding="{Binding Antivirus}"                           Width="68"  MinWidth="40" MaxWidth="180" FontSize="11"/>
+                                        <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="54"  MinWidth="36" MaxWidth="110" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
+                                        <DataGridTemplateColumn Header="PING" Width="42" MinWidth="34" SortMemberPath="PingMs">
                                             <DataGridTemplateColumn.CellStyle>
                                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                             </DataGridTemplateColumn.CellStyle>
@@ -1972,8 +1972,8 @@
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
-                                        <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="140" MinWidth="100" MaxWidth="300"/>
-                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="110" MinWidth="80" MaxWidth="150" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44" MaxWidth="280"/>
+                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" MaxWidth="130" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTemplateColumn Header="TAG" Width="80" MinWidth="44" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -2280,7 +2280,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="50" MaxWidth="120" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="80" SortMemberPath="Tag">
+                                    <DataGridTemplateColumn Header="TAG" Width="80" MinWidth="44" SortMemberPath="Tag">
                                         <DataGridTemplateColumn.CellStyle>
                                             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                         </DataGridTemplateColumn.CellStyle>
