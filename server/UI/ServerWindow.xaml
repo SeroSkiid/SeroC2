@@ -2003,7 +2003,7 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <!-- Empty column to fill remaining space -->
-                                        <DataGridTextColumn Width="*" MinWidth="0"/>
+                                        <DataGridTextColumn Width="*" MinWidth="0" MaxWidth="Infinity"/>
                                     </DataGrid.Columns>
                                     <DataGrid.ContextMenu>
                                         <ContextMenu>
@@ -2313,7 +2313,7 @@
                                         </DataGridTemplateColumn.CellTemplate>
                                     </DataGridTemplateColumn>
                                         <!-- Empty column to fill remaining space -->
-                                        <DataGridTextColumn Width="*" MinWidth="0"/>
+                                        <DataGridTextColumn Width="*" MinWidth="0" MaxWidth="Infinity"/>
                                 </DataGrid.Columns>
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
