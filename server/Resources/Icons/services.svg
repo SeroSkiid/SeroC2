@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- Large gear (grey-blue, background) — 6 rectangular teeth, center (10, 5.5) -->
+  <g transform="translate(10,5.5)">
+    <circle r="3" fill="#6A90D4"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4" transform="rotate(60)"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4" transform="rotate(120)"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4" transform="rotate(180)"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4" transform="rotate(240)"/>
+    <rect x="-0.65" y="-4.5" width="1.3" height="1.8" fill="#6A90D4" transform="rotate(300)"/>
+    <circle r="1.25" fill="#C8D8F4"/>
+  </g>
+  <!-- Small gear (bright blue, foreground) — 6 rectangular teeth, center (4.5, 11) -->
+  <g transform="translate(4.5,11)">
+    <circle r="2.2" fill="#2060CC"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC" transform="rotate(60)"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC" transform="rotate(120)"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC" transform="rotate(180)"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC" transform="rotate(240)"/>
+    <rect x="-0.48" y="-3.35" width="0.96" height="1.35" fill="#2060CC" transform="rotate(300)"/>
+    <circle r="0.9" fill="#A0BFEF"/>
+  </g>
+</svg>

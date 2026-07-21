@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PublishAot>true</PublishAot>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData>
+    <IlcFoldIdenticalMethodBodies>true</IlcFoldIdenticalMethodBodies>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <UseSystemResourceKeys>true</UseSystemResourceKeys>
+    <DebuggerSupport>false</DebuggerSupport>
+    <EventSourceSupport>false</EventSourceSupport>
+    <MetadataUpdaterSupport>false</MetadataUpdaterSupport>
+    <HttpActivityPropagationSupport>false</HttpActivityPropagationSupport>
+    <EnableUnsafeBinaryFormatterSerialization>false</EnableUnsafeBinaryFormatterSerialization>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <Deterministic>true</Deterministic>
+    <SourceRevisionId></SourceRevisionId>
+    <ContinuousIntegrationBuild>false</ContinuousIntegrationBuild>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
+    <!-- Assembly metadata dynamically set by the Builder — defaults look like a legit Windows binary -->
+    <AssemblyName>SeroStub</AssemblyName>
+    <AssemblyTitle>SeroStub</AssemblyTitle>
+    <Description>SeroStub</Description>
+    <Product></Product>
+    <Company></Company>
+    <Copyright></Copyright>
+    <FileVersion>1.0.0.0</FileVersion>
+    <ProductVersion>1.0.0.0</ProductVersion>
+    <InformationalVersion>1.0.0.0</InformationalVersion>
+    <Platforms>AnyCPU;x64</Platforms>
+    <!-- CS0162: intentional dead-code branches from compile-time const feature flags -->
+    <!-- CS0168: catch(Exception ex){} blocks where ex is intentionally unused -->
+    <NoWarn>$(NoWarn);CS0162;CS0168;CS0618</NoWarn>
+  </PropertyGroup>
+</Project>

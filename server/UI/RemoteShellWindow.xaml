@@ -1,0 +1,108 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.RemoteShellWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Remote Shell"
+        Width="720" Height="500" MinWidth="480" MinHeight="320"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Title bar -->
+        <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="&#x203A;" Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"
+                               FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    <TextBox x:Name="TxtCommand" Style="{StaticResource STxt}"
+                             FontFamily="Consolas" FontSize="12"
+                             MinWidth="380" VerticalAlignment="Center"
+                             KeyDown="TxtCommand_KeyDown"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="SEND" Width="64" Height="22" Margin="0,0,8,0"
+                            Style="{StaticResource SGreenBtn}" Click="Send_Click"
+                            FontSize="10" FontWeight="SemiBold" Padding="10,0"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Output area + reconnect overlay — both fill the remaining space via a Grid -->
+        <Grid>
+            <Border Background="{DynamicResource WindowBgBrush}">
+                <ScrollViewer x:Name="OutputScroller" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled" Padding="4,4,4,4"
+                              Background="Transparent">
+                    <TextBox x:Name="TxtOutput"
+                             IsReadOnly="True"
+                             TextWrapping="Wrap"
+                             FontFamily="Consolas" FontSize="12"
+                             Foreground="{DynamicResource ContentTextBrush}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="10,8"
+                             Text="Type a command and press Enter..."
+                             SelectionBrush="#3A85F540"
+                             CaretBrush="Transparent"
+                             IsTabStop="False"
+                             FocusVisualStyle="{x:Null}">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                          HorizontalScrollBarVisibility="Disabled"
+                                                          VerticalScrollBarVisibility="Disabled"
+                                                          Background="Transparent"/>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Reconnecting overlay -->
+            <Grid x:Name="ReconnectOverlay" Visibility="Collapsed" IsHitTestVisible="False">
+                <Rectangle Fill="{DynamicResource WindowBgBrush}" Opacity="0.88"/>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtReconnectIcon" Text="&#xE72C;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="36" Foreground="{DynamicResource AccentBrush}"
+                               HorizontalAlignment="Center" Margin="0,0,0,12">
+                        <TextBlock.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                         From="0.3" To="1.0" Duration="0:0:0.8"
+                                                         AutoReverse="True" RepeatBehavior="Forever"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </TextBlock.Triggers>
+                    </TextBlock>
+                    <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
+                               FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
+                    <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
+                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               HorizontalAlignment="Center" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+    </DockPanel>
+</dx:ThemedWindow>

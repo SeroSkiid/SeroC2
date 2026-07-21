@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    width: 1200px; height: 630px; overflow: hidden;
+    background: #070812;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    position: relative;
+}
+.bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+        linear-gradient(rgba(74,133,245,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74,133,245,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+.bg-glow {
+    position: absolute;
+    width: 600px; height: 400px;
+    background: radial-gradient(ellipse, rgba(74,133,245,0.12) 0%, transparent 70%);
+    top: -100px; left: -100px;
+}
+.bg-glow2 {
+    position: absolute;
+    width: 400px; height: 300px;
+    background: radial-gradient(ellipse, rgba(124,92,232,0.08) 0%, transparent 70%);
+    bottom: -50px; right: 100px;
+}
+.inner {
+    position: relative; z-index: 1;
+    padding: 72px 80px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 13px; color: #4A85F5;
+    border: 1px solid rgba(74,133,245,0.25);
+    padding: 5px 12px; border-radius: 100px;
+    width: fit-content; margin-bottom: 32px;
+    letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600;
+}
+.dot { width:6px; height:6px; border-radius:50%; background:#22C55E;
+    box-shadow: 0 0 8px #22C55E; }
+h1 {
+    font-size: 72px; font-weight: 700; line-height: 1.08;
+    letter-spacing: -0.04em; color: #e0e4f4;
+    margin-bottom: 24px;
+}
+h1 em {
+    font-style: normal;
+    background: linear-gradient(90deg, #4A85F5, #7C5CE8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.sub { font-size: 22px; color: #606880; line-height: 1.5; max-width: 640px; }
+.bottom {
+    margin-top: auto;
+    display: flex; align-items: center; justify-content: space-between;
+}
+.logo { display:flex; align-items:center; gap:10px; }
+.logo-text { font-family:'Courier New',monospace; font-size:26px; font-weight:700; }
+.logo-s { color:#4A85F5; }
+.logo-ero { color:#e0e4f4; }
+.logo-rat { color:#606880; }
+.domain { font-family:'Courier New',monospace; font-size:16px; color:#2a2d45;
+    border:1px solid #1e2038; padding:6px 14px; border-radius:6px; }
+.pills { display:flex; gap:8px; }
+.pill {
+    font-size:12px; padding:4px 10px; border-radius:4px;
+    background:rgba(74,133,245,0.08); color:#4A85F5;
+    border:1px solid rgba(74,133,245,0.15);
+    font-family:'Courier New',monospace;
+}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+<div class="bg-glow2"></div>
+<div class="inner">
+    <div class="tag"><span class="dot"></span>Source Available · Authorized Use Only</div>
+    <h1>The C2 they charge<br>$5,000 for. <em>Free.</em></h1>
+    <p class="sub">HVNC, remote desktop at 60fps, NativeAOT stub, polymorphic crypter, rootkit.<br>Everything. No price tag.</p>
+    <div class="bottom">
+        <div class="logo">
+            <div class="logo-text">
+                <span class="logo-s">S</span><span class="logo-ero">ero</span><span class="logo-rat">RAT</span>
+            </div>
+            <div class="pills">
+                <span class="pill">NativeAOT</span>
+                <span class="pill">HVNC</span>
+                <span class="pill">7 MB</span>
+            </div>
+        </div>
+        <div class="domain">serorat.zip</div>
+    </div>
+</div>
+</body>
+</html>

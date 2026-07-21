@@ -1,0 +1,62 @@
+<Window x:Class="SeroServer.UI.NotificationPopup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" ShowActivated="False" Topmost="True"
+        Width="280" SizeToContent="Height">
+
+    <!-- Drop shadow via outer border � colors follow the active theme -->
+    <Border Margin="8" CornerRadius="10"
+            Background="{DynamicResource SectionBgBrush}"
+            BorderThickness="1"
+            BorderBrush="{DynamicResource SectionBorderBrush}">
+        <Border.Effect>
+            <DropShadowEffect Color="{DynamicResource AccentColor}" BlurRadius="18" ShadowDepth="0" Opacity="0.22"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="3"/>
+            </Grid.RowDefinitions>
+
+            <!-- Content row -->
+            <Grid Grid.Row="0" Margin="10,8,10,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo with soft accent glow -->
+                <Border Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0" VerticalAlignment="Center"
+                        CornerRadius="22" Background="{DynamicResource ActivityBgBrush}" Opacity="0.7"/>
+                <Image Grid.Column="0" Source="/serofondtransparent.png"
+                       Width="34" Height="34" Margin="0,0,12,0"
+                       HorizontalAlignment="Center" VerticalAlignment="Center"
+                       RenderOptions.BitmapScalingMode="HighQuality"
+                       Opacity="0.92"/>
+
+                <!-- Text -->
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle"
+                               FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"
+                               Foreground="{DynamicResource AccentBrush}"
+                               Margin="0,0,0,3"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock x:Name="TxtBody"
+                               FontSize="11" FontFamily="Consolas"
+                               Foreground="{DynamicResource LabelBrush}"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
+            </Grid>
+
+            <!-- Accent progress bar -->
+            <Grid Grid.Row="1">
+                <Rectangle Height="3" HorizontalAlignment="Stretch"
+                           Fill="{DynamicResource InputBorderBrush}"/>
+                <Rectangle x:Name="ProgressBar" Height="3" HorizontalAlignment="Left" Width="264"
+                           Fill="{DynamicResource AccentBrush}"/>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>

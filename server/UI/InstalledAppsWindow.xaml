@@ -1,0 +1,128 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.InstalledAppsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Installed Programs" Width="900" Height="540" MinWidth="660" MinHeight="380"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        ShowGlow="False">
+    <DockPanel>
+
+        <!-- Title bar -->
+        <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtCount" FontSize="11" Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas" Margin="8,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Height="27" Width="30" Margin="0,0,4,0" Style="{StaticResource SBtn}" Padding="0" Click="BtnRefresh_Click" ToolTip="Refresh">
+                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border DockPanel.Dock="Top" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource InputBgBrush}" BorderThickness="0,0,0,1" Padding="12,6">
+            <TextBox x:Name="TxtSearch" Height="28" Style="{StaticResource STxt}" FontSize="12" TextChanged="TxtSearch_Changed"/>
+        </Border>
+
+        <Border DockPanel.Dock="Bottom" Height="26" Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource InputBgBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="12,0"/>
+        </Border>
+
+        <DataGrid x:Name="GridApps" AutoGenerateColumns="False" IsReadOnly="True"
+                  Background="{DynamicResource WindowBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
+                  RowBackground="Transparent" AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                  HeadersVisibility="Column" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
+                  SelectionMode="Single" SelectionUnit="FullRow" CanUserAddRows="False"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  EnableColumnVirtualization="True"
+                  ScrollViewer.CanContentScroll="True"
+                  ColumnHeaderStyle="{StaticResource SColHeader}">
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="Height" Value="24"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Verified}" Value="False">
+                            <Setter Property="BorderBrush"     Value="#EF4444"/>
+                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                        </DataTrigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
+                            <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
+                            <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
+                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.CellStyle>
+                <Style TargetType="DataGridCell">
+                    <Setter Property="Background"      Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Verified}" Value="False">
+                            <Setter Property="Background" Value="#20EF4444"/>
+                        </DataTrigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="Transparent"/>
+                            <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                            <Setter Property="BorderBrush" Value="Transparent"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.CellStyle>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="MnuAppUninstall"     Header="Uninstall"        Click="BtnUninstall_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuAppCopyName"      Header="Copy Name"        Click="GridApps_CopyName_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuAppCopyPublisher" Header="Copy Publisher"   Click="GridApps_CopyPublisher_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Lead.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuAppRefresh"       Header="Refresh"          Click="BtnRefresh_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTemplateColumn Width="30" CanUserSort="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="NAME"         Binding="{Binding Name}"              Width="*"/>
+                <DataGridTextColumn Header="VERSION"      Binding="{Binding Version}"            Width="100"/>
+                <DataGridTemplateColumn Header="PUBLISHER" Width="175" SortMemberPath="PublisherDisplay">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="{Binding VerifiedDisplay}" FontSize="11" FontWeight="Bold" Margin="0,0,5,0" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Verified}" Value="True">
+                                                    <Setter Property="Foreground" Value="#22C55E"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding PublisherDisplay}" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="INSTALL DATE" Binding="{Binding InstallDate}"        Width="100"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</dx:ThemedWindow>

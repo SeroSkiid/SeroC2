@@ -1,0 +1,29 @@
+<svg width="256" height="256" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<symbol id="c">
+<path fill="#52d3ff" d="M50 50v36l-27-10v-36"/>
+<path fill="#005782" d="M50 50v36l27-10v-36"/>
+<path fill="#0088cc" d="M50 50l-27-10 27-10 27 10"/>
+</symbol>
+</defs>
+<use href="#c" x="76" y="63"/>
+<use href="#c" x="76" y="24"/>
+<use href="#c" x="45" y="113"/>
+<use href="#c" x="45" y="74"/>
+<use href="#c" x="45" y="35"/>
+<use href="#c" x="14" y="124"/>
+<use href="#c" x="14" y="85"/>
+<use href="#c" x="14" y="46"/>
+<use href="#c" x="107" y="113"/>
+<use href="#c" x="107" y="74"/>
+<use href="#c" x="107" y="35"/>
+<use href="#c" x="138" y="124"/>
+<use href="#c" x="138" y="85"/>
+<use href="#c" x="76" y="124"/>
+<use href="#c" x="76" y="85"/>
+<use href="#c" x="45" y="135"/>
+<use href="#c" x="107" y="135"/>
+<use href="#c" x="76" y="146"/>
+<use href="#c" transform="translate(119,-24) rotate(35, 50, 50)"/>
+<use href="#c" transform="translate(173,33) rotate(20, 50, 50)"/>
+</svg>

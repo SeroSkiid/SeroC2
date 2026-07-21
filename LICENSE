@@ -1,0 +1,41 @@
+SeroC2 Source Available License
+Copyright (c) 2026 SeroSkiid
+
+Permission is hereby granted, free of charge, to any individual to view,
+clone, and use this software for personal, educational, and authorized
+security research purposes, subject to the following conditions:
+
+1. ATTRIBUTION
+   This copyright notice, the project name "SeroC2 / SeroRAT", and the
+   author credit "SeroSkiid" must be preserved in all copies, forks, or
+   substantial portions of the software. You may not represent yourself
+   as the original author or creator of this project.
+
+2. NO COMMERCIAL USE
+   You may not sell, sublicense, rent, or distribute this software or any
+   derivative work for commercial gain without prior written permission
+   from the copyright holder.
+
+3. NO CLOSED-SOURCE REDISTRIBUTION
+   If you publicly distribute a modified version of this software, you
+   must make the full source code of your modifications publicly available
+   under these same terms.
+
+4. AUTHORIZED USE ONLY
+   This software is intended solely for:
+   - Authorized penetration testing on systems you own or have explicit
+     written permission to test.
+   - Personal security research and education.
+   - CTF (Capture the Flag) competitions.
+   Any use against systems without prior explicit authorization from the
+   system owner is strictly prohibited. The user assumes all legal
+   responsibility for how they use this software.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE
+   FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF
+   THIS SOFTWARE.
+
+For commercial licensing or special permissions:
+https://github.com/SeroSkiid

@@ -1,0 +1,439 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.FileManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="File Manager"
+        Width="1000" Height="600" MinWidth="720" MinHeight="420"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize" ShowGlow="False">
+
+    <Window.Resources>
+        <Style x:Key="FmBtn" TargetType="Button" BasedOn="{StaticResource SBtn}">
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="11"/>
+        </Style>
+        <!-- Clean DataGridCell: no SelBar artifact on selection -->
+        <Style x:Key="FmCell" TargetType="DataGridCell">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="BorderThickness"  Value="0"/>
+            <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="CellBd" Background="Transparent" Padding="10,4" SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="DataGridCell" BasedOn="{StaticResource FmCell}"/>
+        <!-- Override DX scrollbar theme within this window -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="SnapsToDevicePixels"  Value="True"/>
+            <Setter Property="Width"    Value="8"/>
+            <Setter Property="MinWidth" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="{x:Type ScrollBar}">
+                        <Grid Width="8" SnapsToDevicePixels="True">
+                            <Border Background="{DynamicResource InputBgBrush}" CornerRadius="4" Opacity="0.6"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.DecreaseRepeatButton><RepeatButton Command="{x:Static ScrollBar.PageUpCommand}" Opacity="0" IsTabStop="False" Focusable="False"/></Track.DecreaseRepeatButton>
+                                <Track.Thumb>
+                                    <Thumb MinHeight="40">
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="{x:Type Thumb}">
+                                                <Border x:Name="Bd" Background="{DynamicResource AccentBrush}" CornerRadius="4" Margin="2,0" Opacity="0.55"/>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.80"/></Trigger>
+                                                    <Trigger Property="IsDragging"  Value="True"><Setter TargetName="Bd" Property="Opacity" Value="1.0"/></Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                                <Track.IncreaseRepeatButton><RepeatButton Command="{x:Static ScrollBar.PageDownCommand}" Opacity="0" IsTabStop="False" Focusable="False"/></Track.IncreaseRepeatButton>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Width"    Value="Auto"/>
+                    <Setter Property="MinWidth" Value="0"/>
+                    <Setter Property="Height"    Value="8"/>
+                    <Setter Property="MinHeight" Value="8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Grid Height="8" SnapsToDevicePixels="True">
+                                    <Border Background="{DynamicResource InputBgBrush}" CornerRadius="4" Opacity="0.6"/>
+                                    <Track x:Name="PART_Track" IsDirectionReversed="False" Margin="4,0,4,0">
+                                        <Track.DecreaseRepeatButton><RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}" Opacity="0" IsTabStop="False" Focusable="False"/></Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb MinWidth="40">
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="{x:Type Thumb}">
+                                                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}" CornerRadius="4" Margin="0,2" Opacity="0.55"/>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Bd" Property="Opacity" Value="0.80"/></Trigger>
+                                                            <Trigger Property="IsDragging"  Value="True"><Setter TargetName="Bd" Property="Opacity" Value="1.0"/></Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton><RepeatButton Command="{x:Static ScrollBar.PageRightCommand}" Opacity="0" IsTabStop="False" Focusable="False"/></Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Navigation bar with client label -->
+        <Border DockPanel.Dock="Top" Height="36" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="8,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TxtTitle" Grid.Column="0" FontSize="11" Foreground="{DynamicResource TitleTextBrush}"
+                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                <Button Grid.Column="1" x:Name="BtnBack" Content="&#x25C0; Back" Height="26" Padding="10,0" Margin="0,0,4,0"
+                        Style="{StaticResource FmBtn}" Click="Back_Click"/>
+                <Button Grid.Column="2" Height="26" Width="28" Margin="0,0,6,0" Padding="0"
+                        Style="{StaticResource FmBtn}" Click="Refresh_Click" ToolTip="Refresh current folder">
+                    <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14"
+                               VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </Button>
+                <TextBox x:Name="TxtPath" Grid.Column="3" Height="26"
+                         Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
+                         BorderThickness="1" Padding="6,3" FontFamily="Consolas" FontSize="11"
+                         VerticalContentAlignment="Center" KeyDown="TxtPath_KeyDown"/>
+                <Button Grid.Column="4" x:Name="BtnGo" Content="Go" Height="26" MinWidth="46" Width="Auto" Padding="8,0" Margin="4,0,0,0"
+                        Style="{StaticResource FmBtn}" Click="GoPath_Click"/>
+            </Grid>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="26" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource LabelBrush}"
+                       FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="14,0"/>
+        </Border>
+
+        <!-- Main: Left sidebar + File list + Preview -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="160"/>
+                <ColumnDefinition Width="1"/>
+                <ColumnDefinition Width="*" MinWidth="280"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="220" MinWidth="180" MaxWidth="420"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Left sidebar -->
+            <Border Grid.Column="0" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,1,0">
+                <DockPanel LastChildFill="True">
+
+                    <!-- Quick Access header -->
+                    <Border DockPanel.Dock="Top" Padding="10,6" Background="{DynamicResource TitleBgBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock x:Name="TxtQuickAccess" Text="QUICK ACCESS" FontSize="9" FontWeight="Bold"
+                                   Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas"/>
+                    </Border>
+
+                    <!-- Quick access buttons -->
+                    <StackPanel DockPanel.Dock="Top" Margin="0,4,0,0">
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToDesktop_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8FC;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#60A5FA"/>
+                                <TextBlock Text="Desktop" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToUser_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#A78BFA"/>
+                                <TextBlock Text="User" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToTemp_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#FBBF24"/>
+                                <TextBlock Text="Temp" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToAppData_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xED43;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#34D399"/>
+                                <TextBlock Text="AppData" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToStartup_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#F87171"/>
+                                <TextBlock Text="Startup" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToWindows_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#60A5FA"/>
+                                <TextBlock Text="Windows" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                        <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
+                                Click="GoToSystem32_Click" Padding="8,0">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xEA86;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#94A3B8"/>
+                                <TextBlock Text="System32" FontSize="11" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Drives header -->
+                    <Border DockPanel.Dock="Top" Padding="10,6" Background="{DynamicResource TitleBgBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1" Margin="0,8,0,0">
+                        <TextBlock x:Name="TxtDrives" Text="DRIVES" FontSize="9" FontWeight="Bold"
+                                   Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas"/>
+                    </Border>
+
+                    <!-- Drives list -->
+                    <ListBox x:Name="DrivesList" Background="Transparent" BorderThickness="0"
+                             Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" FontSize="12"
+                             Margin="0,4,0,0"
+                             SelectionChanged="DrivesList_SelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Padding" Value="8,5"/>
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Source="{Binding Icon}" Width="16" Height="16"
+                                           Margin="0,0,7,0" VerticalAlignment="Center"
+                                           RenderOptions.BitmapScalingMode="HighQuality"/>
+                                    <TextBlock Text="{Binding Path}" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                </DockPanel>
+            </Border>
+
+            <Rectangle Grid.Column="1" Fill="{DynamicResource InputBorderBrush}" HorizontalAlignment="Stretch"/>
+
+            <!-- Center: file list + status + preview -->
+            <DockPanel Grid.Column="2" LastChildFill="True">
+
+                <!-- Transfer/status strip at bottom of file list -->
+                <Border DockPanel.Dock="Bottom" Height="24" Background="{DynamicResource WindowBgBrush}"
+                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0" Padding="12,0">
+                    <Grid>
+                        <TextBlock x:Name="TxtFileCount" Text="" Foreground="{DynamicResource LabelBrush}"
+                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
+                        <StackPanel x:Name="TransferStrip" Orientation="Horizontal" Visibility="Collapsed"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock Text="&#xE895;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBlock x:Name="TxtTransferName" Text="" Foreground="{DynamicResource ContentTextBrush}"
+                                       FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtTransferStatus" Text="" Foreground="{DynamicResource FieldLabelBrush}"
+                                       FontSize="10" FontFamily="Consolas" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                            <TextBlock x:Name="TxtTransferPct" Text="" Foreground="{DynamicResource LabelBrush}"
+                                       FontSize="10" FontFamily="Consolas" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- File list -->
+                <DataGrid x:Name="GridFiles"
+                      AutoGenerateColumns="False" IsReadOnly="True"
+                      Background="{DynamicResource WindowBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                      BorderThickness="0" RowBackground="Transparent"
+                      AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                      GridLinesVisibility="None" HeadersVisibility="Column"
+                      FontFamily="Consolas" FontSize="13"
+                      SelectionMode="Extended" SelectionUnit="FullRow"
+                      CanUserAddRows="False" CanUserResizeRows="False"
+                      CanUserResizeColumns="True" CanUserReorderColumns="False"
+                      ColumnHeaderHeight="28"
+                      VirtualizingStackPanel.IsVirtualizing="True"
+                      VirtualizingStackPanel.VirtualizationMode="Recycling"
+                      EnableColumnVirtualization="True"
+                      ScrollViewer.CanContentScroll="True"
+                      MouseDoubleClick="GridFiles_DoubleClick"
+                      SelectionChanged="GridFiles_SelectionChanged">
+                    <DataGrid.ColumnHeaderStyle>
+                        <Style TargetType="DataGridColumnHeader">
+                            <Setter Property="Background" Value="{DynamicResource TitleBgBrush}"/>
+                            <Setter Property="Foreground" Value="{DynamicResource LabelBrush}"/>
+                            <Setter Property="FontSize" Value="10"/>
+                            <Setter Property="FontWeight" Value="SemiBold"/>
+                            <Setter Property="Padding" Value="10,0"/>
+                            <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}"/>
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        </Style>
+                    </DataGrid.ColumnHeaderStyle>
+                    <DataGrid.ContextMenu>
+                        <ContextMenu Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1"
+                                     Foreground="{DynamicResource ContentTextBrush}">
+                            <MenuItem x:Name="MnuFmRefresh"     Header="Refresh"           Click="Refresh_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <Separator Background="{DynamicResource SectionBorderBrush}"/>
+                            <MenuItem x:Name="MnuFmExecNormal"  Header="Execute Normal"    Click="Exec_Normal_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Validation.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmExecHidden"  Header="Execute Hidden"    Click="Exec_Hidden_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Dashboard.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmExecAdmin"   Header="Execute As Admin"  Click="Exec_Admin_Click">   <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Security_Permission.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <Separator Background="{DynamicResource SectionBorderBrush}"/>
+                            <MenuItem x:Name="MnuFmDownload"    Header="Download"          Click="Download_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_FileAttachment.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmUpload"      Header="Upload here"       Click="Upload_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Send.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmNewFolder"   Header="New Folder"        Click="NewFolder_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <Separator Background="{DynamicResource SectionBorderBrush}"/>
+                            <MenuItem x:Name="MnuFmRename"      Header="Rename"            Click="Rename_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Label.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmDelete"      Header="Delete"            Click="Delete_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <Separator Background="{DynamicResource SectionBorderBrush}"/>
+                            <MenuItem x:Name="MnuFmHash"        Header="Hash (SHA-256)"    Click="Hash_Click">         <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmShowHide"    Header="Show / Hide"       Click="ShowHide_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Appearance.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmSetAttr"     Header="Set Attributes"    Click="SetAttr_Click">      <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmWallpaper"   Header="Set as Wallpaper"  Click="Wallpaper_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_TV.svg'}"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmPlayMusic"   Header="Play Music"        Click="PlayMusic_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Note.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmZip"         Header="7-Zip (compress)"  Click="Zip_Click">          <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Organization.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmDownloadUrl" Header="Download from URL" Click="DownloadUrl_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <Separator Background="{DynamicResource SectionBorderBrush}"/>
+                            <MenuItem x:Name="MnuFmCopyName"    Header="Copy Name"         Click="GridFiles_CopyName_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmCopyPath"    Header="Copy Full Path"    Click="GridFiles_CopyPath_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Lead.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                        </ContextMenu>
+                    </DataGrid.ContextMenu>
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Header="Name" Width="*" SortMemberPath="Name" CanUserSort="True">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Image Source="{Binding IconImage}" Width="16" Height="16"
+                                               VerticalAlignment="Center" Margin="2,0,6,0"
+                                               RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                               SnapsToDevicePixels="True"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center" FontSize="13"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Type"       Binding="{Binding TypeDisplay}"  Width="70"  CanUserSort="True" SortMemberPath="TypeDisplay" CanUserResize="True"/>
+                        <DataGridTextColumn Header="Size"       Binding="{Binding SizeDisplay}"  Width="80"  CanUserSort="True" SortMemberPath="SizeRaw"    CanUserResize="True"/>
+                        <DataGridTextColumn Header="Modified"   Binding="{Binding Modified}"     Width="130" CanUserSort="True" SortMemberPath="Modified"   CanUserResize="True"/>
+                        <DataGridTextColumn Header="Created"    Binding="{Binding Created}"      Width="130" CanUserSort="True" SortMemberPath="Created"    CanUserResize="True"/>
+                        <DataGridTextColumn Header="Attr"       Binding="{Binding AttribDisplay}" Width="50"  CanUserSort="False" CanUserResize="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+            </DockPanel>
+
+            <GridSplitter Grid.Column="3" Width="4" Background="{DynamicResource WindowBgBrush}"
+                          HorizontalAlignment="Stretch" Cursor="SizeWE"/>
+
+            <!-- Preview pane (right) -->
+            <Border Grid.Column="4" Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1,0,0,0">
+                <Grid>
+                    <Image x:Name="PreviewImage" Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality"
+                           Visibility="Collapsed"
+                           HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                    <MediaElement x:Name="PreviewVideo" Visibility="Collapsed"
+                                  LoadedBehavior="Manual" UnloadedBehavior="Manual"
+                                  Stretch="Uniform"
+                                  MouseLeftButtonUp="PreviewVideo_Click"/>
+                    <ScrollViewer x:Name="TextScroll" Visibility="Collapsed"
+                                  VerticalScrollBarVisibility="Auto" Background="Transparent">
+                        <TextBox x:Name="PreviewText"
+                                 Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                 FontFamily="Consolas" FontSize="10"
+                                 BorderThickness="0" Padding="8"
+                                 IsReadOnly="True" TextWrapping="Wrap">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="TextBox">
+                                                <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                              HorizontalScrollBarVisibility="Disabled"
+                                                              VerticalScrollBarVisibility="Disabled"
+                                                              Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </ScrollViewer>
+                    <StackPanel x:Name="PreviewEmpty" VerticalAlignment="Center"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="&#xEC50;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="36" Opacity="0.10" HorizontalAlignment="Center" Foreground="{DynamicResource LabelBrush}"/>
+                        <TextBlock x:Name="TxtPreviewInfo" Text="Select a file"
+                                   Foreground="{DynamicResource LabelBrush}" FontSize="10" FontFamily="Consolas"
+                                   HorizontalAlignment="Center" Margin="0,8,0,0"
+                                   TextWrapping="Wrap" MaxWidth="200"/>
+                    </StackPanel>
+                    <!-- Filename overlay -->
+                    <Border VerticalAlignment="Bottom" Background="{DynamicResource TitleBgBrush}" Padding="8,4" Opacity="0.9">
+                        <TextBlock x:Name="TxtPreviewName" Text=""
+                                   Foreground="{DynamicResource LabelBrush}" FontSize="9" FontFamily="Consolas"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Border>
+                    <!-- Preview button (invisible anchor for auto-trigger) -->
+                    <Button x:Name="BtnPreview" Visibility="Collapsed"
+                            Click="BtnPreview_Click" IsEnabled="False"/>
+                </Grid>
+            </Border>
+
+        </Grid>
+    </DockPanel>
+</dx:ThemedWindow>

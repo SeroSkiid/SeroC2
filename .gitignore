@@ -1,0 +1,99 @@
+# ── Build outputs ──────────────────────────────────────────────────────────────
+bin/
+obj/
+dist/
+out/
+out_*/
+out_prod/
+publish/
+Release/
+Debug/
+x64/
+
+# ── NativeAOT / MSVC intermediate artifacts ───────────────────────────────────
+*.pdb
+*.obj
+*.pch
+*.iobj
+*.ipdb
+*.exp
+*.lib
+*.dll.recipe
+*.tlog
+*.ilk
+mscordbi.dll
+createdump.exe
+
+# ── Third-party tools (place locally, not committed) ──────────────────────────
+tools/
+# xmrig binaries: download separately and place in xmrig-release/
+xmrig-release/*.exe
+# xmrig source (large self-contained repo)
+xmrig-master/
+pe-union-master/
+
+# ── Closed-source components (NOT included in this repo) ──────────────────────
+# loader.cpp (C++ native loader) is closed-source — not distributed.
+# Crypter.cs: a no-op stub is committed so the project compiles without the crypter.
+# Replace server/Builder/Crypter.cs with the real implementation locally, then run:
+#   git update-index --assume-unchanged server/Builder/Crypter.cs
+server/Stubs/loader.cpp
+server/Builder/Crypter.cs.bak
+loader/
+crypter/
+*.loader
+*.crypter
+
+# ── Miner embedded binary (generated at build time) ───────────────────────────
+miner-stub/xmrig.bin
+miner-stub/*.bak
+
+# ── Certificates and runtime server data ──────────────────────────────────────
+*.pfx
+*.sero
+*.cer
+*.pem
+*.p12
+*.key
+server_config.json
+clients.json
+server.log
+
+# ── Plugin cache (compiled C++ DLL plugins, rebuilt on demand) ────────────────
+plugin_cache/
+
+# ── Visual Studio / IDE ────────────────────────────────────────────────────────
+.vs/
+.vscode/
+.idea/
+*.sln.user
+*.vcxproj.user
+*.suo
+*.user
+*.iml
+*.DotSettings.user
+
+# ── NuGet ──────────────────────────────────────────────────────────────────────
+packages/
+.nuget/
+
+# ── Personal / dev artifacts ──────────────────────────────────────────────────
+.claude/
+query
+# Private build scripts (not for public repo)
+build_private.ps1
+build_private.bat
+
+# ── Large media (demo GIF/PNG committed, large videos not) ────────────────────
+*.mp4
+
+# ── OS junk ───────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# ── Misc ───────────────────────────────────────────────────────────────────────
+.cache/
+temp/
+xmrig_test*.log

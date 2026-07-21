@@ -1,0 +1,114 @@
+﻿<dx:ThemedWindow x:Class="SeroServer.UI.Socks5Window"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="SOCKS5 Proxy"
+        Width="560" Height="400" MinWidth="420" MinHeight="300"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize"
+        ShowGlow="False">
+
+        <DockPanel LastChildFill="True">
+
+            <!-- Title bar -->
+            <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
+                <Grid Margin="14,0">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
+                        <Border x:Name="BadgeActive" Margin="10,0,0,0" CornerRadius="3"
+                                Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                                    <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
+                                </Ellipse>
+                                <TextBlock Text="ACTIVE" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Status bar -->
+            <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
+                <Grid>
+                    <TextBlock x:Name="TxtStatus" Text="Configure port and click Start"
+                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
+                               VerticalAlignment="Center" Margin="14,0"/>
+                </Grid>
+            </Border>
+
+            <!-- Content -->
+            <StackPanel Margin="20,16">
+
+                <!-- Port config -->
+                <Border Padding="14,12" CornerRadius="6"
+                        Background="{DynamicResource SectionBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Margin="0,0,0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="LOCAL SOCKS5 PORT" FontSize="9" FontWeight="Bold"
+                                       Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" Margin="0,0,0,6"/>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="127.0.0.1 :" Foreground="{DynamicResource LabelBrush}" FontSize="12"
+                                           FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBox x:Name="TxtPort" Text="1080" Width="80" Height="30"
+                                         Style="{StaticResource STxt}" FontSize="13"/>
+                            </StackPanel>
+                            <TextBlock Text="Configure your browser/tool to use 127.0.0.1:PORT as SOCKS5 proxy"
+                                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI" Margin="0,6,0,0"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" x:Name="BtnStart" Content="Start" Height="32" Padding="16,0"
+                                Margin="0,0,6,0" Style="{StaticResource SGreenBtn}" FontSize="12" Click="BtnStart_Click"/>
+                        <Button Grid.Column="2" x:Name="BtnStop"  Content="Stop"  Height="32" Padding="16,0"
+                                Style="{StaticResource SRedBtn}"   FontSize="12" Click="BtnStop_Click" IsEnabled="False"/>
+                    </Grid>
+                </Border>
+
+                <!-- Traffic log -->
+                <Border Padding="14,10" CornerRadius="6"
+                        Background="{DynamicResource SectionBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <TextBlock Text="CONNECTIONS" FontSize="9" FontWeight="Bold"
+                                       Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtConnCount" Text="0 active"
+                                       Foreground="{DynamicResource LabelBrush}" FontSize="11" FontFamily="Consolas"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                        </Grid>
+                        <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="4" Height="180">
+                            <ScrollViewer x:Name="LogScroll" VerticalScrollBarVisibility="Auto" Background="Transparent">
+                                <TextBox x:Name="TxtLog"
+                                         Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                         FontFamily="Consolas" FontSize="11"
+                                         BorderThickness="0" Padding="8,6"
+                                         IsReadOnly="True" TextWrapping="Wrap"
+                                         AcceptsReturn="True">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="TextBox">
+                                                        <ScrollViewer x:Name="PART_ContentHost" Focusable="False"
+                                                                      HorizontalScrollBarVisibility="Disabled"
+                                                                      VerticalScrollBarVisibility="Disabled"
+                                                                      Background="Transparent"/>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+        </DockPanel>
+</dx:ThemedWindow>

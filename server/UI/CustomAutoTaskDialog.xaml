@@ -1,0 +1,29 @@
+<Window x:Class="SeroServer.UI.CustomAutoTaskDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Custom AutoTask"
+        Width="480" Height="250"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="10"
+            BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" Padding="20">
+        <StackPanel>
+            <TextBlock x:Name="LblTaskName" Text="TASK NAME" Style="{StaticResource SLabel}" />
+            <TextBox x:Name="TxtName" Style="{StaticResource STxt}" Margin="0,0,0,10"
+                     KeyDown="Txt_KeyDown" />
+            <TextBlock x:Name="LblCommand" Text="POWERSHELL / CMD COMMAND" Style="{StaticResource SLabel}" />
+            <TextBox x:Name="TxtCmd" Style="{StaticResource STxt}" Margin="0,0,0,14"
+                     Height="60" TextWrapping="Wrap" AcceptsReturn="False"
+                     VerticalScrollBarVisibility="Auto" KeyDown="Txt_KeyDown"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnCancel" Content="CANCEL" Width="80" Style="{StaticResource SBtn}" Click="Cancel_Click" />
+                <Button x:Name="BtnAdd" Content="ADD" Width="80" Margin="8,0,0,0" Style="{StaticResource SGreenBtn}" Click="Ok_Click" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>
