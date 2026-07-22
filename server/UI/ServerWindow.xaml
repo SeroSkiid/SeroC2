@@ -1861,7 +1861,6 @@
                                           PreviewKeyDown="GridClients_PreviewKeyDown"
                                           PreviewMouseLeftButtonDown="GridClients_PreviewMouseLeftButtonDown"
                                           MouseRightButtonDown="GridClients_MouseRightButtonDown"
-                                          ContextMenuOpening="GridClients_ContextMenuOpening"
                                           Sorting="GridClients_Sorting"
                                           SelectionChanged="GridClients_SelectionChanged"
                                           Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"

@@ -1480,13 +1480,6 @@ public partial class ServerWindow : ThemedWindow
         if (row != null) { row.IsSelected = true; GridClients.Focus(); }
     }
 
-    private void GridClients_ContextMenuOpening(object sender, ContextMenuEventArgs e)
-    {
-        var hit = VisualTreeHelper.HitTest(GridClients, Mouse.GetPosition(GridClients));
-        if (hit == null || FindVisualAncestor<DataGridRow>(hit.VisualHit) == null)
-            e.Handled = true;
-    }
-
     private void GridAllClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
