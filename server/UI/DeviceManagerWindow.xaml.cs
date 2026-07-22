@@ -49,6 +49,11 @@ public partial class DeviceManagerWindow : ThemedWindow
         if (MnuDevCopyName  != null) MnuDevCopyName.Header  = Lang.Get("ACT_COPY_NAME");
         if (MnuDevCopyId    != null) MnuDevCopyId.Header    = Lang.Get("ACT_COPY_DEVICE_ID");
         if (MnuDevRefresh   != null) MnuDevRefresh.Header   = Lang.Get("ACT_REFRESH");
+        if (ColDevName   != null) ColDevName.Header   = Lang.Get("WIN_COL_NAME");
+        if (ColDevClass  != null) ColDevClass.Header  = Lang.Get("WIN_COL_CLASS");
+        if (ColDevStatus != null) ColDevStatus.Header = Lang.Get("COL_STATUS");
+        if (ColDevManuf  != null) ColDevManuf.Header  = Lang.Get("WIN_COL_MANUFACTURER");
+        if (ColDevId     != null) ColDevId.Header     = Lang.Get("WIN_COL_DEVICE_ID");
     }
 
     private void Refresh() => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevGetList });

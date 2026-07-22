@@ -88,6 +88,11 @@ public partial class WindowManagerWindow : ThemedWindow
         if (MnuWinCopyHandle  != null) MnuWinCopyHandle.Header  = Lang.Get("ACT_COPY_HANDLE");
         if (MnuWinCopyProcess != null) MnuWinCopyProcess.Header = Lang.Get("ACT_COPY_PROCESS");
         if (MnuWinRefresh     != null) MnuWinRefresh.Header     = Lang.Get("ACT_REFRESH");
+        if (ColWinProcess != null) ColWinProcess.Header = Lang.Get("WIN_COL_PROCESS");
+        if (ColWinTitle   != null) ColWinTitle.Header   = Lang.Get("WIN_COL_TITLE");
+        if (ColWinClass   != null) ColWinClass.Header   = Lang.Get("WIN_COL_CLASS");
+        if (ColWinPid     != null) ColWinPid.Header     = Lang.Get("PM_COL_PID");
+        if (ColWinHandle  != null) ColWinHandle.Header  = Lang.Get("WIN_COL_HANDLE");
     }
 
     private bool FilterWindow(object obj)

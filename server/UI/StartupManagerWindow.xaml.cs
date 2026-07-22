@@ -42,6 +42,11 @@ public partial class StartupManagerWindow : ThemedWindow
         if (MnuStupCopyName != null) MnuStupCopyName.Header = Lang.Get("ACT_COPY_NAME");
         if (MnuStupCopyPath != null) MnuStupCopyPath.Header = Lang.Get("ACT_COPY_PATH");
         if (MnuStupRefresh  != null) MnuStupRefresh.Header  = Lang.Get("ACT_REFRESH");
+        if (ColStupName      != null) ColStupName.Header      = Lang.Get("WIN_COL_NAME");
+        if (ColStupType      != null) ColStupType.Header      = Lang.Get("WIN_COL_TYPE");
+        if (ColStupLocation  != null) ColStupLocation.Header  = Lang.Get("WIN_COL_LOCATION");
+        if (ColStupPublisher != null) ColStupPublisher.Header = Lang.Get("WIN_COL_PUBLISHER");
+        if (ColStupPath      != null) ColStupPath.Header      = Lang.Get("WIN_COL_PATH");
     }
 
     private async Task Refresh()

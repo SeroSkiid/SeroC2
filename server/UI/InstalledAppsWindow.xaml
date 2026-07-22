@@ -127,9 +127,9 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="NAME"         Binding="{Binding Name}"              Width="*"/>
-                <DataGridTextColumn Header="VERSION"      Binding="{Binding Version}"            Width="100"/>
-                <DataGridTemplateColumn Header="PUBLISHER" Width="175" SortMemberPath="PublisherDisplay">
+                <DataGridTextColumn x:Name="ColAppName"      Header="NAME"         Binding="{Binding Name}"              Width="*"/>
+                <DataGridTextColumn x:Name="ColAppVersion"   Header="VERSION"      Binding="{Binding Version}"            Width="100"/>
+                <DataGridTemplateColumn x:Name="ColAppPublisher" Header="PUBLISHER" Width="175" SortMemberPath="PublisherDisplay">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -150,7 +150,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="INSTALL DATE" Binding="{Binding InstallDate}"        Width="100"/>
+                <DataGridTextColumn x:Name="ColAppInstDate" Header="INSTALL DATE" Binding="{Binding InstallDate}"        Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

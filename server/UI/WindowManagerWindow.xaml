@@ -204,11 +204,11 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="PROCESS" Binding="{Binding ProcessName}" Width="120" FontFamily="Consolas" FontSize="11"/>
-                <DataGridTextColumn Header="TITLE"   Binding="{Binding Title}"       Width="*"/>
-                <DataGridTextColumn Header="CLASS"   Binding="{Binding ClassName}"   Width="140"/>
-                <DataGridTextColumn Header="PID"     Binding="{Binding Pid}"         Width="60"  FontFamily="Consolas" FontSize="11"/>
-                <DataGridTextColumn Header="HANDLE"  Binding="{Binding HandleHex}"   Width="90"  FontFamily="Consolas" FontSize="11"/>
+                <DataGridTextColumn x:Name="ColWinProcess" Header="PROCESS" Binding="{Binding ProcessName}" Width="120" FontFamily="Consolas" FontSize="11"/>
+                <DataGridTextColumn x:Name="ColWinTitle"   Header="TITLE"   Binding="{Binding Title}"       Width="*"/>
+                <DataGridTextColumn x:Name="ColWinClass"   Header="CLASS"   Binding="{Binding ClassName}"   Width="140"/>
+                <DataGridTextColumn x:Name="ColWinPid"     Header="PID"     Binding="{Binding Pid}"         Width="60"  FontFamily="Consolas" FontSize="11"/>
+                <DataGridTextColumn x:Name="ColWinHandle"  Header="HANDLE"  Binding="{Binding HandleHex}"   Width="90"  FontFamily="Consolas" FontSize="11"/>
             </DataGrid.Columns>
         </DataGrid>
     </DockPanel>

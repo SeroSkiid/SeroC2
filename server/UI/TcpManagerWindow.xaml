@@ -171,11 +171,11 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="PID"     Binding="{Binding Pid}"         Width="60"  FontSize="11"/>
-                <DataGridTextColumn Header="PROCESS" Binding="{Binding ProcessName}" Width="140" FontSize="11"/>
-                <DataGridTextColumn Header="LOCAL"   Binding="{Binding LocalAddr}"   Width="*"/>
-                <DataGridTextColumn Header="REMOTE"  Binding="{Binding RemoteAddr}"  Width="*"/>
-                <DataGridTemplateColumn Header="STATE" Width="120" SortMemberPath="State">
+                <DataGridTextColumn x:Name="ColTcpPid"     Header="PID"     Binding="{Binding Pid}"         Width="60"  FontSize="11"/>
+                <DataGridTextColumn x:Name="ColTcpProcess" Header="PROCESS" Binding="{Binding ProcessName}" Width="140" FontSize="11"/>
+                <DataGridTextColumn x:Name="ColTcpLocal"   Header="LOCAL"   Binding="{Binding LocalAddr}"   Width="*"/>
+                <DataGridTextColumn x:Name="ColTcpRemote"  Header="REMOTE"  Binding="{Binding RemoteAddr}"  Width="*"/>
+                <DataGridTemplateColumn x:Name="ColTcpState" Header="STATE" Width="120" SortMemberPath="State">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">

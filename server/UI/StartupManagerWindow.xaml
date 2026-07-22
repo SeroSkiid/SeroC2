@@ -130,17 +130,17 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="NAME"      Binding="{Binding Name}"             Width="200" FontSize="12"/>
-                <DataGridTextColumn Header="TYPE"      Binding="{Binding Type}"             Width="70"  FontSize="11"/>
-                <DataGridTextColumn Header="LOCATION"  Binding="{Binding Location}"         Width="115" FontSize="11"/>
-                <DataGridTemplateColumn Header="PUBLISHER" Width="210" SortMemberPath="PublisherDisplay">
+                <DataGridTextColumn x:Name="ColStupName"     Header="NAME"      Binding="{Binding Name}"             Width="200" FontSize="12"/>
+                <DataGridTextColumn x:Name="ColStupType"     Header="TYPE"      Binding="{Binding Type}"             Width="70"  FontSize="11"/>
+                <DataGridTextColumn x:Name="ColStupLocation" Header="LOCATION"  Binding="{Binding Location}"         Width="115" FontSize="11"/>
+                <DataGridTemplateColumn x:Name="ColStupPublisher" Header="PUBLISHER" Width="210" SortMemberPath="PublisherDisplay">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock Text="{Binding PublisherDisplay}" FontSize="11" VerticalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="PATH"      Binding="{Binding Path}"             Width="*"   FontSize="11"/>
+                <DataGridTextColumn x:Name="ColStupPath"     Header="PATH"      Binding="{Binding Path}"             Width="*"   FontSize="11"/>
             </DataGrid.Columns>
         </DataGrid>
 

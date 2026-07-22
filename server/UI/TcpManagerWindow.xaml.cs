@@ -46,6 +46,11 @@ public partial class TcpManagerWindow : ThemedWindow
         if (MnuTcpKill       != null) MnuTcpKill.Header       = Lang.Get("ACT_KILL");
         if (MnuTcpCopyLocal  != null) MnuTcpCopyLocal.Header  = Lang.Get("ACT_COPY_LOCAL");
         if (MnuTcpCopyRemote != null) MnuTcpCopyRemote.Header = Lang.Get("ACT_COPY_REMOTE");
+        if (ColTcpPid     != null) ColTcpPid.Header     = Lang.Get("PM_COL_PID");
+        if (ColTcpProcess != null) ColTcpProcess.Header = Lang.Get("WIN_COL_PROCESS");
+        if (ColTcpLocal   != null) ColTcpLocal.Header   = Lang.Get("TCP_COL_LOCAL");
+        if (ColTcpRemote  != null) ColTcpRemote.Header  = Lang.Get("TCP_COL_REMOTE");
+        if (ColTcpState   != null) ColTcpState.Header   = Lang.Get("WIN_COL_STATE");
     }
 
     private async Task Refresh()

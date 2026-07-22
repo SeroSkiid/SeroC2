@@ -59,6 +59,10 @@ public partial class InstalledAppsWindow : ThemedWindow
         if (MnuAppCopyName      != null) MnuAppCopyName.Header      = Lang.Get("ACT_COPY_NAME");
         if (MnuAppCopyPublisher != null) MnuAppCopyPublisher.Header = Lang.Get("ACT_COPY_PUBLISHER");
         if (MnuAppRefresh       != null) MnuAppRefresh.Header       = Lang.Get("ACT_REFRESH");
+        if (ColAppName      != null) ColAppName.Header      = Lang.Get("WIN_COL_NAME");
+        if (ColAppVersion   != null) ColAppVersion.Header   = Lang.Get("WIN_COL_VERSION");
+        if (ColAppPublisher != null) ColAppPublisher.Header = Lang.Get("WIN_COL_PUBLISHER");
+        if (ColAppInstDate  != null) ColAppInstDate.Header  = Lang.Get("WIN_COL_INSTALL_DATE");
     }
 
     private void Refresh() => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.InstalledGetList });
