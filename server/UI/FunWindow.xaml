@@ -128,6 +128,7 @@
             <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Shopping_Gift.svg'}" Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
                     </StackPanel>
                 </Grid>

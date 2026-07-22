@@ -14,6 +14,7 @@
             <Border DockPanel.Dock="Top" Height="40" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Business_World.svg'}" Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
                         <Border x:Name="BadgeActive" Margin="10,0,0,0" CornerRadius="3"
                                 Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
