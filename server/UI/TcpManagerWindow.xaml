@@ -56,14 +56,18 @@
             </Setter>
         </Style>
         <Style TargetType="ContextMenu">
-            <Setter Property="Background"      Value="{DynamicResource WindowBgBrush}"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource SectionBorderBrush}"/>
-            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Background"      Value="{DynamicResource InputBgBrush}"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ContextMenu">
-                        <Border Background="{DynamicResource WindowBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="4">
-                            <Border.Effect><DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.7" Color="#000"/></Border.Effect>
+                        <Border Background="{DynamicResource InputBgBrush}"
+                                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="3">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="22" ShadowDepth="6" Opacity="0.7" Color="#000000"/>
+                            </Border.Effect>
                             <ItemsPresenter/>
                         </Border>
                     </ControlTemplate>

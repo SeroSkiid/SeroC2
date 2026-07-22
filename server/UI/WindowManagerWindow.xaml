@@ -6,6 +6,31 @@
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
         ShowGlow="False">
     <dx:ThemedWindow.Resources>
+        <Style TargetType="ContextMenu">
+            <Setter Property="Background"      Value="{DynamicResource InputBgBrush}"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="{DynamicResource InputBgBrush}"
+                                BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
+                                CornerRadius="8" Padding="3">
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="22" ShadowDepth="6" Opacity="0.7" Color="#000000"/>
+                            </Border.Effect>
+                            <ItemsPresenter/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style TargetType="MenuItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="FontSize"   Value="12"/>
+            <Setter Property="Cursor"     Value="Hand"/>
+        </Style>
         <Style TargetType="DataGridRow">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
