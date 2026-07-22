@@ -1482,7 +1482,9 @@ public partial class ServerWindow : ThemedWindow
 
     private void GridClients_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (GridClients.SelectedItems.Count == 0) e.Handled = true;
+        var hit = VisualTreeHelper.HitTest(GridClients, Mouse.GetPosition(GridClients));
+        if (hit == null || FindVisualAncestor<DataGridRow>(hit.VisualHit) == null)
+            e.Handled = true;
     }
 
     private void GridAllClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

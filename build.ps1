@@ -117,10 +117,11 @@ if ($pluginCpps -and $pluginCpps.Count -gt 0) {
             $clArgs   = "`"$($cpp.FullName)`" /LD /O2 /GS- /MT /W0 /nologo /Fe`"$dllOut`" /Fo`"$objOut`" kernel32.lib user32.lib advapi32.lib ole32.lib oleaut32.lib shell32.lib /link /INCREMENTAL:NO /OPT:REF /OPT:ICF"
 
             if ($vcVars) {
-                # Normal PowerShell (no VS env): use a temp .bat to call vcvars then cl.exe
+                # Normal PowerShell (no VS env): use a temp .bat to call vcvars then cl.exe.
+                # Use the full path to cl.exe so it works even if vcvars fails to update PATH.
                 $vcVarsCall = if ($vcVars -match 'vcvarsall') { "`"$vcVars`" x64" } else { "`"$vcVars`"" }
                 $tmpBat = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetTempFileName(), '.bat')
-                [System.IO.File]::WriteAllText($tmpBat, "@echo off`r`ncall $vcVarsCall >nul 2>&1`r`ncl.exe $clArgs`r`n")
+                [System.IO.File]::WriteAllText($tmpBat, "@echo off`r`ncall $vcVarsCall >nul 2>&1`r`n`"$clExe`" $clArgs`r`n")
                 $psi = New-Object System.Diagnostics.ProcessStartInfo
                 $psi.FileName  = "cmd.exe"
                 $psi.Arguments = "/c `"$tmpBat`""
@@ -161,7 +162,14 @@ if ($pluginCpps -and $pluginCpps.Count -gt 0) {
                 # These are NOT in the UM or Shared include dirs — they live in the separate 'ucrt' folder.
                 # vcvars64.bat normally adds it, but only if "Windows Universal CRT SDK" was installed.
                 $combinedOut = "$stdout`n$stderr"
-                if ($combinedOut -match "C1083" -and $combinedOut -match "ctype\.h|corecrt\.h|stddef\.h|stdlib\.h") {
+                if ($combinedOut -match "C1083" -and $combinedOut -match "windows\.h|winnt\.h|winsock2\.h|winsock\.h") {
+                    Write-Host "      -> Missing Windows SDK headers (C1083 on windows.h)" -ForegroundColor DarkYellow
+                    Write-Host "         Cause: The Windows SDK is not installed or not found by cl.exe." -ForegroundColor DarkYellow
+                    Write-Host "         Fix:   Open Visual Studio Installer → Modify → Individual components" -ForegroundColor DarkYellow
+                    Write-Host "                → check 'Windows 10/11 SDK' → Install." -ForegroundColor DarkYellow
+                    Write-Host "         Alt:   Install the latest Windows SDK from developer.microsoft.com/windows/downloads/windows-sdk" -ForegroundColor DarkYellow
+                }
+                elseif ($combinedOut -match "C1083" -and $combinedOut -match "ctype\.h|corecrt\.h|stddef\.h|stdlib\.h") {
                     Write-Host "      -> Missing UCRT headers (C1083 on C runtime include)" -ForegroundColor DarkYellow
                     Write-Host "         Cause: The 'Windows Universal CRT SDK' component is not installed." -ForegroundColor DarkYellow
                     Write-Host "         Fix:   Open Visual Studio Installer → Modify → Individual components" -ForegroundColor DarkYellow
