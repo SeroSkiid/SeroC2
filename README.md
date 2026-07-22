@@ -305,6 +305,7 @@ The stub copies itself to `%AppData%\Roaming\<PersistName>\<HiddenFileName>`.
 | Registry `HKCU\Run` | Visible | `NtSetValueKey` (bypasses behavioral hook) |
 | Startup Folder `.lnk` | Visible | Native binary Shell Link writer (no COM) |
 | Scheduled Task | Hidden from Startup tab | `schtasks /Create` + `ONLOGON /IT` |
+| WMI Subscription | Invisible to Startup tools | `__EventFilter` + `CommandLineEventConsumer` in `root\subscription` — fires every 60 s after boot; admin required |
 | Registry `HKLM\Run` | Admin only | `NtSetValueKey` |
 
 **Watchdog:** file lock on installed exe + backup, `FileSystemWatcher` instant restore, 5-second polling fallback, isolated PPID-spoofed persistence worker (breaks Defender Persistence.A!ml correlation).
