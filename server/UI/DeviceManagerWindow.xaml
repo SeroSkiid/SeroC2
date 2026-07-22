@@ -106,7 +106,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn x:Name="ColDevName"  Header="NAME"         Binding="{Binding Name}"         Width="*"/>
                     <DataGridTextColumn x:Name="ColDevClass" Header="CLASS"        Binding="{Binding Class}"         Width="120"/>
-                    <DataGridTextColumn x:Name="ColDevStatus"Header="STATUS"       Binding="{Binding Status}"        Width="80"/>
+                    <DataGridTextColumn x:Name="ColDevStatus" Header="STATUS"       Binding="{Binding Status}"        Width="80"/>
                     <DataGridTextColumn x:Name="ColDevManuf" Header="MANUFACTURER" Binding="{Binding Manufacturer}"  Width="160"/>
                     <DataGridTextColumn x:Name="ColDevId"    Header="DEVICE ID"    Binding="{Binding DeviceId}"      Width="200" FontFamily="Consolas" FontSize="10"/>
                 </DataGrid.Columns>
