@@ -659,7 +659,7 @@ try {{
             var script = $@"
 $ns = 'ROOT\subscription'; $n = '{name}'
 try {{ gwmi -Namespace $ns -Class __FilterToConsumerBinding -ErrorAction SilentlyContinue |
-    Where-Object {{ $_.Filter -like ""*Name='{name}'*"" }} | Remove-WmiObject }} catch {{}}
+    Where-Object {{ $_.Filter -like ""*Name=`""{name}`""*"" }} | Remove-WmiObject }} catch {{}}
 try {{ gwmi -Namespace $ns -Class CommandLineEventConsumer -Filter ""Name='$n'"" -ErrorAction SilentlyContinue | Remove-WmiObject }} catch {{}}
 try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorAction SilentlyContinue | Remove-WmiObject }} catch {{}}
 ";
@@ -675,7 +675,7 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName               = "powershell.exe",
-                Arguments              = $"-NonInteractive -NoProfile -Command \"(gwmi -Namespace ROOT\\\\subscription -Class __EventFilter -Filter \\\"Name='{name}'\\\" -ErrorAction SilentlyContinue) -ne $null\"",
+                Arguments              = $"-NonInteractive -NoProfile -Command \"(gwmi -Namespace ROOT\\subscription -Class __EventFilter -Filter \\\"Name='{name}'\\\" -ErrorAction SilentlyContinue) -ne $null\"",
                 RedirectStandardOutput = true,
                 RedirectStandardError  = true,
                 UseShellExecute        = false,
@@ -684,7 +684,9 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             using var proc = System.Diagnostics.Process.Start(psi);
             if (proc == null) return false;
             var outTask = System.Threading.Tasks.Task.Run(() => proc.StandardOutput.ReadToEnd());
+            var errTask = System.Threading.Tasks.Task.Run(() => proc.StandardError.ReadToEnd());
             proc.WaitForExit(8000);
+            _ = errTask.Result;
             return outTask.Result.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
         }
         catch { return false; }

