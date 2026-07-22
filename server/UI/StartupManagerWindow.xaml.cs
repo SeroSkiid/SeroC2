@@ -126,6 +126,11 @@ public partial class StartupManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridStartup_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridStartup.SelectedItems.Count == 0) e.Handled = true;
+    }
 }
 
 public record StartupEntryVM(string Name, string Type, string Location, string Path, bool Verified, string Publisher)

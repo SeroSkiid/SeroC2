@@ -100,6 +100,7 @@
                   EnableColumnVirtualization="True"
                   ScrollViewer.CanContentScroll="True"
                   EnableRowVirtualization="True"
+                  ContextMenuOpening="GridServices_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow">

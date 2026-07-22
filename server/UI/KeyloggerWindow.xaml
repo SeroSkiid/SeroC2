@@ -106,7 +106,8 @@
                     </Border>
                     <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
                              Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" FontSize="12"
-                             SelectionChanged="ListFiles_SelectionChanged">
+                             SelectionChanged="ListFiles_SelectionChanged"
+                             ContextMenuOpening="ListFiles_ContextMenuOpening">
                         <ListBox.ContextMenu>
                             <ContextMenu>
                                 <MenuItem x:Name="MnuKlDownload"  Header="Download"  Click="BtnDownload_Click">

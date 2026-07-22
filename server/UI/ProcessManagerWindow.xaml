@@ -123,6 +123,7 @@
                   FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow"
                   CanUserAddRows="False" CanUserResizeRows="False"
                   ColumnHeaderHeight="30"
+                  ContextMenuOpening="GridProcs_ContextMenuOpening"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"

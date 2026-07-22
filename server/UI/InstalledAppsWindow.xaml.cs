@@ -151,6 +151,11 @@ public partial class InstalledAppsWindow : ThemedWindow
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
+    private void GridApps_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridApps.SelectedItem == null) e.Handled = true;
+    }
+
     private static System.Windows.Media.ImageSource? DecodeIcon(string b64)
     {
         if (string.IsNullOrEmpty(b64)) return null;

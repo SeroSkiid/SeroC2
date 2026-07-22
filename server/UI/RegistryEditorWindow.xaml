@@ -123,7 +123,8 @@
                 <!-- Registry key tree -->
                 <TreeView x:Name="RegTree" Grid.Column="0"
                           Background="{DynamicResource SectionBgBrush}" BorderThickness="0"
-                          SelectedItemChanged="RegTree_SelectedItemChanged">
+                          SelectedItemChanged="RegTree_SelectedItemChanged"
+                          ContextMenuOpening="RegTree_ContextMenuOpening">
                     <TreeView.ContextMenu>
                         <ContextMenu>
                             <MenuItem x:Name="MnuRegNewKey"    Header="New Key"    Click="BtnNewKey_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_FileAttachment.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
@@ -150,6 +151,7 @@
                           EnableColumnVirtualization="True"
                           ScrollViewer.CanContentScroll="True"
                           ColumnHeaderStyle="{StaticResource SColHeader}"
+                          ContextMenuOpening="GridValues_ContextMenuOpening"
                           MouseDoubleClick="GridValues_DoubleClick">
                     <DataGrid.ContextMenu>
                         <ContextMenu>

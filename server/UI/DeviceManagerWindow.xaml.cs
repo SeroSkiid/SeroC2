@@ -92,4 +92,9 @@ public partial class DeviceManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridDevs_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridDevs.SelectedItem == null) e.Handled = true;
+    }
 }

@@ -535,4 +535,9 @@ public partial class ProcessManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridProcs_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (GridProcs.SelectedItems.Count == 0) e.Handled = true;
+    }
 }

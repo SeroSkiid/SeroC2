@@ -1508,6 +1508,16 @@ public partial class ServerWindow : ThemedWindow
         if (GridWinNotify.SelectedItem == null) e.Handled = true;
     }
 
+    private void GridAutoTasks_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (GridAutoTasks.SelectedItems.Count == 0) e.Handled = true;
+    }
+
+    private void BinderGrid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (BinderGrid.Items.Count == 0) e.Handled = true;
+    }
+
     private static T? FindVisualAncestor<T>(DependencyObject? source) where T : DependencyObject
     {
         var current = source;

@@ -210,6 +210,11 @@ public partial class TcpManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridTcp_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridTcp.SelectedItems.Count == 0) e.Handled = true;
+    }
 }
 
 public record TcpEntryVM(int Pid, string ProcessName, string LocalAddr, string RemoteAddr, string State);

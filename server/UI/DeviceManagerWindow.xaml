@@ -34,6 +34,7 @@
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                       EnableColumnVirtualization="True"
                       ScrollViewer.CanContentScroll="True"
+                      ContextMenuOpening="GridDevs_ContextMenuOpening"
                       ColumnHeaderStyle="{StaticResource SColHeader}">
                 <DataGrid.RowStyle>
                     <Style TargetType="DataGridRow">

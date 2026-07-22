@@ -242,4 +242,9 @@ public partial class ServiceManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridServices_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridServices.SelectedItems.Count == 0) e.Handled = true;
+    }
 }

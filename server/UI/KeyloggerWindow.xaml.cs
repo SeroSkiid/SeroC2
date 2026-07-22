@@ -200,6 +200,11 @@ public partial class KeyloggerWindow : ThemedWindow
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
+    private void ListFiles_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (ListFiles.SelectedItem == null) e.Handled = true;
+    }
+
     private void BtnMenu_Click(object sender, RoutedEventArgs e)
     {
         if (sender is not System.Windows.Controls.Button btn) return;

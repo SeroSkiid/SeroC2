@@ -369,4 +369,14 @@ public partial class RegistryEditorWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void RegTree_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (RegTree.SelectedItem == null) e.Handled = true;
+    }
+
+    private void GridValues_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (RegTree.SelectedItem == null) e.Handled = true;
+    }
 }

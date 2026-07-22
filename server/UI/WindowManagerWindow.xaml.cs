@@ -209,6 +209,11 @@ public partial class WindowManagerWindow : ThemedWindow
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
+    private void GridWins_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
+    {
+        if (GridWins.SelectedItems.Count == 0) e.Handled = true;
+    }
+
     private static readonly System.Windows.Media.ImageSource _fallbackIcon = MakeFallbackIcon();
     private static System.Windows.Media.ImageSource MakeFallbackIcon()
     {

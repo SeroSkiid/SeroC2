@@ -310,6 +310,7 @@
                       CanUserAddRows="False" CanUserResizeRows="False"
                       CanUserResizeColumns="True" CanUserReorderColumns="False"
                       ColumnHeaderHeight="28"
+                      ContextMenuOpening="GridFiles_ContextMenuOpening"
                       VirtualizingStackPanel.IsVirtualizing="True"
                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                       EnableColumnVirtualization="True"

@@ -7,6 +7,7 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="Themes/DarkTheme.xaml" />
             </ResourceDictionary.MergedDictionaries>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <!-- ── Palette ─────────────────────────────────────────── -->
         <Color x:Key="BgColor">#0C0D18</Color>
         <Color x:Key="SurfaceColor">#111222</Color>

@@ -961,6 +961,11 @@ public partial class FileManagerWindow : ThemedWindow
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();
+
+    private void GridFiles_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        if (GridFiles.SelectedItems.Count == 0) e.Handled = true;
+    }
 }
 
 public class FileEntryVM
