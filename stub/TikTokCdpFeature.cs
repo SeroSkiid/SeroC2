@@ -14,7 +14,6 @@ namespace SeroStub;
 internal static class TikTokCdpFeature
 {
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(8) };
-    private static int _msgId;
 
     // ── Win32 window hiding ──────────────────────────────────────────────────
 
@@ -358,6 +357,7 @@ internal static class TikTokCdpFeature
         private TcpClient? _tcp;
         private NetworkStream? _ns;
         private readonly byte[] _rbuf = new byte[131072];
+        private int _msgId;
 
         public async Task ConnectAsync(string wsUrl, CancellationToken ct)
         {
@@ -502,6 +502,14 @@ internal static class TikTokCdpFeature
             byte[] buf = payLen <= _rbuf.Length ? _rbuf : new byte[(int)Math.Min(payLen, 4L * 1024 * 1024)];
             int len = (int)Math.Min(payLen, (long)buf.Length);
             await ReadExactAsync(buf, 0, len, ct);
+
+            // Drain excess bytes to keep the stream in sync for oversized frames
+            if (payLen > len)
+            {
+                var skip = new byte[4096];
+                long rem = payLen - len;
+                while (rem > 0) { int n = (int)Math.Min(rem, skip.Length); await ReadExactAsync(skip, 0, n, ct); rem -= n; }
+            }
 
             if (opcode == 8) return "";
             if (opcode == 9) { await WriteFrameAsync([], ct); return ""; }

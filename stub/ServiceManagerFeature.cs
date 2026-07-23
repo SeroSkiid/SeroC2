@@ -23,11 +23,11 @@ internal static class ServiceManagerFeature
                         using var svcKey = servicesKey.OpenSubKey(name);
                         if (svcKey == null) continue;
 
-                        // Only Win32 services (type 16 = own process, 32 = shared process)
+                        // Only Win32 services: 16 (own), 32 (shared), 272 (interactive own), 288 (interactive shared)
                         var typeObj = svcKey.GetValue("Type");
                         if (typeObj == null) continue;
                         int svcType = Convert.ToInt32(typeObj);
-                        if (svcType != 16 && svcType != 32) continue;
+                        if ((svcType & 0x30) == 0) continue;
 
                         var displayName = svcKey.GetValue("DisplayName")?.ToString() ?? name;
                         if (displayName.StartsWith('@')) displayName = name;

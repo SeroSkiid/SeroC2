@@ -59,6 +59,11 @@ internal static class Socks5Feature
                 portOffset = 5 + len;
                 break;
             case 4: // IPv6
+                if (payload.Length < 22)
+                {
+                    await (_sendConnResult?.Invoke(sessionId, "Bad SOCKS5 IPv6 length") ?? Task.CompletedTask);
+                    return;
+                }
                 host = new System.Net.IPAddress(payload[4..20]).ToString();
                 portOffset = 20;
                 break;

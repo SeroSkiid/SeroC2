@@ -87,7 +87,7 @@ internal static class ProcessManagerFeature
     private static readonly Dictionary<int, (TimeSpan cpu, DateTime ts)> _cpuSamples = [];
     private static readonly int _cpuCount = Environment.ProcessorCount;
 
-    // Per-process network I/O sampling (OtherBytes ≈ network traffic)
+    // Per-process I/O sampling (ReadBytes + WriteBytes = disk + network activity)
     private static readonly Dictionary<int, (ulong bytes, DateTime ts)> _netSamples = [];
     private static readonly object _samplesLock = new();
     private const uint PROCESS_QUERY_INFORMATION = 0x0400;
@@ -99,16 +99,17 @@ internal static class ProcessManagerFeature
         try
         {
             if (!GetProcessIoCounters(h, out var io)) return 0f;
+            var totalIo = io.ReadBytes + io.WriteBytes;
             lock (_samplesLock)
             {
                 if (_netSamples.TryGetValue(pid, out var prev))
                 {
-                    var delta = io.OtherBytes >= prev.bytes ? io.OtherBytes - prev.bytes : 0UL;
+                    var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
                     var ms    = (now - prev.ts).TotalMilliseconds;
-                    _netSamples[pid] = (io.OtherBytes, now);
+                    _netSamples[pid] = (totalIo, now);
                     return ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
                 }
-                _netSamples[pid] = (io.OtherBytes, now);
+                _netSamples[pid] = (totalIo, now);
                 return 0f;
             }
         }

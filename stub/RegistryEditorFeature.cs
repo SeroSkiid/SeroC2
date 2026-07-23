@@ -24,7 +24,7 @@ internal static class RegistryEditorFeature
                     values.Add(new RegValueStub
                     {
                         Name      = vName,
-                        ValueType = kind.ToString().Replace("Unknown", "REG_BINARY").Replace("String", "REG_SZ").Replace("ExpandString", "REG_EXPAND_SZ").Replace("DWord", "REG_DWORD").Replace("QWord", "REG_QWORD").Replace("MultiString", "REG_MULTI_SZ").Replace("Binary", "REG_BINARY"),
+                        ValueType = kind.ToString().Replace("Unknown", "REG_BINARY").Replace("ExpandString", "REG_EXPAND_SZ").Replace("MultiString", "REG_MULTI_SZ").Replace("String", "REG_SZ").Replace("DWord", "REG_DWORD").Replace("QWord", "REG_QWORD").Replace("Binary", "REG_BINARY"),
                         Data      = raw?.ToString() ?? ""
                     });
                 }

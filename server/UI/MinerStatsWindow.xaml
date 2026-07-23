@@ -97,9 +97,9 @@
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons"
                                    Foreground="#F59E0B" FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="PillHashrate" Text="0.0" Foreground="#F59E0B"
+                        <TextBlock x:Name="PillHashrate" Text="0.0 H/s" Foreground="#F59E0B"
                                    FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
-                        <TextBlock Text=" H/s total" Foreground="{DynamicResource LabelBrush}"
+                        <TextBlock Text=" total" Foreground="{DynamicResource LabelBrush}"
                                    FontSize="10" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>
