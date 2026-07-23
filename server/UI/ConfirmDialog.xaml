@@ -1,0 +1,29 @@
+<Window x:Class="SeroServer.UI.ConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="390" Height="175"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="10"
+            BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" Padding="24,20">
+        <StackPanel>
+            <TextBlock x:Name="TxtTitle" FontSize="13" FontWeight="SemiBold"
+                       Foreground="{DynamicResource TitleTextBrush}"
+                       FontFamily="Segoe UI Variable Display, Segoe UI"
+                       Margin="0,0,0,10"/>
+            <TextBlock x:Name="TxtMessage" TextWrapping="Wrap" FontSize="12"
+                       Foreground="{DynamicResource ContentTextBrush}"
+                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                       Margin="0,0,0,22"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="BtnNo"  Height="28" Padding="18,0" Style="{StaticResource SBtn}"     Click="No_Click"/>
+                <Button x:Name="BtnYes" Height="28" Padding="18,0" Margin="8,0,0,0" Style="{StaticResource SRedBtn}" Click="Yes_Click"/>
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</Window>

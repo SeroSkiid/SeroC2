@@ -272,6 +272,12 @@ public partial class ServerWindow : ThemedWindow
             ApplyStoredTheme();
             ApplyStoredLanguage();
             BuildAccentPalette();
+            {
+                int w = UiPrefs.GetInt("WinWidth", 0), h = UiPrefs.GetInt("WinHeight", 0);
+                if (w > 400 && h > 300) { Left = UiPrefs.GetInt("WinLeft", 0); Top = UiPrefs.GetInt("WinTop", 0); Width = w; Height = h; }
+                int nav = UiPrefs.GetInt("ActiveNav", 1);
+                if (nav >= 0 && nav <= 11) { MainTabControl.SelectedIndex = nav; SyncNavButtons(nav); }
+            }
             NotificationService.Initialize(SettingsNotifySound.IsChecked == true, SettingsNotifyVisual.IsChecked == true);
             // Initialize default host if empty
             if (BldHosts.Items.Count == 0)
@@ -837,6 +843,14 @@ public partial class ServerWindow : ThemedWindow
 
     private void ServerWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
     {
+        if (WindowState == WindowState.Normal)
+        {
+            UiPrefs.Set("WinLeft",   (int)Left);
+            UiPrefs.Set("WinTop",    (int)Top);
+            UiPrefs.Set("WinWidth",  (int)ActualWidth);
+            UiPrefs.Set("WinHeight", (int)ActualHeight);
+        }
+        UiPrefs.Set("ActiveNav", MainTabControl.SelectedIndex);
         SaveConfig();
         foreach (var w in _featureWindows.Values.ToList())
             try { w.Close(); } catch { }
@@ -2235,13 +2249,12 @@ public partial class ServerWindow : ThemedWindow
         var clients = GetSelectedClients();
         if (clients.Count == 0 || _server == null) return;
 
-        var result = MessageBox.Show(
-            $"Uninstall client from {clients.Count} machine(s)?\nThis will remove persistence and delete the client.",
-            "Confirm Uninstall",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning);
-
-        if (result != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog(
+            Lang.Get("POPUP_CONFIRM"),
+            string.Format(Lang.Get("POPUP_UNINSTALL_CONFIRM"), clients.Count),
+            Lang.Get("POPUP_YES"),
+            Lang.Get("POPUP_NO")) { Owner = this };
+        if (dlg.ShowDialog() != true) return;
 
         var packet = new Packet { Type = PacketType.Uninstall };
 
@@ -2922,7 +2935,7 @@ internal static class Config
     public const bool PersistStartup = {(BldPersistStartup.IsChecked == true ? "true" : "false")};
     public const bool PersistTask = {(BldPersistTask.IsChecked == true ? "true" : "false")};
     public const bool PersistWmi = {(BldPersistWmi.IsChecked == true ? "true" : "false")};
-    public const string PersistName = ""{Esc(installFolder.ToLowerInvariant())}"";
+    public const string PersistName = ""{Esc(installFolder)}"";
 
     public const bool AntiKill = {(BldAntiKill.IsChecked == true ? "true" : "false")};
     public const bool EnableWatchdog = {(BldAntiKill.IsChecked == true ? "true" : "false")};
@@ -5906,6 +5919,7 @@ Read-Host 'Press Enter to close'
         };
         if (idx >= 0 && MainTabControl.SelectedIndex != idx)
             MainTabControl.SelectedIndex = idx;
+        if (idx >= 0) UiPrefs.Set("ActiveNav", idx);
 
         // Accent-colour the resting glow on the newly-selected button
         ApplyNavBtnGlow(rb);

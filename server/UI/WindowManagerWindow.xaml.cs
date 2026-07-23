@@ -64,16 +64,6 @@ public partial class WindowManagerWindow : ThemedWindow
     private void ApplyLanguage()
     {
         Title = Lang.Get("FEAT_WINDOW_MGR");
-        if (TxtBtnWinShow     != null) TxtBtnWinShow.Text     = Lang.Get("ACT_SHOW");
-        if (TxtBtnWinHide     != null) TxtBtnWinHide.Text     = Lang.Get("ACT_HIDE");
-        if (TxtBtnWinFocus    != null) TxtBtnWinFocus.Text    = Lang.Get("ACT_FOCUS");
-        if (TxtBtnWinMin      != null) TxtBtnWinMin.Text      = Lang.Get("ACT_MINIMIZE");
-        if (TxtBtnWinMax      != null) TxtBtnWinMax.Text      = Lang.Get("ACT_MAXIMIZE");
-        if (TxtBtnWinRestore  != null) TxtBtnWinRestore.Text  = Lang.Get("ACT_RESTORE");
-        if (TxtBtnWinClose    != null) TxtBtnWinClose.Text    = Lang.Get("ACT_CLOSE");
-        if (TxtBtnWinKill     != null) TxtBtnWinKill.Text     = Lang.Get("ACT_KILL_SHORT");
-        if (TxtBtnWinFreeze   != null) TxtBtnWinFreeze.Text   = Lang.Get("ACT_FREEZE");
-        if (TxtBtnWinUnfreeze != null) TxtBtnWinUnfreeze.Text = Lang.Get("ACT_UNFREEZE");
         if (MnuWinShow     != null) MnuWinShow.Header     = Lang.Get("ACT_SHOW");
         if (MnuWinHide     != null) MnuWinHide.Header     = Lang.Get("ACT_HIDE");
         if (MnuWinFocus    != null) MnuWinFocus.Header    = Lang.Get("ACT_FOCUS");

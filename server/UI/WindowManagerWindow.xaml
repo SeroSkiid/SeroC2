@@ -40,11 +40,10 @@
                     <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                                    <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
-                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
-                    </Trigger>
+                    <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
+                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                </Trigger>
                 <MultiTrigger>
                     <MultiTrigger.Conditions>
                         <Condition Property="IsSelected" Value="True"/>
@@ -133,23 +132,9 @@
                     </DockPanel>
                 </Border>
 
-                <!-- Action buttons -->
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnShow_Click"     ToolTip="Show window"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Appearance.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinShow"     Text="Show"     VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnHide_Click"     ToolTip="Hide window"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Dashboard.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinHide"     Text="Hide"     VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnFocus_Click"    ToolTip="Bring to front"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_DesktopWindows.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinFocus"    Text="Focus"    VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnMinimize_Click" ToolTip="Minimize"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Opportunity.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinMin"      Text="Min"      VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnMaximize_Click2" ToolTip="Maximize"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FullScreen.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinMax"      Text="Max"      VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnRestore_Click"  ToolTip="Restore"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinRestore"  Text="Restore"  VerticalAlignment="Center"/></StackPanel></Button>
-                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnClose_Click2"   ToolTip="Close (WM_CLOSE)"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinClose"   Text="Close"    VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SRedBtn}" Click="BtnKill_Click"  ToolTip="Kill process"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinKill"    Text="Kill"     VerticalAlignment="Center"/></StackPanel></Button>
-                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnFreeze_Click"   ToolTip="Suspend process threads"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Security_Permission.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinFreeze"  Text="Freeze"   VerticalAlignment="Center"/></StackPanel></Button>
-                    <Button Height="26" Padding="8,0" Margin="0,0,4,0" Style="{StaticResource SBtn}" Click="BtnUnfreeze_Click" ToolTip="Resume process threads"><StackPanel Orientation="Horizontal"><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}" Width="12" Height="12" Margin="0,0,4,0" VerticalAlignment="Center"/><TextBlock x:Name="TxtBtnWinUnfreeze" Text="Unfreeze" VerticalAlignment="Center"/></StackPanel></Button>
-                    <Rectangle Width="1" Fill="{DynamicResource InputBorderBrush}" Margin="4,2,8,2"/>
                     <CheckBox x:Name="ChkAutoRefresh" Content="Auto 3s" Foreground="{DynamicResource TitleTextBrush}" FontSize="11"
-                              VerticalAlignment="Center" Margin="0,0,0,0"
+                              VerticalAlignment="Center"
                               Checked="ChkAutoRefresh_Changed" Unchecked="ChkAutoRefresh_Changed"
                               ToolTip="Refresh window list every 3 seconds"/>
                 </StackPanel>

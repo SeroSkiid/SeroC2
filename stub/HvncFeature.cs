@@ -2157,11 +2157,6 @@ internal static class HvncFeature
             // Repair real Opera / Opera GX profile JSON before launch.
             if (exeBase == "opera.exe") RepairOperaProfileAfterHvnc();
 
-            // Explorer.exe is a singleton — a second instance DDE-messages the existing one
-            // and exits immediately (ignoring lpDesktop). /factory bypasses the singleton check.
-            if (exeBase == "explorer.exe" && !cmd.Contains("/factory", StringComparison.OrdinalIgnoreCase))
-                cmd += " /factory,{90AA3A4E-1CBA-4233-B8BB-535773D48449}";
-
             var sb = new System.Text.StringBuilder(cmd);
             uint createFlags = CREATE_UNICODE_ENVIRONMENT | (isConsoleApp ? CREATE_NEW_CONSOLE : 0u);
             nint launchToken = GetLaunchToken();
@@ -2170,14 +2165,12 @@ internal static class HvncFeature
             PROCESS_INFORMATION pi;
             if (launchToken != 0)
             {
-                // SYSTEM path: launch with interactive user token so explorer gets correct HKCU.
-                if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi))
-                    CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi);
+                if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                    if (!CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                        CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
             }
             else
             {
-                // Admin/User path: own token is fine — desktop access is via lpDesktop in si,
-                // and the NULL DACL set on _hDesktop lets any IL process access the hidden desktop.
                 CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
             }
             if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
