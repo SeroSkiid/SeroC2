@@ -17,7 +17,7 @@ internal static class TcpManagerFeature
     }
 
     [DllImport("iphlpapi.dll")]
-    private static extern int GetExtendedTcpTable(nint pTcpTable, ref int pdwSize, bool bOrder, int ulAf, int TableClass, int Reserved);
+    private static extern int GetExtendedTcpTable(nint pTcpTable, ref uint pdwSize, bool bOrder, int ulAf, int TableClass, int Reserved);
 
     [DllImport("iphlpapi.dll")]
     private static extern int SetTcpEntry(ref MIB_TCPROW tcpRow);
@@ -47,9 +47,9 @@ internal static class TcpManagerFeature
         var entries = new List<TcpEntryStub>();
         try
         {
-            int size = 0;
+            uint size = 0;
             GetExtendedTcpTable(nint.Zero, ref size, false, 2, 5, 0);
-            var buf = Marshal.AllocHGlobal(size + 1024);
+            var buf = Marshal.AllocHGlobal((int)size + 1024);
             try
             {
                 if (GetExtendedTcpTable(buf, ref size, true, 2, 5, 0) == 0)

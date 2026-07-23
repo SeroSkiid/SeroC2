@@ -110,8 +110,18 @@
                                             <ControlTemplate TargetType="TextBox">
                                                 <Grid>
                                                     <TextBlock Text="Search title, class, process..." Foreground="{DynamicResource FieldLabelBrush}" FontSize="11"
-                                                               VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI"
-                                                               Visibility="{Binding Text.IsEmpty, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BoolToVis}}"/>
+                                                               VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
                                                     <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"/>
                                                 </Grid>
                                             </ControlTemplate>
