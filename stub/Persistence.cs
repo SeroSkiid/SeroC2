@@ -633,20 +633,9 @@ $ns = 'ROOT\subscription'
 $n  = '{name}'
 $q  = ""SELECT * FROM __InstanceModificationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 60 AND TargetInstance.SystemUpTime < 600""
 try {{
-    $f = ([wmiclass]""$ns`:__EventFilter"").CreateInstance()
-    $f.Name           = $n
-    $f.EventNamespace = 'root\cimv2'
-    $f.QueryLanguage  = 'WQL'
-    $f.Query          = $q
-    $f.Put() | Out-Null
-    $c = ([wmiclass]""$ns`:CommandLineEventConsumer"").CreateInstance()
-    $c.Name                = $n
-    $c.CommandLineTemplate = '""{safePath}""'
-    $c.Put() | Out-Null
-    $b = ([wmiclass]""$ns`:__FilterToConsumerBinding"").CreateInstance()
-    $b.Filter   = $f.__PATH
-    $b.Consumer = $c.__PATH
-    $b.Put() | Out-Null
+    $f = Set-WmiInstance -Namespace $ns -Class __EventFilter -Arguments @{{Name=$n;EventNamespace='root\cimv2';QueryLanguage='WQL';Query=$q}}
+    $c = Set-WmiInstance -Namespace $ns -Class CommandLineEventConsumer -Arguments @{{Name=$n;CommandLineTemplate='""{safePath}""'}}
+    Set-WmiInstance -Namespace $ns -Class __FilterToConsumerBinding -Arguments @{{Filter=$f;Consumer=$c}} | Out-Null
 }} catch {{}}
 ";
             RunPs(script);
