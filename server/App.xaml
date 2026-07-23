@@ -204,8 +204,7 @@
             <Setter Property="Padding"         Value="8,6" />
             <Setter Property="FontSize"        Value="12" />
             <Setter Property="CaretBrush"      Value="{DynamicResource AccentBrush}" />
-            <Setter Property="SelectionBrush"       Value="{DynamicResource SelectionBgBrush}" />
-            <Setter Property="SelectionForeground"  Value="{DynamicResource SelectionFgBrush}" />
+            <Setter Property="SelectionBrush"  Value="{DynamicResource SelectionBgBrush}" />
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="TextBox">
