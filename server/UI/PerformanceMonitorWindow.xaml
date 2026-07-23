@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         Title="Performance Monitor"
-        Width="680" Height="460" MinWidth="520" MinHeight="360"
+        Width="720" Height="600" MinWidth="520" MinHeight="440"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         ShowGlow="False">

