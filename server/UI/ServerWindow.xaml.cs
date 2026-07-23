@@ -2568,7 +2568,6 @@ public partial class ServerWindow : ThemedWindow
         BldAntiSandbox.IsChecked = true;
         BldBlockCis.IsChecked = true;
         BldAntiKill.IsChecked = true;
-        BldAntiKill.IsChecked = true;
         BldPersistRegistry.IsChecked = true;
         BldPersistStartup.IsChecked = true;
         BldPersistTask.IsChecked = true;
@@ -3468,7 +3467,6 @@ Read-Host 'Press Enter to close'
                 Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "rcedit.exe")), // repo root (bin/Release/net10.0-windows/ → 4 levels up)
                 Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "rcedit.exe")), // fallback 3 levels
                 "rcedit.exe", // PATH
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "..", "..", "Downloads", "sero", "ancien code", "code qui marchai", "rcedit.exe"),
             };
 
             string? rceditPath = null;
