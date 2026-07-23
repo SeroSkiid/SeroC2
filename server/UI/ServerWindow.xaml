@@ -1881,7 +1881,8 @@
                                           SelectionChanged="GridClients_SelectionChanged"
                                           Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                           BorderThickness="0" RowBackground="{DynamicResource InputBgBrush}"
-                                          GridLinesVisibility="None" HeadersVisibility="Column"
+                                          GridLinesVisibility="Vertical" VerticalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                                          HeadersVisibility="Column"
                                           FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
                                           CanUserResizeColumns="True" CanUserReorderColumns="False"
                                           VirtualizingStackPanel.IsVirtualizing="True"
@@ -2018,8 +2019,11 @@
                                             </DataGridTemplateColumn.CellStyle>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding PingDisplay}" Foreground="{Binding PingBrush}"
-                                                               FontFamily="Consolas" FontSize="11" VerticalAlignment="Center" Margin="10,0"/>
+                                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
+                                                        <Ellipse Width="7" Height="7" Fill="{Binding PingBrush}" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                                                        <TextBlock Text="{Binding PingDisplay}" Foreground="{DynamicResource ContentTextBrush}"
+                                                                   FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
+                                                    </StackPanel>
                                                 </DataTemplate>
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
@@ -2288,7 +2292,8 @@
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                       BorderThickness="0" RowBackground="{DynamicResource InputBgBrush}"
-                                      GridLinesVisibility="None" HeadersVisibility="Column"
+                                      GridLinesVisibility="Vertical" VerticalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                                      HeadersVisibility="Column"
                                       FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
                                       CanUserResizeColumns="True" CanUserReorderColumns="False"
                                       VirtualizingStackPanel.IsVirtualizing="True"

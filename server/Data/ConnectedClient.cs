@@ -136,13 +136,13 @@ public class ConnectedClient : INotifyPropertyChanged
     }
     public string PingDisplay => _pingMs < 0 ? "..." : $"{_pingMs} ms";
 
-    // Green < 80ms · Yellow 80-200ms · Red > 200ms · Dim while waiting
-    private static readonly Brush _brushDim    = new SolidColorBrush(Color.FromRgb(0x7a, 0x86, 0xb5));
-    private static readonly Brush _brushGreen  = new SolidColorBrush(Color.FromRgb(0x35, 0xf8, 0x9c));
-    private static readonly Brush _brushYellow = new SolidColorBrush(Color.FromRgb(0xff, 0xd2, 0x3f));
-    private static readonly Brush _brushRed    = new SolidColorBrush(Color.FromRgb(0xff, 0x38, 0x60));
-    public Brush PingBrush => _pingMs < 0 ? _brushDim
-        : _pingMs < 80  ? _brushGreen
-        : _pingMs < 200 ? _brushYellow
+    // Green < 100ms · Orange 100-300ms · Red > 300ms · Dim while waiting
+    private static readonly Brush _brushDim    = new SolidColorBrush(Color.FromRgb(0x55, 0x60, 0x78));
+    private static readonly Brush _brushGreen  = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+    private static readonly Brush _brushOrange = new SolidColorBrush(Color.FromRgb(0xf5, 0x9e, 0x0b));
+    private static readonly Brush _brushRed    = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
+    public Brush PingBrush => _pingMs < 0   ? _brushDim
+        : _pingMs < 100 ? _brushGreen
+        : _pingMs < 300 ? _brushOrange
         : _brushRed;
 }
