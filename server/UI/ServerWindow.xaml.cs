@@ -5838,8 +5838,8 @@ Read-Host 'Press Enter to close'
             byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
             byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
             byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(98, hr, hg, hb);
-            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(34, accent.R, accent.G, accent.B);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(55, hr, hg, hb);
+            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(15, accent.R, accent.G, accent.B);
         }
 
         var pos = e.GetPosition(btn);
@@ -8221,6 +8221,7 @@ Read-Host 'Press Enter to close'
         if (BtnMnrBuild      != null) BtnMnrBuild.Content      = Lang.Get("MNR_BTN_BUILD");
         if (BtnMnrSaveConfig != null) BtnMnrSaveConfig.Content = Lang.Get("MNR_BTN_SAVE_CFG");
         if (BtnMnrLoadConfig != null) BtnMnrLoadConfig.Content = Lang.Get("MNR_BTN_LOAD_CFG");
+        if (BldMnrXmrigPath  != null && _bldXmrigBytes == null) BldMnrXmrigPath.Text = Lang.Get("MNR_XMRIG_MISSING");
 
         // ── Screen buttons ──
         if (BtnScreenStart != null) BtnScreenStart.Content = Lang.Get("ACT_START").ToUpper();

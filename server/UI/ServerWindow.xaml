@@ -250,9 +250,9 @@
                             <Border x:Name="Bg" Background="Transparent"/>
                             <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
                                 <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.52" RadiusY="0.88">
-                                        <GradientStop Color="#5EFFFFFF" Offset="0"/>
-                                        <GradientStop Color="#18FFFFFF" Offset="0.52"/>
+                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.25" RadiusY="0.45">
+                                        <GradientStop Color="#28FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#08FFFFFF" Offset="0.5"/>
                                         <GradientStop Color="#00FFFFFF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Border.Background>
@@ -1904,14 +1904,14 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Grid Width="24" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <Grid Width="18" Height="12" Margin="0,0,8,0" VerticalAlignment="Center">
                                                             <Border Background="{DynamicResource SectionBgBrush}" CornerRadius="2"
                                                                     BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="0.5">
-                                                                <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="9"
+                                                                <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="7"
                                                                            FontFamily="Segoe UI" FontWeight="SemiBold"
                                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            <Image Source="{Binding FlagImage}" Width="24" Height="16" Stretch="Fill"
+                                                            <Image Source="{Binding FlagImage}" Width="18" Height="12" Stretch="Fill"
                                                                    RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True"/>
                                                             <Border CornerRadius="2" IsHitTestVisible="False">
                                                                 <Border.Background>
@@ -2311,14 +2311,14 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Grid Width="24" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <Grid Width="18" Height="12" Margin="0,0,8,0" VerticalAlignment="Center">
                                                         <Border Background="{DynamicResource SectionBgBrush}" CornerRadius="2"
                                                                 BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="0.5">
-                                                            <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="9"
+                                                            <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="7"
                                                                        FontFamily="Segoe UI" FontWeight="SemiBold"
                                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
-                                                        <Image Source="{Binding FlagImage}" Width="24" Height="16"
+                                                        <Image Source="{Binding FlagImage}" Width="18" Height="12"
                                                                Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality"
                                                                SnapsToDevicePixels="True"/>
                                                         <Border CornerRadius="2" IsHitTestVisible="False">
