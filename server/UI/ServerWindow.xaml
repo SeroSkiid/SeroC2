@@ -1982,12 +1982,14 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
-                                                        <dx:DXImage x:Name="CamYesIcon"
-                                                                    Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Check.svg'}"
-                                                                    Width="14" Height="14" Visibility="Collapsed"/>
-                                                        <dx:DXImage x:Name="CamNoIcon"
-                                                                    Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}"
-                                                                    Width="14" Height="14" Visibility="Collapsed" Opacity="0.45"/>
+                                                        <TextBlock x:Name="CamYesIcon" Text="✔" FontSize="12"
+                                                                   Foreground="#22C55E" FontFamily="Segoe UI Symbol"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="Collapsed"/>
+                                                        <TextBlock x:Name="CamNoIcon" Text="✖" FontSize="12"
+                                                                   Foreground="#EF4444" FontFamily="Segoe UI Symbol"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                   Visibility="Collapsed"/>
                                                         <TextBlock x:Name="CamDash" Text="—" FontSize="11"
                                                                    Foreground="{DynamicResource LabelBrush}" Opacity="0.4"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -2023,7 +2025,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="120" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2340,7 +2342,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="50" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" SortMemberPath="Tag" CanUserResize="True">
+                                    <DataGridTemplateColumn Header="TAG" Width="120" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                         <DataGridTemplateColumn.CellStyle>
                                             <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                         </DataGridTemplateColumn.CellStyle>
