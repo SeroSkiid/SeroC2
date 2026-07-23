@@ -75,7 +75,7 @@ public partial class DeviceManagerWindow : ThemedWindow
     private void BtnUninstall_Click(object s, RoutedEventArgs e)
     {
         if (GridDevs.SelectedItem is not DeviceEntryVM vm) return;
-        if (MessageBox.Show($"Uninstall device \"{vm.Name}\"?\nThis will disable the device until it is reconnected.", Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(string.Format(Lang.Get("DEV_UNINSTALL_CONFIRM"), vm.Name), Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevUninstall, Data = JsonConvert.SerializeObject(new DevUninstallData { DeviceId = vm.DeviceId }) });
         TxtStatus.Text = string.Format(Lang.Get("DEV_UNINSTALL_SENT"), vm.Name);
         ServerWindow.ReportGlobalActivity("Uninstall device", vm.Name, "complete");

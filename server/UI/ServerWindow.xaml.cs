@@ -298,7 +298,7 @@ public partial class ServerWindow : ThemedWindow
 
             // Always load cert hash
             try { BldCertHash.Text = Net.CertificateHelper.GetCertSha256Hash(); }
-            catch { BldCertHash.Text = "(start server first)"; }
+            catch { BldCertHash.Text = Lang.Get("BLD_CERT_WAIT"); }
 
             BinderGrid.ItemsSource = _binderEntries;
 
@@ -465,11 +465,12 @@ public partial class ServerWindow : ThemedWindow
     private void ClipperSave_Click(object sender, RoutedEventArgs e)
     {
         SaveConfig();
-        ClipperCountTxt.Text = "  —  saved";
+        var clipSavedText = Lang.Get("CLIP_SAVED");
+        ClipperCountTxt.Text = clipSavedText;
         System.Threading.Tasks.Task.Delay(1500).ContinueWith(_ =>
             Dispatcher.BeginInvoke(() => {
-                if (ClipperCountTxt.Text == "  —  saved")
-                    ClipperCountTxt.Text = _clipperCount > 0 ? $"  —  {_clipperCount} replacements" : "";
+                if (ClipperCountTxt.Text == clipSavedText)
+                    ClipperCountTxt.Text = _clipperCount > 0 ? string.Format(Lang.Get("CLIP_REPLACEMENTS"), _clipperCount) : "";
             }));
     }
 
@@ -477,7 +478,7 @@ public partial class ServerWindow : ThemedWindow
     {
         ClipperLog.Clear();
         _clipperCount = 0;
-        ClipperCountTxt.Text = "  —  0 replacements";
+        ClipperCountTxt.Text = string.Format(Lang.Get("CLIP_REPLACEMENTS"), 0);
     }
 
     private void HandleClipperDetected(string clientId, Protocol.ClipperDetectedData data)
@@ -3163,7 +3164,7 @@ internal static class MinerConfig
             var size = new FileInfo(outputExe).Length;
             Log($"[+] MinerBuilder: {Path.GetFileName(outputExe)} ({size:N0} bytes) saved.");
             TxtMnrBuildStatus.Text = $"Built: {Path.GetFileName(outputExe)} ({size / 1024} KB)";
-            MessageBox.Show($"Miner built!\n\nFile: {Path.GetFileName(outputExe)}\nSize: {size / 1024} KB\nUninstaller: {Path.GetFileName(uninstallerExePath)}",
+            MessageBox.Show(string.Format(Lang.Get("MINER_BUILT_MSG"), Path.GetFileName(outputExe), size / 1024, Path.GetFileName(uninstallerExePath)),
                 "Sero — Miner Built", MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex)
@@ -4749,7 +4750,7 @@ Read-Host 'Press Enter to close'
         catch (Exception ex)
         {
             Log($"[!] Backup export failed: {ex.Message}");
-            MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Lang.Get("ERR_GENERIC"), ex.Message), Lang.Get("MSG_ERROR"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -4809,7 +4810,7 @@ Read-Host 'Press Enter to close'
         catch (Exception ex)
         {
             Log($"[!] Import failed: {ex.Message}");
-            MessageBox.Show($"Import échoué : {ex.Message}", "Erreur", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Lang.Get("ERR_GENERIC"), ex.Message), Lang.Get("MSG_ERROR"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -4836,7 +4837,7 @@ Read-Host 'Press Enter to close'
         catch (Exception ex)
         {
             Log($"[!] Export failed: {ex.Message}");
-            MessageBox.Show($"Export failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(string.Format(Lang.Get("ERR_GENERIC"), ex.Message), Lang.Get("MSG_ERROR"), MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -5471,7 +5472,7 @@ Read-Host 'Press Enter to close'
     {
         if (BinderGrid.SelectedItem is SeroServer.Binder.BinderEntry entry)
         {
-            if (MessageBox.Show($"Remove '{entry.FileName}' from the binder?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            if (MessageBox.Show(string.Format(Lang.Get("BINDER_REMOVE_CONFIRM"), entry.FileName), Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             _binderEntries.Remove(entry);
         }
     }
@@ -5479,7 +5480,7 @@ Read-Host 'Press Enter to close'
     private void BtnBinderClearAll_Click(object sender, RoutedEventArgs e)
     {
         if (_binderEntries.Count == 0) return;
-        if (MessageBox.Show($"Clear all {_binderEntries.Count} entries from the binder?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(string.Format(Lang.Get("BINDER_CLEAR_CONFIRM"), _binderEntries.Count), Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _binderEntries.Clear();
     }
 

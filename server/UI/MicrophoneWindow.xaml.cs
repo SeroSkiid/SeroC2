@@ -358,7 +358,7 @@ public partial class MicrophoneWindow : ThemedWindow
         foreach (var chunk in data) bw.Write(chunk);
 
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), dlg.FileName);
-        MessageBox.Show($"WAV saved:\n{dlg.FileName}\n\nDuration: {dataSize / (double)byteRate:F1}s",
+        MessageBox.Show(string.Format(Lang.Get("MIC_WAV_SAVED"), dlg.FileName, (dataSize / (double)byteRate).ToString("F1")),
             "Sero — Microphone", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
