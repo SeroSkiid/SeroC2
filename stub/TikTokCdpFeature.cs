@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -14,6 +15,60 @@ internal static class TikTokCdpFeature
 {
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(8) };
     private static int _msgId;
+
+    // ── Win32 window hiding ──────────────────────────────────────────────────
+
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc lp, IntPtr p);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint pid);
+    [DllImport("user32.dll")] private static extern bool ShowWindow(IntPtr hWnd, int cmd);
+    [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(uint acc, bool inh, int pid);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
+    [DllImport("ntdll.dll")]   private static extern int NtQueryInformationProcess(IntPtr h, int cls, ref ProcBasicInfo i, int sz, out int ret);
+
+    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr p);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct ProcBasicInfo { public IntPtr R1, Peb, R2, R3, Pid, ParentPid; }
+
+    private static HashSet<int> GetProcessTree(int rootPid)
+    {
+        var pids = new HashSet<int> { rootPid };
+        bool added;
+        do {
+            added = false;
+            foreach (var p in Process.GetProcesses())
+            {
+                try
+                {
+                    if (pids.Contains(p.Id)) continue;
+                    var h = OpenProcess(0x1000, false, p.Id);
+                    if (h == IntPtr.Zero) continue;
+                    try
+                    {
+                        var info = new ProcBasicInfo();
+                        if (NtQueryInformationProcess(h, 0, ref info, Marshal.SizeOf(info), out _) == 0
+                            && pids.Contains(info.ParentPid.ToInt32())
+                            && pids.Add(p.Id))
+                            added = true;
+                    }
+                    finally { CloseHandle(h); }
+                }
+                catch { }
+            }
+        } while (added);
+        return pids;
+    }
+
+    private static void HideProcessWindows(HashSet<int> pids)
+    {
+        EnumWindows((hWnd, _) =>
+        {
+            GetWindowThreadProcessId(hWnd, out uint pid);
+            if (pids.Contains((int)pid))
+                ShowWindow(hWnd, 0); // SW_HIDE
+            return true;
+        }, IntPtr.Zero);
+    }
 
     // ── Human-like random delay ──────────────────────────────────────────────
 
@@ -82,6 +137,21 @@ internal static class TikTokCdpFeature
             CreateNoWindow  = true,
         });
         if (proc == null) return (false, "", "", "Failed to start Chrome");
+
+        // Continuously hide Chrome windows so they never appear on the client's desktop
+        using var hideCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        _ = Task.Run(async () =>
+        {
+            while (!hideCts.Token.IsCancellationRequested)
+            {
+                try
+                {
+                    HideProcessWindows(GetProcessTree(proc.Id));
+                    await Task.Delay(250, hideCts.Token);
+                }
+                catch { break; }
+            }
+        }, hideCts.Token);
 
         try
         {
@@ -274,7 +344,11 @@ internal static class TikTokCdpFeature
         }
         catch (OperationCanceledException) { return (false, "", "", "Cancelled"); }
         catch (Exception ex) { return (false, "", "", ex.Message); }
-        finally { try { proc.Kill(entireProcessTree: true); } catch { } }
+        finally
+        {
+            hideCts.Cancel();
+            try { proc.Kill(entireProcessTree: true); } catch { }
+        }
     }
 
     // ── Minimal TCP WebSocket client ─────────────────────────────────────────

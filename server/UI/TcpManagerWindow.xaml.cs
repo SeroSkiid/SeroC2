@@ -84,7 +84,7 @@ public partial class TcpManagerWindow : ThemedWindow
             Dispatcher.BeginInvoke(() =>
             {
                 if (data == null || data.Rules.Count == 0)
-                    TxtStatus.Text = "Firewall: rule failed (check admin privileges / firewall service)";
+                    TxtStatus.Text = Lang.Get("TCP_FIREWALL_FAIL");
                 else
                     TxtStatus.Text = $"Firewall: {data.Rules.Count} rule(s) applied — {string.Join(", ", data.Rules.Select(r => r.RuleName))}";
             });

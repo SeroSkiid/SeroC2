@@ -69,7 +69,7 @@ public partial class CryptoClipperWindow : ThemedWindow
             TxtLog.AppendText(line);
             LogScroll.ScrollToEnd();
 
-            TxtStatus.Text = $"Replaced {data.Type} address ({_totalCount} total)";
+            TxtStatus.Text = string.Format(Lang.Get("CLIPPER_REPLACED"), data.Type, _totalCount);
         });
     }
 

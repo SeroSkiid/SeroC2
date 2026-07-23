@@ -861,7 +861,7 @@ public partial class FileManagerWindow : ThemedWindow
         var path = _currentPath.TrimEnd('\\', '/') + "\\" + vm.Name;
         var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
 
-        TxtPreviewInfo.Text = "Loading…";
+        TxtPreviewInfo.Text = Lang.Get("STATUS_LOADING");
         ShowPreviewPanel("empty");
         BtnPreview.IsEnabled = false;
 

@@ -59,7 +59,7 @@ public partial class Socks5Window : ThemedWindow
     private async void BtnStart_Click(object s, RoutedEventArgs e)
     {
         if (!int.TryParse(TxtPort.Text, out int port) || port < 1 || port > 65535)
-        { TxtStatus.Text = "Invalid port."; return; }
+        { TxtStatus.Text = Lang.Get("ERR_INVALID_PORT"); return; }
 
         ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "running");
         ServerWindow.LogGlobal($"[SOCKS5] Starting SOCKS5 proxy on local port {port} targeting client {_clientId}...");
@@ -114,7 +114,7 @@ public partial class Socks5Window : ThemedWindow
         {
             BtnStart.IsEnabled = true; BtnStop.IsEnabled = false;
             BadgeActive.Visibility = Visibility.Collapsed;
-            TxtStatus.Text = "Stopped";
+            TxtStatus.Text = Lang.Get("STOPPED");
         });
     }
 

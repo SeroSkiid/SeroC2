@@ -170,7 +170,7 @@ public partial class WebcamWindow : ThemedWindow
     private void SendStart()
     {
         int idx = CmbDevice.SelectedIndex;
-        if (idx < 0) { TxtStatus.Text = "No device selected."; return; }
+        if (idx < 0) { TxtStatus.Text = Lang.Get("ERR_NO_DEVICE"); return; }
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.WcamStart,

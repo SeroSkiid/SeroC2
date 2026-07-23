@@ -22,7 +22,7 @@ public partial class CustomAutoTaskDialog : Window
     {
         if (string.IsNullOrWhiteSpace(TaskName) || string.IsNullOrWhiteSpace(TaskCommand))
         {
-            MessageBox.Show("Please enter both a task name and a command.", "Validation",
+            MessageBox.Show(Lang.Get("TASK_VALIDATE_MSG"), Lang.Get("TASK_VALIDATE_TITLE"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

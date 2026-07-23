@@ -242,7 +242,7 @@ public partial class TikTokWindow : ThemedWindow
     private async void BtnCdpSignup_Click(object s, RoutedEventArgs e)
     {
         var selected = _clients.Where(c => c.Selected).ToList();
-        if (selected.Count == 0) { TxtStatus.Text = "No clients selected — check the boxes first."; return; }
+        if (selected.Count == 0) { TxtStatus.Text = Lang.Get("TT_NO_CLIENTS"); return; }
 
         BtnCdpSignup.IsEnabled = false;
         BtnCdpSignup.Content   = $"⏳ Running ({selected.Count})…";
@@ -262,12 +262,12 @@ public partial class TikTokWindow : ThemedWindow
     private async void BtnStart_Click(object s, RoutedEventArgs e)
     {
         var accounts = _clients.Where(c => c.HasCookie && c.Selected).ToList();
-        if (accounts.Count == 0) { TxtStatus.Text = "No selected accounts with cookies — check boxes or run Auto-Signup."; return; }
+        if (accounts.Count == 0) { TxtStatus.Text = Lang.Get("TT_NO_COOKIES"); return; }
         var comments = GetComments();
-        if (comments.Length == 0) { TxtStatus.Text = "Enter at least one comment."; return; }
-        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }
+        if (comments.Length == 0) { TxtStatus.Text = Lang.Get("TT_NO_COMMENT"); return; }
+        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = Lang.Get("TT_NO_VIDEO"); return; }
         if (!int.TryParse(TxtDelayMin.Text, out int dMin) || !int.TryParse(TxtDelayMax.Text, out int dMax))
-        { TxtStatus.Text = "Invalid delay values."; return; }
+        { TxtStatus.Text = Lang.Get("TT_INVALID_DELAY"); return; }
         if (dMin > dMax) dMax = dMin;
 
         SetRunning(true);
@@ -291,7 +291,7 @@ public partial class TikTokWindow : ThemedWindow
 
                     _ = Dispatcher.BeginInvoke(() =>
                     {
-                        TxtBadge.Text   = $"POSTING ({i + 1}/{accounts.Count})";
+                        TxtBadge.Text   = $"{Lang.Get("TT_BADGE_POSTING")} ({i + 1}/{accounts.Count})";
                         TxtProgress.Text = $"Pass {pass + 1}";
                         TxtStatus.Text   = $"Posting to {vm.Label}…";
                     });
@@ -333,10 +333,10 @@ public partial class TikTokWindow : ThemedWindow
     private async void BtnPostOnce_Click(object s, RoutedEventArgs e)
     {
         var accounts = _clients.Where(c => c.HasCookie && c.Selected).ToList();
-        if (accounts.Count == 0) { TxtStatus.Text = "No selected accounts yet."; return; }
+        if (accounts.Count == 0) { TxtStatus.Text = Lang.Get("TT_NO_ACCOUNTS"); return; }
         var comments = GetComments();
-        if (comments.Length == 0) { TxtStatus.Text = "Enter a comment."; return; }
-        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = "Enter a video URL or ID."; return; }
+        if (comments.Length == 0) { TxtStatus.Text = Lang.Get("TT_NO_COMMENT"); return; }
+        if (string.IsNullOrEmpty(TxtVideoId.Text.Trim())) { TxtStatus.Text = Lang.Get("TT_NO_VIDEO"); return; }
 
         var isLive  = RbLive.IsChecked == true;
         var videoId = TxtVideoId.Text.Trim();
@@ -422,7 +422,7 @@ public partial class TikTokWindow : ThemedWindow
         BtnStart.IsEnabled  = !running; BtnStart.Opacity  = running ? 0.4 : 1.0;
         BtnStop.IsEnabled   =  running; BtnStop.Opacity   = running ? 1.0 : 0.4;
         BadgeRunning.Visibility = running ? Visibility.Visible : Visibility.Collapsed;
-        if (!running) TxtBadge.Text = "POSTING";
+        if (!running) TxtBadge.Text = Lang.Get("TT_BADGE_POSTING");
     }
 
     private void AddLog(string msg)

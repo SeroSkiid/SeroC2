@@ -94,7 +94,13 @@ public partial class HvncWindow : ThemedWindow
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
     }
 
-    private void ApplyLanguage() { this.Title = Lang.Get("FEAT_HVNC"); if (TxtStatus != null && !_streaming) TxtStatus.Text = Lang.Get("STOPPED"); }
+    private void ApplyLanguage()
+    {
+        this.Title = Lang.Get("FEAT_HVNC");
+        if (BtnStart != null) BtnStart.Content = Lang.Get("ACT_START");
+        if (BtnStop  != null) BtnStop.Content  = Lang.Get("ACT_STOP");
+        if (TxtStatus != null && !_streaming) TxtStatus.Text = Lang.Get("STOPPED");
+    }
 
     // ── Streaming state ───────────────────────────────────────────────────────
 

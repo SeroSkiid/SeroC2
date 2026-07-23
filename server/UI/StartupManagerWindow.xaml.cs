@@ -63,7 +63,7 @@ public partial class StartupManagerWindow : ThemedWindow
             _ = Dispatcher.BeginInvoke(() =>
             {
                 if (TxtStatus.Text?.StartsWith("Refresh") == true)
-                    TxtStatus.Text = "No response from client — click Refresh to retry";
+                    TxtStatus.Text = Lang.Get("ERR_NO_RESPONSE");
             });
         }
         catch (TaskCanceledException) { /* OnList arrived, timeout cancelled */ }
