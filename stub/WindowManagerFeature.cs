@@ -21,7 +21,7 @@ internal static class WindowManagerFeature
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr hwnd);
     [DllImport("user32.dll")] private static extern bool PostMessageW(IntPtr hwnd, uint msg, IntPtr wParam, IntPtr lParam);
     [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, IntPtr lpdwProcessId);
-    [DllImport("user32.dll")] private static extern nint SendMessage(IntPtr hwnd, uint msg, nint wParam, nint lParam);
+    [DllImport("user32.dll")] private static extern nint SendMessageTimeout(IntPtr hwnd, uint msg, nint wParam, nint lParam, uint fuFlags, uint uTimeout, out nint lpdwResult);
     [DllImport("user32.dll")] private static extern nint GetClassLongPtrW(IntPtr hwnd, int nIndex);
     [DllImport("ntdll.dll")]  private static extern int  NtSuspendProcess(IntPtr hProcess);
     [DllImport("ntdll.dll")]  private static extern int  NtResumeProcess(IntPtr hProcess);
@@ -29,7 +29,8 @@ internal static class WindowManagerFeature
     [DllImport("kernel32.dll")] private static extern bool   CloseHandle(IntPtr h);
 
     private const uint PROCESS_SUSPEND_RESUME = 0x0800;
-    private const uint WM_GETICON  = 0x007F;
+    private const uint WM_GETICON      = 0x007F;
+    private const uint SMTO_ABORTIFHUNG = 0x0002;
     private const int  GCL_HICONSM = -34;
     private const int  GCL_HICON   = -14;
 
@@ -38,10 +39,11 @@ internal static class WindowManagerFeature
 
     private static string GetWindowIconB64(IntPtr hwnd, uint pid)
     {
-        // WM_GETICON returns a handle owned by the window — do NOT destroy it
-        nint hIcon = SendMessage(hwnd, WM_GETICON, 2, 0); // ICON_SMALL2
-        if (hIcon == 0) hIcon = SendMessage(hwnd, WM_GETICON, 0, 0); // ICON_SMALL
-        if (hIcon == 0) hIcon = SendMessage(hwnd, WM_GETICON, 1, 0); // ICON_BIG
+        // WM_GETICON returns a handle owned by the window — do NOT destroy it.
+        // SendMessageTimeout with SMTO_ABORTIFHUNG avoids blocking on frozen windows.
+        SendMessageTimeout(hwnd, WM_GETICON, 2, 0, SMTO_ABORTIFHUNG, 50, out nint hIcon); // ICON_SMALL2
+        if (hIcon == 0) SendMessageTimeout(hwnd, WM_GETICON, 0, 0, SMTO_ABORTIFHUNG, 50, out hIcon); // ICON_SMALL
+        if (hIcon == 0) SendMessageTimeout(hwnd, WM_GETICON, 1, 0, SMTO_ABORTIFHUNG, 50, out hIcon); // ICON_BIG
         if (hIcon == 0) hIcon = GetClassLongPtrW(hwnd, GCL_HICONSM);
         if (hIcon == 0) hIcon = GetClassLongPtrW(hwnd, GCL_HICON);
         if (hIcon != 0)
@@ -150,7 +152,7 @@ internal static class WindowManagerFeature
                 case "close":    PostMessageW(hwnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero); break;
                 case "kill":
                     GetWindowThreadProcessId(hwnd, out uint pid);
-                    if (pid > 0) System.Diagnostics.Process.GetProcessById((int)pid).Kill();
+                    if (pid > 0) { using var kp = System.Diagnostics.Process.GetProcessById((int)pid); kp.Kill(); }
                     break;
                 case "freeze":
                 case "unfreeze":
