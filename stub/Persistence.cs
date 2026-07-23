@@ -628,18 +628,19 @@ internal static partial class Persistence
             var safePath = selfPath.Replace("'", "''");
             var script = $@"
 $ns = 'ROOT\subscription'; $n = '{name}'
-try {{
-    $f = ([wmiclass]""\\.\root\subscription:__EventFilter"").CreateInstance()
-    $f.QueryLanguage = 'WQL'
-    $f.Query = ""SELECT * FROM __InstanceCreationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
-    $f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
-    $c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
-    $c.Name = $n; $c.ExecutablePath = '{safePath}'; $null = $c.Put()
-    $b = ([wmiclass]""\\.\root\subscription:__FilterToConsumerBinding"").CreateInstance()
-    $b.Filter = ""\\.\root\subscription:__EventFilter.Name='$n'""
-    $b.Consumer = ""\\.\root\subscription:CommandLineEventConsumer.Name='$n'""
-    $null = $b.Put()
-}} catch {{}}
+try {{ gwmi -NS $ns __FilterToConsumerBinding -EA 0 | ?{{ $_.Filter -like ""*$n*"" }} | Remove-WmiObject }} catch {{}}
+try {{ gwmi -NS $ns CommandLineEventConsumer -Filter ""Name='$n'"" -EA 0 | Remove-WmiObject }} catch {{}}
+try {{ gwmi -NS $ns __EventFilter -Filter ""Name='$n'"" -EA 0 | Remove-WmiObject }} catch {{}}
+$f = ([wmiclass]""\\.\root\subscription:__EventFilter"").CreateInstance()
+$f.QueryLanguage = 'WQL'
+$f.Query = ""SELECT * FROM __InstanceCreationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
+$f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
+$c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
+$c.Name = $n; $c.ExecutablePath = '{safePath}'; $null = $c.Put()
+$b = ([wmiclass]""\\.\root\subscription:__FilterToConsumerBinding"").CreateInstance()
+$b.Filter = ""\\.\root\subscription:__EventFilter.Name='$n'""
+$b.Consumer = ""\\.\root\subscription:CommandLineEventConsumer.Name='$n'""
+$null = $b.Put()
 ";
             RunPs(script);
         }
