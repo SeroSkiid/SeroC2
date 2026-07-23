@@ -686,6 +686,7 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             var outTask = System.Threading.Tasks.Task.Run(() => proc.StandardOutput.ReadToEnd());
             var errTask = System.Threading.Tasks.Task.Run(() => proc.StandardError.ReadToEnd());
             proc.WaitForExit(8000);
+            if (!proc.HasExited) { try { proc.Kill(); } catch { } }
             _ = errTask.Result;
             return outTask.Result.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
         }
@@ -711,7 +712,8 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             var outTask = System.Threading.Tasks.Task.Run(() => proc.StandardOutput.ReadToEnd());
             var errTask = System.Threading.Tasks.Task.Run(() => proc.StandardError.ReadToEnd());
             proc.WaitForExit(15000);
-            return (proc.ExitCode, outTask.Result.Trim());
+            if (!proc.HasExited) { try { proc.Kill(); } catch { } }
+            return (proc.HasExited ? proc.ExitCode : -1, outTask.Result.Trim());
         }
         catch (Exception ex) { return (-1, ex.Message); }
     }
