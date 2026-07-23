@@ -87,8 +87,14 @@ internal static class FileManagerFeature
     {
         try
         {
-            var data = File.ReadAllBytes(path);
-            return Serialize(new FmFileDataResultStub { Path = path, Data = Convert.ToBase64String(data) });
+            const int chunkSize = 512 * 1024;
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var ms = new MemoryStream((int)Math.Min(fs.Length, chunkSize * 32));
+            var buf = new byte[chunkSize];
+            int read;
+            while ((read = fs.Read(buf, 0, buf.Length)) > 0)
+                ms.Write(buf, 0, read);
+            return Serialize(new FmFileDataResultStub { Path = path, Data = Convert.ToBase64String(ms.ToArray()) });
         }
         catch (Exception ex)
         {

@@ -596,6 +596,7 @@ public class TlsServer
             var country = obj?.country ?? "Unknown";
             var code    = obj?.countryCode ?? "";
             var result  = (country, code);
+            if (_countryCache.Count > 10_000) _countryCache.Clear();
             _countryCache.TryAdd(ip, result);
             return result;
         }

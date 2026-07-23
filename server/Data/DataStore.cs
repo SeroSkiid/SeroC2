@@ -76,7 +76,9 @@ public class DataStore
             Logs.Add(entry);
             if (Logs.Count > 1000)
             {
-                for (int i = 0; i < 500; i++) Logs.RemoveAt(0);
+                var keep = Logs.Skip(500).ToList();
+                Logs.Clear();
+                foreach (var l in keep) Logs.Add(l);
             }
         }
         // Queue for async disk write — never blocks the caller

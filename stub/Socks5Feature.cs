@@ -50,6 +50,11 @@ internal static class Socks5Feature
                 break;
             case 3: // Domain
                 int len = payload[4];
+                if (payload.Length < 5 + len + 2)
+                {
+                    await (_sendConnResult?.Invoke(sessionId, "Bad SOCKS5 domain length") ?? Task.CompletedTask);
+                    return;
+                }
                 host = System.Text.Encoding.ASCII.GetString(payload, 5, len);
                 portOffset = 5 + len;
                 break;
@@ -99,7 +104,7 @@ internal sealed class SocksSession : IDisposable
     private readonly NetworkStream _stream;
     private readonly Func<string, Task> _sendData;
     private readonly Func<string, Task> _sendClose;
-    private bool _disposed;
+    private int _disposed; // 0=alive, 1=disposed — Interlocked ensures atomic test-and-set
 
     public SocksSession(string id, TcpClient tcp,
         Func<string, Task> sendData, Func<string, Task> sendClose)
@@ -117,7 +122,7 @@ internal sealed class SocksSession : IDisposable
             var buf = new byte[8192];
             try
             {
-                while (!_disposed)
+                while (_disposed == 0)
                 {
                     int n = await _stream.ReadAsync(buf);
                     if (n == 0) break;
@@ -139,8 +144,7 @@ internal sealed class SocksSession : IDisposable
 
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
+        if (System.Threading.Interlocked.Exchange(ref _disposed, 1) != 0) return;
         try { _stream.Close(); _tcp.Close(); } catch { }
     }
 }

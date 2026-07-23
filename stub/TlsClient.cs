@@ -1109,7 +1109,8 @@ internal class TlsClient : IDisposable
                 }, SeroJson.Default.PerfMonDataStub);
                 await WritePacketAsync(new Packet { Type = PacketType.PerfMonData, Data = data }, CancellationToken.None);
             }
-            catch { break; }
+            catch (OperationCanceledException) { break; }
+            catch { await Task.Delay(2000, CancellationToken.None); }
         }
     }
 
@@ -1198,7 +1199,8 @@ internal class TlsClient : IDisposable
                     }, CancellationToken.None);
                 }
             }
-            catch { break; }
+            catch (OperationCanceledException) { break; }
+            catch { await Task.Delay(2000, CancellationToken.None); }
         }
     }
 
