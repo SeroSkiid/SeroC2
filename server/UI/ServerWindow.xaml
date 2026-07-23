@@ -1872,6 +1872,7 @@
 
                                 <DataGrid Grid.Column="0" x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
+                                          MinWidth="1440"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
                                           PreviewKeyDown="GridClients_PreviewKeyDown"

