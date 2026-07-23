@@ -273,6 +273,6 @@ internal sealed class RubberBandAdorner : Adorner
                        ?? Color.FromRgb(0x00, 0x78, 0xD7);
         var fill   = new SolidColorBrush(Color.FromArgb(50,  selColor.R, selColor.G, selColor.B));
         var stroke = new SolidColorBrush(Color.FromArgb(210, selColor.R, selColor.G, selColor.B));
-        dc.DrawRectangle(fill, new Pen(stroke, 1.0), clipped);
+        dc.DrawRectangle(fill, new System.Windows.Media.Pen(stroke, 1.0), clipped);
     }
 }

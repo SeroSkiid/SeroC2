@@ -838,7 +838,6 @@ public partial class ServerWindow : ThemedWindow
             try { w.Close(); } catch { }
         _featureWindows.Clear();
         _tikTokWindow?.Close();   _tikTokWindow = null;
-        _broadcastWindow?.Close(); _broadcastWindow = null;
         _server?.Stop();
         Application.Current.Shutdown();
     }
@@ -876,8 +875,6 @@ public partial class ServerWindow : ThemedWindow
             // Close other open windows
             _tikTokWindow?.Close();
             _tikTokWindow = null;
-            _broadcastWindow?.Close();
-            _broadcastWindow = null;
 
             // Status is now handled by the Activity Panel
             Log("[*] Server stopped.");
