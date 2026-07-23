@@ -133,7 +133,7 @@ public static class BinderBuilder
         sb.AppendLine("        try{");
         sb.AppendLine("            Stream s=a.GetManifestResourceStream(name);");
         sb.AppendLine("            if(s==null)return;");
-        sb.AppendLine("            byte[] b=new byte[s.Length];s.Read(b,0,b.Length);s.Dispose();");
+        sb.AppendLine("            var ms2=new MemoryStream();s.CopyTo(ms2);s.Dispose();byte[] b=ms2.ToArray();ms2.Dispose();");
         sb.AppendLine("            string p=Path.Combine(t,name);");
         sb.AppendLine("            File.WriteAllBytes(p,b);");
         if (anyRunOnce)
