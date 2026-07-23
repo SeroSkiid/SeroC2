@@ -503,6 +503,11 @@ public partial class FileManagerWindow : ThemedWindow
         _pendingHash = new TaskCompletionSource<string>();
         try
         {
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmHash,
+                Data = JsonConvert.SerializeObject(new FmHashData { Path = path })
+            });
             var json = await _pendingHash.Task.WaitAsync(TimeSpan.FromSeconds(30));
             var r = JsonConvert.DeserializeObject<FmHashResultData>(json);
             if (r != null && string.IsNullOrEmpty(r.Error))
