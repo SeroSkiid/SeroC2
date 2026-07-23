@@ -89,6 +89,7 @@ internal static class ProcessManagerFeature
 
     // Per-process network I/O sampling (OtherBytes ≈ network traffic)
     private static readonly Dictionary<int, (ulong bytes, DateTime ts)> _netSamples = [];
+    private static readonly object _samplesLock = new();
     private const uint PROCESS_QUERY_INFORMATION = 0x0400;
 
     private static float GetNetKbps(int pid, DateTime now)
@@ -98,15 +99,18 @@ internal static class ProcessManagerFeature
         try
         {
             if (!GetProcessIoCounters(h, out var io)) return 0f;
-            if (_netSamples.TryGetValue(pid, out var prev))
+            lock (_samplesLock)
             {
-                var delta = io.OtherBytes >= prev.bytes ? io.OtherBytes - prev.bytes : 0UL;
-                var ms    = (now - prev.ts).TotalMilliseconds;
+                if (_netSamples.TryGetValue(pid, out var prev))
+                {
+                    var delta = io.OtherBytes >= prev.bytes ? io.OtherBytes - prev.bytes : 0UL;
+                    var ms    = (now - prev.ts).TotalMilliseconds;
+                    _netSamples[pid] = (io.OtherBytes, now);
+                    return ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                }
                 _netSamples[pid] = (io.OtherBytes, now);
-                return ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                return 0f;
             }
-            _netSamples[pid] = (io.OtherBytes, now);
-            return 0f;
         }
         finally { CloseHandle(h); }
     }
@@ -125,15 +129,18 @@ internal static class ProcessManagerFeature
                 try
                 {
                     var totalCpu = p.TotalProcessorTime;
-                    if (_cpuSamples.TryGetValue(p.Id, out var prev))
+                    lock (_samplesLock)
                     {
-                        var deltaCpu = (totalCpu - prev.cpu).TotalMilliseconds;
-                        var deltaMs  = (now - prev.ts).TotalMilliseconds;
-                        if (deltaMs > 0)
-                            cpuPct = (float)(deltaCpu / (deltaMs * _cpuCount) * 100.0);
-                        cpuPct = Math.Max(0f, Math.Min(100f, cpuPct));
+                        if (_cpuSamples.TryGetValue(p.Id, out var prev))
+                        {
+                            var deltaCpu = (totalCpu - prev.cpu).TotalMilliseconds;
+                            var deltaMs  = (now - prev.ts).TotalMilliseconds;
+                            if (deltaMs > 0)
+                                cpuPct = (float)(deltaCpu / (deltaMs * _cpuCount) * 100.0);
+                            cpuPct = Math.Max(0f, Math.Min(100f, cpuPct));
+                        }
+                        _cpuSamples[p.Id] = (totalCpu, now);
                     }
-                    _cpuSamples[p.Id] = (totalCpu, now);
                 }
                 catch { }
 
@@ -171,7 +178,7 @@ internal static class ProcessManagerFeature
 
     internal static bool Kill(int pid)
     {
-        try { Process.GetProcessById(pid).Kill(); return true; }
+        try { using var p = Process.GetProcessById(pid); p.Kill(); return true; }
         catch { return false; }
     }
 

@@ -122,7 +122,10 @@ internal static class ServiceManagerFeature
                 RedirectStandardOutput = true,
                 StandardOutputEncoding = System.Text.Encoding.ASCII
             });
-            return p?.StandardOutput.ReadToEnd() ?? "";
+            if (p == null) return "";
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            if (!p.WaitForExit(10000)) { try { p.Kill(); } catch { } }
+            return outTask.IsCompleted ? outTask.Result : "";
         }
         catch { return ""; }
     }

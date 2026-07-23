@@ -98,7 +98,9 @@ internal static class InstalledAppsFeature
             System.Diagnostics.ProcessStartInfo psi;
             if (uninstallString.StartsWith("msiexec", StringComparison.OrdinalIgnoreCase))
             {
-                psi = new System.Diagnostics.ProcessStartInfo("msiexec.exe", uninstallString.Replace("msiexec.exe", "").Trim())
+                int msiEnd = uninstallString.IndexOf("msiexec.exe", StringComparison.OrdinalIgnoreCase);
+                string msiArgs = msiEnd >= 0 ? uninstallString[(msiEnd + "msiexec.exe".Length)..].Trim() : uninstallString.Trim();
+                psi = new System.Diagnostics.ProcessStartInfo("msiexec.exe", msiArgs)
                     { UseShellExecute = true };
             }
             else

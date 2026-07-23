@@ -1990,6 +1990,8 @@ internal static class HvncFeature
             }
 
             var deskPtr = Marshal.StringToHGlobalUni("WinSta0\\" + DesktopName);
+            try
+            {
             const uint STARTF_USEPOSITION   = 0x00000004;
             const uint STARTF_USESHOWWINDOW = 0x00000001;
             const uint CREATE_NEW_CONSOLE   = 0x00000010;
@@ -2179,7 +2181,8 @@ internal static class HvncFeature
             }
             if (pi.hProcess != 0) CloseHandle(pi.hProcess);
             if (pi.hThread  != 0) CloseHandle(pi.hThread);
-            Marshal.FreeHGlobal(deskPtr);
+            }
+            finally { Marshal.FreeHGlobal(deskPtr); }
         }
         catch (Exception ex) { StubLog.Error($"[HVNC] LaunchOnDesktop exception: {ex.Message}"); }
     }

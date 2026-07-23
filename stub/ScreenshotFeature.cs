@@ -74,7 +74,7 @@ internal static class ScreenshotFeature
             nint hbm = CreateDIBSection(hdcScreen, ref bmi, 0, out nint bits, 0, 0);
             if (hbm == 0 || bits == 0) { DeleteDC(hdcMem); return ""; }
 
-            SelectObject(hdcMem, hbm);
+            nint hbmOld = SelectObject(hdcMem, hbm);
             BitBlt(hdcMem, 0, 0, sw, sh, hdcScreen, 0, 0, 0x00CC0020u); // SRCCOPY
 
             if (GdipCreateBitmapFromScan0(sw, sh, sw * 4, 0x26200A, bits, out nint bmp) != 0 || bmp == 0)
@@ -116,7 +116,7 @@ internal static class ScreenshotFeature
                 foreach (var ch in chunks) { Buffer.BlockCopy(ch, 0, result, off, ch.Length); off += ch.Length; }
                 return Convert.ToBase64String(result);
             }
-            finally { GdipDisposeImage(bmp); DeleteObject(hbm); DeleteDC(hdcMem); }
+            finally { GdipDisposeImage(bmp); if (hbmOld != 0) SelectObject(hdcMem, hbmOld); DeleteObject(hbm); DeleteDC(hdcMem); }
         }
         finally { ReleaseDC(0, hdcScreen); }
     }

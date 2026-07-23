@@ -48,9 +48,11 @@ internal static class RegistryEditorFeature
             var kind = ParseKind(valueType);
             object value = kind switch
             {
-                RegistryValueKind.DWord => int.TryParse(data, out int d) ? d : 0,
-                RegistryValueKind.QWord => long.TryParse(data, out long l) ? l : 0L,
-                _                       => data
+                RegistryValueKind.DWord       => int.TryParse(data, out int d) ? d : 0,
+                RegistryValueKind.QWord       => long.TryParse(data, out long l) ? l : 0L,
+                RegistryValueKind.Binary      => Convert.FromHexString(data.Replace(" ", "").Replace("-", "")),
+                RegistryValueKind.MultiString => data.Split('\n'),
+                _                             => data
             };
             key.SetValue(name, value, kind);
             return Ack(true, "");

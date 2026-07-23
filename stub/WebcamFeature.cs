@@ -118,7 +118,7 @@ internal static class WebcamFeature
     private static Func<int, string, System.Threading.Tasks.Task>? _send;
     private static WcamStartDataStub _cfg = new();
 
-    private static int _pendingRequests;
+    private static volatile int _pendingRequests;
     private static readonly SemaphoreSlim _frameReqWake = new(0, 100);
 
     private static volatile int _adaptiveQuality;

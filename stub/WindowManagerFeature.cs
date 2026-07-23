@@ -71,6 +71,7 @@ internal static class WindowManagerFeature
             using var p = System.Diagnostics.Process.GetProcessById((int)pid);
             var exe = p.MainModule?.FileName;
             if (string.IsNullOrEmpty(exe)) return "";
+            if (_iconCache.Count > 500) _iconCache.Clear();
             return _iconCache.GetOrAdd(exe, path => StubIconHelper.ExtractExeIcon(path));
         }
         catch { return ""; }

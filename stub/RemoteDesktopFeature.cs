@@ -175,7 +175,7 @@ internal static class RemoteDesktopFeature
         _cfg  = cfg;
         _send = send;
         _prevPixels = null; // reset diff buffer on new session
-        _forceRefreshAt = Environment.TickCount64 + 200; // safety-net refresh 200ms after first frame
+        Interlocked.Exchange(ref _forceRefreshAt, Environment.TickCount64 + 200);
 
         _adaptiveQuality = cfg.Quality;
         Interlocked.Exchange(ref _lastFrameSendMs, 0);
@@ -200,6 +200,7 @@ internal static class RemoteDesktopFeature
         _thread?.Join(2000);
         _thread = null;
         Interlocked.Exchange(ref _pendingRequests, 0);
+        if (_prevPixels != null) { System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels); _prevPixels = null; }
     }
 
     public static void SignalAck()
@@ -407,18 +408,13 @@ internal static class RemoteDesktopFeature
             dstW = Math.Max(1, srcW * scale / 100);
             dstH = Math.Max(1, srcH * scale / 100);
             int requiredLen = dstW * 4 * dstH;
-            if (_prevPixels == null || _prevPixels.Length < requiredLen || dstW != _prevW || dstH != _prevH)
-            {
-                pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(requiredLen);
-            }
-            else
-            {
-                pixels = _prevPixels; // reuse buffer for GDI
-            }
-
+            // Always rent a new buffer — never write into _prevPixels directly.
+            // Reusing _prevPixels as the capture target overwrites the diff baseline,
+            // so BlockChanged would compare new pixels against themselves → zero diff every frame.
+            pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(requiredLen);
             if (!CaptureGdi(srcX, srcY, srcW, srcH, dstW, dstH, pixels))
             {
-                if (pixels != _prevPixels) System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
+                System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
                 return null;
             }
         }
@@ -427,9 +423,11 @@ internal static class RemoteDesktopFeature
 
         // Scheduled full-refresh: clear the diff baseline so the next frame is sent complete.
         // Fires ~800ms after Start() to flush any black regions from the initial DXGI snapshot.
-        if (_forceRefreshAt != 0 && Environment.TickCount64 >= _forceRefreshAt)
+        long forceAt = Interlocked.Read(ref _forceRefreshAt);
+        if (forceAt != 0 && Environment.TickCount64 >= forceAt)
         {
-            _forceRefreshAt = 0;
+            Interlocked.Exchange(ref _forceRefreshAt, 0);
+            if (_prevPixels != null) { System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels); }
             _prevPixels = null;
         }
 

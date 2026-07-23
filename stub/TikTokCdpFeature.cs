@@ -499,13 +499,14 @@ internal static class TikTokCdpFeature
                 for (int i = 0; i < 8; i++) payLen = (payLen << 8) | _rbuf[2+i];
             }
 
-            int len = (int)Math.Min(payLen, _rbuf.Length);
-            await ReadExactAsync(_rbuf, 0, len, ct);
+            byte[] buf = payLen <= _rbuf.Length ? _rbuf : new byte[(int)Math.Min(payLen, 4L * 1024 * 1024)];
+            int len = (int)Math.Min(payLen, (long)buf.Length);
+            await ReadExactAsync(buf, 0, len, ct);
 
             if (opcode == 8) return "";
             if (opcode == 9) { await WriteFrameAsync([], ct); return ""; }
 
-            return Encoding.UTF8.GetString(_rbuf, 0, len);
+            return Encoding.UTF8.GetString(buf, 0, len);
         }
 
         private async Task ReadExactAsync(byte[] buf, int offset, int count, CancellationToken ct)
