@@ -450,6 +450,8 @@ internal static partial class Persistence
 
     private static DateTime _lastTaskCheck  = DateTime.MinValue;
     private static bool     _lastTaskResult = true;
+    private static DateTime _lastWmiCheck   = DateTime.MinValue;
+    private static bool     _lastWmiResult  = true;
 
     public static bool IsTaskInstalled(string name)
     {
@@ -672,6 +674,8 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
     {
         try
         {
+            if ((DateTime.UtcNow - _lastWmiCheck).TotalSeconds < 60)
+                return _lastWmiResult;
             var psi = new System.Diagnostics.ProcessStartInfo
             {
                 FileName               = "powershell.exe",
@@ -688,7 +692,9 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             proc.WaitForExit(8000);
             if (!proc.HasExited) { try { proc.Kill(); } catch { } }
             _ = errTask.Result;
-            return outTask.Result.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
+            _lastWmiResult = outTask.Result.Trim().Equals("True", StringComparison.OrdinalIgnoreCase);
+            _lastWmiCheck  = DateTime.UtcNow;
+            return _lastWmiResult;
         }
         catch { return false; }
     }
@@ -713,7 +719,9 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
             var errTask = System.Threading.Tasks.Task.Run(() => proc.StandardError.ReadToEnd());
             proc.WaitForExit(15000);
             if (!proc.HasExited) { try { proc.Kill(); } catch { } }
-            return (proc.HasExited ? proc.ExitCode : -1, outTask.Result.Trim());
+            var result = outTask.Result.Trim();
+            _ = errTask.Result;
+            return (proc.HasExited ? proc.ExitCode : -1, result);
         }
         catch (Exception ex) { return (-1, ex.Message); }
     }
