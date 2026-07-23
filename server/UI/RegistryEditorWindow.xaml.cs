@@ -164,7 +164,7 @@ public partial class RegistryEditorWindow : ThemedWindow
         {
             if (!string.IsNullOrEmpty(d.Error))
             {
-                TxtStatus.Text = $"Error: {d.Error}";
+                TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), d.Error);
                 return;
             }
 
@@ -176,7 +176,7 @@ public partial class RegistryEditorWindow : ThemedWindow
             foreach (var v in d.Values)
                 _values.Add(new RegValueVM { Name = string.IsNullOrEmpty(v.Name) ? "(Default)" : v.Name, ValueType = v.ValueType, Data = v.Data });
 
-            TxtStatus.Text = $"{d.SubKeys.Count} key(s) · {d.Values.Count} value(s)  —  {_currentPath}";
+            TxtStatus.Text = string.Format(Lang.Get("REG_LOADED"), d.SubKeys.Count, d.Values.Count, _currentPath);
 
             // Populate tree: find the item that requested this
             PopulateTreeItem(d.KeyPath, d.SubKeys);
@@ -243,7 +243,7 @@ public partial class RegistryEditorWindow : ThemedWindow
                 }
                 else
                 {
-                    TxtStatus.Text = $"Error: {msg}";
+                    TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), msg);
                 }
             }
         });

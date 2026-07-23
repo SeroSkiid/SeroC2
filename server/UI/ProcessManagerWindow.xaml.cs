@@ -514,19 +514,19 @@ public partial class ProcessManagerWindow : ThemedWindow
     private void GridProcs_CopyPid_Click(object s, RoutedEventArgs e)
     {
         if (GridProcs.SelectedItem is ProcEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Pid.ToString()); TxtStatus.Text = $"Copied PID: {vm.Pid}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Pid.ToString()); TxtStatus.Text = string.Format(Lang.Get("PM_COPIED_PID"), vm.Pid); } catch { }
     }
 
     private void GridProcs_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridProcs.SelectedItem is ProcEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Name); } catch { }
     }
 
     private void GridProcs_CopyPath_Click(object s, RoutedEventArgs e)
     {
         if (GridProcs.SelectedItem is ProcEntryVM vm && !string.IsNullOrEmpty(vm.ExePath))
-            try { System.Windows.Clipboard.SetText(vm.ExePath); TxtStatus.Text = $"Copied path: {vm.ExePath}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.ExePath); TxtStatus.Text = string.Format(Lang.Get("PM_COPIED_PATH"), vm.ExePath); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

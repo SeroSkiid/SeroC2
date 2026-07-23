@@ -347,7 +347,7 @@ public partial class WebcamWindow : ThemedWindow
                 var enc = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 95 };
                 enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bi));
                 enc.Save(fs);
-                Dispatcher.BeginInvoke(() => TxtStatus.Text = $"Saved: {Path.GetFileName(path)}");
+                Dispatcher.BeginInvoke(() => TxtStatus.Text = string.Format(Lang.Get("SAVED"), Path.GetFileName(path)));
             }
             catch { }
         });

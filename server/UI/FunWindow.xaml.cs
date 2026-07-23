@@ -84,7 +84,7 @@ public partial class FunWindow : ThemedWindow
 
     private async Task Send(string action, string param = "")
     {
-        TxtStatus.Text = $"Sending: {action}…";
+        TxtStatus.Text = string.Format(Lang.Get("FUN_SENDING"), action);
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.FunCmd,

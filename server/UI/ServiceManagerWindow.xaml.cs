@@ -186,7 +186,7 @@ public partial class ServiceManagerWindow : ThemedWindow
         if (d == null) return;
         Dispatcher.BeginInvoke(() =>
         {
-            TxtStatus.Text = d.Success ? Lang.Get("SVC_ACK_OK") : $"Error: {d.Error}";
+            TxtStatus.Text = d.Success ? Lang.Get("SVC_ACK_OK") : string.Format(Lang.Get("ERR_GENERIC"), d.Error);
             if (d.Success) Refresh();
         });
     }
@@ -238,7 +238,7 @@ public partial class ServiceManagerWindow : ThemedWindow
     private void GridServices_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridServices.SelectedItem is ServiceEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.DisplayName}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.DisplayName); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

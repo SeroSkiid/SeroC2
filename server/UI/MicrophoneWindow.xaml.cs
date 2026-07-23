@@ -246,7 +246,7 @@ public partial class MicrophoneWindow : ThemedWindow
             foreach (var d in data.Devices)
                 CmbDevice.Items.Add(new MicDeviceItem(d.Index, d.Name));
             if (CmbDevice.Items.Count > 0) CmbDevice.SelectedIndex = 0;
-            TxtStatus.Text = $"{data.Devices.Count} device(s) found";
+            TxtStatus.Text = string.Format(Lang.Get("MIC_DEVICES_FOUND"), data.Devices.Count);
         });
     }
 
@@ -271,7 +271,7 @@ public partial class MicrophoneWindow : ThemedWindow
 
         // BeginInvoke (fire-and-forget) — never block the network receive thread
         int count; lock (_chunks) count = _chunks.Count;
-        Dispatcher.BeginInvoke(() => TxtStatus.Text = $"Recording… {count} chunks received");
+        Dispatcher.BeginInvoke(() => TxtStatus.Text = string.Format(Lang.Get("MIC_RECORDING"), count));
     }
 
     private async void Record_Click(object s, RoutedEventArgs e)
@@ -315,7 +315,7 @@ public partial class MicrophoneWindow : ThemedWindow
         BtnRecord.IsEnabled = true;
         BtnStop.IsEnabled   = false;
         int total = 0; lock (_chunks) total = _chunks.Sum(c => c.Length);
-        TxtStatus.Text = $"Stopped — {total / (SampleRate * Channels * 2.0):F1}s recorded  ({_chunks.Count} chunks)";
+        TxtStatus.Text = string.Format(Lang.Get("MIC_STOPPED"), (total / (SampleRate * Channels * 2.0)).ToString("F1"), _chunks.Count);
         await Task.CompletedTask;
     }
 
@@ -357,7 +357,7 @@ public partial class MicrophoneWindow : ThemedWindow
         bw.Write(dataSize);
         foreach (var chunk in data) bw.Write(chunk);
 
-        TxtStatus.Text = $"Saved: {dlg.FileName}";
+        TxtStatus.Text = string.Format(Lang.Get("SAVED"), dlg.FileName);
         MessageBox.Show($"WAV saved:\n{dlg.FileName}\n\nDuration: {dataSize / (double)byteRate:F1}s",
             "Sero — Microphone", MessageBoxButton.OK, MessageBoxImage.Information);
     }

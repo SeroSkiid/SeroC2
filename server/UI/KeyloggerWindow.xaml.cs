@@ -118,7 +118,7 @@ public partial class KeyloggerWindow : ThemedWindow
             foreach (var f in data.Files)
                 ListFiles.Items.Add(new LogFileVM(f.Filename, f.Size));
 
-            TxtStatus.Text = $"{data.Files.Count} log file(s) on client  —  capturing: {(_capturing ? "yes" : "no")}";
+            TxtStatus.Text = string.Format(Lang.Get("KL_STATUS"), data.Files.Count, _capturing ? Lang.Get("KL_YES") : Lang.Get("KL_NO"));
         });
     }
 
@@ -132,7 +132,7 @@ public partial class KeyloggerWindow : ThemedWindow
             TxtLog.Text = data.Content;
             TxtViewerTitle.Text = data.Filename;
             TxtLog.ScrollToEnd();
-            TxtStatus.Text = $"Loaded {data.Filename}  ({data.Content.Length:N0} chars)";
+            TxtStatus.Text = string.Format(Lang.Get("KL_LOADED"), data.Filename, data.Content.Length.ToString("N0"));
         });
     }
 
@@ -144,7 +144,7 @@ public partial class KeyloggerWindow : ThemedWindow
     {
         if (ListFiles.SelectedItem is not LogFileVM vm) return;
         try { System.Windows.Clipboard.SetText(vm.Filename); } catch { }
-        TxtStatus.Text = $"Copied: {vm.Filename}";
+        TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Filename);
     }
 
     private async void ListFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -156,7 +156,7 @@ public partial class KeyloggerWindow : ThemedWindow
             Type = PacketType.KeyloggerGetFile,
             Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
         });
-        TxtStatus.Text = $"Loading {vm.Filename}…";
+        TxtStatus.Text = string.Format(Lang.Get("KL_LOADING"), vm.Filename);
     }
 
     private async void BtnDelete_Click(object s, RoutedEventArgs e)
@@ -190,7 +190,7 @@ public partial class KeyloggerWindow : ThemedWindow
         };
         if (dlg.ShowDialog() != true) return;
         File.WriteAllText(dlg.FileName, TxtLog.Text, System.Text.Encoding.UTF8);
-        TxtStatus.Text = $"Saved: {dlg.FileName}";
+        TxtStatus.Text = string.Format(Lang.Get("SAVED"), dlg.FileName);
     }
 
     private void BtnSave_Click(object s, RoutedEventArgs e) => BtnDownload_Click(s, e);

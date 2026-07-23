@@ -113,7 +113,7 @@ public partial class PerformanceMonitorWindow : ThemedWindow
                 _netRHistory.Count > 0 ? _netRHistory.Max() : 1));
             DrawDualSparkline(SparkNet, _netSHistory, _netRHistory, maxNet);
 
-            TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss}";
+            TxtStatus.Text = string.Format(Lang.Get("PERF_UPDATED"), DateTime.Now.ToString("HH:mm:ss"));
         });
     }
 

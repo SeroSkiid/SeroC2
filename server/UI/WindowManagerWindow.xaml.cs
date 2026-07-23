@@ -134,7 +134,7 @@ public partial class WindowManagerWindow : ThemedWindow
             _view?.Refresh();
             int visible = _windows.Count(x => FilterWindow(x));
             TxtCount.Text  = $"({visible}/{d.Windows.Count})";
-            TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Windows.Count} windows";
+            TxtStatus.Text = string.Format(Lang.Get("WIN_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Windows.Count);
         });
     }
 
@@ -197,19 +197,19 @@ public partial class WindowManagerWindow : ThemedWindow
     private void GridWins_CopyTitle_Click(object s, RoutedEventArgs e)
     {
         if (GridWins.SelectedItem is WindowEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Title); TxtStatus.Text = $"Copied: {vm.Title}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Title); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Title); } catch { }
     }
 
     private void GridWins_CopyHandle_Click(object s, RoutedEventArgs e)
     {
         if (GridWins.SelectedItem is WindowEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.HandleHex); TxtStatus.Text = $"Copied: {vm.HandleHex}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.HandleHex); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.HandleHex); } catch { }
     }
 
     private void GridWins_CopyProcess_Click(object s, RoutedEventArgs e)
     {
         if (GridWins.SelectedItem is WindowEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.ProcessName); TxtStatus.Text = $"Copied: {vm.ProcessName}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.ProcessName); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.ProcessName); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

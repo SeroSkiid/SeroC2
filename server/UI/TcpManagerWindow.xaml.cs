@@ -70,7 +70,7 @@ public partial class TcpManagerWindow : ThemedWindow
                 _entries.Clear();
                 foreach (var e in data.Entries)
                     _entries.Add(new TcpEntryVM(e.Pid, e.ProcessName, e.LocalAddr, e.RemoteAddr, e.State));
-                TxtStatus.Text = $"{_entries.Count} connection(s) — {DateTime.Now:HH:mm:ss}";
+                TxtStatus.Text = string.Format(Lang.Get("TCP_UPDATED"), _entries.Count, DateTime.Now.ToString("HH:mm:ss"));
             });
         }
         catch { }
@@ -86,7 +86,7 @@ public partial class TcpManagerWindow : ThemedWindow
                 if (data == null || data.Rules.Count == 0)
                     TxtStatus.Text = Lang.Get("TCP_FIREWALL_FAIL");
                 else
-                    TxtStatus.Text = $"Firewall: {data.Rules.Count} rule(s) applied — {string.Join(", ", data.Rules.Select(r => r.RuleName))}";
+                    TxtStatus.Text = string.Format(Lang.Get("TCP_FIREWALL_RULES"), data.Rules.Count, string.Join(", ", data.Rules.Select(r => r.RuleName)));
             });
         }
         catch { }
@@ -99,9 +99,9 @@ public partial class TcpManagerWindow : ThemedWindow
         var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().ToList();
         if (sel.Count == 0) return;
         string confirmMsg = sel.Count == 1
-            ? $"Close TCP connection {sel[0].RemoteAddr} ({sel[0].ProcessName})?"
-            : $"Close {sel.Count} TCP connections?";
-        if (MessageBox.Show(confirmMsg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            ? string.Format(Lang.Get("TCP_CLOSE_CONFIRM_1"), sel[0].RemoteAddr, sel[0].ProcessName)
+            : string.Format(Lang.Get("TCP_CLOSE_CONFIRM_N"), sel.Count);
+        if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var row in sel)
         {
             var data = JsonConvert.SerializeObject(new TcpCloseData { LocalAddr = row.LocalAddr, RemoteAddr = row.RemoteAddr });
@@ -118,9 +118,9 @@ public partial class TcpManagerWindow : ThemedWindow
         var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().Where(r => r.Pid > 0).ToList();
         if (sel.Count == 0) return;
         string confirmMsg = sel.Count == 1
-            ? $"Kill '{sel[0].ProcessName}' (PID {sel[0].Pid})?"
-            : $"Kill {sel.Count} processes?";
-        if (MessageBox.Show(confirmMsg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            ? string.Format(Lang.Get("PM_KILL_1"), sel[0].ProcessName, sel[0].Pid)
+            : string.Format(Lang.Get("PM_KILL_N"), sel.Count);
+        if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var row in sel)
         {
             var cmd = $"powershell -NoP -NonI -W H -Command \"" +
@@ -138,7 +138,9 @@ public partial class TcpManagerWindow : ThemedWindow
                       $"[PK]::TerminateProcess($h,0)|Out-Null;[PK]::CloseHandle($h)|Out-Null}}\"";
             await _server.SendToClient(_clientId, new Packet { Type = PacketType.AutoTaskShell, Data = cmd });
         }
-        TxtStatus.Text = sel.Count == 1 ? $"Kill sent → PID {sel[0].Pid} ({sel[0].ProcessName})" : $"Kill sent → {sel.Count} processes";
+        TxtStatus.Text = sel.Count == 1
+            ? string.Format(Lang.Get("TCP_KILL_SENT"), sel[0].Pid, sel[0].ProcessName)
+            : string.Format(Lang.Get("TCP_KILL_SENT_N"), sel.Count);
         ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].ProcessName : $"{sel.Count} processes", "complete");
         ServerWindow.LogGlobal($"[TCP] Killed process {(sel.Count == 1 ? $"'{sel[0].ProcessName}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} via TCP manager on client {_clientId}.");
         await Task.Delay(600);
@@ -156,7 +158,7 @@ public partial class TcpManagerWindow : ThemedWindow
             Type = PacketType.TcpFirewallBlock,
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = 0, RemoteIp = ip, Direction = "both" })
         });
-        TxtStatus.Text = $"🛡 Firewall block sent → IP {ip}";
+        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_IP"), ip);
         ServerWindow.ReportGlobalActivity("Firewall block IP", ip, "complete");
         ServerWindow.LogGlobal($"[TCP] Blocked remote IP {ip} in firewall on client {_clientId}.");
     }
@@ -171,7 +173,7 @@ public partial class TcpManagerWindow : ThemedWindow
             Type = PacketType.TcpFirewallBlock,
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = name, Port = 0, Direction = "both" })
         });
-        TxtStatus.Text = $"Firewall block sent → {name} (in+out)";
+        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PROC"), name);
         ServerWindow.ReportGlobalActivity("Firewall block proc", name, "complete");
         ServerWindow.LogGlobal($"[TCP] Blocked process '{name}' in firewall on client {_clientId}.");
     }
@@ -191,7 +193,7 @@ public partial class TcpManagerWindow : ThemedWindow
             Type = PacketType.TcpFirewallBlock,
             Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = port, Direction = "both" })
         });
-        TxtStatus.Text = $"Firewall block sent → port {port} (in+out)";
+        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PORT"), port);
         ServerWindow.ReportGlobalActivity("Firewall block port", port.ToString(), "complete");
         ServerWindow.LogGlobal($"[TCP] Blocked TCP port {port} in firewall on client {_clientId}.");
     }
@@ -205,13 +207,13 @@ public partial class TcpManagerWindow : ThemedWindow
     private void GridTcp_CopyLocal_Click(object s, RoutedEventArgs e)
     {
         if (GridTcp.SelectedItem is TcpEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.LocalAddr); TxtStatus.Text = $"Copied: {vm.LocalAddr}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.LocalAddr); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.LocalAddr); } catch { }
     }
 
     private void GridTcp_CopyRemote_Click(object s, RoutedEventArgs e)
     {
         if (GridTcp.SelectedItem is TcpEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.RemoteAddr); TxtStatus.Text = $"Copied: {vm.RemoteAddr}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.RemoteAddr); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.RemoteAddr); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

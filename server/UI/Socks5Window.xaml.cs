@@ -78,7 +78,7 @@ public partial class Socks5Window : ThemedWindow
         {
             _listener = new TcpListener(IPAddress.Loopback, port);
             _listener.Start();
-            TxtStatus.Text = $"SOCKS5 listening on 127.0.0.1:{port}";
+            TxtStatus.Text = string.Format(Lang.Get("SOCKS5_LISTENING"), port);
             AddLog($"[+] Started on port {port}");
             ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "success");
             ServerWindow.LogGlobal($"[SOCKS5] SOCKS5 proxy running on local port {port} for client {_clientId}.");
@@ -86,7 +86,7 @@ public partial class Socks5Window : ThemedWindow
         }
         catch (Exception ex)
         {
-            TxtStatus.Text = $"Error: {ex.Message}";
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "failed");
             ServerWindow.LogGlobal($"[SOCKS5] SOCKS5 proxy failed to start on port {port}: {ex.Message}");
             StopProxy(logStop: false);

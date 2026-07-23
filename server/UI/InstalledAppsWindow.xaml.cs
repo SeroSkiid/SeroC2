@@ -79,7 +79,7 @@ public partial class InstalledAppsWindow : ThemedWindow
                 _all.Add(new InstalledAppVM { Name = a.Name, Version = a.Version, Publisher = a.Publisher, InstallDate = a.InstallDate, UninstallString = a.UninstallString, Verified = a.Verified });
             ApplyFilter(TxtSearch.Text);
             TxtCount.Text = $"({d.Apps.Count})";
-            TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Apps.Count} apps";
+            TxtStatus.Text = string.Format(Lang.Get("INS_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Apps.Count);
             _ = RequestIconsAsync(d.Apps);
         });
     }
@@ -144,13 +144,13 @@ public partial class InstalledAppsWindow : ThemedWindow
     private void GridApps_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridApps.SelectedItem is InstalledAppVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Name); } catch { }
     }
 
     private void GridApps_CopyPublisher_Click(object s, RoutedEventArgs e)
     {
         if (GridApps.SelectedItem is InstalledAppVM vm && !string.IsNullOrEmpty(vm.Publisher))
-            try { System.Windows.Clipboard.SetText(vm.Publisher); TxtStatus.Text = $"Copied: {vm.Publisher}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Publisher); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Publisher); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

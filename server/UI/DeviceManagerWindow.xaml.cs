@@ -68,16 +68,16 @@ public partial class DeviceManagerWindow : ThemedWindow
             foreach (var dev in d.Devices)
                 _devices.Add(new DeviceEntryVM { DeviceId = dev.DeviceId, Name = dev.Name, Class = dev.Class, Status = dev.Status, Manufacturer = dev.Manufacturer });
             TxtCount.Text = $"({d.Devices.Count})";
-            TxtStatus.Text = $"Updated {DateTime.Now:HH:mm:ss} — {d.Devices.Count} devices";
+            TxtStatus.Text = string.Format(Lang.Get("DEV_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Devices.Count);
         });
     }
 
     private void BtnUninstall_Click(object s, RoutedEventArgs e)
     {
         if (GridDevs.SelectedItem is not DeviceEntryVM vm) return;
-        if (MessageBox.Show($"Uninstall device \"{vm.Name}\"?\nThis will disable the device until it is reconnected.", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show($"Uninstall device \"{vm.Name}\"?\nThis will disable the device until it is reconnected.", Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevUninstall, Data = JsonConvert.SerializeObject(new DevUninstallData { DeviceId = vm.DeviceId }) });
-        TxtStatus.Text = $"Uninstall sent → {vm.Name}";
+        TxtStatus.Text = string.Format(Lang.Get("DEV_UNINSTALL_SENT"), vm.Name);
         ServerWindow.ReportGlobalActivity("Uninstall device", vm.Name, "complete");
         ServerWindow.LogGlobal($"[DEV] Uninstalled device '{vm.Name}' (ID: {vm.DeviceId}) on client {_clientId}.");
     }
@@ -87,13 +87,13 @@ public partial class DeviceManagerWindow : ThemedWindow
     private void GridDevs_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridDevs.SelectedItem is DeviceEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Name); } catch { }
     }
 
     private void GridDevs_CopyId_Click(object s, RoutedEventArgs e)
     {
         if (GridDevs.SelectedItem is DeviceEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.DeviceId); TxtStatus.Text = $"Copied device ID"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.DeviceId); TxtStatus.Text = Lang.Get("DEV_COPIED_ID"); } catch { }
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

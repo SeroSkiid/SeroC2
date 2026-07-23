@@ -173,7 +173,7 @@ public partial class FileManagerWindow : ThemedWindow
                 if (err.StartsWith("IO_PathNotFound_Path,"))     err = "Path not found: " + err[(err.IndexOf(',') + 1)..].Trim();
                 else if (err.StartsWith("IO_FileNotFound,"))     err = "File not found: " + err[(err.IndexOf(',') + 1)..].Trim();
                 else if (err.StartsWith("UnauthorizedAccess"))   err = "Access denied: " + err[(err.IndexOf(',') + 1)..].TrimStart();
-                TxtStatus.Text = $"Error: {err}";
+                TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), err);
                 return;
             }
 
@@ -192,7 +192,7 @@ public partial class FileManagerWindow : ThemedWindow
 
             var dirs  = result.Entries.Count(x => x.IsDir);
             var files = result.Entries.Count - dirs;
-            TxtStatus.Text = $"{result.Path}  —  {files} file(s), {dirs} folder(s)";
+            TxtStatus.Text = string.Format(Lang.Get("FM_DIR_STAT"), result.Path, files, dirs);
             if (TxtFileCount != null)
                 TxtFileCount.Text = $"{files} files — {dirs} directories";
         }
@@ -210,7 +210,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (dlg.ShowDialog() != true) return;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        TxtStatus.Text = $"Downloading {row.Name}…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), row.Name);
         ServerWindow.ReportGlobalActivity("Downloading", row.Name, "running");
         ShowTransfer(row.Name, Lang.Get("FM_REQUESTING"));
         try
@@ -224,7 +224,7 @@ public partial class FileManagerWindow : ThemedWindow
             ShowTransfer(row.Name, Lang.Get("FM_RECEIVING"));
             var json = await _pendingData.Task.WaitAsync(TimeSpan.FromSeconds(60));
             var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
-            if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = $"Error: {result?.Error}"; return; }
+            if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error); return; }
             ShowTransfer(row.Name, Lang.Get("FM_DECODING"));
             var bytes = Convert.FromBase64String(result.Data);
             TxtTransferPct.Text = "50%";
@@ -234,12 +234,12 @@ public partial class FileManagerWindow : ThemedWindow
             TxtTransferPct.Text = "100%";
             NotificationService.NotifyDownloadComplete();
             var elapsed = sw.Elapsed.TotalSeconds < 60 ? $"{sw.Elapsed.TotalSeconds:F1}s" : $"{sw.Elapsed.TotalMinutes:F0}m {sw.Elapsed.Seconds}s";
-            TxtStatus.Text = $"Downloaded: {row.Name}  ({bytes.Length:N0} B in {elapsed})";
+            TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADED"), row.Name, bytes.Length.ToString("N0"), elapsed);
             ServerWindow.ReportGlobalActivity("Download completed", row.Name, "success");
         }
-        catch (Exception ex) { 
-            TxtStatus.Text = $"Download failed: {ex.Message}"; 
-            ServerWindow.ReportGlobalActivity("Download failed", row.Name, "failed"); 
+        catch (Exception ex) {
+            TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOAD_FAILED"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Download failed", row.Name, "failed");
         }
         finally { _pendingData = null; HideTransfer(); }
     }
@@ -252,13 +252,13 @@ public partial class FileManagerWindow : ThemedWindow
         var uploadName = Path.GetFileName(dlg.FileName);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        TxtStatus.Text = $"Uploading {uploadName}…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_UPLOADING"), uploadName);
         ServerWindow.ReportGlobalActivity("Uploading", uploadName, "running");
         ShowTransfer(uploadName, Lang.Get("FM_READING"));
         try
         {
             var bytes = await File.ReadAllBytesAsync(dlg.FileName);
-            ShowTransfer(uploadName, $"Encoding ({bytes.Length:N0} B)…");
+            ShowTransfer(uploadName, string.Format(Lang.Get("FM_ENCODING"), bytes.Length.ToString("N0")));
             var b64 = Convert.ToBase64String(bytes);
             TxtTransferPct.Text = "50%";
             _pendingAck = new TaskCompletionSource<string>();
@@ -273,13 +273,13 @@ public partial class FileManagerWindow : ThemedWindow
             TxtTransferPct.Text = "100%";
             NotificationService.NotifyUploadComplete();
             var elapsed = sw.Elapsed.TotalSeconds < 60 ? $"{sw.Elapsed.TotalSeconds:F1}s" : $"{sw.Elapsed.TotalMinutes:F0}m {sw.Elapsed.Seconds}s";
-            TxtStatus.Text = $"Uploaded: {uploadName} ({bytes.Length:N0} B in {elapsed})";
+            TxtStatus.Text = string.Format(Lang.Get("FM_UPLOADED"), uploadName, bytes.Length.ToString("N0"), elapsed);
             ServerWindow.ReportGlobalActivity("Upload completed", uploadName, "success");
             await Navigate(_currentPath);
         }
-        catch (Exception ex) { 
-            TxtStatus.Text = $"Upload failed: {ex.Message}"; 
-            ServerWindow.ReportGlobalActivity("Upload failed", uploadName, "failed"); 
+        catch (Exception ex) {
+            TxtStatus.Text = string.Format(Lang.Get("FM_UPLOAD_FAILED"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Upload failed", uploadName, "failed");
         }
         finally { _pendingAck = null; HideTransfer(); }
     }
@@ -288,8 +288,10 @@ public partial class FileManagerWindow : ThemedWindow
     {
         var selected = GridFiles.SelectedItems.Cast<FileEntryVM>().ToList();
         if (selected.Count == 0) return;
-        var msg = selected.Count == 1 ? $"Delete '{selected[0].Name}'?" : $"Delete {selected.Count} items?";
-        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        var msg = selected.Count == 1
+            ? string.Format(Lang.Get("FM_CONFIRM_DELETE_1"), selected[0].Name)
+            : string.Format(Lang.Get("FM_CONFIRM_DELETE_N"), selected.Count);
+        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         
         int total = selected.Count;
         int successCount = 0;
@@ -300,7 +302,7 @@ public partial class FileManagerWindow : ThemedWindow
         {
             var row = selected[0];
             var path = Path.Combine(_currentPath, row.Name);
-            TxtStatus.Text = $"Deleting {row.Name}…";
+            TxtStatus.Text = string.Format(Lang.Get("FM_DELETING"), row.Name);
             ServerWindow.ReportGlobalActivity("Delete file", row.Name, "running");
             ServerWindow.LogGlobal($"[FM] Deleting file '{path}' on client {_clientId}...");
             _pendingAck = new TaskCompletionSource<string>();
@@ -313,7 +315,7 @@ public partial class FileManagerWindow : ThemedWindow
                 {
                     successCount++;
                     NotificationService.NotifyFileDeleted();
-                    TxtStatus.Text = $"Deleted: {row.Name}";
+                    TxtStatus.Text = string.Format(Lang.Get("FM_DELETED"), row.Name);
                     ServerWindow.ReportGlobalActivity("Delete completed", row.Name, "success");
                     ServerWindow.LogGlobal($"[FM] Deleted file '{path}' on client {_clientId}.");
                 }
@@ -321,7 +323,7 @@ public partial class FileManagerWindow : ThemedWindow
                 {
                     failedCount++;
                     lastError = ack?.Error ?? "Unknown error";
-                    TxtStatus.Text = $"Delete failed: {lastError}";
+                    TxtStatus.Text = string.Format(Lang.Get("FM_DELETE_FAILED"), lastError);
                     ServerWindow.ReportGlobalActivity("Delete failed", row.Name, "failed");
                     ServerWindow.LogGlobal($"[FM] Delete failed for '{path}' on client {_clientId}: {lastError}");
                 }
@@ -330,7 +332,7 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 failedCount++;
                 lastError = ex.Message;
-                TxtStatus.Text = $"Delete failed: {lastError}";
+                TxtStatus.Text = string.Format(Lang.Get("FM_DELETE_FAILED"), lastError);
                 ServerWindow.ReportGlobalActivity("Delete failed", row.Name, "failed");
                 ServerWindow.LogGlobal($"[FM] Delete failed for '{path}' on client {_clientId}: {lastError}");
             }
@@ -338,7 +340,7 @@ public partial class FileManagerWindow : ThemedWindow
         }
         else
         {
-            TxtStatus.Text = $"Deleting {total} items…";
+            TxtStatus.Text = string.Format(Lang.Get("FM_DELETING_N"), total);
             ServerWindow.ReportGlobalActivity("Delete items", $"{total} items", "running");
             ServerWindow.LogGlobal($"[FM] Deleting {total} items on client {_clientId}...");
             
@@ -346,7 +348,7 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 var row = selected[i];
                 var path = Path.Combine(_currentPath, row.Name);
-                TxtStatus.Text = $"Deleting ({i + 1}/{total}): {row.Name}…";
+                TxtStatus.Text = string.Format(Lang.Get("FM_DELETING_PROGRESS"), i + 1, total, row.Name);
                 
                 _pendingAck = new TaskCompletionSource<string>();
                 try
@@ -375,13 +377,13 @@ public partial class FileManagerWindow : ThemedWindow
             NotificationService.NotifyFileDeleted();
             if (failedCount == 0)
             {
-                TxtStatus.Text = $"Deleted {successCount} items.";
+                TxtStatus.Text = string.Format(Lang.Get("FM_DELETED_N"), successCount);
                 ServerWindow.ReportGlobalActivity("Delete completed", $"{successCount} items", "success");
                 ServerWindow.LogGlobal($"[FM] Bulk delete completed on client {_clientId}: deleted {successCount} of {total} items.");
             }
             else
             {
-                TxtStatus.Text = $"Delete completed: {successCount} deleted, {failedCount} failed.";
+                TxtStatus.Text = string.Format(Lang.Get("FM_DELETE_PARTIAL"), successCount, failedCount);
                 ServerWindow.ReportGlobalActivity("Delete failed", $"{failedCount} of {total} failed", "failed");
                 ServerWindow.LogGlobal($"[FM] Bulk delete finished on client {_clientId} with errors: deleted {successCount}, failed {failedCount}. Last error: {lastError}");
             }
@@ -397,7 +399,7 @@ public partial class FileManagerWindow : ThemedWindow
         var oldPath = Path.Combine(_currentPath, row.Name);
         var newPath = Path.Combine(_currentPath, newName);
         
-        TxtStatus.Text = $"Renaming '{row.Name}' to '{newName}'…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_RENAMING"), row.Name, newName);
         ServerWindow.ReportGlobalActivity("Rename item", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Renaming '{oldPath}' to '{newName}' on client {_clientId}...");
         
@@ -409,21 +411,21 @@ public partial class FileManagerWindow : ThemedWindow
             var ack = JsonConvert.DeserializeObject<FmAckData>(json);
             if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
             {
-                TxtStatus.Text = $"Renamed '{row.Name}' to '{newName}'.";
+                TxtStatus.Text = string.Format(Lang.Get("FM_RENAMED"), row.Name, newName);
                 ServerWindow.ReportGlobalActivity("Rename completed", newName, "success");
                 ServerWindow.LogGlobal($"[FM] Renamed '{oldPath}' to '{newPath}' on client {_clientId}.");
             }
             else
             {
                 var err = ack?.Error ?? "Unknown error";
-                TxtStatus.Text = $"Rename failed: {err}";
+                TxtStatus.Text = string.Format(Lang.Get("FM_RENAME_FAILED"), err);
                 ServerWindow.ReportGlobalActivity("Rename failed", row.Name, "failed");
                 ServerWindow.LogGlobal($"[FM] Rename failed for '{oldPath}' to '{newPath}' on client {_clientId}: {err}");
             }
         }
         catch (Exception ex)
         {
-            TxtStatus.Text = $"Rename failed: {ex.Message}";
+            TxtStatus.Text = string.Format(Lang.Get("FM_RENAME_FAILED"), ex.Message);
             ServerWindow.ReportGlobalActivity("Rename failed", row.Name, "failed");
             ServerWindow.LogGlobal($"[FM] Rename failed for '{oldPath}' to '{newPath}' on client {_clientId}: {ex.Message}");
         }
@@ -437,7 +439,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (string.IsNullOrWhiteSpace(name)) return;
         var path = Path.Combine(_currentPath, name);
         
-        TxtStatus.Text = $"Creating folder '{name}'…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_CREATING_FOLDER"), name);
         ServerWindow.ReportGlobalActivity("New folder", name, "running");
         ServerWindow.LogGlobal($"[FM] Creating folder '{path}' on client {_clientId}...");
         
@@ -449,21 +451,21 @@ public partial class FileManagerWindow : ThemedWindow
             var ack = JsonConvert.DeserializeObject<FmAckData>(json);
             if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
             {
-                TxtStatus.Text = $"Created folder: {name}";
+                TxtStatus.Text = string.Format(Lang.Get("FM_FOLDER_CREATED"), name);
                 ServerWindow.ReportGlobalActivity("New folder completed", name, "success");
                 ServerWindow.LogGlobal($"[FM] Created folder '{path}' on client {_clientId}.");
             }
             else
             {
                 var err = ack?.Error ?? "Unknown error";
-                TxtStatus.Text = $"New folder failed: {err}";
+                TxtStatus.Text = string.Format(Lang.Get("FM_FOLDER_FAILED"), err);
                 ServerWindow.ReportGlobalActivity("New folder failed", name, "failed");
                 ServerWindow.LogGlobal($"[FM] New folder creation failed for '{path}' on client {_clientId}: {err}");
             }
         }
         catch (Exception ex)
         {
-            TxtStatus.Text = $"New folder failed: {ex.Message}";
+            TxtStatus.Text = string.Format(Lang.Get("FM_FOLDER_FAILED"), ex.Message);
             ServerWindow.ReportGlobalActivity("New folder failed", name, "failed");
             ServerWindow.LogGlobal($"[FM] New folder creation failed for '{path}' on client {_clientId}: {ex.Message}");
         }
@@ -488,7 +490,7 @@ public partial class FileManagerWindow : ThemedWindow
             Type = PacketType.FmExec,
             Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = mode })
         });
-        TxtStatus.Text = $"Executed: {row.Name} ({mode})";
+        TxtStatus.Text = string.Format(Lang.Get("FM_EXECUTED"), row.Name, mode);
         ServerWindow.ReportGlobalActivity("Execute file", row.Name, "complete");
     }
 
@@ -514,14 +516,14 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 Clipboard.SetText(r.Hash);
                 MessageBox.Show($"SHA-256: {r.Hash}\n\n{Lang.Get("FM_COPIED_CLIPBOARD")}", row.Name, MessageBoxButton.OK, MessageBoxImage.Information);
-                TxtStatus.Text = $"Hash: {r.Hash[..16]}…";
+                TxtStatus.Text = string.Format(Lang.Get("FM_HASH_RESULT"), r.Hash[..16]);
                 ServerWindow.ReportGlobalActivity("Hash completed", row.Name, "success");
                 ServerWindow.LogGlobal($"[FM] Hash computed for '{path}' on client {_clientId}: {r.Hash}");
             }
             else
             {
                 var err = r?.Error ?? "Unknown error";
-                TxtStatus.Text = $"Hash error: {err}";
+                TxtStatus.Text = string.Format(Lang.Get("FM_HASH_ERROR"), err);
                 ServerWindow.ReportGlobalActivity("Hash failed", row.Name, "failed");
                 ServerWindow.LogGlobal($"[FM] Hash computation failed for '{path}' on client {_clientId}: {err}");
             }
@@ -561,7 +563,7 @@ public partial class FileManagerWindow : ThemedWindow
         var newAttrs = ShowAttrDialog(row.Name, current);
         if (newAttrs == null) return;
         
-        TxtStatus.Text = $"Setting attributes for '{row.Name}'…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_SETTING_ATTR"), row.Name);
         ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Setting attributes for '{path}' to {newAttrs.Value} on client {_clientId}...");
         
@@ -659,7 +661,7 @@ public partial class FileManagerWindow : ThemedWindow
             Type = PacketType.FunCmd,
             Data = JsonConvert.SerializeObject(new FunCmdData { Action = "set_wallpaper", Param = path })
         });
-        TxtStatus.Text = $"Wallpaper set: {row.Name}";
+        TxtStatus.Text = string.Format(Lang.Get("FM_WALLPAPER_SET"), row.Name);
         ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "complete");
     }
 
@@ -676,7 +678,7 @@ public partial class FileManagerWindow : ThemedWindow
             Type = PacketType.FmExec,
             Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = "normal" })
         });
-        TxtStatus.Text = $"Playing: {row.Name}";
+        TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING"), row.Name);
         ServerWindow.ReportGlobalActivity("Play audio", row.Name, "complete");
     }
 
@@ -697,7 +699,7 @@ public partial class FileManagerWindow : ThemedWindow
             Type = PacketType.AutoTaskShell,
             Data = $"SET SERO_SRC={path}&& SET SERO_DST={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
         });
-        TxtStatus.Text = $"Zipping {row.Name}…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
         await Task.Delay(2000);
         ServerWindow.ReportGlobalActivity("Zip item", row.Name, "complete");
         ServerWindow.LogGlobal($"[FM] Zip command executed for '{path}' on client {_clientId}.");
@@ -706,7 +708,7 @@ public partial class FileManagerWindow : ThemedWindow
 
     private async void DownloadUrl_Click(object s, RoutedEventArgs e)
     {
-        var url = PromptInput("URL to download:", "https://");
+        var url = PromptInput(Lang.Get("FM_URL_PROMPT"), "https://");
         if (string.IsNullOrWhiteSpace(url)) return;
 
         // Validate URL before sending
@@ -734,7 +736,7 @@ public partial class FileManagerWindow : ThemedWindow
             Type = PacketType.AutoTaskShell,
             Data = $"SET SERO_URL={url}&& SET SERO_OUT={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
         });
-        TxtStatus.Text = $"Downloading {filename}…";
+        TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
         await Task.Delay(3000);
         ServerWindow.ReportGlobalActivity("Download URL", filename, "complete");
         ServerWindow.LogGlobal($"[FM] Download URL command executed for '{url}' on client {_clientId}.");
@@ -950,7 +952,7 @@ public partial class FileManagerWindow : ThemedWindow
     private void GridFiles_CopyName_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is FileEntryVM vm)
-            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = $"Copied: {vm.Name}"; } catch { }
+            try { System.Windows.Clipboard.SetText(vm.Name); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Name); } catch { }
     }
 
     private void GridFiles_CopyPath_Click(object s, RoutedEventArgs e)
@@ -960,7 +962,7 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 var full = Path.Combine(_currentPath, vm.Name);
                 System.Windows.Clipboard.SetText(full);
-                TxtStatus.Text = $"Copied: {full}";
+                TxtStatus.Text = string.Format(Lang.Get("COPIED"), full);
             }
             catch { }
     }
