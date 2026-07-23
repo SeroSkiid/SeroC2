@@ -141,8 +141,12 @@ partial class Program
     {
         const uint TOKEN_ALL_ACCESS        = 0xF01FF;
         const uint CREATE_UNICODE_ENV      = 0x00000400;
-        // SeTcbPrivilege (7) is required for WTSQueryUserToken — present in SYSTEM token
-        // but disabled by default; enable it before querying the user session token.
+        // All three privileges are present in the SYSTEM token but disabled by default.
+        // 3 = SeAssignPrimaryTokenPrivilege — required by CreateProcessAsUserW
+        // 5 = SeIncreaseQuotaPrivilege      — required by CreateProcessAsUserW
+        // 7 = SeTcbPrivilege               — required by WTSQueryUserToken
+        Protection.EnablePrivilege(3);
+        Protection.EnablePrivilege(5);
         Protection.EnablePrivilege(7);
         uint session = WTSGetActiveConsoleSessionId();
         if (session == 0xFFFFFFFF) session = GetFirstActiveUserSession();

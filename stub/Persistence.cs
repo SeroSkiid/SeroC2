@@ -644,7 +644,7 @@ $f.QueryLanguage = 'WQL'
 $f.Query = ""SELECT * FROM __InstanceCreationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
 $f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
 $c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
-$c.Name = $n; $c.ExecutablePath = '{safePath}'; $null = $c.Put()
+$c.Name = $n; $c.ExecutablePath = '{safePath}'; $c.CommandLineTemplate = '""' + '{safePath}' + '""'; $null = $c.Put()
 $b = ([wmiclass]""\\.\root\subscription:__FilterToConsumerBinding"").CreateInstance()
 $b.Filter = ""\\.\root\subscription:__EventFilter.Name='$n'""
 $b.Consumer = ""\\.\root\subscription:CommandLineEventConsumer.Name='$n'""
