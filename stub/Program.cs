@@ -100,6 +100,14 @@ partial class Program
     private static extern uint WTSGetActiveConsoleSessionId();
     [System.Runtime.InteropServices.DllImport("wtsapi32.dll")]
     private static extern bool WTSQueryUserToken(uint sessionId, out nint phToken);
+    [System.Runtime.InteropServices.DllImport("wtsapi32.dll", SetLastError = true)]
+    private static extern bool WTSEnumerateSessionsW(nint hServer, uint Reserved, uint Version,
+        out nint ppSessionInfo, out uint pCount);
+    [System.Runtime.InteropServices.DllImport("wtsapi32.dll")]
+    private static extern void WTSFreeMemory(nint pMemory);
+
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct WTS_SESSION_INFO_S { public uint SessionId; public nint pWinStationName; public int State; }
     [System.Runtime.InteropServices.DllImport("advapi32.dll")]
     private static extern bool DuplicateTokenEx(nint hExistingToken, uint dwDesiredAccess,
         nint lpTokenAttributes, int ImpersonationLevel, int TokenType, out nint phNewToken);
@@ -137,6 +145,7 @@ partial class Program
         // but disabled by default; enable it before querying the user session token.
         Protection.EnablePrivilege(7);
         uint session = WTSGetActiveConsoleSessionId();
+        if (session == 0xFFFFFFFF) session = GetFirstActiveUserSession();
         if (session == 0xFFFFFFFF) return false;
         if (!WTSQueryUserToken(session, out nint hWts)) return false;
         try
@@ -172,6 +181,22 @@ partial class Program
             finally { CloseHandle_P(hPri); }
         }
         finally { CloseHandle_P(hWts); }
+    }
+
+    private static uint GetFirstActiveUserSession()
+    {
+        if (!WTSEnumerateSessionsW(0, 0, 1, out nint pInfo, out uint count)) return 0xFFFFFFFF;
+        try
+        {
+            int sz = System.Runtime.InteropServices.Marshal.SizeOf<WTS_SESSION_INFO_S>();
+            for (uint i = 0; i < count; i++)
+            {
+                var info = System.Runtime.InteropServices.Marshal.PtrToStructure<WTS_SESSION_INFO_S>(pInfo + (int)(i * (uint)sz));
+                if (info.SessionId != 0 && info.State == 0) return info.SessionId;
+            }
+            return 0xFFFFFFFF;
+        }
+        finally { WTSFreeMemory(pInfo); }
     }
 
     [STAThread]
