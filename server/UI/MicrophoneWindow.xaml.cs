@@ -217,6 +217,8 @@ public partial class MicrophoneWindow : ThemedWindow
         ApplyLanguage();
         Closed += (_, _) =>
         {
+            _recTimer.Stop();
+            _waveTimer.Stop();
             _server.UnregisterHandler(clientId, PacketType.MicDevicesResult);
             _server.UnregisterHandler(clientId, PacketType.MicData);
             if (_recording) SendStop();

