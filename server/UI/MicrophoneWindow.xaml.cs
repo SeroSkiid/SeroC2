@@ -232,8 +232,9 @@ public partial class MicrophoneWindow : ThemedWindow
     private void ApplyLanguage()
     {
         this.Title = Lang.Get("FEAT_MICROPHONE");
-        if (BtnRecord != null) BtnRecord.Content = Lang.Get("ACT_START");
-        if (BtnStop   != null) BtnStop.Content   = Lang.Get("ACT_STOP");
+        if (TxtBtnActions != null) TxtBtnActions.Text  = Lang.Get("ACT_ACTIONS");
+        if (BtnRecord     != null) BtnRecord.Content   = Lang.Get("ACT_START");
+        if (BtnStop       != null) BtnStop.Content     = Lang.Get("ACT_STOP");
     }
 
     private void OnDevices(Packet pkt)

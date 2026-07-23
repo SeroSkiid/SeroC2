@@ -74,7 +74,11 @@ public partial class WebcamWindow : ThemedWindow
 
     // ── Fullscreen ────────────────────────────────────────────────────────────
 
-    private void ApplyLanguage() { this.Title = Lang.Get("FEAT_REMOTE_WEBCAM"); }
+    private void ApplyLanguage()
+    {
+        this.Title = Lang.Get("FEAT_REMOTE_WEBCAM");
+        if (TxtBtnActions != null) TxtBtnActions.Text = Lang.Get("ACT_ACTIONS");
+    }
 
     private void BtnFullscreen_Click(object s, RoutedEventArgs e)
     {

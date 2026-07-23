@@ -62,6 +62,7 @@ public partial class KeyloggerWindow : ThemedWindow
     private void ApplyLanguage()
     {
         this.Title = Lang.Get("FEAT_KEYLOGGER");
+        if (TxtBtnActions   != null) TxtBtnActions.Text   = Lang.Get("ACT_ACTIONS");
         if (TxtBtnKlRefresh != null) TxtBtnKlRefresh.Text = Lang.Get("ACT_REFRESH");
         if (MnuKlDownload != null) MnuKlDownload.Header = Lang.Get("ACT_DOWNLOAD");
         if (MnuKlDelete   != null) MnuKlDelete.Header   = Lang.Get("ACT_DELETE");

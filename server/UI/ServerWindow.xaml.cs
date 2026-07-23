@@ -265,6 +265,8 @@ public partial class ServerWindow : ThemedWindow
             UpdateLogBrushes(UiPrefs.GetString("Theme", "SeroDark"));
             Log("[*] Server ready. Click START to listen.");
             RefreshAllClients();
+            RestoreAllClientsColumnWidths();
+            SetupAllClientsColumnPersistence();
             LoadConfig();
             LoadSoundPreferences();
             ApplyStoredTheme();
@@ -1465,6 +1467,42 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header) || header == "TAG") continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
+        }
+    }
+
+    private void RestoreAllClientsColumnWidths()
+    {
+        foreach (var col in GridAllClients.Columns)
+        {
+            string header = col.Header?.ToString() ?? "";
+            if (string.IsNullOrEmpty(header)) continue;
+            if (header == "TAG")
+            {
+                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                continue;
+            }
+            int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
+            if (w > 0) col.Width = new System.Windows.Controls.DataGridLength(w);
+        }
+    }
+
+    private void SetupAllClientsColumnPersistence()
+    {
+        var desc = System.ComponentModel.DependencyPropertyDescriptor
+            .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
+                          typeof(System.Windows.Controls.DataGridColumn));
+        foreach (var col in GridAllClients.Columns)
+            desc.AddValueChanged(col, (_, _) => SaveAllClientsColumnWidths());
+    }
+
+    private void SaveAllClientsColumnWidths()
+    {
+        foreach (var col in GridAllClients.Columns)
+        {
+            string header = col.Header?.ToString() ?? "";
+            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
+            double w = col.ActualWidth;
+            if (w > 0) UiPrefs.Set($"AllColWidth_{header}", (int)w);
         }
     }
 
@@ -3924,12 +3962,7 @@ Read-Host 'Press Enter to close'
             SetStatus("Build successful.");
             NotificationService.NotifyBuildSuccess();
 
-            MessageBox.Show(
-                $"Build successful!\n\n" +
-                $"File: {Path.GetFileName(outputExe)}\n" +
-                $"Size: {sizeStr}\n" +
-                $"Mode: NativeAOT",
-                "Sero — Build Complete", MessageBoxButton.OK, MessageBoxImage.Information);
+            ShowBuildResult(Path.GetFileName(outputExe), sizeStr);
         }
         catch (Exception ex)
         {
@@ -3941,6 +3974,63 @@ Read-Host 'Press Enter to close'
             BtnBuild.IsEnabled = true;
             BuilderPanel.IsEnabled = true;
         }
+    }
+
+    private void ShowBuildResult(string fileName, string sizeStr)
+    {
+        var bg  = (System.Windows.Media.SolidColorBrush)FindResource("WindowBgBrush");
+        var sec = (System.Windows.Media.SolidColorBrush)FindResource("SectionBgBrush");
+        var brd = (System.Windows.Media.SolidColorBrush)FindResource("InputBorderBrush");
+        var txt = (System.Windows.Media.SolidColorBrush)FindResource("ContentTextBrush");
+        var lbl = (System.Windows.Media.SolidColorBrush)FindResource("LabelBrush");
+        var acc = (System.Windows.Media.SolidColorBrush)FindResource("AccentBrush");
+
+        var dlg = new Window
+        {
+            Title = Lang.Get("BLD_SUCCESS_TITLE"),
+            Width = 360, Height = 190,
+            WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
+            ResizeMode = ResizeMode.NoResize,
+            ShowInTaskbar = false,
+            Background = bg,
+            WindowStyle = WindowStyle.ToolWindow,
+        };
+
+        var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(24, 20, 24, 20) };
+
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = "✔  " + Lang.Get("BLD_SUCCESS_MSG"),
+            Foreground = acc, FontSize = 13, FontWeight = FontWeights.SemiBold,
+            Margin = new Thickness(0, 0, 0, 12),
+        });
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = $"{Lang.Get("BLD_FILE")} {fileName}",
+            Foreground = txt, FontSize = 12,
+            Margin = new Thickness(0, 0, 0, 4),
+        });
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = $"{Lang.Get("BLD_SIZE")} {sizeStr}",
+            Foreground = lbl, FontSize = 11,
+            Margin = new Thickness(0, 0, 0, 20),
+        });
+
+        var btn = new System.Windows.Controls.Button
+        {
+            Content = "OK", Width = 80, Height = 28,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Background = sec, Foreground = txt, BorderBrush = brd,
+            BorderThickness = new Thickness(1),
+            Cursor = System.Windows.Input.Cursors.Hand,
+        };
+        btn.Click += (_, _) => dlg.Close();
+        sp.Children.Add(btn);
+
+        dlg.Content = sp;
+        dlg.ShowDialog();
     }
 
     // Helper: run a process and return (exitCode, stdout+stderr combined) without deadlocking

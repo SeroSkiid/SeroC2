@@ -80,7 +80,11 @@ public partial class PerformanceMonitorWindow : ThemedWindow
         TxtStatus.Text = Lang.Get("PERF_STREAMING");
     }
 
-    private void ApplyLanguage() { this.Title = Lang.Get("FEAT_PERF_MONITOR"); }
+    private void ApplyLanguage()
+    {
+        this.Title = Lang.Get("FEAT_PERF_MONITOR");
+        if (TxtBtnActions != null) TxtBtnActions.Text = Lang.Get("ACT_ACTIONS");
+    }
 
     private void OnPerfData(Packet pkt)
     {

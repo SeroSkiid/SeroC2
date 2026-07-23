@@ -97,8 +97,9 @@ public partial class HvncWindow : ThemedWindow
     private void ApplyLanguage()
     {
         this.Title = Lang.Get("FEAT_HVNC");
-        if (BtnStart != null) BtnStart.Content = Lang.Get("ACT_START");
-        if (BtnStop  != null) BtnStop.Content  = Lang.Get("ACT_STOP");
+        if (BtnStart      != null) BtnStart.Content      = Lang.Get("ACT_START");
+        if (BtnStop       != null) BtnStop.Content       = Lang.Get("ACT_STOP");
+        if (TxtBtnActions != null) TxtBtnActions.Text     = Lang.Get("ACT_ACTIONS");
         if (TxtStatus != null && !_streaming) TxtStatus.Text = Lang.Get("STOPPED");
     }
 

@@ -300,14 +300,28 @@
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="22"/>
                                     </Grid.ColumnDefinitions>
-                                    <!-- selected-item label -->
-                                    <ContentPresenter Grid.Column="0"
+                                    <!-- selected-item label (non-editable mode) -->
+                                    <ContentPresenter x:Name="ContentSite"
+                                                      Grid.Column="0"
                                                       Margin="{TemplateBinding Padding}"
                                                       Content="{TemplateBinding SelectionBoxItem}"
                                                       ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
                                                       HorizontalAlignment="Left"
                                                       VerticalAlignment="Center"
                                                       TextBlock.Foreground="{TemplateBinding Foreground}"/>
+                                    <!-- editable text input (IsEditable="True" mode) -->
+                                    <TextBox x:Name="PART_EditableTextBox"
+                                             Grid.Column="0"
+                                             Background="Transparent"
+                                             Foreground="{TemplateBinding Foreground}"
+                                             CaretBrush="{TemplateBinding Foreground}"
+                                             Padding="{TemplateBinding Padding}"
+                                             IsReadOnly="{TemplateBinding IsReadOnly}"
+                                             Focusable="True"
+                                             HorizontalAlignment="Stretch"
+                                             VerticalAlignment="Center"
+                                             Visibility="Hidden"
+                                             BorderThickness="0"/>
                                     <!-- chevron -->
                                     <Path Grid.Column="1"
                                           Data="M2,5 L6,9 L10,5"
@@ -357,6 +371,10 @@
                             </Trigger>
                             <Trigger Property="IsDropDownOpen" Value="True">
                                 <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+                            </Trigger>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="ContentSite"          Property="Visibility" Value="Hidden"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

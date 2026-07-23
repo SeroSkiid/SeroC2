@@ -1777,8 +1777,7 @@
                                                 Click="BtnDashMinerStats_Click" Style="{StaticResource SBtn}"
                                                 ToolTip="Open miner statistics window">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons"
-                                                           FontSize="11" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_ChartOfAccounts.svg'}" Width="13" Height="13" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="BtnDashMinerStatsLbl" Text="MINER STATS"
                                                            VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -1970,7 +1969,7 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="COUNTRY"  Binding="{Binding CountryDisplay}"                      Width="68" MinWidth="40" MaxWidth="200"/>
-                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="Auto" MinWidth="80" MaxWidth="220"/>
+                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="120" MinWidth="80" MaxWidth="220"/>
                                         <DataGridTextColumn Header="OS"       Binding="{Binding OS}"                                  Width="66" MinWidth="40" MaxWidth="200"/>
                                         <DataGridTextColumn Header="MACHINE"  Binding="{Binding MachineName}"                         Width="70" MinWidth="40" MaxWidth="200"/>
                                         <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="86"  MinWidth="66" MaxWidth="140" FontSize="11"/>
@@ -2007,11 +2006,11 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="CPU"      Binding="{Binding CpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
-                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="Auto" MinWidth="64" MaxWidth="140" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="80" MinWidth="64" MaxWidth="140" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="AV"       Binding="{Binding Antivirus}"                           Width="68"  MinWidth="40" MaxWidth="180" FontSize="11"/>
-                                        <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="54"  MinWidth="36" MaxWidth="110" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="90"  MinWidth="60" MaxWidth="130" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="PING" Width="Auto" MinWidth="48" MaxWidth="100" SortMemberPath="PingMs">
+                                        <DataGridTemplateColumn Header="PING" Width="60" MinWidth="48" MaxWidth="100" SortMemberPath="PingMs">
                                             <DataGridTemplateColumn.CellStyle>
                                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                             </DataGridTemplateColumn.CellStyle>

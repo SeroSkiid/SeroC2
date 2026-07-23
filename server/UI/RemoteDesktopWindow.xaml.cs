@@ -148,8 +148,9 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private void ApplyLanguage()
     {
         this.Title = Lang.Get("FEAT_REMOTE_DESKTOP");
-        if (BtnStart != null) BtnStart.Content = Lang.Get("ACT_START");
-        if (BtnStop  != null) BtnStop.Content  = Lang.Get("ACT_STOP");
+        if (TxtBtnActions != null) TxtBtnActions.Text = Lang.Get("ACT_ACTIONS");
+        if (BtnStart      != null) BtnStart.Content   = Lang.Get("ACT_START");
+        if (BtnStop       != null) BtnStop.Content    = Lang.Get("ACT_STOP");
     }
 
     private async void TxtClientId_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
