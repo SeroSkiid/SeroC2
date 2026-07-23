@@ -18,16 +18,15 @@ internal static class TikTokFeature
         videoId = CleanId(videoId);
         try
         {
-            using var http = MakeClient(cookie, $"{BaseUrl}/video/{videoId}");
             var payload = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 ["aweme_id"]        = videoId,
                 ["text"]            = text,
                 ["is_side_comment"] = "0",
             });
-            var resp = await http.PostAsync(
+            var resp = await SendPostAsync(
                 $"{BaseUrl}/api/comment/publish/?aid=1988&app_name=tiktok_web",
-                payload);
+                cookie, $"{BaseUrl}/video/{videoId}", payload);
             return ParseResponse(await resp.Content.ReadAsStringAsync());
         }
         catch (Exception ex) { return (false, ex.Message); }
@@ -41,7 +40,6 @@ internal static class TikTokFeature
         roomId = CleanId(roomId);
         try
         {
-            using var http = MakeClient(cookie, $"{BaseUrl}/live/{roomId}");
             // TikTok live chat endpoint
             var payload = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -49,9 +47,9 @@ internal static class TikTokFeature
                 ["content"]   = text,
                 ["type"]      = "1",
             });
-            var resp = await http.PostAsync(
+            var resp = await SendPostAsync(
                 $"{BaseUrl}/api/live/comment/?aid=1988&app_name=tiktok_web",
-                payload);
+                cookie, $"{BaseUrl}/live/{roomId}", payload);
             return ParseResponse(await resp.Content.ReadAsStringAsync());
         }
         catch (Exception ex) { return (false, ex.Message); }
@@ -106,18 +104,20 @@ internal static class TikTokFeature
 
     // ── Helpers ─────────────────────────────────────────────────────────────
 
-    private static HttpClient MakeClient(string cookie, string referer)
+    private static readonly HttpClient _http = new(new HttpClientHandler { UseCookies = false })
+        { Timeout = TimeSpan.FromSeconds(20) };
+
+    private static Task<HttpResponseMessage> SendPostAsync(string url, string cookie, string referer, HttpContent content)
     {
-        var handler = new HttpClientHandler { UseCookies = false };
-        var http = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(20) };
-        http.DefaultRequestHeaders.UserAgent.ParseAdd(
+        var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
+        req.Headers.UserAgent.ParseAdd(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
             "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 TikTok/26.2.0");
-        http.DefaultRequestHeaders.Add("Cookie", cookie);
-        http.DefaultRequestHeaders.Add("Referer", referer);
-        http.DefaultRequestHeaders.Add("Origin",  BaseUrl);
-        http.DefaultRequestHeaders.Add("X-Tt-Token", ExtractCookieValue(cookie, "tt_csrf_token"));
-        return http;
+        req.Headers.Add("Cookie", cookie);
+        req.Headers.Add("Referer", referer);
+        req.Headers.Add("Origin",  BaseUrl);
+        req.Headers.Add("X-Tt-Token", ExtractCookieValue(cookie, "tt_csrf_token"));
+        return _http.SendAsync(req);
     }
 
     private static (bool, string) ParseResponse(string body)

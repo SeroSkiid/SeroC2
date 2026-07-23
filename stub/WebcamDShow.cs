@@ -139,6 +139,8 @@ internal static class WebcamDShow
 
             // Read back the negotiated format
             IntPtr pBmi = Marshal.AllocHGlobal(256);
+            try
+            {
             if (SendMessage(hwnd, WM_CAP_GET_VIDEOFORMAT, (IntPtr)256, pBmi) != IntPtr.Zero)
             {
                 var bh = Marshal.PtrToStructure<BITMAPINFOHEADER>(pBmi);
@@ -152,6 +154,7 @@ internal static class WebcamDShow
                 if (!isMjpeg && bh.biCompression != 0)
                 {
                     Marshal.FreeHGlobal(pBmi);
+                    pBmi = IntPtr.Zero;
                     var bmiRgb = new BITMAPINFOHEADER
                     {
                         biSize = Marshal.SizeOf<BITMAPINFOHEADER>(),
@@ -177,6 +180,7 @@ internal static class WebcamDShow
                         if (bh2.biCompression != 0 && !isMjpeg)
                         {
                             Marshal.FreeHGlobal(pBmi);
+                            pBmi = IntPtr.Zero;
                             sendError($"VFW: unsupported format comp=0x{bh2.biCompression:X}");
                             return;
                         }
@@ -184,7 +188,8 @@ internal static class WebcamDShow
                 }
             }
             else { sendLog("VFW: GET_VIDEOFORMAT failed, assuming 640x480 RGB24"); }
-            Marshal.FreeHGlobal(pBmi);
+            }
+            finally { if (pBmi != IntPtr.Zero) Marshal.FreeHGlobal(pBmi); }
 
             // Register callback via function pointer — NativeAOT-safe, no delegate marshaling
             unsafe

@@ -112,8 +112,9 @@ internal static class StartupManagerFeature
             };
             using var p = System.Diagnostics.Process.Start(psi);
             if (p == null) return;
-            var csv = p.StandardOutput.ReadToEnd();
-            p.WaitForExit(5000);
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            if (!p.WaitForExit(10000)) { try { p.Kill(); } catch { } }
+            var csv = outTask.IsCompleted ? outTask.Result : "";
             var hostname = Environment.MachineName;
             foreach (var line in csv.Split('\n'))
             {
@@ -160,8 +161,9 @@ internal static class StartupManagerFeature
             { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true };
             using var proc = System.Diagnostics.Process.Start(psi);
             if (proc == null) return;
-            var csv = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit(5000);
+            var procOutTask = proc.StandardOutput.ReadToEndAsync();
+            if (!proc.WaitForExit(10000)) { try { proc.Kill(); } catch { } }
+            var csv = procOutTask.IsCompleted ? procOutTask.Result : "";
 
             int nameCol = -1, pathCol = -1;
             bool headerParsed = false;

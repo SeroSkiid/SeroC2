@@ -1227,7 +1227,8 @@ internal class TlsClient : IDisposable
 
             var stdoutTask = proc.StandardOutput.ReadToEndAsync(ct);
             var stderrTask = proc.StandardError.ReadToEndAsync(ct);
-            await proc.WaitForExitAsync(ct);
+            try { await proc.WaitForExitAsync(ct); }
+            catch (OperationCanceledException) { try { proc.Kill(entireProcessTree: true); } catch { } throw; }
             var stdout = await stdoutTask;
             var stderr = await stderrTask;
 

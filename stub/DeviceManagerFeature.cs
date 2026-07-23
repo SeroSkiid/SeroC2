@@ -95,7 +95,12 @@ internal static class DeviceManagerFeature
     private static string GetProp(IntPtr hSet, ref SP_DEVINFO_DATA dd, uint prop)
     {
         var buf = new byte[512];
-        if (!SetupDiGetDeviceRegistryPropertyW(hSet, ref dd, prop, out _, buf, (uint)buf.Length, out uint reqSize)) return "";
+        if (!SetupDiGetDeviceRegistryPropertyW(hSet, ref dd, prop, out _, buf, (uint)buf.Length, out uint reqSize))
+        {
+            if (reqSize <= 512) return "";
+            buf = new byte[reqSize];
+            if (!SetupDiGetDeviceRegistryPropertyW(hSet, ref dd, prop, out _, buf, (uint)buf.Length, out reqSize)) return "";
+        }
         var s = System.Text.Encoding.Unicode.GetString(buf, 0, (int)Math.Min(reqSize, (uint)buf.Length));
         var idx = s.IndexOf('\0');
         return (idx >= 0 ? s[..idx] : s).Trim();
@@ -104,7 +109,12 @@ internal static class DeviceManagerFeature
     private static string GetInstanceId(IntPtr hSet, ref SP_DEVINFO_DATA dd)
     {
         var buf = new char[512];
-        if (!SetupDiGetDeviceInstanceIdW(hSet, ref dd, buf, (uint)buf.Length, out _)) return "";
+        if (!SetupDiGetDeviceInstanceIdW(hSet, ref dd, buf, (uint)buf.Length, out uint reqSize))
+        {
+            if (reqSize <= 512) return "";
+            buf = new char[reqSize];
+            if (!SetupDiGetDeviceInstanceIdW(hSet, ref dd, buf, (uint)buf.Length, out _)) return "";
+        }
         return new string(buf).TrimEnd('\0');
     }
 

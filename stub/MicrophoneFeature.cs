@@ -124,6 +124,8 @@ internal static class MicrophoneFeature
         var dataPtrs = new nint[numBuffers];
         var hdrPtrs  = new nint[numBuffers];
 
+        try
+        {
         for (int i = 0; i < numBuffers; i++)
         {
             dataPtrs[i] = Marshal.AllocHGlobal(bufferBytes);
@@ -136,8 +138,6 @@ internal static class MicrophoneFeature
 
         waveInStart(hwi);
 
-        try
-        {
             int idx = 0;
             while (_running)
             {
@@ -174,11 +174,14 @@ internal static class MicrophoneFeature
             waveInReset(hwi);
             for (int i = 0; i < numBuffers; i++)
             {
-                var hdr = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[i]);
-                if ((hdr.dwFlags & WHDR_PREPARED) != 0)
-                    waveInUnprepareHeader(hwi, hdrPtrs[i], hdrSize);
-                Marshal.FreeHGlobal(hdrPtrs[i]);
-                Marshal.FreeHGlobal(dataPtrs[i]);
+                if (hdrPtrs[i] != nint.Zero)
+                {
+                    var hdr = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[i]);
+                    if ((hdr.dwFlags & WHDR_PREPARED) != 0)
+                        waveInUnprepareHeader(hwi, hdrPtrs[i], hdrSize);
+                    Marshal.FreeHGlobal(hdrPtrs[i]);
+                }
+                if (dataPtrs[i] != nint.Zero) Marshal.FreeHGlobal(dataPtrs[i]);
             }
             waveInClose(hwi);
         }
