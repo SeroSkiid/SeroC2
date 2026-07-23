@@ -1010,7 +1010,6 @@ public class FileEntryVM
         }
         else
         {
-            var ext = Path.GetExtension(e.Name);
             TypeDisplay = string.IsNullOrEmpty(ext) ? "File" : ext.TrimStart('.').ToUpperInvariant();
             var bytes = e.Size;
             SizeDisplay = bytes < 1024           ? $"{bytes} B"
