@@ -15,20 +15,32 @@
             <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="ESTABLISHED">
-                    <Setter Property="Foreground" Value="#7DD8A0"/>
+                    <Setter Property="Foreground" Value="#4ADE80"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="LISTEN">
-                    <Setter Property="Foreground" Value="#80A8E8"/>
+                    <Setter Property="Foreground" Value="#60A5FA"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="TIME_WAIT">
-                    <Setter Property="Foreground" Value="#C8A060"/>
+                    <Setter Property="Foreground" Value="#FBBF24"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="CLOSE_WAIT">
-                    <Setter Property="Foreground" Value="#D07070"/>
+                    <Setter Property="Foreground" Value="#F87171"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="SYN_SENT">
-                    <Setter Property="Foreground" Value="#C8A060"/>
+                    <Setter Property="Foreground" Value="#FBBF24"/>
                 </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="SYN_RCVD">
+                    <Setter Property="Foreground" Value="#FBBF24"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="FIN_WAIT1">
+                    <Setter Property="Foreground" Value="#F87171"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding State}" Value="FIN_WAIT2">
+                    <Setter Property="Foreground" Value="#F87171"/>
+                </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
         <Style TargetType="DataGridCell">
@@ -128,13 +140,13 @@
                 <!-- State legend -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="ESTABLISHED" Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="ESTABLISHED" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="LISTEN" Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="LISTEN" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="#F59E0B" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="WAIT" Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="WAIT" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="#EF4444" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="CLOSING" Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" VerticalAlignment="Center"/>
+                    <TextBlock Text="CLOSING" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -171,8 +183,8 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn x:Name="ColTcpPid"     Header="PID"     Binding="{Binding Pid}"         Width="60"  FontSize="11"/>
-                <DataGridTextColumn x:Name="ColTcpProcess" Header="PROCESS" Binding="{Binding ProcessName}" Width="140" FontSize="11"/>
+                <DataGridTextColumn x:Name="ColTcpPid"     Header="PID"     Binding="{Binding Pid}"         Width="60"  FontSize="12"/>
+                <DataGridTextColumn x:Name="ColTcpProcess" Header="PROCESS" Binding="{Binding ProcessName}" Width="140" FontSize="12"/>
                 <DataGridTextColumn x:Name="ColTcpLocal"   Header="LOCAL"   Binding="{Binding LocalAddr}"   Width="*"/>
                 <DataGridTextColumn x:Name="ColTcpRemote"  Header="REMOTE"  Binding="{Binding RemoteAddr}"  Width="*"/>
                 <DataGridTemplateColumn x:Name="ColTcpState" Header="STATE" Width="120" SortMemberPath="State">
