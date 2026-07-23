@@ -139,6 +139,7 @@ public class ConnectedClient : INotifyPropertyChanged
     // Green < 100ms · Orange 100-300ms · Red > 300ms · Dim while waiting
     private static readonly Brush _brushDim    = new SolidColorBrush(Color.FromRgb(0x55, 0x60, 0x78));
     private static readonly Brush _brushGreen  = new SolidColorBrush(Color.FromRgb(0x22, 0xc5, 0x5e));
+    private static readonly Brush _brushYellow = new SolidColorBrush(Color.FromRgb(0xfa, 0xcc, 0x15));
     private static readonly Brush _brushOrange = new SolidColorBrush(Color.FromRgb(0xf5, 0x9e, 0x0b));
     private static readonly Brush _brushRed    = new SolidColorBrush(Color.FromRgb(0xef, 0x44, 0x44));
     public Brush PingBrush => _pingMs < 0   ? _brushDim
