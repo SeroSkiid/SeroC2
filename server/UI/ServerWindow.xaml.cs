@@ -1591,6 +1591,20 @@ public partial class ServerWindow : ThemedWindow
         if (busyClient != null) busyClient.ActiveSessions++;
 
         ApplySoftwareRendering(win);
+
+        // Generic fade-in for windows that don't manage their own (those set Opacity=0 in their ctor)
+        if (win.Opacity > 0)
+        {
+            win.Opacity = 0;
+            win.Loaded += (_, _) =>
+            {
+                var ease = new System.Windows.Media.Animation.CubicEase
+                    { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
+                win.BeginAnimation(OpacityProperty,
+                    new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)) { EasingFunction = ease });
+            };
+        }
+
         _featureWindows[key] = win;
         win.Closed += (_, _) => { _featureWindows.Remove(key); if (busyClient != null) busyClient.ActiveSessions--; };
         try
@@ -5302,18 +5316,28 @@ Read-Host 'Press Enter to close'
         dp.Children.Add(labelStack);
         dp.Children.Add(img);
 
+        var scaleT = new System.Windows.Media.ScaleTransform(1.0, 1.0);
         var border = new System.Windows.Controls.Border
         {
-            Margin          = new Thickness(3),
-            BorderThickness = new Thickness(1),
-            CornerRadius    = new System.Windows.CornerRadius(5),
-            Cursor          = System.Windows.Input.Cursors.Hand,
-            Child           = dp,
+            Margin                  = new Thickness(3),
+            BorderThickness         = new Thickness(1),
+            CornerRadius            = new System.Windows.CornerRadius(5),
+            Cursor                  = System.Windows.Input.Cursors.Hand,
+            Child                   = dp,
+            RenderTransform         = scaleT,
+            RenderTransformOrigin   = new System.Windows.Point(0.5, 0.5),
         };
         border.SetResourceReference(System.Windows.Controls.Border.BackgroundProperty, "SectionBgBrush");
         border.SetResourceReference(System.Windows.Controls.Border.BorderBrushProperty, "InputBorderBrush");
 
-        // ── Hover highlight + click-to-popup ────────────────────────────────
+        System.Windows.Media.Animation.DoubleAnimation TileScaleAnim(double to) =>
+            new(to, TimeSpan.FromMilliseconds(160))
+            {
+                EasingFunction = new System.Windows.Media.Animation.CubicEase
+                    { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+            };
+
+        // ── Hover highlight + scale + click-to-popup ────────────────────────
         var capturedId    = client.Id;
         var capturedClient = client;
 
@@ -5322,6 +5346,8 @@ Read-Host 'Press Enter to close'
             if (TryFindResource("AccentBrush") is System.Windows.Media.Brush accent)
                 border.BorderBrush = accent;
             System.Windows.Controls.Panel.SetZIndex(border, 10);
+            scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, TileScaleAnim(1.04));
+            scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, TileScaleAnim(1.04));
             _screenFocusCancelCts?.Cancel();
             _screenFocusCancelCts = null;
             SetScreenFocus(capturedId);
@@ -5330,6 +5356,8 @@ Read-Host 'Press Enter to close'
         {
             border.SetResourceReference(System.Windows.Controls.Border.BorderBrushProperty, "InputBorderBrush");
             System.Windows.Controls.Panel.SetZIndex(border, 0);
+            scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, TileScaleAnim(1.0));
+            scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, TileScaleAnim(1.0));
             _screenFocusCancelCts?.Cancel();
             var cts = new System.Threading.CancellationTokenSource();
             _screenFocusCancelCts = cts;
@@ -5717,7 +5745,11 @@ Read-Host 'Press Enter to close'
         {
             var ease = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut };
             presenter.BeginAnimation(OpacityProperty,
-                new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
+                new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200)) { EasingFunction = ease });
+            var tx = new System.Windows.Media.TranslateTransform(0, 8);
+            presenter.RenderTransform = tx;
+            tx.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty,
+                new DoubleAnimation(0, TimeSpan.FromMilliseconds(220)) { EasingFunction = ease });
         }
 
         SyncNavButtons(MainTabControl.SelectedIndex);
@@ -5734,6 +5766,17 @@ Read-Host 'Press Enter to close'
         if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
         if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+
+        // Cancel any leave-fade so the trigger Setter (Opacity=1) retakes control
+        glow.BeginAnimation(Border.OpacityProperty, null);
+
+        // Adapt glow colour to current accent
+        if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
+        {
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(60, accent.R, accent.G, accent.B);
+            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(14, accent.R, accent.G, accent.B);
+        }
+
         var pos = e.GetPosition(btn);
         double cx = pos.X / Math.Max(btn.ActualWidth, 1);
         double cy = pos.Y / Math.Max(btn.ActualHeight, 1);
@@ -5749,6 +5792,17 @@ Read-Host 'Press Enter to close'
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
         rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
         rgb.Center         = new System.Windows.Point(0.5, 0.5);
+
+        // Smooth fade to the resting value (0 when not selected, 0.15 when selected)
+        double restOpacity = btn.IsChecked == true ? 0.15 : 0.0;
+        var fade = new System.Windows.Media.Animation.DoubleAnimation(
+            restOpacity, TimeSpan.FromMilliseconds(250))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase
+                { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+            FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop
+        };
+        glow.BeginAnimation(Border.OpacityProperty, fade);
     }
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
@@ -8142,20 +8196,41 @@ Read-Host 'Press Enter to close'
     {
         if (GridSettingsPanel == null) return;
         if (GridSettingsPanel.Visibility == Visibility.Visible)
-        {
-            GridSettingsPanel.Visibility = Visibility.Collapsed;
-        }
+            SlideOutGridSettings();
         else
         {
             UpdateSettingsCheckboxStates();
-            GridSettingsPanel.Visibility = Visibility.Visible;
+            SlideInGridSettings();
         }
     }
 
     private void CloseGridSettings_Click(object sender, RoutedEventArgs e)
     {
         if (GridSettingsPanel != null)
-            GridSettingsPanel.Visibility = Visibility.Collapsed;
+            SlideOutGridSettings();
+    }
+
+    private void SlideInGridSettings()
+    {
+        var tx = (System.Windows.Media.TranslateTransform)GridSettingsPanel.RenderTransform;
+        tx.X = 260;
+        GridSettingsPanel.Visibility = Visibility.Visible;
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+        };
+        tx.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
+    }
+
+    private void SlideOutGridSettings()
+    {
+        var tx = (System.Windows.Media.TranslateTransform)GridSettingsPanel.RenderTransform;
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(260, TimeSpan.FromMilliseconds(180))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
+        };
+        anim.Completed += (_, _) => GridSettingsPanel.Visibility = Visibility.Collapsed;
+        tx.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
     }
 
     private void ChkFilterWebcam_Checked(object sender, RoutedEventArgs e)

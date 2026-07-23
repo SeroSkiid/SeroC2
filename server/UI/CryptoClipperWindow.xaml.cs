@@ -52,7 +52,7 @@ public partial class CryptoClipperWindow : ThemedWindow
             ChkEnabled.IsChecked = data.Enabled;
             BadgeActive.Visibility = data.Enabled ? Visibility.Visible : Visibility.Collapsed;
             _totalCount = data.Count;
-            TxtCount.Text = $"{_totalCount} replacement{(_totalCount != 1 ? "s" : "")}";
+            TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
             TxtStatus.Text = data.Enabled ? Lang.Get("CLIPPER_IS_ACTIVE") : Lang.Get("CLIPPER_IS_DISABLED");
         });
     }
@@ -64,7 +64,7 @@ public partial class CryptoClipperWindow : ThemedWindow
         Dispatcher.BeginInvoke(() =>
         {
             _totalCount++;
-            TxtCount.Text = $"{_totalCount} replacement{(_totalCount != 1 ? "s" : "")}";
+            TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
             var line = $"[{DateTime.Now:h:mm tt}]  {data.Type}  {data.Original[..Math.Min(data.Original.Length, 20)]}…  →  {data.Replaced}\n";
             TxtLog.AppendText(line);
             LogScroll.ScrollToEnd();

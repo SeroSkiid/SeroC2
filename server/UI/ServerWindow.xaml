@@ -250,8 +250,9 @@
                             <Border x:Name="Bg" Background="Transparent"/>
                             <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
                                 <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.9" RadiusY="1.2">
-                                        <GradientStop Color="#25FFFFFF" Offset="0"/>
+                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.55" RadiusY="0.9">
+                                        <GradientStop Color="#45FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#10FFFFFF" Offset="0.55"/>
                                         <GradientStop Color="#00FFFFFF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Border.Background>
@@ -1965,16 +1966,25 @@
                                             </DataGridTemplateColumn.CellStyle>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock x:Name="CamTxt" Text="—" FontSize="11"
-                                                               Foreground="{DynamicResource LabelBrush}"
-                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <dx:DXImage x:Name="CamYesIcon"
+                                                                    Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Check.svg'}"
+                                                                    Width="14" Height="14" Visibility="Collapsed"/>
+                                                        <dx:DXImage x:Name="CamNoIcon"
+                                                                    Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}"
+                                                                    Width="14" Height="14" Visibility="Collapsed" Opacity="0.45"/>
+                                                        <TextBlock x:Name="CamDash" Text="—" FontSize="11"
+                                                                   Foreground="{DynamicResource LabelBrush}" Opacity="0.4"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                    </Grid>
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding CameraStatus}" Value="Yes">
-                                                            <Setter TargetName="CamTxt" Property="Text"       Value="Oui"/>
-                                                            <Setter TargetName="CamTxt" Property="Foreground" Value="#22C55E"/>
+                                                            <Setter TargetName="CamYesIcon" Property="Visibility" Value="Visible"/>
+                                                            <Setter TargetName="CamDash"    Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding CameraStatus}" Value="No">
-                                                            <Setter TargetName="CamTxt" Property="Text" Value="Non"/>
+                                                            <Setter TargetName="CamNoIcon"  Property="Visibility" Value="Visible"/>
+                                                            <Setter TargetName="CamDash"    Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                     </DataTemplate.Triggers>
                                                 </DataTemplate>
@@ -1997,8 +2007,8 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44" MaxWidth="280"/>
-                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" MaxWidth="130" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="*" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2108,13 +2118,18 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- Grid Settings Panel on the Right -->
-                                <Border Grid.Column="1" x:Name="GridSettingsPanel"
+                                <!-- Grid Settings Panel — overlays on top of the DataGrid, no layout shift -->
+                                <Border Grid.Column="0" x:Name="GridSettingsPanel"
                                         Width="260"
+                                        HorizontalAlignment="Right"
+                                        Panel.ZIndex="10"
                                         Background="{DynamicResource InputBgBrush}"
                                         BorderBrush="{DynamicResource SectionBorderBrush}"
                                         BorderThickness="1,0,0,0"
                                         Visibility="Collapsed">
+                                    <Border.RenderTransform>
+                                        <TranslateTransform X="260"/>
+                                    </Border.RenderTransform>
                                     <Grid Margin="16">
                                         <Grid.RowDefinitions>
                                             <RowDefinition Height="Auto" /> <!-- Header -->
@@ -3637,7 +3652,7 @@
                                               Style="{StaticResource SChk}" IsChecked="True" Margin="0,0,0,4"
                                               Checked="SettingsDevLogs_Changed" Unchecked="SettingsDevLogs_Changed" />
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                                        <TextBlock x:Name="TxtDevLogsPath" Text="" Foreground="#404878"
+                                        <TextBlock x:Name="TxtDevLogsPath" Text="" Foreground="{DynamicResource LabelBrush}"
                                                    FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
                                         <Button x:Name="BtnOpenDiagFolder" Content="Open folder" Margin="10,0,0,0" Height="22" Padding="8,0"
                                                 Style="{StaticResource SBtn}" Click="OpenDiagLogsFolder_Click"/>

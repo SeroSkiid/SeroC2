@@ -154,7 +154,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
         TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
         await Task.Delay(1500);
         TxtClientId.Text = _clientId;
-        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x90, 0xB8));
+        TxtClientId.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "TitleTextBrush");
     }
 
     // ── Fullscreen toggle ─────────────────────────────────────────────────────
@@ -615,9 +615,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private void Img_MouseMove(object s, MouseEventArgs e)
     {
         if (ChkCursor.IsChecked != true || !_streaming) return;
-        var local = e.GetPosition(ImgFrame);
-        var p = ToRemote(local);
-        TxtStatus.Text = $"Mouse → remote ({(int)p.X},{(int)p.Y})  img {(int)ImgFrame.ActualWidth}×{(int)ImgFrame.ActualHeight}";
+        var p = ToRemote(e.GetPosition(ImgFrame));
         SendInputPacket(new RdpInputData { T = "mm", X = (int)p.X, Y = (int)p.Y });
     }
 
