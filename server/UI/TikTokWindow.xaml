@@ -195,7 +195,7 @@
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
                                       BorderThickness="0" RowBackground="Transparent"
-                                      AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                                      AlternatingRowBackground="Transparent"
                                       GridLinesVisibility="None" HeadersVisibility="Column"
                                       FontFamily="Consolas" FontSize="11"
                                       CanUserAddRows="False" CanUserResizeRows="False"

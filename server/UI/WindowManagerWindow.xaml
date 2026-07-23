@@ -164,7 +164,7 @@
         <!-- Data grid -->
         <DataGrid x:Name="GridWins" AutoGenerateColumns="False" IsReadOnly="True"
                   Background="{DynamicResource WindowBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
-                  RowBackground="Transparent" AlternatingRowBackground="{DynamicResource AlternatingRowBgBrush}"
+                  RowBackground="Transparent" AlternatingRowBackground="Transparent"
                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
                   HeadersVisibility="Column" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
                   SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
