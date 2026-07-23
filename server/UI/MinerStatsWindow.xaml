@@ -62,7 +62,7 @@
                 Padding="16,12">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_ChartOfAccounts.svg'}" Width="16" Height="16" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="#F59E0B" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <TextBlock x:Name="WndTitle" Text="MINER STATS"
                                Foreground="{DynamicResource ContentTextBrush}" FontSize="14" FontWeight="Bold"/>
                 </StackPanel>
@@ -94,7 +94,7 @@
                 <Border Background="{DynamicResource CardBgBrush}" CornerRadius="4" Padding="12,6" Margin="0,0,8,0"
                         BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                     <StackPanel Orientation="Horizontal">
-                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_ChartOfAccounts.svg'}" Width="12" Height="12" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="#F59E0B" FontSize="10" Margin="0,0,6,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="PillHashrate" Text="0.0 H/s" Foreground="#F59E0B"
                                    FontSize="13" FontWeight="Bold" VerticalAlignment="Center"/>
                         <TextBlock Text=" total" Foreground="{DynamicResource LabelBrush}"
