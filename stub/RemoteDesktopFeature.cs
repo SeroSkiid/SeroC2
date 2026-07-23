@@ -162,6 +162,11 @@ internal static class RemoteDesktopFeature
 
     private static string _lastClip = "";
 
+    // Adaptive bandwidth: quality ramps down when acks are slow, recovers when they're fast.
+    // _adaptiveQuality starts at _cfg.Quality (the server-configured max) and is clamped to [15, _cfg.Quality].
+    private static volatile int _adaptiveQuality;
+    private static long         _lastFrameSendMs; // written by capture thread, read by SignalAck thread
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     public static void Start(RdpStartDataStub cfg, Func<int, string, System.Threading.Tasks.Task> send)
@@ -171,6 +176,9 @@ internal static class RemoteDesktopFeature
         _send = send;
         _prevPixels = null; // reset diff buffer on new session
         _forceRefreshAt = Environment.TickCount64 + 200; // safety-net refresh 200ms after first frame
+
+        _adaptiveQuality = cfg.Quality;
+        Interlocked.Exchange(ref _lastFrameSendMs, 0);
 
         EnsureGdiplus();
         _monitors = EnumMonitors();
@@ -196,6 +204,14 @@ internal static class RemoteDesktopFeature
 
     public static void SignalAck()
     {
+        long sentMs = Interlocked.Read(ref _lastFrameSendMs);
+        if (sentMs > 0)
+        {
+            int rtt = (int)Math.Min(Environment.TickCount64 - sentMs, 5000);
+            int q   = _adaptiveQuality;
+            if      (rtt > 450 && q > 15)            _adaptiveQuality = Math.Max(15,           q - 8);
+            else if (rtt < 100 && q < _cfg.Quality)  _adaptiveQuality = Math.Min(_cfg.Quality, q + 3);
+        }
         Interlocked.Add(ref _pendingRequests, 1);
         _frameReqWake.Release();
     }
@@ -279,6 +295,7 @@ internal static class RemoteDesktopFeature
                     string? json = CaptureAndDiff(mon.X, mon.Y, srcW, srcH);
                     if (json != null)
                     {
+                        Interlocked.Exchange(ref _lastFrameSendMs, Environment.TickCount64);
                         _send?.Invoke((int)PacketType.RdpFrame, json)
                               .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
                     }
@@ -451,14 +468,14 @@ internal static class RemoteDesktopFeature
 
         if (useFullFrame)
         {
-            byte[]? fullJpeg = EncodeBlock(pixels, dstW, dstH, 0, 0, dstW, dstH, _cfg.Quality);
+            byte[]? fullJpeg = EncodeBlock(pixels, dstW, dstH, 0, 0, dstW, dstH, _adaptiveQuality);
             if (fullJpeg == null || fullJpeg.Length == 0) return null;
             string swsh = scale < 100 ? $",\"sw\":{srcW},\"sh\":{srcH}" : "";
             return "{\"w\":" + dstW + ",\"h\":" + dstH + swsh +
                    ",\"j\":\"" + Convert.ToBase64String(fullJpeg) + "\"}";
         }
 
-        int effectiveQ = changedCount < totalBlocks * 15 / 100 ? 95 : _cfg.Quality;
+        int effectiveQ = changedCount < totalBlocks * 15 / 100 ? 95 : _adaptiveQuality;
 
         var encoded = new byte[]?[changedBlocks.Count];
         System.Threading.Tasks.Parallel.For(0, changedBlocks.Count,

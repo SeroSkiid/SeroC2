@@ -135,10 +135,21 @@ if ($pluginCpps -and $pluginCpps.Count -gt 0) {
             $psi.RedirectStandardError  = $true
             $psi.UseShellExecute        = $false
             $psi.CreateNoWindow         = $true
-            $proc   = [System.Diagnostics.Process]::Start($psi)
-            $stdout = $proc.StandardOutput.ReadToEnd()
-            $stderr = $proc.StandardError.ReadToEnd()
-            $proc.WaitForExit()
+            $stdout = ""; $stderr = ""
+            try {
+                $proc   = [System.Diagnostics.Process]::Start($psi)
+                $stdout = $proc.StandardOutput.ReadToEnd()
+                $stderr = $proc.StandardError.ReadToEnd()
+                $proc.WaitForExit()
+            } catch {
+                if ($vcVars) { Remove-Item $tmpBat -ErrorAction SilentlyContinue }
+                Write-Host "  [!] $baseName compile failed (process launch denied)" -ForegroundColor Yellow
+                Write-Host "      -> Access denied starting compiler: $($_.Exception.Message)" -ForegroundColor DarkYellow
+                Write-Host "         Cause: Antivirus is blocking cmd.exe / cl.exe from running." -ForegroundColor DarkYellow
+                Write-Host "         Fix:   Add an AV exclusion for the dist\server\Stubs\ folder," -ForegroundColor DarkYellow
+                Write-Host "                or temporarily disable real-time protection during the build." -ForegroundColor DarkYellow
+                continue
+            }
             if ($vcVars) { Remove-Item $tmpBat -ErrorAction SilentlyContinue }
 
             if ($proc.ExitCode -eq 0 -and (Test-Path $dllOut)) {

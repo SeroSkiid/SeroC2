@@ -121,6 +121,9 @@ internal static class WebcamFeature
     private static int _pendingRequests;
     private static readonly SemaphoreSlim _frameReqWake = new(0, 100);
 
+    private static volatile int _adaptiveQuality;
+    private static long         _lastFrameSendMs;
+
     private static volatile byte[]? _sgCbFrame;
     private static volatile int _cbFrameTotal;
 
@@ -168,7 +171,9 @@ internal static class WebcamFeature
         _cfg     = cfg;
         _send    = send;
         _running = true;
-        _pendingRequests = 2; // Allow 2 in-flight frames initially
+        _pendingRequests = 2;
+        _adaptiveQuality = cfg.Quality;
+        Interlocked.Exchange(ref _lastFrameSendMs, 0);
         _thread  = new Thread(CaptureLoop) { IsBackground = true, Name = "WcamCapture" };
         _thread.SetApartmentState(ApartmentState.STA);
         _thread.Start();
@@ -185,6 +190,14 @@ internal static class WebcamFeature
 
     public static void SignalAck()
     {
+        long sentMs = Interlocked.Read(ref _lastFrameSendMs);
+        if (sentMs > 0)
+        {
+            int rtt = (int)Math.Min(Environment.TickCount64 - sentMs, 5000);
+            int q   = _adaptiveQuality;
+            if      (rtt > 450 && q > 15)            _adaptiveQuality = Math.Max(15,           q - 8);
+            else if (rtt < 100 && q < _cfg.Quality)  _adaptiveQuality = Math.Min(_cfg.Quality, q + 3);
+        }
         Interlocked.Increment(ref _pendingRequests);
         if (_frameReqWake.CurrentCount == 0)
             _frameReqWake.Release();
@@ -552,19 +565,20 @@ internal static class WebcamFeature
                     byte[]? jpeg = null;
                     try
                     {
+                        int encQ = _adaptiveQuality;
                         if (outW != vidW || outH != vidH)
                         {
-                            if (sgIsMjpg) jpeg = ScaleMjpeg(raw, outW, outH, _cfg.Quality);
-                            else if (sgIsYuy2) { bgraBuffer = Yuy2ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, _cfg.Quality); }
-                            else if (bpp == 4) { bgraBuffer = Bgrx32ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, _cfg.Quality); }
-                            else { bgraBuffer = Rgb24ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, _cfg.Quality); }
+                            if (sgIsMjpg) jpeg = ScaleMjpeg(raw, outW, outH, encQ);
+                            else if (sgIsYuy2) { bgraBuffer = Yuy2ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
+                            else if (bpp == 4) { bgraBuffer = Bgrx32ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
+                            else { bgraBuffer = Rgb24ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
                         }
                         else
                         {
                             if (sgIsMjpg) jpeg = raw;
-                            else if (sgIsYuy2) jpeg = Yuy2ToJpeg(raw, vidW, vidH, _cfg.Quality);
-                            else if (bpp == 4) jpeg = Bgrx32ToJpeg(raw, vidW, vidH, _cfg.Quality);
-                            else jpeg = Rgb24ToJpeg(raw, vidW, vidH, _cfg.Quality);
+                            else if (sgIsYuy2) jpeg = Yuy2ToJpeg(raw, vidW, vidH, encQ);
+                            else if (bpp == 4) jpeg = Bgrx32ToJpeg(raw, vidW, vidH, encQ);
+                            else jpeg = Rgb24ToJpeg(raw, vidW, vidH, encQ);
                         }
                     }
                     finally
@@ -575,9 +589,10 @@ internal static class WebcamFeature
                     if (jpeg == null || jpeg.Length == 0) continue;
 
                     lastSendMs = now;
+                    Interlocked.Exchange(ref _lastFrameSendMs, now);
                     var b64  = RemoteDesktopFeature.ToBase64(jpeg);
                     var json = "{\"w\":" + outW + ",\"h\":" + outH + ",\"j\":\"" + b64 + "\"}";
-                    
+
                     Interlocked.Decrement(ref _pendingRequests);
                     _send?.Invoke((int)PacketType.WcamFrame, json)
                          .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
