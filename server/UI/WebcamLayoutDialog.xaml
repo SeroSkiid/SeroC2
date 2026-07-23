@@ -47,10 +47,10 @@
                               VerticalAlignment="Center" HorizontalAlignment="Left"
                               Style="{StaticResource SChk}"/>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="CANCEL" Width="80" Height="28" Margin="0,0,8,0"
+                        <Button x:Name="BtnCancel" Content="CANCEL" Width="80" Height="28" Margin="0,0,8,0"
                                 Style="{StaticResource SBtn}" Click="Cancel_Click"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI"/>
-                        <Button Content="OK" Width="80" Height="28"
+                        <Button x:Name="BtnOk" Content="OK" Width="80" Height="28"
                                 Style="{StaticResource SGreenBtn}" Click="Ok_Click"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI"/>
                     </StackPanel>
@@ -82,7 +82,7 @@
                             <Rectangle Canvas.Left="62" Canvas.Top="42" Width="56" Height="36"
                                        Fill="{DynamicResource InputBgBrush}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
                         </Canvas>
-                        <TextBlock Text="Tile Windows" Foreground="{DynamicResource ContentTextBrush}"
+                        <TextBlock x:Name="LblTileWindows" Text="Tile Windows" Foreground="{DynamicResource ContentTextBrush}"
                                    FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"
                                    HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     </StackPanel>
@@ -103,7 +103,7 @@
                             <Rectangle Canvas.Left="30" Canvas.Top="26" Width="76" Height="52"
                                        Fill="{DynamicResource InputBgBrush}" Stroke="#7C5CE8" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
                         </Canvas>
-                        <TextBlock Text="Cascade Windows" Foreground="{DynamicResource ContentTextBrush}"
+                        <TextBlock x:Name="LblCascadeWindows" Text="Cascade Windows" Foreground="{DynamicResource ContentTextBrush}"
                                    FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"
                                    HorizontalAlignment="Center" Margin="0,0,0,8"/>
                     </StackPanel>

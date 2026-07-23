@@ -131,7 +131,7 @@ public partial class InstalledAppsWindow : ThemedWindow
         var sel = GridApps.SelectedItems.Cast<InstalledAppVM>().Where(v => !string.IsNullOrEmpty(v.UninstallString)).ToList();
         if (sel.Count == 0) return;
         string msg = sel.Count == 1 ? $"Uninstall \"{sel[0].Name}\"?" : $"Uninstall {sel.Count} applications?";
-        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var vm in sel)
             _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.InstalledUninstall, Data = JsonConvert.SerializeObject(new InstalledUninstallData { UninstallString = vm.UninstallString }) });
         TxtStatus.Text = sel.Count == 1 ? $"Uninstall sent → {sel[0].Name}" : $"Uninstall sent → {sel.Count} apps";

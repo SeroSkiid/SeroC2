@@ -41,6 +41,11 @@ public partial class WebcamLayoutDialog : Window
     public WebcamLayoutDialog()
     {
         InitializeComponent();
+        BtnCancel.Content      = Lang.Get("BTN_CANCEL");
+        BtnOk.Content          = Lang.Get("BTN_OK");
+        ChkRemember.Content    = Lang.Get("WEBCAM_REMEMBER");
+        LblTileWindows.Text    = Lang.Get("WEBCAM_TILE");
+        LblCascadeWindows.Text = Lang.Get("WEBCAM_CASCADE");
         UpdateCardVisuals();
     }
 

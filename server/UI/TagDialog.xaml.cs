@@ -10,7 +10,10 @@ public partial class TagDialog : Window
     public TagDialog(string currentTag = "")
     {
         InitializeComponent();
-        TxtTag.Text = currentTag;
+        TxtTag.Text       = currentTag;
+        LblTag.Text       = Lang.Get("TAG_LBL");
+        BtnCancel.Content = Lang.Get("BTN_CANCEL");
+        BtnOk.Content     = Lang.Get("BTN_OK");
         Loaded += (_, _) => { TxtTag.Focus(); TxtTag.SelectAll(); };
     }
 

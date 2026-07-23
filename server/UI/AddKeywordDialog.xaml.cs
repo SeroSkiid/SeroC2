@@ -7,12 +7,14 @@ public partial class AddKeywordDialog : Window
 {
     public string Keyword => TxtKeyword.Text.Trim();
 
-    public AddKeywordDialog(Window owner, string initial = "", string prompt = "Enter window name keyword")
+    public AddKeywordDialog(Window owner, string initial = "", string? prompt = null)
     {
         InitializeComponent();
         Owner = owner;
         TxtKeyword.Text = initial;
-        LblPrompt.Text  = prompt;
+        LblPrompt.Text  = prompt ?? Lang.Get("WIN_NOTIFY_PROMPT");
+        BtnCancel.Content = Lang.Get("BTN_CANCEL");
+        BtnOk.Content     = Lang.Get("BTN_OK");
         Loaded += (_, _) => { TxtKeyword.Focus(); TxtKeyword.SelectAll(); };
     }
 
