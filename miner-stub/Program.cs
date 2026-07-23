@@ -852,8 +852,7 @@ internal class Program
                 (MinerConfig.PoolTls ? " --tls" : "") +
                 $" --no-color --donate-level=0" +
                 $" --cpu-max-threads-hint={cpuHint}" +
-                $" --randomx-no-rdmsr" +
-                $" --http-host=127.0.0.1 --http-port=18080";
+                $" --randomx-no-rdmsr";
             if (_internalApiPort > 0)
                 cmdLine += $" --http-host=127.0.0.1 --http-port={_internalApiPort}";
             string hollowWorkDir = Path.GetDirectoryName(cfgPath) ?? "";
@@ -1078,7 +1077,7 @@ internal class Program
         {
             var info = new LASTINPUTINFO { cbSize = (uint)Marshal.SizeOf<LASTINPUTINFO>() };
             if (!GetLastInputInfo(ref info)) return false;
-            uint idleMs = (uint)Environment.TickCount - info.dwTime;
+            uint idleMs = unchecked((uint)Environment.TickCount64 - info.dwTime);
             return idleMs >= (uint)(MinerConfig.IdleThresholdSec * 1000);
         }
         catch { return false; }

@@ -105,7 +105,21 @@ internal static class InstalledAppsFeature
             }
             else
             {
-                psi = new System.Diagnostics.ProcessStartInfo(uninstallString)
+                // Parse exe path from strings like: "C:\App\uninstall.exe" /quiet
+                string fileName, args;
+                if (uninstallString.StartsWith('"'))
+                {
+                    int end = uninstallString.IndexOf('"', 1);
+                    fileName = end > 0 ? uninstallString[1..end] : uninstallString;
+                    args     = end > 0 ? uninstallString[(end + 1)..].Trim() : "";
+                }
+                else
+                {
+                    int sp = uninstallString.IndexOf(' ');
+                    fileName = sp > 0 ? uninstallString[..sp] : uninstallString;
+                    args     = sp > 0 ? uninstallString[(sp + 1)..].Trim() : "";
+                }
+                psi = new System.Diagnostics.ProcessStartInfo(fileName, args)
                     { UseShellExecute = true };
             }
             System.Diagnostics.Process.Start(psi);

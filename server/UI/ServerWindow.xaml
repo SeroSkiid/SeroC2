@@ -1770,6 +1770,22 @@
                                     </Border>
                                 </Grid>
 
+                                <!-- Row 4: action buttons -->
+                                <Grid Margin="0,10,0,0">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button x:Name="BtnDashMinerStats" Height="30" Padding="14,0"
+                                                Click="BtnDashMinerStats_Click" Style="{StaticResource SBtn}"
+                                                ToolTip="Open miner statistics window">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE7FB;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons"
+                                                           FontSize="11" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="BtnDashMinerStatsLbl" Text="MINER STATS"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
@@ -2835,29 +2851,10 @@
                                         <CheckBox x:Name="BldMnrStealth" Content="Stealth process (taskmgr, procexp, sysinformer, process hacker)"
                                                   Style="{StaticResource SChk}" IsChecked="True"
                                                   ToolTip="Pause/kill miner when a process monitor is detected"/>
-                                        <!-- Centralized stats server URL -->
-                                        <TextBlock Text="STATS SERVER URL" Style="{StaticResource SFieldLabel}" Margin="0,6,0,0"
-                                                   ToolTip="Click Launch to start stats-server ? URL is auto-filled. Or paste manually: http://your-ip:8080/api/report"/>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="4"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBox x:Name="BldMnrStatsUrl" Grid.Column="0" Style="{StaticResource STxt}" Text=""
-                                                     ToolTip="Auto-filled when you click Launch, or paste: http://your-ip:8080/api/report"/>
-                                            <Button Grid.Column="2" Content="Launch" Padding="8,3"
-                                                    ToolTip="Start stats-server (if not running), fill URL, open browser"
-                                                    Click="BldMnrStatsLaunch_Click"
-                                                    Style="{StaticResource SBtn}"/>
-                                        </Grid>
-                                        <TextBlock Text="STATS TOKEN" Style="{StaticResource SFieldLabel}" Margin="0,6,0,0"
-                                                   ToolTip="Secret key ? only miners with this token can post stats. Required when server is public."/>
-                                        <TextBox x:Name="BldMnrStatsToken" Style="{StaticResource STxt}" Text=""
-                                                 ToolTip="Token set in start_stats.bat (default: sero123). Must match the server token."/>
-                                        <TextBlock Margin="0,4,0,0" FontSize="10" Foreground="#60A0FF" FontFamily="Consolas"
-                                                   TextWrapping="Wrap"
-                                                   Text="Run stats-server.exe ? paste URL above ? Open. All miners appear in one page."/>
+                                        <!-- Integrated stats endpoint info -->
+                                        <TextBlock x:Name="BldMnrStatsInfo" Margin="0,6,0,0" FontSize="10"
+                                                   Foreground="#60A0FF" FontFamily="Consolas" TextWrapping="Wrap"
+                                                   Text="Stats are collected automatically by the C2 server.&#10;Click MINER STATS in the dashboard to view."/>
                                     </StackPanel>
                                 </Border>
 
@@ -2903,9 +2900,6 @@
                                         <StackPanel Orientation="Horizontal">
                                             <Button x:Name="BtnMnrBuild" Content="BUILD" Width="120" Height="30"
                                                     Style="{StaticResource SGreenBtn}" Click="BldMnrBuild_Click"/>
-                                            <Button Content="WEB PANEL" Width="100" Height="30" Margin="8,0,0,0"
-                                                    Style="{StaticResource SBtn}" Click="BldMnrStatsLaunch_Click"
-                                                    ToolTip="Start stats-server (if not running) and open the web dashboard in the browser"/>
                                             <Button Content="SAVE CONFIG" Width="100" Height="30" Margin="8,0,0,0"
                                                     Style="{StaticResource SBtn}" Click="BldMnrSaveConfig_Click"/>
                                             <Button Content="LOAD CONFIG" Width="100" Height="30" Margin="6,0,0,0"

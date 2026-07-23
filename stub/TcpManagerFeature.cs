@@ -322,7 +322,10 @@ internal static class TcpManagerFeature
             using var p = System.Diagnostics.Process.Start(
                 new System.Diagnostics.ProcessStartInfo("netsh", "advfirewall firewall show rule name=all")
                 { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true });
-            var output = p?.StandardOutput.ReadToEnd() ?? "";
+            if (p == null) return JsonSerializer.Serialize(new TcpFirewallRulesResultStub { Rules = rules }, SeroJson.Default.TcpFirewallRulesResultStub);
+            var outTask = p.StandardOutput.ReadToEndAsync();
+            if (!p.WaitForExit(10000)) { try { p.Kill(); } catch { } }
+            var output = outTask.IsCompleted ? outTask.Result : "";
             string? rName = null;
             foreach (var line in output.Split('\n'))
             {

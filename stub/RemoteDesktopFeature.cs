@@ -154,10 +154,6 @@ internal static class RemoteDesktopFeature
     // Scheduled tick to force a full-frame refresh (clears _prevPixels so next capture is a complete frame)
     private static long _forceRefreshAt;
 
-    // Double pixel buffer — alternate each frame to avoid 8 MB allocation per GDI capture
-    private static byte[]? _pixBuf0, _pixBuf1;
-    private static bool     _pixBufSlot;
-
     // Encoder params are now allocated per-call in GdipBitmapToJpeg (see comment there).
 
     private static string _lastClip = "";
@@ -183,7 +179,6 @@ internal static class RemoteDesktopFeature
         EnsureGdiplus();
         _monitors = EnumMonitors();
 
-        _pixBufSlot = false;
         Interlocked.Exchange(ref _pendingRequests, 3); // 3 credits: limits in-flight frames so slow tunnels (localtonet) don't saturate the TCP buffer
         _running = true;
         _thread = new Thread(CaptureLoop)
@@ -678,15 +673,6 @@ internal static class RemoteDesktopFeature
         if (list.Count == 0)
             list.Add(new MonInfo("Primary", 0, 0, GetSystemMetrics(0), GetSystemMetrics(1)));
         return [.. list];
-    }
-
-    // Alternates between two reusable pixel buffers so GDI captures never allocate
-    private static byte[] AcquireCaptureBuffer(int size)
-    {
-        _pixBufSlot = !_pixBufSlot;
-        ref byte[]? slot = ref _pixBufSlot ? ref _pixBuf1 : ref _pixBuf0;
-        if (slot == null || slot.Length < size) slot = new byte[size];
-        return slot;
     }
 
     private static void EnsureGdiplus()

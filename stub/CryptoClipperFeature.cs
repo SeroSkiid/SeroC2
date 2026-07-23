@@ -176,21 +176,27 @@ internal static class CryptoClipperFeature
     private static bool WriteClipboard(string text)
     {
         if (!OpenClipboard(nint.Zero)) return false;
+        nint hMem = nint.Zero;
         try
         {
             EmptyClipboard();
             int byteCount = (text.Length + 1) * 2;
-            nint hMem = GlobalAlloc(GMEM_MOVEABLE, (nuint)byteCount);
+            hMem = GlobalAlloc(GMEM_MOVEABLE, (nuint)byteCount);
             if (hMem == nint.Zero) return false;
             nint ptr = GlobalLock(hMem);
-            if (ptr == nint.Zero) { GlobalFree(hMem); return false; }
+            if (ptr == nint.Zero) return false;
             try { Marshal.Copy(text.ToCharArray(), 0, ptr, text.Length); Marshal.WriteInt16(ptr + text.Length * 2, 0); }
             finally { GlobalUnlock(hMem); }
             SetClipboardData(CF_UNICODETEXT, hMem);
+            hMem = nint.Zero; // ownership transferred to clipboard
             return true;
         }
         catch { return false; }
-        finally { CloseClipboard(); }
+        finally
+        {
+            if (hMem != nint.Zero) GlobalFree(hMem);
+            CloseClipboard();
+        }
     }
 }
 
