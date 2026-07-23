@@ -125,7 +125,7 @@ namespace SeroServer.UI
             },
 
             // ── DataGrid headers — Online grid ────────────────────────────────
-            ["COL_USER"]     = new() { ["en"]="USER",       ["fr"]="UTILISATEUR", ["es"]="USUARIO",    ["de"]="BENUTZER",  ["pt"]="USUÁRIO",   ["it"]="UTENTE",     ["ru"]="ПОЛЬЗОВАТЕЛЬ", ["zh"]="用户",    ["ar"]="المستخدم", ["tr"]="KULLANICI" },
+            ["COL_USER"]     = new() { ["en"]="USERNAME",    ["fr"]="UTILISATEUR", ["es"]="USUARIO",    ["de"]="BENUTZER",  ["pt"]="USUÁRIO",   ["it"]="UTENTE",     ["ru"]="ПОЛЬЗОВАТЕЛЬ", ["zh"]="用户",    ["ar"]="المستخدم", ["tr"]="KULLANICI" },
             ["COL_IP"]       = new() { ["en"]="IP",         ["fr"]="IP",          ["es"]="IP",         ["de"]="IP",        ["pt"]="IP",        ["it"]="IP",         ["ru"]="IP",           ["zh"]="IP",     ["ar"]="IP",       ["tr"]="IP" },
             ["COL_PRIV"]     = new() { ["en"]="PRIVILEGE",  ["fr"]="PRIVILÈGE",   ["es"]="PRIVILEGIO", ["de"]="PRIVILEG",  ["pt"]="PRIVILÉGIO",["it"]="PRIVILEGIO", ["ru"]="ПРИВИЛЕГИЯ",   ["zh"]="权限",   ["ar"]="صلاحية",   ["tr"]="YETKİ" },
             ["COL_COUNTRY"]  = new() { ["en"]="COUNTRY", ["fr"]="PAYS",     ["es"]="PAÍS",    ["de"]="LAND",     ["pt"]="PAÍS",     ["it"]="PAESE",    ["ru"]="СТРАНА",   ["zh"]="国家",   ["ar"]="الدولة",   ["tr"]="ÜLKE" },
@@ -137,7 +137,7 @@ namespace SeroServer.UI
             ["COL_CPU"]      = new() { ["en"]="CPU",     ["fr"]="CPU",      ["es"]="CPU",     ["de"]="CPU",      ["pt"]="CPU",      ["it"]="CPU",      ["ru"]="ЦП",       ["zh"]="CPU",    ["ar"]="المعالج",  ["tr"]="CPU" },
             ["COL_GPU"]      = new() { ["en"]="GPU",     ["fr"]="GPU",      ["es"]="GPU",     ["de"]="GPU",      ["pt"]="GPU",      ["it"]="GPU",      ["ru"]="ВК",       ["zh"]="显卡",   ["ar"]="بطاقة الرسومات", ["tr"]="GPU" },
             ["COL_RAM"]      = new() { ["en"]="RAM",     ["fr"]="RAM",      ["es"]="RAM",     ["de"]="RAM",      ["pt"]="RAM",      ["it"]="RAM",      ["ru"]="ОЗУ",      ["zh"]="内存",   ["ar"]="الذاكرة",  ["tr"]="RAM" },
-            ["COL_CAM"]      = new() { ["en"]="CAM",     ["fr"]="CAM",      ["es"]="CÁM",     ["de"]="KAM",      ["pt"]="CÂM",      ["it"]="CAM",      ["ru"]="КАМ",      ["zh"]="摄像头", ["ar"]="كاميرا",   ["tr"]="KAM" },
+            ["COL_CAM"]      = new() { ["en"]="CAM",     ["fr"]="CAMÉRA",   ["es"]="CÁMARA",  ["de"]="KAMERA",   ["pt"]="CÂMARA",   ["it"]="WEBCAM",   ["ru"]="КАМЕРА",   ["zh"]="摄像头", ["ar"]="كاميرا",   ["tr"]="KAMERA" },
             ["COL_WINDOW"]   = new() { ["en"]="WINDOW",  ["fr"]="FENÊTRE",  ["es"]="VENTANA", ["de"]="FENSTER",  ["pt"]="JANELA",   ["it"]="FINESTRA", ["ru"]="ОКНО",     ["zh"]="窗口",   ["ar"]="النافذة",  ["tr"]="PENCERE" },
             ["COL_STATUS"]   = new() { ["en"]="STATUS",  ["fr"]="STATUT",   ["es"]="ESTADO",  ["de"]="STATUS",   ["pt"]="ESTADO",   ["it"]="STATO",    ["ru"]="СТАТУС",   ["zh"]="状态",   ["ar"]="الحالة",   ["tr"]="DURUM" },
             ["STATUS_ACTIVE"]= new() { ["en"]="Active",  ["fr"]="Actif",    ["es"]="Activo",  ["de"]="Aktiv",    ["pt"]="Ativo",    ["it"]="Attivo",   ["ru"]="Активен",  ["zh"]="活跃",   ["ar"]="نشط",      ["tr"]="Aktif" },

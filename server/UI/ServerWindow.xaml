@@ -1953,13 +1953,13 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="COUNTRY"  Binding="{Binding CountryDisplay}"                      Width="68" MinWidth="40" MaxWidth="200"/>
-                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="70" MinWidth="40" MaxWidth="220"/>
+                                        <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="Auto" MinWidth="80" MaxWidth="220"/>
                                         <DataGridTextColumn Header="OS"       Binding="{Binding OS}"                                  Width="66" MinWidth="40" MaxWidth="200"/>
                                         <DataGridTextColumn Header="MACHINE"  Binding="{Binding MachineName}"                         Width="70" MinWidth="40" MaxWidth="200"/>
-                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="50"  MinWidth="36" MaxWidth="140" FontSize="11"/>
+                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="86"  MinWidth="66" MaxWidth="140" FontSize="11"/>
                                         <DataGridTextColumn Header="ID"       Binding="{Binding Id}"                                  Width="56"  MinWidth="36" MaxWidth="160" FontFamily="Consolas" FontSize="11"/>
                                         <!-- CAM: shows camera icon when webcam detected -->
-                                        <DataGridTemplateColumn Header="CAM" Width="30" MinWidth="28" SortMemberPath="CameraIcon">
+                                        <DataGridTemplateColumn x:Name="ColCamHdr" Header="CAM" Width="64" MinWidth="50" MaxWidth="90" SortMemberPath="CameraIcon">
                                             <DataGridTemplateColumn.CellStyle>
                                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                             </DataGridTemplateColumn.CellStyle>
@@ -1981,11 +1981,11 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="CPU"      Binding="{Binding CpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
-                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="54"  MinWidth="36" MaxWidth="140" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn x:Name="ColLoadHdr" Header="LOAD" Width="Auto" MinWidth="64" MaxWidth="140" Binding="{Binding Payload}" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="AV"       Binding="{Binding Antivirus}"                           Width="68"  MinWidth="40" MaxWidth="180" FontSize="11"/>
                                         <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="54"  MinWidth="36" MaxWidth="110" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="86"  MinWidth="44" MaxWidth="220" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="PING" Width="42" MinWidth="34" SortMemberPath="PingMs">
+                                        <DataGridTemplateColumn Header="PING" Width="Auto" MinWidth="48" MaxWidth="100" SortMemberPath="PingMs">
                                             <DataGridTemplateColumn.CellStyle>
                                                 <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}"/>
                                             </DataGridTemplateColumn.CellStyle>

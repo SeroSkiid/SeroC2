@@ -1429,6 +1429,11 @@ public partial class ServerWindow : ThemedWindow
         {
             string header = col.Header?.ToString() ?? "";
             if (string.IsNullOrEmpty(header)) continue;
+            if (header == "TAG")
+            {
+                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                continue;
+            }
             int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
             if (w > 0) col.Width = new System.Windows.Controls.DataGridLength(w);
         }
@@ -1448,7 +1453,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
+            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
         }
@@ -7724,7 +7729,7 @@ Read-Host 'Press Enter to close'
         UpdateColHeader(GridClients, "CPU",      Lang.Get("COL_CPU"));
         UpdateColHeader(GridClients, "GPU",      Lang.Get("COL_GPU"));
         UpdateColHeader(GridClients, "RAM",      Lang.Get("COL_RAM"));
-        UpdateColHeader(GridClients, "CAM",      Lang.Get("COL_CAM"));
+        if (ColCamHdr    != null) ColCamHdr.Header    = Lang.Get("COL_CAM");
         UpdateColHeader(GridClients, "WINDOW",   Lang.Get("COL_WINDOW"));
         if (ColStatusHdr != null) ColStatusHdr.Header = Lang.Get("COL_STATUS");
         if (ColLoadHdr   != null) ColLoadHdr.Header   = Lang.Get("COL_PAYLOAD");
@@ -8188,21 +8193,21 @@ Read-Host 'Press Enter to close'
             { "IP",       new DataGridLength(96)  },
             { "STATUS",   new DataGridLength(68)  },
             { "COUNTRY",  new DataGridLength(68)  },
-            { "USER",     new DataGridLength(70)  },
+            { "USERNAME",  DataGridLength.Auto     },
             { "OS",       new DataGridLength(66)  },
             { "MACHINE",  new DataGridLength(70)  },
-            { "PRIV",     new DataGridLength(50)  },
+            { "PRIVILEGE",new DataGridLength(86)  },
             { "ID",       new DataGridLength(56)  },
-            { "CAM",      new DataGridLength(30)  },
+            { "CAM",      new DataGridLength(64)  },
             { "CPU",      new DataGridLength(86)  },
-            { "LOAD",     new DataGridLength(54)  },
+            { "LOAD",     DataGridLength.Auto     },
             { "AV",       new DataGridLength(68)  },
             { "RAM",      new DataGridLength(54)  },
             { "GPU",      new DataGridLength(86)  },
-            { "PING",     new DataGridLength(42)  },
+            { "PING",     DataGridLength.Auto     },
             { "WINDOW",   new DataGridLength(82)  },
             { "1ST SEEN", new DataGridLength(68)  },
-            { "TAG",      new DataGridLength(80)  },
+            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
         foreach (var col in GridClients.Columns)
