@@ -29,7 +29,7 @@
                              IsReadOnly="True" IsDocumentEnabled="True"
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Disabled"
-                             Padding="10" SelectionBrush="{DynamicResource FieldLabelBrush}" CaretBrush="Transparent">
+                             Padding="10" SelectionBrush="{DynamicResource SelectionBgBrush}" CaretBrush="Transparent">
                     <RichTextBox.Resources>
                         <Style TargetType="Paragraph">
                             <Setter Property="Margin" Value="0"/>

@@ -27,7 +27,8 @@ internal static class ShellIcon
     private const uint FILE_ATTRIBUTE_NORMAL    = 0x080;
     private const uint FILE_ATTRIBUTE_DIRECTORY = 0x010;
 
-    private static readonly Dictionary<string, ImageSource?> _cache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ImageSource?> _cache   = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, ImageSource?> _dxCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object _lock = new();
 
     // Icon by file extension (uses fake path — fast, no file I/O)
@@ -62,6 +63,27 @@ internal static class ShellIcon
             r = Extract(drivePath, FILE_ATTRIBUTE_NORMAL, SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
         lock (_lock) { _cache.TryAdd(key, r); }
         return r;
+    }
+
+    // Render a DevExpress SVG icon to a frozen BitmapSource. UI-thread only.
+    public static ImageSource? GetDxIcon(string svgPath)
+    {
+        if (_dxCache.TryGetValue(svgPath, out var cached)) return cached;
+        ImageSource? src = null;
+        try
+        {
+            var xaml = $"<dx:DXImage xmlns:dx=\"http://schemas.devexpress.com/winfx/2008/xaml/core\" " +
+                       $"Source=\"{{dx:DXImageExtension '{svgPath}'}}\" Width=\"16\" Height=\"16\"/>";
+            var el = (System.Windows.UIElement)System.Windows.Markup.XamlReader.Parse(xaml);
+            el.Measure(new System.Windows.Size(16, 16));
+            el.Arrange(new System.Windows.Rect(0, 0, 16, 16));
+            var rtb = new RenderTargetBitmap(16, 16, 96, 96, System.Windows.Media.PixelFormats.Pbgra32);
+            rtb.Render(el);
+            rtb.Freeze();
+            src = rtb;
+        }
+        catch { }
+        return _dxCache[svgPath] = src;
     }
 
     private static ImageSource? Extract(string path, uint attr, uint flags)

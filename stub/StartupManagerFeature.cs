@@ -108,7 +108,7 @@ internal static class StartupManagerFeature
             var psi = new System.Diagnostics.ProcessStartInfo("schtasks", "/query /fo CSV /nh /v")
             {
                 CreateNoWindow = true, UseShellExecute = false,
-                RedirectStandardOutput = true, RedirectStandardError = true,
+                RedirectStandardOutput = true,
             };
             using var p = System.Diagnostics.Process.Start(psi);
             if (p == null) return;
@@ -157,7 +157,7 @@ internal static class StartupManagerFeature
         {
             var psi = new System.Diagnostics.ProcessStartInfo("wmic",
                 $@"/namespace:\\root\subscription PATH {cls} GET {nameProp},{pathProp} /FORMAT:CSV")
-            { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+            { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true };
             using var proc = System.Diagnostics.Process.Start(psi);
             if (proc == null) return;
             var csv = proc.StandardOutput.ReadToEnd();

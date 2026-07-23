@@ -276,12 +276,6 @@ public partial class ProcessManagerWindow : ThemedWindow
                 if (selectedPid.HasValue)
                     GridProcs.SelectedItem = _view.FirstOrDefault(p => p.Pid == selectedPid.Value);
 
-                // Restore sort
-                foreach (var sd in viewSortDescriptions)
-                    GridProcs.Items.SortDescriptions.Add(sd);
-                for (int i = 0; i < GridProcs.Columns.Count && i < viewSortArrows.Count; i++)
-                    GridProcs.Columns[i].SortDirection = viewSortArrows[i];
-
                 TxtCount.Text = $"({d.Processes.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("PM_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Processes.Count);
             });
@@ -329,6 +323,7 @@ public partial class ProcessManagerWindow : ThemedWindow
             foreach (var vm in list)
                 _view.Add(vm);
 
+            GridProcs.Items.SortDescriptions.Clear();
             foreach (var sd in savedSorts)
                 GridProcs.Items.SortDescriptions.Add(sd);
             for (int i = 0; i < GridProcs.Columns.Count && i < savedArrows.Count; i++)

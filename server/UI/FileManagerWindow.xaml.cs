@@ -996,9 +996,12 @@ public class FileEntryVM
         Created  = e.Created;
         AttributesRaw = e.Attributes;
         SizeRaw  = e.IsDir ? -1 : e.Size;
+        var ext = e.IsDir ? "" : Path.GetExtension(e.Name);
         IconImage = (e.IsDir && e.Name.Length >= 2 && e.Name[1] == ':')
             ? ShellIcon.GetDrive(e.Name.TrimEnd('\\', '/') + "\\")
-            : ShellIcon.Get(e.IsDir ? "" : Path.GetExtension(e.Name), e.IsDir);
+            : (ext.Equals(".lnk", StringComparison.OrdinalIgnoreCase)
+                ? (ShellIcon.GetDxIcon("SvgImages/Icon Builder/Actions_Link.svg") ?? ShellIcon.Get(".lnk", false))
+                : ShellIcon.Get(ext, e.IsDir));
 
         if (e.IsDir)
         {
