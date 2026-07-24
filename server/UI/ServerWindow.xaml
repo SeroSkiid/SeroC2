@@ -239,14 +239,22 @@
         <Style x:Key="NavBtn" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+            <EventSetter Event="MouseMove"  Handler="NavBtn_MouseMove"/>
+            <EventSetter Event="MouseLeave" Handler="NavBtn_MouseLeave"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Grid Height="30">
                             <Border x:Name="Bg" Background="Transparent"/>
-                            <Border x:Name="Indicator" Width="2.5" HorizontalAlignment="Left"
-                                    Background="{DynamicResource AccentBrush}" Opacity="0"
-                                    CornerRadius="0,2,2,0" IsHitTestVisible="False"/>
+                            <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
+                                <Border.Background>
+                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.07" RadiusY="0.38">
+                                        <GradientStop Color="#30FFFFFF" Offset="0"/>
+                                        <GradientStop Color="#0AFFFFFF" Offset="0.45"/>
+                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
+                                    </RadialGradientBrush>
+                                </Border.Background>
+                            </Border>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
                                 <ContentPresenter x:Name="Icon"
                                               Content="{TemplateBinding Tag}"
@@ -263,23 +271,22 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg"        Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                                <Setter TargetName="Indicator" Property="Opacity"    Value="0.45"/>
-                                <Setter TargetName="Label"     Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
-                                <Setter TargetName="Icon"      Property="TextElement.Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
+                                <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                <Setter TargetName="SpotGlow" Property="Opacity"    Value="1"/>
+                                <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
+                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bg"        Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
-                                <Setter TargetName="Indicator" Property="Opacity"    Value="1"/>
-                                <Setter TargetName="Label"     Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
-                                <Setter TargetName="Icon"      Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
+                                <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
+                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="IsChecked"   Value="True"/>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="Indicator" Property="Opacity" Value="1"/>
+                                <Setter TargetName="SpotGlow" Property="Opacity" Value="1"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

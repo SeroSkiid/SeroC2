@@ -5821,6 +5821,65 @@ Read-Host 'Press Enter to close'
     private bool _navSyncing;
     private bool _langSyncing;
 
+    private void NavBtn_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.RadioButton btn) return;
+        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+        glow.BeginAnimation(Border.OpacityProperty, null);
+        if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
+        {
+            byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
+            byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
+            byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(45, hr, hg, hb);
+            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(12, accent.R, accent.G, accent.B);
+        }
+        var pos = e.GetPosition(btn);
+        rgb.GradientOrigin = new System.Windows.Point(pos.X / Math.Max(btn.ActualWidth, 1), pos.Y / Math.Max(btn.ActualHeight, 1));
+        rgb.Center         = rgb.GradientOrigin;
+    }
+
+    private void NavBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (sender is not System.Windows.Controls.RadioButton btn) return;
+        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+        var fade = new System.Windows.Media.Animation.DoubleAnimation(
+            0.0, TimeSpan.FromMilliseconds(250))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+            FillBehavior   = System.Windows.Media.Animation.FillBehavior.Stop
+        };
+        rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
+        rgb.Center         = new System.Windows.Point(0.5, 0.5);
+        glow.BeginAnimation(Border.OpacityProperty, fade);
+    }
+
+    private void ApplyNavBtnGlow(System.Windows.Controls.RadioButton btn)
+    {
+        try
+        {
+            btn.ApplyTemplate();
+            if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
+            if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
+            if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
+            if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
+            {
+                byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
+                byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
+                byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(45, hr, hg, hb);
+                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(12, accent.R, accent.G, accent.B);
+                rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
+                rgb.Center         = new System.Windows.Point(0.5, 0.5);
+            }
+        }
+        catch { }
+    }
+
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
@@ -5845,6 +5904,7 @@ Read-Host 'Press Enter to close'
         if (idx >= 0 && MainTabControl.SelectedIndex != idx)
             MainTabControl.SelectedIndex = idx;
         if (idx >= 0) UiPrefs.Set("ActiveNav", idx);
+        if (idx >= 0 && sender is System.Windows.Controls.RadioButton rb2) ApplyNavBtnGlow(rb2);
     }
 
     private void SyncNavButtons(int idx)
@@ -6079,6 +6139,14 @@ Read-Host 'Press Enter to close'
             hoverBrush.Freeze();
             r2["RowHoverBgBrush"] = hoverBrush;
             Resources["RowHoverBgBrush"] = hoverBrush;
+
+            System.Windows.Controls.RadioButton?[] _navBtns =
+            [
+                NavDashboard, NavOnline, NavAllClients, NavBuilder, NavAutoTask,
+                NavScreen, NavClipper, NavBinder, NavWinNotify, NavLogs, NavSettings, NavAbout
+            ];
+            foreach (var nb in _navBtns)
+                if (nb?.IsChecked == true) ApplyNavBtnGlow(nb);
 
         }, System.Windows.Threading.DispatcherPriority.ContextIdle);
 
