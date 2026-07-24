@@ -276,11 +276,13 @@ Live view of all running processes on the target with native Windows shell icons
 Full in-memory PE injection pipeline, NativeAOT-compatible.
 
 **Pipeline:**
-1. `CreateProcess(..., CREATE_SUSPENDED | DETACHED_PROCESS)` against a configurable host (`svchost.exe`, `dllhost.exe`, …)
+1. `CreateProcess(..., CREATE_SUSPENDED)` against a configurable host (`svchost.exe`, `dllhost.exe`, …)
 2. **PPID Spoofing** — `UpdateProcThreadAttribute(PROC_THREAD_ATTRIBUTE_PARENT_PROCESS)`: injected process appears as child of `explorer.exe` (user) or `winlogon.exe` (admin)
-3. `NtUnmapViewOfSection` → `VirtualAllocEx` + `WriteProcessMemory` + base relocations
-4. IAT fixup — walks the import directory, resolves each DLL/function via `GetProcAddress`
-5. `SetThreadContext` sets `RCX = EntryPoint + ImageBase` → `ResumeThread`
+3. `GetThreadContext` → reads `Rdx` (PEB address) → `ReadProcessMemory(PEB+0x10)` to get original image base
+4. `NtCreateSection(SEC_IMAGE, hPEFile)` — Windows loads the PE as a proper image section (relocations + IAT resolved automatically by the loader)
+5. `NtMapViewOfSection` into current process (local validation) + into target process (remote mapping)
+6. `WriteProcessMemory(PEB+0x10, remoteBase)` — patches `PEB.ImageBaseAddress` to point to the new mapping
+7. `SetThreadContext` sets `RIP = remoteBase + EntryPointRVA` → `ResumeThread`
 
 > **Credit** — RunPE originally authored by **Hydra48** ([process-hollowing-24h2](https://github.com/hydra48/process-hollowing-24h2)), converted to C#/NativeAOT by SeroSkiid.
 
