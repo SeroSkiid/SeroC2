@@ -49,10 +49,28 @@ public class ConnectedClient : INotifyPropertyChanged
     public int IdleSeconds
     {
         get => _idleSeconds;
-        set { if (_idleSeconds != value) { _idleSeconds = value; Notify(); Notify(nameof(StatusColor)); Notify(nameof(StatusTooltip)); Notify(nameof(StatusText)); } }
+        set
+        {
+            if (_idleSeconds != value)
+            {
+                int oldTier = IdleTier(_idleSeconds);
+                _idleSeconds = value;
+                Notify();
+                // Only notify visual status properties when the tier actually changes
+                // (Green→Yellow at 300s, Yellow→Grey at 900s). Avoids 40k PropertyChanged/5s
+                // storm on the UI thread when the idle timer ticks at 10k+ connected clients.
+                if (IdleTier(value) != oldTier)
+                {
+                    Notify(nameof(StatusColor));
+                    Notify(nameof(StatusText));
+                    Notify(nameof(StatusTooltip));
+                }
+            }
+        }
     }
+    private static int IdleTier(int s) => s < 300 ? 0 : s < 900 ? 1 : 2;
     // "Green" = active (< 5 min idle), "Yellow" = idle (5–15 min), "Grey" = AFK (> 15 min)
-    public string StatusColor   => _idleSeconds <= 0 ? "Green" : _idleSeconds < 300 ? "Green" : _idleSeconds < 900 ? "Yellow" : "Grey";
+    public string StatusColor   => _idleSeconds < 300 ? "Green" : _idleSeconds < 900 ? "Yellow" : "Grey";
     public string StatusText    => StatusColor == "Yellow" ? Lang.Get("STATUS_IDLE") : StatusColor == "Grey" ? Lang.Get("STATUS_AFK") : Lang.Get("STATUS_ACTIVE");
     public string StatusTooltip => _idleSeconds <= 0 ? "Active" : _idleSeconds < 300 ? $"Active ({_idleSeconds}s)" : _idleSeconds < 900 ? $"Idle ({_idleSeconds / 60}m)" : $"AFK ({_idleSeconds / 60}m)";
     public void   NotifyStatus() => Notify(nameof(StatusText));

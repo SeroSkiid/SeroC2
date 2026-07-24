@@ -44,6 +44,7 @@ public class TlsServer
 
     // Per-(client,packetType) dynamic handlers — used by feature windows
     private readonly ConcurrentDictionary<(string, PacketType), Action<Packet>> _handlers = new();
+    private static readonly PacketType[] _allPacketTypes = Enum.GetValues<PacketType>();
 
     // ── Rate limiting & auth-fail tracking ──────────────────────────────
     // Tracks (attempt_count, window_expiry) per IP for connection rate limiting
@@ -219,7 +220,7 @@ public class TlsServer
             Log($"[*] Client {client.Id} ({client.Username}@{client.IP}) disconnected.");
             // Purge feature-window handlers: try O(1) removes per known PacketType first,
             // then fall back to full scan only if stragglers remain (avoids O(n) at scale)
-            foreach (PacketType pt in Enum.GetValues<PacketType>())
+            foreach (PacketType pt in _allPacketTypes)
                 _handlers.TryRemove((clientId, pt), out _);
             ClientDisconnected?.Invoke(client);
         }
