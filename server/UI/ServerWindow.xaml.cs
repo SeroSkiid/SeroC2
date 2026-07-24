@@ -284,14 +284,14 @@ public partial class ServerWindow : ThemedWindow
                     }
                     catch { }
                 };
-                foreach (var item in GridClients.ContextMenu.Items.OfType<MenuItem>())
+                foreach (var item in GridClients.ContextMenu.Items.OfType<System.Windows.Controls.MenuItem>())
                 {
                     item.SubmenuOpened += (s, _) =>
                     {
                         try
                         {
                             var t = DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName;
-                            if (!string.IsNullOrEmpty(t) && s is MenuItem mi)
+                            if (!string.IsNullOrEmpty(t) && s is System.Windows.Controls.MenuItem mi)
                                 DevExpress.Xpf.Core.ThemeManager.SetThemeName(mi, t);
                         }
                         catch { }
