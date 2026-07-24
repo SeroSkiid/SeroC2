@@ -2332,7 +2332,7 @@
                                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                                       EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="28"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
