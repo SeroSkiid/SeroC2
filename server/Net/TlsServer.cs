@@ -501,7 +501,10 @@ public class TlsServer
 
                     case PacketType.WcamFrame:
                     case PacketType.WcamDevices:
-                        WcamFrameReceived?.Invoke(client.Id, packet.Data);
+                        if (_handlers.TryGetValue((client.Id, packet.Type), out var wcamH))
+                            try { wcamH(packet); } catch { }
+                        else
+                            WcamFrameReceived?.Invoke(client.Id, packet.Data);
                         break;
 
                     case PacketType.RdpClipboard:

