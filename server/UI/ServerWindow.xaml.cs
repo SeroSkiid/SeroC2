@@ -1561,10 +1561,7 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                int tagW = UiPrefs.GetInt("ColWidth_TAG", 0);
-                col.Width = tagW > 0
-                    ? new System.Windows.Controls.DataGridLength(tagW)
-                    : new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
@@ -1586,7 +1583,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
+            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
         }
@@ -1600,10 +1597,7 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                int tagW = UiPrefs.GetInt("AllColWidth_TAG", 0);
-                col.Width = tagW > 0
-                    ? new System.Windows.Controls.DataGridLength(tagW)
-                    : new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
@@ -1625,7 +1619,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridAllClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
+            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"AllColWidth_{header}", (int)w);
         }
