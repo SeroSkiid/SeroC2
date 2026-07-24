@@ -5837,9 +5837,9 @@ Read-Host 'Press Enter to close'
             rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(22, accent.R, accent.G, accent.B);
         }
         var pos = e.GetPosition(btn);
-        double y = pos.Y / Math.Max(btn.ActualHeight, 1);
-        rgb.GradientOrigin = new System.Windows.Point(0.5, y);
-        rgb.Center         = new System.Windows.Point(0.5, y);
+        double x = pos.X / Math.Max(btn.ActualWidth, 1);
+        rgb.GradientOrigin = new System.Windows.Point(x, 0.5);
+        rgb.Center         = new System.Windows.Point(x, 0.5);
     }
 
     private void NavBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)

