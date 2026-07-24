@@ -94,51 +94,41 @@
 
         <!-- Toolbar -->
         <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1" Padding="8,5">
-            <DockPanel>
-                <!-- Search box -->
-                <Border DockPanel.Dock="Right" Background="{DynamicResource InputBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,0" Margin="8,0,0,0" Width="180">
-                    <DockPanel>
-                        <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource FieldLabelBrush}" Margin="0,0,4,0"/>
-                        <TextBox x:Name="TxtSearch" Background="Transparent" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
-                                 FontSize="11" VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI"
-                                 TextChanged="TxtSearch_TextChanged">
-                            <TextBox.Style>
-                                <Style TargetType="TextBox">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="TextBox">
-                                                <Grid>
-                                                    <TextBlock Text="Search title, class, process..." Foreground="{DynamicResource FieldLabelBrush}" FontSize="11"
-                                                               VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock">
-                                                                <Setter Property="Visibility" Value="Collapsed"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Value="">
-                                                                        <Setter Property="Visibility" Value="Visible"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                    <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"/>
-                                                </Grid>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </TextBox.Style>
-                        </TextBox>
-                    </DockPanel>
-                </Border>
-
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <CheckBox x:Name="ChkAutoRefresh" Content="Auto 3s" Foreground="{DynamicResource TitleTextBrush}" FontSize="11"
-                              VerticalAlignment="Center"
-                              Checked="ChkAutoRefresh_Changed" Unchecked="ChkAutoRefresh_Changed"
-                              ToolTip="Refresh window list every 3 seconds"/>
-                </StackPanel>
-            </DockPanel>
+            <Border DockPanel.Dock="Right" Background="{DynamicResource InputBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,0" Width="180" HorizontalAlignment="Right">
+                <DockPanel>
+                    <TextBlock Text="&#xE721;" FontFamily="Segoe MDL2 Assets" FontSize="12" VerticalAlignment="Center" Foreground="{DynamicResource FieldLabelBrush}" Margin="0,0,4,0"/>
+                    <TextBox x:Name="TxtSearch" Background="Transparent" Foreground="{DynamicResource ContentTextBrush}" BorderThickness="0"
+                             FontSize="11" VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI"
+                             TextChanged="TxtSearch_TextChanged">
+                        <TextBox.Style>
+                            <Style TargetType="TextBox">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="TextBox">
+                                            <Grid>
+                                                <TextBlock Text="Search title, class, process..." Foreground="{DynamicResource FieldLabelBrush}" FontSize="11"
+                                                           VerticalAlignment="Center" FontFamily="Segoe UI Variable Text, Segoe UI">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Text, RelativeSource={RelativeSource TemplatedParent}}" Value="">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <ScrollViewer x:Name="PART_ContentHost" Background="Transparent"/>
+                                            </Grid>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </TextBox.Style>
+                    </TextBox>
+                </DockPanel>
+            </Border>
         </Border>
 
         <!-- Status bar -->
@@ -185,8 +175,20 @@
                 <DataGridTemplateColumn Width="30" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                            <Grid Width="16" Height="16" Margin="6,0" VerticalAlignment="Center">
+                                <Image x:Name="WinIcon" Source="{Binding Icon}" Width="16" Height="16"
+                                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                                <dx:DXImage x:Name="WinFallback"
+                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Window.svg'}"
+                                            Width="14" Height="14" VerticalAlignment="Center"
+                                            Visibility="Collapsed"/>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
+                                    <Setter TargetName="WinFallback" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="WinIcon"     Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>

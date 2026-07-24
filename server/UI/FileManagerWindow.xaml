@@ -199,49 +199,49 @@
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToDesktop_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE8FC;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#60A5FA"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_DesktopWindows.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="Desktop" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToUser_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE77B;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#A78BFA"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Contact.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="User" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToTemp_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE838;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#FBBF24"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="Temp" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToAppData_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xED43;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#34D399"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="AppData" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToStartup_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#F87171"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="Startup" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToWindows_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#60A5FA"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Window.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="Windows" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>
                         <Button Height="28" Margin="6,1" Style="{StaticResource FmBtn}" HorizontalContentAlignment="Left"
                                 Click="GoToSystem32_Click" Padding="8,0">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="&#xEA86;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14" VerticalAlignment="Center" Margin="0,0,8,0" Foreground="#94A3B8"/>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}" Width="14" Height="14" VerticalAlignment="Center" Margin="0,0,8,0"/>
                                 <TextBlock Text="System32" FontSize="11" VerticalAlignment="Center"/>
                             </StackPanel>
                         </Button>

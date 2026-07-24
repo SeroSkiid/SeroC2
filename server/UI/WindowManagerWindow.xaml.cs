@@ -58,6 +58,10 @@ public partial class WindowManagerWindow : ThemedWindow
         };
 
         GridWins.MouseDoubleClick += (_, _) => SendAction("focus");
+
+        _autoRefresh = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
+        _autoRefresh.Tick += (_, _) => Refresh();
+        _autoRefresh.Start();
         Refresh();
     }
 
@@ -151,25 +155,6 @@ public partial class WindowManagerWindow : ThemedWindow
         TxtStatus.Text = sel.Count == 1 ? $"{action} → {sel[0].Title}" : $"{action} → {sel.Count} windows";
         ServerWindow.ReportGlobalActivity($"Window {action}", sel.Count == 1 ? sel[0].Title : $"{sel.Count} windows", "complete");
         ServerWindow.LogGlobal($"[WIN] '{action}' on {(sel.Count == 1 ? $"'{sel[0].Title}'" : $"{sel.Count} windows")} — client {_clientId}.");
-    }
-
-    private void ChkAutoRefresh_Changed(object s, RoutedEventArgs e)
-    {
-        if (ChkAutoRefresh.IsChecked == true)
-        {
-            if (_autoRefresh == null)
-            {
-                _autoRefresh = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
-                _autoRefresh.Tick += (_, _) => Refresh();
-            }
-            _autoRefresh.Start();
-            TxtStatus.Text = Lang.Get("WIN_AUTOREFRESH_ON");
-        }
-        else
-        {
-            _autoRefresh?.Stop();
-            TxtStatus.Text = Lang.Get("WIN_AUTOREFRESH_OFF");
-        }
     }
 
     private void BtnRefresh_Click  (object s, RoutedEventArgs e) => Refresh();

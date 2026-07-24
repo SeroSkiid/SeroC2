@@ -156,43 +156,34 @@
                                 <TextBlock Text="{Binding TreePrefix}" Foreground="{DynamicResource FieldLabelBrush}"
                                            FontFamily="Consolas" FontSize="10"
                                            VerticalAlignment="Center" Margin="0,0,2,0"/>
-                                <Image Source="{Binding IconImage}" Width="15" Height="15"
-                                       VerticalAlignment="Center" Margin="2,0,7,0"
-                                       RenderOptions.BitmapScalingMode="NearestNeighbor"
-                                       SnapsToDevicePixels="True"/>
+                                <Grid Width="17" Height="15" VerticalAlignment="Center" Margin="2,0,7,0">
+                                    <Image x:Name="ProcIcon" Source="{Binding IconImage}" Width="15" Height="15"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor"
+                                           SnapsToDevicePixels="True" VerticalAlignment="Center"/>
+                                    <dx:DXImage x:Name="ProcFallback"
+                                                Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Organization.svg'}"
+                                                Width="14" Height="14" VerticalAlignment="Center"
+                                                Visibility="Collapsed"/>
+                                </Grid>
                                 <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
                             </StackPanel>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding IconImage}" Value="{x:Null}">
+                                    <Setter TargetName="ProcFallback" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="ProcIcon"     Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <!-- PID -->
                 <DataGridTextColumn x:Name="ColPid" Header="PID" Binding="{Binding Pid}" Width="65" FontFamily="Consolas" FontSize="11"/>
-                <!-- CPU heat-map column -->
-                <DataGridTemplateColumn x:Name="ColCpu" Header="CPU" Width="90" SortMemberPath="CpuUsage">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding CpuHeatBrush}" Margin="-10,-5">
-                                <TextBlock Text="{Binding CpuDisplay}"
-                                           Foreground="{Binding CpuTextBrush}"
-                                           FontFamily="Consolas" FontSize="11"
-                                           VerticalAlignment="Center" Margin="10,5"/>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <!-- RAM heat-map column -->
-                <DataGridTemplateColumn x:Name="ColMem" Header="MEMORY" Width="110" SortMemberPath="Memory">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Background="{Binding MemHeatBrush}" Margin="-10,-5">
-                                <TextBlock Text="{Binding MemDisplay}"
-                                           Foreground="{Binding MemTextBrush}"
-                                           FontFamily="Consolas" FontSize="11"
-                                           VerticalAlignment="Center" Margin="10,5"/>
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
+                <!-- CPU column -->
+                <DataGridTextColumn x:Name="ColCpu" Header="CPU" Width="90" SortMemberPath="CpuUsage"
+                                    Binding="{Binding CpuDisplay}" FontFamily="Consolas" FontSize="11"/>
+                <!-- RAM column -->
+                <DataGridTextColumn x:Name="ColMem" Header="MEMORY" Width="110" SortMemberPath="Memory"
+                                    Binding="{Binding MemDisplay}" FontFamily="Consolas" FontSize="11"/>
                 <!-- Remote IPs (ESTABLISHED connections) -->
                 <DataGridTextColumn x:Name="ColNet" Header="NETWORK" Binding="{Binding NetDisplay}" Width="180"
                                     FontFamily="Consolas" FontSize="11"/>

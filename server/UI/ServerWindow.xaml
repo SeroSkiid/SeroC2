@@ -64,7 +64,7 @@
                                 Background="{DynamicResource InputBgBrush}"
                                 BorderBrush="{DynamicResource InputBorderBrush}"
                                 BorderThickness="0,0,1,0"
-                                Padding="10,6"
+                                Padding="10,4"
                                 SnapsToDevicePixels="True">
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
@@ -1869,6 +1869,7 @@
 
                                 <DataGrid Grid.Column="0" x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
+                                          RowHeight="24"
                                           MinWidth="1440"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
@@ -2062,7 +2063,7 @@
                                                 <MenuItem x:Name="MenuItemProcessMgr"     Header="Process Manager"    Click="ProcessManager_Click"> <MenuItem.Icon><Image Source="pack://application:,,,/processmanager.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemStartupMgr"     Header="Startup Manager"    Click="StartupManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemTcpConn"        Header="TCP Connections"    Click="TcpManager_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                                                <MenuItem x:Name="MenuItemSvcMgr"         Header="Service Manager"    Click="ServiceManager_Click"> <MenuItem.Icon><dx:DXImage Source="pack://application:,,,/Resources/Icons/services.svg"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemSvcMgr"         Header="Service Manager"    Click="ServiceManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemWindowMgr"      Header="Window Manager"     Click="WindowManager_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Window.svg'}"         Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemRegistryEditor" Header="Registry Editor"    Click="RegistryEditor_Click"> <MenuItem.Icon><Image Source="pack://application:,,,/registry.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemInstalledApps"  Header="Installed Programs" Click="InstalledApps_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Shopping_Box.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>

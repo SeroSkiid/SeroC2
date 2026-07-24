@@ -89,7 +89,7 @@
                     <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Video.svg'}" Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"/>
                     <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TitleTextBrush}" VerticalAlignment="Center" Cursor="Hand" MouseLeftButtonUp="TxtClientId_MouseLeftButtonUp" ToolTip="Click to copy ID"/>
                     <Border x:Name="LiveBadge" Margin="12,0,0,0" CornerRadius="3"
-                            Background="#0C2016" BorderBrush="#1A6040" BorderThickness="1"
+                            Background="{DynamicResource SectionBgBrush}" BorderBrush="#22C55E" BorderThickness="1"
                             Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
                             <Ellipse Width="5" Height="5" Fill="#22C55E"

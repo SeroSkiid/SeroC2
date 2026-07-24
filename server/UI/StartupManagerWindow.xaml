@@ -13,11 +13,12 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Verified}" Value="False">
-                    <Setter Property="BorderBrush" Value="#EF4444"/>
-                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=IsMouseOver}" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
                 </DataTrigger>
                 <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
+                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
                     <Setter Property="BorderThickness" Value="0"/>
                 </Trigger>
             </Style.Triggers>
@@ -34,12 +35,6 @@
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <DataTrigger Binding="{Binding Verified}" Value="False">
-                                <Setter TargetName="CellBd" Property="Background" Value="#20EF4444"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
-                            </DataTrigger>
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>

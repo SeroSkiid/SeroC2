@@ -64,7 +64,7 @@
                   RowBackground="Transparent" AlternatingRowBackground="Transparent"
                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
                   HeadersVisibility="Column" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
-                  SelectionMode="Single" SelectionUnit="FullRow" CanUserAddRows="False"
+                  SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
                   EnableColumnVirtualization="True"
@@ -75,18 +75,13 @@
                 <Style TargetType="DataGridRow">
                     <Setter Property="Height" Value="24"/>
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Verified}" Value="False">
-                            <Setter Property="BorderBrush"     Value="#EF4444"/>
-                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
-                        </DataTrigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
                             <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                            <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
-                            <Setter Property="BorderThickness" Value="3,0,0,0"/>
+                            <Setter Property="BorderThickness" Value="0"/>
                         </Trigger>
                     </Style.Triggers>
                 </Style>
@@ -97,9 +92,6 @@
                     <Setter Property="BorderThickness" Value="0"/>
                     <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Verified}" Value="False">
-                            <Setter Property="Background" Value="#20EF4444"/>
-                        </DataTrigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>

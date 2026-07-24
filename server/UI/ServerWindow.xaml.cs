@@ -270,6 +270,34 @@ public partial class ServerWindow : ThemedWindow
                 nameof(Data.ConnectedClient.HasTag), System.ComponentModel.ListSortDirection.Descending));
             GridClients.ItemsSource = view;
             RubberBandSelector.Enable(GridClients);
+
+            // Apply DX theme to GridClients context menu — same pattern as FeatureContextMenu
+            if (GridClients.ContextMenu != null)
+            {
+                GridClients.ContextMenu.Opened += (_, _) =>
+                {
+                    try
+                    {
+                        var t = DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName;
+                        if (!string.IsNullOrEmpty(t))
+                            DevExpress.Xpf.Core.ThemeManager.SetThemeName(GridClients.ContextMenu, t);
+                    }
+                    catch { }
+                };
+                foreach (var item in GridClients.ContextMenu.Items.OfType<MenuItem>())
+                {
+                    item.SubmenuOpened += (s, _) =>
+                    {
+                        try
+                        {
+                            var t = DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName;
+                            if (!string.IsNullOrEmpty(t) && s is MenuItem mi)
+                                DevExpress.Xpf.Core.ThemeManager.SetThemeName(mi, t);
+                        }
+                        catch { }
+                    };
+                }
+            }
             GridWinNotify.ItemsSource = _winNotifyEntries;
             LoadColumnVisibility();
             RestoreGridColumnWidths();
