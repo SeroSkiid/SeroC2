@@ -13,7 +13,7 @@ public class DataStore
     private static readonly string LogPath = Path.Combine(DataDir, "server.log");
     private static readonly string ClientsPath = Path.Combine(DataDir, "clients.json");
 
-    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
     private readonly object _lock = new();
     private readonly object _logsLock = new();
     private volatile bool _clientsDirty;
@@ -74,12 +74,9 @@ public class DataStore
         lock (_logsLock)
         {
             Logs.Add(entry);
+            // Remove oldest 500 entries when over limit — avoids Clear() which resets scroll position
             if (Logs.Count > 1000)
-            {
-                var keep = Logs.Skip(500).ToList();
-                Logs.Clear();
-                foreach (var l in keep) Logs.Add(l);
-            }
+                for (int i = 0; i < 500; i++) Logs.RemoveAt(0);
         }
         // Queue for async disk write — never blocks the caller
         _logQueue.Enqueue(entry);
@@ -128,8 +125,8 @@ public class DataStore
             if (client.Port > 0) record.LastPort = client.Port;
             record.ActivityLog.Add(new ActivityEntry { Action = $"Connected from {client.IP} ({client.Username})" });
 
-            if (record.ActivityLog.Count > 200)
-                record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 200);
+            if (record.ActivityLog.Count > 20)
+                record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
         }
         AddConnectTimestamp(connectTime);
 
@@ -145,6 +142,8 @@ public class DataStore
             {
                 record.LastSeen = DateTime.UtcNow;
                 record.ActivityLog.Add(new ActivityEntry { Action = "Disconnected" });
+                if (record.ActivityLog.Count > 20)
+                    record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
             }
             SaveClients();
         }
@@ -157,6 +156,8 @@ public class DataStore
             lock (_lock)
             {
                 record.ActivityLog.Add(new ActivityEntry { Action = action });
+                if (record.ActivityLog.Count > 20)
+                    record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
             }
             SaveClients();
         }

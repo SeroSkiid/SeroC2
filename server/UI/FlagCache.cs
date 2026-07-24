@@ -12,6 +12,9 @@ internal static class FlagCache
     internal static Action<string>? LiveLog;
 
     private static readonly ConcurrentDictionary<string, BitmapImage?> _mem = new(StringComparer.OrdinalIgnoreCase);
+    // Tracks in-flight download tasks per country code to prevent thundering herd:
+    // without this, 1000 clients from the same country would each spawn a Task.Run for the same download.
+    private static readonly ConcurrentDictionary<string, Task<BitmapImage?>> _inflight = new(StringComparer.OrdinalIgnoreCase);
     private static readonly string _dir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
         "SeroServer", "flags");
@@ -46,24 +49,19 @@ internal static class FlagCache
             });
             return;
         }
-        _ = Task.Run(async () =>
+        var task = _inflight.GetOrAdd(key, k => Task.Run(() => DownloadAsync(k)));
+        _ = task.ContinueWith(t =>
         {
-            var img = await DownloadAsync(key);
-            if (img != null)
+            _inflight.TryRemove(key, out _);
+            var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
+            if (img != null) _mem[key] = img;
+            else if (!_mem.TryGetValue("?", out img))
             {
-                _mem[key] = img;
-            }
-            else
-            {
-                const string unknownKey = "?";
-                if (!_mem.TryGetValue(unknownKey, out img))
-                {
-                    img = GenerateBadge("?", System.Windows.Media.Color.FromRgb(0x58, 0x60, 0x78));
-                    if (img != null) _mem[unknownKey] = img;
-                }
+                img = GenerateBadge("?", System.Windows.Media.Color.FromRgb(0x58, 0x60, 0x78));
+                if (img != null) _mem["?"] = img;
             }
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => record.FlagImage = img);
-        });
+        }, TaskScheduler.Default);
     }
 
     // Call from TlsServer after country resolution. Fires async; sets client.FlagImage on UI thread.
@@ -117,13 +115,14 @@ internal static class FlagCache
             return;
         }
 
-        _ = Task.Run(async () =>
+        LiveLog?.Invoke($"[FLAG] Téléchargement drapeau pour '{key}'...");
+        var task = _inflight.GetOrAdd(key, k => Task.Run(() => DownloadAsync(k)));
+        _ = task.ContinueWith(t =>
         {
-            LiveLog?.Invoke($"[FLAG] Téléchargement drapeau pour '{key}'...");
-            var img = await DownloadAsync(key);
+            _inflight.TryRemove(key, out _);
+            var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
             if (img == null)
             {
-                // Flag image unavailable — show "?" rather than leaving the column blank.
                 LiveLog?.Invoke($"[FLAG] Download échoué pour '{key}', badge inconnu");
                 Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind,
                     () => SetUnknownBadge(client));
@@ -132,7 +131,7 @@ internal static class FlagCache
             LiveLog?.Invoke($"[FLAG] Drapeau '{key}' téléchargé OK, assignation...");
             _mem[key] = img;
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => client.FlagImage = img);
-        });
+        }, TaskScheduler.Default);
     }
 
     private static void SetUnknownBadge(ConnectedClient client)

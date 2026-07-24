@@ -42,8 +42,13 @@ public partial class ServerWindow : ThemedWindow
         }
         public void RemoveRange(IEnumerable<T> items)
         {
+            // O(n+m) HashSet-based removal — avoids O(n×m) from Items.Remove() linear scan
+            // which would freeze the UI thread on mass disconnects (e.g. 1000 drops at once).
+            var toRemove = new HashSet<T>(items, ReferenceEqualityComparer.Instance);
+            if (toRemove.Count == 0) return;
             _bulk = true;
-            foreach (var item in items) Items.Remove(item);
+            for (int i = Items.Count - 1; i >= 0; i--)
+                if (toRemove.Contains(Items[i])) Items.RemoveAt(i);
             _bulk = false;
             OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
         }
@@ -1356,12 +1361,15 @@ public partial class ServerWindow : ThemedWindow
 
         DashLastUpdated.Text = DateTime.Now.ToString("HH:mm:ss");
 
-        // ── New 24h: clients whose last connection was within 24h (O(n), no locks) ──
-        var cutoff24h = DateTime.UtcNow.AddHours(-24);
-        int new24h = 0;
-        foreach (var rec in _store.AllClients.Values)
-            if (rec.LastConnectedAt >= cutoff24h) new24h++;
-        AnimateCounter(DashNew24h, new24h);
+        // O(n) scan moved to background — at 100k records this blocked the UI thread for ~50ms
+        _ = Task.Run(() =>
+        {
+            var cutoff24h = DateTime.UtcNow.AddHours(-24);
+            int count = 0;
+            foreach (var rec in _store.AllClients.Values)
+                if (rec.LastConnectedAt >= cutoff24h) count++;
+            Dispatcher.BeginInvoke(() => AnimateCounter(DashNew24h, count));
+        });
 
         // ── Tagged count — maintained live in DataStore, O(1) ─────────────
         DashTagged.Text = _store.TaggedCount.ToString();
@@ -1579,7 +1587,7 @@ public partial class ServerWindow : ThemedWindow
 
     private void BinderGrid_ContextMenuOpening(object sender, ContextMenuEventArgs e)
     {
-        if (BinderGrid.Items.Count == 0) e.Handled = true;
+        if (BinderGrid.SelectedItems.Count == 0) e.Handled = true;
     }
 
     private static T? FindVisualAncestor<T>(DependencyObject? source) where T : DependencyObject

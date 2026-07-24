@@ -20,6 +20,8 @@ public class TlsServer
     private readonly DataStore _store;
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
     private readonly ConcurrentDictionary<string, (string country, string code)> _countryCache = new();
+    // ip-api.com free plan: 45 req/min. Cap at 10 concurrent lookups to avoid HTTP 429 bursts.
+    private readonly SemaphoreSlim _countrySem = new(10, 10);
     private System.Timers.Timer? _watchdogTimer;
     public int MaxConnectedClients { get; set; } = 100_000;
 
@@ -588,8 +590,12 @@ public class TlsServer
         if (_countryCache.TryGetValue(ip, out var cached))
             return cached;
 
+        await _countrySem.WaitAsync();
         try
         {
+            // Re-check after acquiring semaphore — another caller may have resolved this IP
+            if (_countryCache.TryGetValue(ip, out cached)) return cached;
+
             // ip-api.com free plan only supports HTTP (HTTPS requires paid plan)
             var url  = $"http://ip-api.com/json/{ip}?fields=country,countryCode";
             var json = await _http.GetStringAsync(url);
@@ -604,6 +610,10 @@ public class TlsServer
         catch
         {
             return ("Unknown", "");
+        }
+        finally
+        {
+            _countrySem.Release();
         }
     }
 
