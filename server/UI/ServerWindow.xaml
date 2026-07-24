@@ -2335,7 +2335,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
-                                      CellStyle="{StaticResource SMainDGCellNoSel}"
+                                      CellStyle="{StaticResource SMainDGCell}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="LastIP">
@@ -2379,14 +2379,14 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="50" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True"
-                                                            CellStyle="{StaticResource SMainDGCellNoSel}">
+                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
-                                                <StackPanel VerticalAlignment="Center" Margin="2,0" Orientation="Horizontal">
+                                                <Grid>
+                                                    <TextBlock x:Name="EmptyTag" Text="" Foreground="Transparent" FontSize="10" Margin="2,0"/>
                                                     <Border x:Name="TagBadge" CornerRadius="3" Padding="6,2"
                                                             Background="#15F59E0B" BorderBrush="#C0F59E0B" BorderThickness="1"
-                                                            Visibility="Collapsed">
+                                                            HorizontalAlignment="Left" Margin="2,0" Visibility="Collapsed">
                                                         <StackPanel Orientation="Horizontal">
                                                             <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}" Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"/>
                                                             <TextBlock Text="{Binding Tag}" Foreground="#D4A843"
@@ -2394,7 +2394,7 @@
                                                                        VerticalAlignment="Center"/>
                                                         </StackPanel>
                                                     </Border>
-                                                </StackPanel>
+                                                </Grid>
                                                 <DataTemplate.Triggers>
                                                     <DataTrigger Binding="{Binding HasTag}" Value="True">
                                                         <Setter TargetName="TagBadge" Property="Visibility" Value="Visible"/>

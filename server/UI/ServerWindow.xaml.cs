@@ -1654,21 +1654,22 @@ public partial class ServerWindow : ThemedWindow
 
     private void GridAllClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
+        // Let column resize grips pass through untouched
+        if (e.OriginalSource is System.Windows.Controls.Primitives.Thumb) return;
+
         var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
         if (row != null)
         {
-            var mod = System.Windows.Input.Keyboard.Modifiers;
-            if (mod == System.Windows.Input.ModifierKeys.Control)
+            bool ctrl = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0;
+            if (ctrl)
                 row.IsSelected = !row.IsSelected;
-            else if (mod != System.Windows.Input.ModifierKeys.Shift)
+            else
             {
-                GridAllClients.SelectedItems.Clear();
+                GridAllClients.UnselectAll();
                 row.IsSelected = true;
+                GridAllClients.Focus();
             }
-            GridAllClients.Focus();
         }
-        // Always mark handled — prevents rubber-band drag selection whether clicking
-        // on a row or on the empty background area to the right of columns
         e.Handled = true;
     }
 
