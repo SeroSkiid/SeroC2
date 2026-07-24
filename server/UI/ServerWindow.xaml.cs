@@ -69,6 +69,7 @@ public partial class ServerWindow : ThemedWindow
 
     private volatile bool _clientsDirty = true;
     private volatile bool _autoTasksDirty;
+    private bool _dashboardInitialized;
     private int _logLineCount;
     private const int LogMaxLines = 2000;
     private const int LogTrimTo   = 1000;
@@ -1437,8 +1438,11 @@ public partial class ServerWindow : ThemedWindow
         var online = _server?.ConnectedClients.Count ?? 0;
         var total  = _store.AllClients.Count;
 
-        AnimateCounter(DashOnline, online);
-        AnimateCounter(DashTotal,  total);
+        bool isFirst = !_dashboardInitialized;
+        _dashboardInitialized = true;
+
+        if (isFirst) { DashOnline.Text = online.ToString(); DashTotal.Text = total.ToString(); }
+        else { AnimateCounter(DashOnline, online); AnimateCounter(DashTotal, total); }
 
         DashLastUpdated.Text = DateTime.Now.ToString("HH:mm:ss");
 
@@ -1449,7 +1453,7 @@ public partial class ServerWindow : ThemedWindow
             int count = 0;
             foreach (var rec in _store.AllClients.Values)
                 if (rec.LastConnectedAt >= cutoff24h) count++;
-            Dispatcher.BeginInvoke(() => AnimateCounter(DashNew24h, count));
+            Dispatcher.BeginInvoke(() => { if (isFirst) DashNew24h.Text = count.ToString(); else AnimateCounter(DashNew24h, count); });
         });
 
         // ── Tagged count — maintained live in DataStore, O(1) ─────────────

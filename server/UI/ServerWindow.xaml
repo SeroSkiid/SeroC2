@@ -95,6 +95,39 @@
         <!-- Implicit fallback — wins over App.xaml SDGCell for all DataGridCells in this window -->
         <Style TargetType="DataGridCell" BasedOn="{StaticResource SMainDGCell}"/>
 
+        <!-- All Clients variant: same as SMainDGCell but no selection highlight -->
+        <Style x:Key="SMainDGCellNoSel" TargetType="DataGridCell">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="BorderThickness"       Value="0"/>
+            <Setter Property="Padding"               Value="0"/>
+            <Setter Property="FocusVisualStyle"      Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="CellBd"
+                                Background="{DynamicResource InputBgBrush}"
+                                BorderBrush="{DynamicResource InputBorderBrush}"
+                                BorderThickness="0,0,1,0"
+                                Padding="10,4"
+                                SnapsToDevicePixels="True">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="Tag" Value="NoSep">
+                                <Setter TargetName="CellBd" Property="BorderThickness" Value="0"/>
+                            </Trigger>
+                            <DataTrigger Binding="{Binding HasTag}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="#20F59E0B"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
         <Style TargetType="ContextMenu">
             <Setter Property="Background"      Value="{DynamicResource InputBgBrush}" />
             <Setter Property="BorderBrush"     Value="{DynamicResource InputBorderBrush}" />
@@ -2289,9 +2322,9 @@
                                       PreviewMouseLeftButtonDown="GridAllClients_PreviewMouseLeftButtonDown"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
-                                      Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
-                                      BorderThickness="0" RowBackground="{DynamicResource InputBgBrush}"
-                                      GridLinesVisibility="Vertical" VerticalGridLinesBrush="{DynamicResource InputBorderBrush}"
+                                      Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                      BorderThickness="0" RowBackground="Transparent"
+                                      GridLinesVisibility="None"
                                       HeadersVisibility="Column"
                                       FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
                                       CanUserResizeColumns="True" CanUserReorderColumns="False"
@@ -2302,7 +2335,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="28"
-                                      CellStyle="{StaticResource SMainDGCell}"
+                                      CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="LastIP">
@@ -2347,7 +2380,7 @@
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="100" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True"
-                                                            CellStyle="{StaticResource SMainDGCell}">
+                                                            CellStyle="{StaticResource SMainDGCellNoSel}">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel VerticalAlignment="Center" Margin="2,0" Orientation="Horizontal">
