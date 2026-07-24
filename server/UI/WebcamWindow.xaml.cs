@@ -50,6 +50,9 @@ public partial class WebcamWindow : ThemedWindow
         CmbResolution.SelectedIndex = UiPrefs.GetInt("WcamRes", 4);
         ChkAutoStart.IsChecked = UiPrefs.GetInt("WcamAutoStart", 0) == 1;
 
+        int wcw = UiPrefs.GetInt("WcamWinWidth", 0), wch = UiPrefs.GetInt("WcamWinHeight", 0);
+        if (wcw > 420 && wch > 320) { Width = wcw; Height = wch; }
+        SizeChanged += (_, _) => { UiPrefs.Set("WcamWinWidth", (int)ActualWidth); UiPrefs.Set("WcamWinHeight", (int)ActualHeight); };
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; UiPrefs.Set("WcamQuality", (int)e.NewValue); };
         SldFps.ValueChanged     += (_, e) => { TxtFpsVal.Text  = $"{(int)e.NewValue}"; UiPrefs.Set("WcamFps",    (int)e.NewValue); };
         CmbResolution.SelectionChanged += (_, _) => UiPrefs.Set("WcamRes", CmbResolution.SelectedIndex);

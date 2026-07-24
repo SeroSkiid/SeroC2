@@ -71,9 +71,16 @@ public partial class RemoteDesktopWindow : ThemedWindow
         // Reclaim keyboard focus on ImgFrame whenever focus leaves it.
         // Clicking the checkboxes in the status bar steals focus, which also
         // breaks MouseMove routing on the Focusable Image element.
+        int rw = UiPrefs.GetInt("RdpWinWidth", 0), rh = UiPrefs.GetInt("RdpWinHeight", 0);
+        if (rw > 440 && rh > 320) { Width = rw; Height = rh; }
         Activated       += (_, _) => { InstallHook(); if (_streaming) ImgFrame.Focus(); };
         Deactivated     += (_, _) => UninstallHook();
-        SizeChanged     += (_, _) => { if (_streaming) ImgFrame.Focus(); };
+        SizeChanged     += (_, e) =>
+        {
+            if (_streaming) ImgFrame.Focus();
+            UiPrefs.Set("RdpWinWidth",  (int)ActualWidth);
+            UiPrefs.Set("RdpWinHeight", (int)ActualHeight);
+        };
         ChkClicks.Checked   += (_, _) => { UiPrefs.Set("RdpClicks",    1); if (_streaming) ImgFrame.Focus(); };
         ChkClicks.Unchecked += (_, _) =>   UiPrefs.Set("RdpClicks",    0);
         ChkCursor.Checked   += (_, _) => { UiPrefs.Set("RdpCursor",    1); if (_streaming) ImgFrame.Focus(); };

@@ -323,8 +323,7 @@ public partial class ServerWindow : ThemedWindow
             {
                 int w = UiPrefs.GetInt("WinWidth", 0), h = UiPrefs.GetInt("WinHeight", 0);
                 if (w > 400 && h > 300) { Left = UiPrefs.GetInt("WinLeft", 0); Top = UiPrefs.GetInt("WinTop", 0); Width = w; Height = h; }
-                int nav = UiPrefs.GetInt("ActiveNav", 1);
-                if (nav >= 0 && nav <= 11) { MainTabControl.SelectedIndex = nav; SyncNavButtons(nav); }
+                SyncNavButtons(0);
             }
             NotificationService.Initialize(SettingsNotifySound.IsChecked == true, SettingsNotifyVisual.IsChecked == true);
             // Initialize default host if empty
@@ -1598,7 +1597,10 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                int saved = UiPrefs.GetInt("AllColWidth_TAG", 0);
+                col.Width = saved > 0
+                    ? new System.Windows.Controls.DataGridLength(saved)
+                    : new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
@@ -1620,7 +1622,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridAllClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
+            if (string.IsNullOrEmpty(header)) continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"AllColWidth_{header}", (int)w);
         }
