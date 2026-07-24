@@ -2332,10 +2332,13 @@
                                       EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
+                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
+                                <DataGrid.Resources>
+                                    <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
+                                </DataGrid.Resources>
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="LastIP">
                                         <DataGridTemplateColumn.CellTemplate>
