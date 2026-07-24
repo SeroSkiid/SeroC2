@@ -28,7 +28,9 @@ internal static class FlagCache
         var key = code.ToLowerInvariant();
         if (_mem.TryGetValue(key, out var hit))
         {
-            if (hit != null)
+            // Skip dispatch if record already has the correct image — avoids 100k BeginInvoke
+            // calls when RefreshAllClients rebuilds the grid and all flags are already cached.
+            if (hit != null && !ReferenceEquals(record.FlagImage, hit))
                 Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => record.FlagImage = hit);
             return;
         }

