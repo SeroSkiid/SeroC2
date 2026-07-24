@@ -2332,7 +2332,7 @@
                                       EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                      ScrollViewer.VerticalScrollBarVisibility="Visible"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
