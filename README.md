@@ -314,7 +314,7 @@ The stub copies itself to `%AppData%\Roaming\<PersistName>\<HiddenFileName>`.
 | WMI Subscription | Invisible to Startup tools | `__EventFilter` + `CommandLineEventConsumer` in `root\subscription` — fires once per boot (within the first ~10 min); admin required only for initial install, runs as SYSTEM automatically on reboot |
 | Registry `HKLM\Run` | Admin only | `NtSetValueKey` |
 
-**Watchdog:** file lock on installed exe + backup, `FileSystemWatcher` instant restore, 5-second polling fallback, isolated PPID-spoofed persistence worker (breaks Defender Persistence.A!ml correlation).
+**Watchdog:** file lock on installed exe + backup, `FileSystemWatcher` instant restore, 2-second polling fallback, isolated PPID-spoofed persistence worker (breaks Defender Persistence.A!ml correlation).
 
 ---
 
@@ -429,7 +429,7 @@ Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
 3. Fill wallet, pool, CPU limits
 4. Click **Build Miner**
 
-**Optional — UPX compression (8 MB → 2.4 MB):**
+**Optional — UPX compression (~8.4 MB → ~2.4 MB):**
 
 Download [upx.exe](https://github.com/upx/upx/releases) (Windows x64) and place it either:
 - in your `PATH`, **or**
@@ -554,7 +554,7 @@ SeroC2/
 - [x] CPU/RAM telemetry — GetSystemTimes + GlobalMemoryStatusEx sampling every ~15 s, displayed as columns in client list with color-coded brush
 - [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
 - [x] TikTok Bot — multi-client panel: CDP session detection (navigates to tiktok.com and reads Chrome cookies via `Network.getCookies` — skips signup if session exists), CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session
-- [x] Stub size — **8.00 MB** NativeAOT / **2.36 MB** with UPX `--best --lzma` (all features incl. Keylogger, Crypto Clipper, Telegram notify)
+- [x] Stub size — **8.37 MB** NativeAOT / **~2.4 MB** with UPX `--best --lzma` (all features incl. Keylogger, Crypto Clipper, Telegram notify)
 - [x] Multi-theme UI — 15+ DevExpress themes (Sero Dark, DevExpress Style/Dark, Office 2019 series, VS2010/2017, Seven Classic, WXI, WindowsXP, TheBezier…); live theme picker with per-theme colour preview badges; dashboard cards, chart backgrounds, and progress bars adapt dynamically to the active theme; all icons use `dx:DXImage` SVG adapting to every theme
 - [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
 - [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
