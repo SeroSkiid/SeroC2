@@ -82,15 +82,15 @@ public partial class ServerWindow : ThemedWindow
     private void UpdateSignalHealth() { }
 
     // Coloured log brushes — updated by UpdateLogBrushes() on every theme change
-    private Brush _brushLogError      = MakeBrush(0xF8, 0x71, 0x71);
-    private Brush _brushLogSuccess    = MakeBrush(0x4A, 0xDE, 0x80);
-    private Brush _brushLogConnect    = MakeBrush(0x2D, 0xD4, 0xBF);
-    private Brush _brushLogDisconnect = MakeBrush(0xFB, 0x92, 0x3C);
-    private Brush _brushLogAdmin      = MakeBrush(0xC0, 0x84, 0xFC);
-    private Brush _brushLogTask       = MakeBrush(0x38, 0xBD, 0xF8);
-    private Brush _brushLogDefault    = MakeBrush(0x94, 0xA3, 0xB8);
-    private Brush _brushLogTime       = MakeBrush(0x50, 0x58, 0x70);
-    private Brush _brushLogIP         = MakeBrush(0xF4, 0x72, 0xB6);
+    private Brush _brushLogError      = MakeBrush(0xF8, 0x71, 0x71); // red-400
+    private Brush _brushLogSuccess    = MakeBrush(0x4A, 0xDE, 0x80); // green-400
+    private Brush _brushLogConnect    = MakeBrush(0x34, 0xD3, 0x99); // emerald-400
+    private Brush _brushLogDisconnect = MakeBrush(0xFB, 0x92, 0x3C); // orange-400
+    private Brush _brushLogAdmin      = MakeBrush(0xC0, 0x84, 0xFC); // purple-400
+    private Brush _brushLogTask       = MakeBrush(0x22, 0xD3, 0xEE); // cyan-400
+    private Brush _brushLogDefault    = MakeBrush(0xCB, 0xD5, 0xE1); // slate-300
+    private Brush _brushLogTime       = MakeBrush(0x47, 0x55, 0x69); // slate-600
+    private Brush _brushLogIP         = MakeBrush(0xF4, 0x72, 0xB6); // pink-400
     private Brush _brushLogGood       => _brushLogSuccess;
     private Brush _brushLogDll        => _brushLogTask;
     private static Brush MakeBrush(byte r, byte g, byte b)
@@ -130,35 +130,37 @@ public partial class ServerWindow : ThemedWindow
         bool light = _lightThemeKeys.Contains(themeKey);
         if (light)
         {
+            // Light themes: saturated colours on white/near-white background
             _brushLogTime       = MakeBrush(0x9C, 0xA3, 0xAF); // gray-400
-            _brushLogDefault    = MakeBrush(0x37, 0x41, 0x51); // gray-700
+            _brushLogDefault    = MakeBrush(0x1E, 0x29, 0x3B); // slate-900 — near-black body
             _brushLogSuccess    = MakeBrush(0x16, 0xA3, 0x4A); // green-600
-            _brushLogConnect    = MakeBrush(0x16, 0xA3, 0x4A);
-            _brushLogUser       = MakeBrush(0x16, 0xA3, 0x4A);
+            _brushLogConnect    = MakeBrush(0x05, 0x96, 0x69); // emerald-600 — teal-green (≠ success)
             _brushLogError      = MakeBrush(0xDC, 0x26, 0x26); // red-600
             _brushLogDisconnect = MakeBrush(0xD9, 0x77, 0x06); // amber-600
-            _brushLogAdmin      = MakeBrush(0x25, 0x63, 0xEB); // blue-600
-            _brushLogTask       = MakeBrush(0x25, 0x63, 0xEB);
-            _brushLogEvent      = MakeBrush(0x25, 0x63, 0xEB);
-            _brushLogClient     = MakeBrush(0x37, 0x41, 0x51);
-            _brushLogIP         = MakeBrush(0x37, 0x41, 0x51);
+            _brushLogAdmin      = MakeBrush(0x7C, 0x3A, 0xED); // violet-600 — purple
+            _brushLogTask       = MakeBrush(0x08, 0x91, 0xB2); // cyan-600 — distinct from purple
+            _brushLogEvent      = MakeBrush(0x25, 0x63, 0xEB); // blue-600 — event keywords
+            _brushLogClient     = MakeBrush(0x6D, 0x28, 0xD9); // violet-700 — client IDs
+            _brushLogUser       = MakeBrush(0x04, 0x78, 0x57); // emerald-700 — usernames
+            _brushLogIP         = MakeBrush(0xDB, 0x27, 0x77); // pink-600 — IPs pop in pink
             if (ClipperLog != null) ClipperLog.Foreground = MakeBrush(0x16, 0xA3, 0x4A);
         }
         else
         {
-            _brushLogTime       = MakeBrush(0x4B, 0x55, 0x63); // gray-600
-            _brushLogDefault    = MakeBrush(0x94, 0xA3, 0xB8); // slate-400
-            _brushLogSuccess    = MakeBrush(0x22, 0xC5, 0x5E); // green-500
-            _brushLogConnect    = MakeBrush(0x22, 0xC5, 0x5E);
-            _brushLogUser       = MakeBrush(0x22, 0xC5, 0x5E);
-            _brushLogError      = MakeBrush(0xEF, 0x44, 0x44); // red-500
-            _brushLogDisconnect = MakeBrush(0xF5, 0x9E, 0x0B); // amber-500
-            _brushLogAdmin      = MakeBrush(0x60, 0xA5, 0xFA); // blue-400
-            _brushLogTask       = MakeBrush(0x60, 0xA5, 0xFA);
-            _brushLogEvent      = MakeBrush(0x60, 0xA5, 0xFA);
-            _brushLogClient     = MakeBrush(0x94, 0xA3, 0xB8);
-            _brushLogIP         = MakeBrush(0x94, 0xA3, 0xB8);
-            if (ClipperLog != null) ClipperLog.Foreground = MakeBrush(0x22, 0xC5, 0x5E);
+            // Dark themes: bright pastel colours on dark background
+            _brushLogTime       = MakeBrush(0x47, 0x55, 0x69); // slate-600 — dim prefix
+            _brushLogDefault    = MakeBrush(0xCB, 0xD5, 0xE1); // slate-300 — bright readable body
+            _brushLogSuccess    = MakeBrush(0x4A, 0xDE, 0x80); // green-400
+            _brushLogConnect    = MakeBrush(0x34, 0xD3, 0x99); // emerald-400 — teal-green (≠ success)
+            _brushLogError      = MakeBrush(0xF8, 0x71, 0x71); // red-400
+            _brushLogDisconnect = MakeBrush(0xFB, 0x92, 0x3C); // orange-400
+            _brushLogAdmin      = MakeBrush(0xC0, 0x84, 0xFC); // purple-400 — vivid violet
+            _brushLogTask       = MakeBrush(0x22, 0xD3, 0xEE); // cyan-400 — distinct from purple
+            _brushLogEvent      = MakeBrush(0x93, 0xC5, 0xFD); // blue-300 — event keywords
+            _brushLogClient     = MakeBrush(0xA7, 0x8B, 0xFA); // violet-400 — lavender client IDs
+            _brushLogUser       = MakeBrush(0x6E, 0xE7, 0xB7); // emerald-300 — mint usernames
+            _brushLogIP         = MakeBrush(0xF4, 0x72, 0xB6); // pink-400 — IPs pop in pink
+            if (ClipperLog != null) ClipperLog.Foreground = MakeBrush(0x4A, 0xDE, 0x80);
         }
     }
     private readonly Dictionary<TextBlock, DispatcherTimer> _counterTimers = new();
@@ -5098,9 +5100,9 @@ Read-Host 'Press Enter to close'
     private static readonly System.Text.RegularExpressions.Regex _logTokenRegex = new(
         @"(?<ip>\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b)|(?<event>\b(?:connected|disconnected|failed|success|error)\b)|(?<client>\b(?:Client|client)\s+[A-Za-z0-9_-]+)|(?<user>\b[A-Za-z0-9_.-]+(?=@))",
         System.Text.RegularExpressions.RegexOptions.Compiled | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-    private Brush _brushLogEvent  = MakeBrush(0x60, 0xA5, 0xFA);
-    private Brush _brushLogClient = MakeBrush(0xA7, 0x8B, 0xFA);
-    private Brush _brushLogUser   = MakeBrush(0x34, 0xD3, 0x99);
+    private Brush _brushLogEvent  = MakeBrush(0x93, 0xC5, 0xFD); // blue-300
+    private Brush _brushLogClient = MakeBrush(0xA7, 0x8B, 0xFA); // violet-400
+    private Brush _brushLogUser   = MakeBrush(0x6E, 0xE7, 0xB7); // emerald-300
 
     private IEnumerable<(string text, Brush brush)> TokenizeLogEntry(string msg)
     {
