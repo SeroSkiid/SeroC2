@@ -33,22 +33,20 @@
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="Background"      Value="Transparent" />
-            <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="BorderBrush"     Value="Transparent" />
-            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}" />
-            <Style.Triggers>
-                <!-- Tagged rows: amber tint — evaluated first so selection overrides it -->
-                <DataTrigger Binding="{Binding HasTag}" Value="True">
-                    <Setter Property="Background" Value="#20F59E0B"/>
-                </DataTrigger>
-                <!-- Hover is handled at cell level only (no double-layer with row+cell) -->
-                <!-- Selection: accent gradient fills the entire row behind transparent cells -->
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                </Trigger>
-            </Style.Triggers>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="Background"            Value="Transparent"/>
+            <Setter Property="BorderThickness"       Value="0"/>
+            <Setter Property="Foreground"            Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <!-- Minimal template: no border, no WPF selection chrome, no height added on select -->
+                    <ControlTemplate TargetType="DataGridRow">
+                        <DataGridCellsPresenter
+                            ItemsPanel="{TemplateBinding ItemsPanel}"
+                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- Named cell style — set directly on DataGrid.CellStyle (FrameworkElement context finds
@@ -241,22 +239,14 @@
         <Style x:Key="NavBtn" TargetType="RadioButton">
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-            <EventSetter Event="MouseMove"  Handler="NavBtn_MouseMove"/>
-            <EventSetter Event="MouseLeave" Handler="NavBtn_MouseLeave"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="RadioButton">
                         <Grid Height="30">
                             <Border x:Name="Bg" Background="Transparent"/>
-                            <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
-                                <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.25" RadiusY="0.45">
-                                        <GradientStop Color="#28FFFFFF" Offset="0"/>
-                                        <GradientStop Color="#08FFFFFF" Offset="0.5"/>
-                                        <GradientStop Color="#00FFFFFF" Offset="1"/>
-                                    </RadialGradientBrush>
-                                </Border.Background>
-                            </Border>
+                            <Border x:Name="Indicator" Width="2.5" HorizontalAlignment="Left"
+                                    Background="{DynamicResource AccentBrush}" Opacity="0"
+                                    CornerRadius="0,2,2,0" IsHitTestVisible="False"/>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
                                 <ContentPresenter x:Name="Icon"
                                               Content="{TemplateBinding Tag}"
@@ -273,23 +263,23 @@
                         </Grid>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                                <Setter TargetName="SpotGlow" Property="Opacity"    Value="1"/>
-                                <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
-                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
+                                <Setter TargetName="Bg"        Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                <Setter TargetName="Indicator" Property="Opacity"    Value="0.45"/>
+                                <Setter TargetName="Label"     Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
+                                <Setter TargetName="Icon"      Property="TextElement.Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
-                                <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
-                                <Setter TargetName="SpotGlow" Property="Opacity"    Value="0.22"/>
-                                <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
-                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
+                                <Setter TargetName="Bg"        Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                <Setter TargetName="Indicator" Property="Opacity"    Value="1"/>
+                                <Setter TargetName="Label"     Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
+                                <Setter TargetName="Icon"      Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>
                                     <Condition Property="IsChecked"   Value="True"/>
                                     <Condition Property="IsMouseOver" Value="True"/>
                                 </MultiTrigger.Conditions>
-                                <Setter TargetName="SpotGlow" Property="Opacity" Value="1"/>
+                                <Setter TargetName="Indicator" Property="Opacity" Value="1"/>
                             </MultiTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>

