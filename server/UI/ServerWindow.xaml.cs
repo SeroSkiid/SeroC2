@@ -5829,10 +5829,10 @@ Read-Host 'Press Enter to close'
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
         if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
         {
-            byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
-            byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
-            byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x25, hr, hg, hb);
+            byte hr = (byte)(accent.R + (255 - accent.R) * 0.30);
+            byte hg = (byte)(accent.G + (255 - accent.G) * 0.30);
+            byte hb = (byte)(accent.B + (255 - accent.B) * 0.30);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x50, hr, hg, hb);
         }
         var pos = e.GetPosition(btn);
         double cx = pos.X / Math.Max(btn.ActualWidth, 1);
@@ -5864,7 +5864,7 @@ Read-Host 'Press Enter to close'
                 byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
                 byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
                 byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x25, hr, hg, hb);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x50, hr, hg, hb);
                 rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
                 rgb.Center         = new System.Windows.Point(0.5, 0.5);
             }
