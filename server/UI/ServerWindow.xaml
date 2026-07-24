@@ -2319,7 +2319,6 @@
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
-                                      PreviewMouseLeftButtonDown="GridAllClients_PreviewMouseLeftButtonDown"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
@@ -2335,7 +2334,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
-                                      CellStyle="{StaticResource SMainDGCell}"
+                                      CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="LastIP">

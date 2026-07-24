@@ -1652,26 +1652,6 @@ public partial class ServerWindow : ThemedWindow
         if (row != null) { row.IsSelected = true; GridClients.Focus(); }
     }
 
-    private void GridAllClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-        // Let column resize grips pass through untouched
-        if (e.OriginalSource is System.Windows.Controls.Primitives.Thumb) return;
-
-        var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
-        if (row != null)
-        {
-            bool ctrl = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0;
-            if (ctrl)
-                row.IsSelected = !row.IsSelected;
-            else
-            {
-                GridAllClients.UnselectAll();
-                row.IsSelected = true;
-                GridAllClients.Focus();
-            }
-        }
-        e.Handled = true;
-    }
 
     private void GridAllClients_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
