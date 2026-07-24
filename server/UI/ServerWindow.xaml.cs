@@ -1202,15 +1202,26 @@ public partial class ServerWindow : ThemedWindow
     private void RefreshAllClients()
     {
         int currentPort = _server?.Port ?? 0;
+        // No LINQ sort here — SortDescriptions on the view handle ordering so that
+        // _allClientsView.Refresh() can re-sort cheaply without a full collection rebuild.
         var clients = _store.AllClients.Values
-            .Where(r => currentPort == 0 || r.LastPort == 0 || r.LastPort == currentPort)
-            .OrderByDescending(r => r.HasTag)
-            .ThenByDescending(r => r.LastSeen);
+            .Where(r => currentPort == 0 || r.LastPort == 0 || r.LastPort == currentPort);
         var recordList = new ObservableCollection<ClientRecord>(clients);
         GridAllClients.ItemsSource = null;
         GridAllClients.ItemsSource = recordList;
         _allClientsView = System.Windows.Data.CollectionViewSource.GetDefaultView(recordList);
-        if (_allClientsView != null) _allClientsView.Filter = AllClientsFilter;
+        if (_allClientsView != null)
+        {
+            _allClientsView.Filter = AllClientsFilter;
+            using (_allClientsView.DeferRefresh())
+            {
+                _allClientsView.SortDescriptions.Clear();
+                _allClientsView.SortDescriptions.Add(new System.ComponentModel.SortDescription(
+                    nameof(Data.ClientRecord.HasTag), System.ComponentModel.ListSortDirection.Descending));
+                _allClientsView.SortDescriptions.Add(new System.ComponentModel.SortDescription(
+                    nameof(Data.ClientRecord.LastSeen), System.ComponentModel.ListSortDirection.Descending));
+            }
+        }
         foreach (var r in recordList)
             FlagCache.QueueLoadForRecord(r);
         if (TxtAllClientsCount != null)
@@ -2373,7 +2384,7 @@ public partial class ServerWindow : ThemedWindow
         }
 
         System.Windows.Data.CollectionViewSource.GetDefaultView(_onlineClients)?.Refresh();
-        RefreshAllClients();
+        _allClientsView?.Refresh(); // ClientRecord.Tag now fires PropertyChanged — no full rebuild needed
 
         // CollectionView.Refresh() clears DataGrid selection — restore it
         GridClients.UnselectAll();
@@ -2413,7 +2424,7 @@ public partial class ServerWindow : ThemedWindow
         }
 
         RefreshClients();
-        RefreshAllClients();
+        _allClientsView?.Refresh(); // ClientRecord.Tag now fires PropertyChanged — no full rebuild needed
         SetStatus($"Tag set on {records.Count} record(s).");
     }
 

@@ -33,8 +33,13 @@ public class ClientRecord : INotifyPropertyChanged
     private static int StdGb(long mb) { int g = (int)Math.Ceiling(mb / 1024.0); int s = 4; while (s < g) s *= 2; return s; }
     public bool   LastIsAdmin   { get; set; }
     public int    LastPort { get; set; }
-    public string Tag    { get; set; } = string.Empty;
-    public bool   HasTag => !string.IsNullOrEmpty(Tag);
+    private string _tag = string.Empty;
+    public string Tag
+    {
+        get => _tag;
+        set { if (_tag != value) { _tag = value; Notify(); Notify(nameof(HasTag)); } }
+    }
+    public bool HasTag => !string.IsNullOrEmpty(_tag);
     public string AssignedId { get; set; } = string.Empty;
     public DateTime FirstSeen        { get; set; } = DateTime.UtcNow;
     public DateTime LastSeen         { get; set; } = DateTime.UtcNow;
