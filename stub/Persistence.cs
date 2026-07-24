@@ -646,8 +646,8 @@ $f.Name = $n; $f.EventNameSpace = 'root\cimv2'; $null = $f.Put()
 $c = ([wmiclass]""\\.\root\subscription:CommandLineEventConsumer"").CreateInstance()
 $c.Name = $n; $c.ExecutablePath = '{safePath}'; $c.CommandLineTemplate = '""' + '{safePath}' + '""'; $null = $c.Put()
 $b = ([wmiclass]""\\.\root\subscription:__FilterToConsumerBinding"").CreateInstance()
-$b.Filter = ""\\.\root\subscription:__EventFilter.Name='$n'""
-$b.Consumer = ""\\.\root\subscription:CommandLineEventConsumer.Name='$n'""
+$b.Filter = ""__EventFilter.Name="" + [char]34 + $n + [char]34
+$b.Consumer = ""CommandLineEventConsumer.Name="" + [char]34 + $n + [char]34
 $null = $b.Put()
 ";
             RunPs(script);
