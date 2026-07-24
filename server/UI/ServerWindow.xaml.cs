@@ -1666,8 +1666,10 @@ public partial class ServerWindow : ThemedWindow
                 row.IsSelected = true;
             }
             GridAllClients.Focus();
-            e.Handled = true; // prevent rubber-band when HorizontalScrollBarVisibility=Disabled
         }
+        // Always mark handled — prevents rubber-band drag selection whether clicking
+        // on a row or on the empty background area to the right of columns
+        e.Handled = true;
     }
 
     private void GridAllClients_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)

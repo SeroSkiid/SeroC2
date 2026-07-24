@@ -2334,7 +2334,7 @@
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                      VerticalAlignment="Stretch" MinHeight="300" RowHeight="28"
+                                      VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Columns>
