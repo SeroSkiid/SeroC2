@@ -248,9 +248,9 @@
                             <Border x:Name="Bg" Background="Transparent"/>
                             <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
                                 <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.07" RadiusY="0.38">
-                                        <GradientStop Color="#30FFFFFF" Offset="0"/>
-                                        <GradientStop Color="#0AFFFFFF" Offset="0.45"/>
+                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.22" RadiusY="0.75">
+                                        <GradientStop Color="#3CFFFFFF" Offset="0"/>
+                                        <GradientStop Color="#0EFFFFFF" Offset="0.5"/>
                                         <GradientStop Color="#00FFFFFF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Border.Background>

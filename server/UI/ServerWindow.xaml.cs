@@ -5833,8 +5833,8 @@ Read-Host 'Press Enter to close'
             byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
             byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
             byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(45, hr, hg, hb);
-            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(12, accent.R, accent.G, accent.B);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(62, hr, hg, hb);
+            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(18, accent.R, accent.G, accent.B);
         }
         var pos = e.GetPosition(btn);
         rgb.GradientOrigin = new System.Windows.Point(pos.X / Math.Max(btn.ActualWidth, 1), pos.Y / Math.Max(btn.ActualHeight, 1));
@@ -5871,8 +5871,8 @@ Read-Host 'Press Enter to close'
                 byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
                 byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
                 byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(45, hr, hg, hb);
-                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(12, accent.R, accent.G, accent.B);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(62, hr, hg, hb);
+                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(18, accent.R, accent.G, accent.B);
                 rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
                 rgb.Center         = new System.Windows.Point(0.5, 0.5);
             }
