@@ -1169,38 +1169,36 @@
                     BorderThickness="{TemplateBinding BorderThickness}"
                     SnapsToDevicePixels="True">
                 <ScrollViewer x:Name="DG_ScrollViewer" Focusable="False" Background="Transparent"
-                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}">
+                              HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
+                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
                     <ScrollViewer.Template>
                         <ControlTemplate TargetType="{x:Type ScrollViewer}">
                             <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
-                                </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
-                                                                Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"/>
+                                                                Grid.Row="0"/>
                                 <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
-                                                        Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                        Grid.Row="1"
                                                         CanContentScroll="{TemplateBinding CanContentScroll}"/>
-                                <!-- Vertical scrollbar spans rows 0+1 — full height including column headers -->
+                                <!-- Vertical scrollbar overlays both header and data rows — no dedicated column, no gap -->
                                 <ScrollBar x:Name="PART_VerticalScrollBar"
-                                           Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"
+                                           Grid.Row="0" Grid.RowSpan="2"
+                                           HorizontalAlignment="Right" Width="8"
                                            Orientation="Vertical"
                                            Maximum="{TemplateBinding ScrollableHeight}"
                                            ViewportSize="{TemplateBinding ViewportHeight}"
-                                           Value="{TemplateBinding VerticalOffset}"
+                                           Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
                                            Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
                                 <ScrollBar x:Name="PART_HorizontalScrollBar"
-                                           Grid.Row="2" Grid.Column="0"
+                                           Grid.Row="2"
                                            Orientation="Horizontal"
                                            Maximum="{TemplateBinding ScrollableWidth}"
                                            ViewportSize="{TemplateBinding ViewportWidth}"
-                                           Value="{TemplateBinding HorizontalOffset}"
+                                           Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
                                            Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
                             </Grid>
                         </ControlTemplate>
