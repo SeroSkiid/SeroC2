@@ -1655,7 +1655,19 @@ public partial class ServerWindow : ThemedWindow
     private void GridAllClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
-        if (row != null) { row.IsSelected = true; GridAllClients.Focus(); }
+        if (row != null)
+        {
+            var mod = System.Windows.Input.Keyboard.Modifiers;
+            if (mod == System.Windows.Input.ModifierKeys.Control)
+                row.IsSelected = !row.IsSelected;
+            else if (mod != System.Windows.Input.ModifierKeys.Shift)
+            {
+                GridAllClients.SelectedItems.Clear();
+                row.IsSelected = true;
+            }
+            GridAllClients.Focus();
+            e.Handled = true; // prevent rubber-band when HorizontalScrollBarVisibility=Disabled
+        }
     }
 
     private void GridAllClients_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
