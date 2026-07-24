@@ -304,7 +304,7 @@ The stub copies itself to `%AppData%\Roaming\<PersistName>\<HiddenFileName>`.
 |--------|-----------|----------------|
 | Registry `HKCU\Run` | Visible | `NtSetValueKey` (bypasses behavioral hook) |
 | Startup Folder `.lnk` | Visible | Native binary Shell Link writer (no COM) |
-| Scheduled Task | Hidden from Startup tab | `schtasks /Create` + `ONLOGON /IT` |
+| Scheduled Task | Hidden from Startup tab | `schtasks /Create` + `ONLOGON /IT` — admin required; client relaunches as SYSTEM on logon |
 | WMI Subscription | Invisible to Startup tools | `__EventFilter` + `CommandLineEventConsumer` in `root\subscription` — fires once per boot (within the first ~10 min); admin required only for initial install, runs as SYSTEM automatically on reboot |
 | Registry `HKLM\Run` | Admin only | `NtSetValueKey` |
 
