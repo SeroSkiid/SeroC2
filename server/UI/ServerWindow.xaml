@@ -248,9 +248,8 @@
                             <Border x:Name="Bg" Background="Transparent"/>
                             <Border x:Name="SpotGlow" IsHitTestVisible="False" Opacity="0" ClipToBounds="True">
                                 <Border.Background>
-                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.35" RadiusY="0.82">
-                                        <GradientStop Color="#5EFFFFFF" Offset="0"/>
-                                        <GradientStop Color="#18FFFFFF" Offset="0.52"/>
+                                    <RadialGradientBrush GradientOrigin="0.5,0.5" Center="0.5,0.5" RadiusX="0.9" RadiusY="1.2">
+                                        <GradientStop Color="#25FFFFFF" Offset="0"/>
                                         <GradientStop Color="#00FFFFFF" Offset="1"/>
                                     </RadialGradientBrush>
                                 </Border.Background>
@@ -280,6 +279,7 @@
                                 <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
                                 <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
                                 <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
+                                <Setter TargetName="SpotGlow" Property="Opacity"    Value="0.15"/>
                             </Trigger>
                             <MultiTrigger>
                                 <MultiTrigger.Conditions>

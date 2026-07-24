@@ -5827,14 +5827,12 @@ Read-Host 'Press Enter to close'
         if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
         if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-        glow.BeginAnimation(Border.OpacityProperty, null);
         if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
         {
             byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
             byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
             byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(88, hr, hg, hb);
-            rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(28, accent.R, accent.G, accent.B);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x25, hr, hg, hb);
         }
         var pos = e.GetPosition(btn);
         double cx = pos.X / Math.Max(btn.ActualWidth, 1);
@@ -5849,15 +5847,8 @@ Read-Host 'Press Enter to close'
         if (btn.Template.FindName("SpotGlow", btn) is not Border glow) return;
         if (glow.Background is not System.Windows.Media.RadialGradientBrush rgb) return;
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
-        var fade = new System.Windows.Media.Animation.DoubleAnimation(
-            0.0, TimeSpan.FromMilliseconds(250))
-        {
-            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
-            FillBehavior   = System.Windows.Media.Animation.FillBehavior.Stop
-        };
         rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
         rgb.Center         = new System.Windows.Point(0.5, 0.5);
-        glow.BeginAnimation(Border.OpacityProperty, fade);
     }
 
     private void ApplyNavBtnGlow(System.Windows.Controls.RadioButton btn)
@@ -5873,8 +5864,7 @@ Read-Host 'Press Enter to close'
                 byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
                 byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
                 byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(88, hr, hg, hb);
-                rgb.GradientStops[1].Color = System.Windows.Media.Color.FromArgb(28, accent.R, accent.G, accent.B);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x25, hr, hg, hb);
                 rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
                 rgb.Center         = new System.Windows.Point(0.5, 0.5);
             }
