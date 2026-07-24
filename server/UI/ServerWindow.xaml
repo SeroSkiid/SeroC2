@@ -2338,6 +2338,42 @@
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Resources>
                                     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
+                                    <Style TargetType="{x:Type ScrollViewer}">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto"/>
+                                                            <RowDefinition Height="*"/>
+                                                            <RowDefinition Height="Auto"/>
+                                                        </Grid.RowDefinitions>
+                                                        <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                            Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"/>
+                                                        <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                            Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                            CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                                                        <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                            Grid.Row="1" Grid.Column="1" Orientation="Vertical"
+                                                            Maximum="{TemplateBinding ScrollableHeight}"
+                                                            ViewportSize="{TemplateBinding ViewportHeight}"
+                                                            Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                                                        <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                            Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal"
+                                                            Maximum="{TemplateBinding ScrollableWidth}"
+                                                            ViewportSize="{TemplateBinding ViewportWidth}"
+                                                            Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                            Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                                                    </Grid>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
                                 </DataGrid.Resources>
                                 <DataGrid.Columns>
                                     <DataGridTemplateColumn Header="IP" Width="110" MinWidth="80" SortMemberPath="LastIP">
