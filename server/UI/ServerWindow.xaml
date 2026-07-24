@@ -2322,7 +2322,7 @@
                                       PreviewMouseLeftButtonDown="GridAllClients_PreviewMouseLeftButtonDown"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
-                                      Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
+                                      Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                       BorderThickness="0" RowBackground="Transparent"
                                       GridLinesVisibility="None"
                                       HeadersVisibility="Column"
