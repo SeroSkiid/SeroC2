@@ -2317,7 +2317,7 @@
                                 </Grid.ColumnDefinitions>
                                 <DataGrid Grid.Column="0" x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
-                                      HorizontalAlignment="Stretch"
+                                      HorizontalAlignment="Stretch" MinWidth="750"
                                       UseLayoutRounding="True"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
@@ -2331,7 +2331,7 @@
                                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                                       EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
