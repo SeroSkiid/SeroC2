@@ -163,6 +163,7 @@ public partial class ServerWindow : ThemedWindow
     private readonly Dictionary<TextBlock, DispatcherTimer> _counterTimers = new();
     private DispatcherTimer? _searchDebounce;
     private DispatcherTimer? _allClientsSearchDebounce;
+    private DispatcherTimer? _chartSizeDebounce;
     private System.ComponentModel.ICollectionView? _allClientsView;
     private readonly Dictionary<string, Window> _featureWindows = new();
     private byte[]? _bldXmrigBytes;
@@ -311,7 +312,6 @@ public partial class ServerWindow : ThemedWindow
 
             UpdateLogBrushes(UiPrefs.GetString("Theme", "SeroDark"));
             Log("[*] Server ready. Click START to listen.");
-            RefreshAllClients();
             RestoreAllClientsColumnWidths();
             SetupAllClientsColumnPersistence();
             LoadConfig();
@@ -1240,9 +1240,9 @@ public partial class ServerWindow : ThemedWindow
         _allClientsView = System.Windows.Data.CollectionViewSource.GetDefaultView(recordList);
         if (_allClientsView != null)
         {
-            _allClientsView.Filter = AllClientsFilter;
             using (_allClientsView.DeferRefresh())
             {
+                _allClientsView.Filter = AllClientsFilter;
                 _allClientsView.SortDescriptions.Clear();
                 _allClientsView.SortDescriptions.Add(new System.ComponentModel.SortDescription(
                     nameof(Data.ClientRecord.HasTag), System.ComponentModel.ListSortDirection.Descending));
@@ -1321,7 +1321,16 @@ public partial class ServerWindow : ThemedWindow
     private void ScreenPopupOverlay_StopBubble(object sender, System.Windows.Input.MouseButtonEventArgs e)
         => e.Handled = true; // prevent click on the card from dismissing the overlay
 
-    private void DashChart_SizeChanged(object sender, SizeChangedEventArgs e) => DrawActivityChart();
+    private void DashChart_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (_chartSizeDebounce == null)
+        {
+            _chartSizeDebounce = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            _chartSizeDebounce.Tick += (_, _) => { _chartSizeDebounce.Stop(); DrawActivityChart(); };
+        }
+        _chartSizeDebounce.Stop();
+        _chartSizeDebounce.Start();
+    }
 
     private void DrawActivityChart()
     {
