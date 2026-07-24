@@ -125,6 +125,16 @@ public class TlsServer
                 DisconnectClient(client.Id);
             }
         }
+
+        // Evict expired rate-limit and auth-fail entries — prevents unbounded growth
+        // when 100k+ unique IPs connect over the server's lifetime (scans, bots, etc.)
+        var now = DateTime.UtcNow;
+        foreach (var ip in _connRate.Keys)
+            if (_connRate.TryGetValue(ip, out var r) && now > r.reset)
+                _connRate.TryRemove(ip, out _);
+        foreach (var ip in _authFail.Keys)
+            if (_authFail.TryGetValue(ip, out var v) && now > v.unbanAt)
+                _authFail.TryRemove(ip, out _);
     }
 
     public void Stop()
