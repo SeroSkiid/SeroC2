@@ -5821,6 +5821,16 @@ Read-Host 'Press Enter to close'
     private bool _navSyncing;
     private bool _langSyncing;
 
+    private (byte alpha, float lighten) GlowParams()
+    {
+        if (TryFindResource("SidebarBgBrush") is System.Windows.Media.SolidColorBrush sb)
+        {
+            float lum = (sb.Color.R * 0.299f + sb.Color.G * 0.587f + sb.Color.B * 0.114f) / 255f;
+            if (lum > 0.5f) return (0x70, 0.05f); // light sidebar: saturated accent, higher alpha
+        }
+        return (0x50, 0.30f); // dark sidebar: lightened accent, standard alpha
+    }
+
     private void NavBtn_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
         if (sender is not System.Windows.Controls.RadioButton btn) return;
@@ -5829,10 +5839,11 @@ Read-Host 'Press Enter to close'
         if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
         if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
         {
-            byte hr = (byte)(accent.R + (255 - accent.R) * 0.30);
-            byte hg = (byte)(accent.G + (255 - accent.G) * 0.30);
-            byte hb = (byte)(accent.B + (255 - accent.B) * 0.30);
-            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x50, hr, hg, hb);
+            var (alpha, lighten) = GlowParams();
+            byte hr = (byte)(accent.R + (255 - accent.R) * lighten);
+            byte hg = (byte)(accent.G + (255 - accent.G) * lighten);
+            byte hb = (byte)(accent.B + (255 - accent.B) * lighten);
+            rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(alpha, hr, hg, hb);
         }
         var pos = e.GetPosition(btn);
         double cx = pos.X / Math.Max(btn.ActualWidth, 1);
@@ -5861,10 +5872,11 @@ Read-Host 'Press Enter to close'
             if (rgb.IsFrozen) { rgb = rgb.Clone(); glow.Background = rgb; }
             if (TryFindResource("AccentColor") is System.Windows.Media.Color accent)
             {
-                byte hr = (byte)(accent.R + (255 - accent.R) * 0.55);
-                byte hg = (byte)(accent.G + (255 - accent.G) * 0.55);
-                byte hb = (byte)(accent.B + (255 - accent.B) * 0.55);
-                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(0x50, hr, hg, hb);
+                var (alpha, lighten) = GlowParams();
+                byte hr = (byte)(accent.R + (255 - accent.R) * lighten);
+                byte hg = (byte)(accent.G + (255 - accent.G) * lighten);
+                byte hb = (byte)(accent.B + (255 - accent.B) * lighten);
+                rgb.GradientStops[0].Color = System.Windows.Media.Color.FromArgb(alpha, hr, hg, hb);
                 rgb.GradientOrigin = new System.Windows.Point(0.5, 0.5);
                 rgb.Center         = new System.Windows.Point(0.5, 0.5);
             }
