@@ -7427,10 +7427,12 @@ Read-Host 'Press Enter to close'
             if (name == "Seven")
             {
                 GridAllClients.ClearValue(System.Windows.Controls.DataGrid.TemplateProperty);
+                GridClients.ClearValue(System.Windows.Controls.DataGrid.TemplateProperty);
             }
             else if (TryFindResource("DataGridFullHeightScrollbar") is System.Windows.Controls.ControlTemplate fhTpl)
             {
                 GridAllClients.Template = fhTpl;
+                GridClients.Template = fhTpl;
             }
         }, System.Windows.Threading.DispatcherPriority.Loaded);
 
