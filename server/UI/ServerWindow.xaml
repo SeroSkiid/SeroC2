@@ -1928,6 +1928,42 @@
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                     <DataGrid.Resources>
                                         <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
+                                        <Style TargetType="{x:Type ScrollViewer}">
+                                            <Setter Property="Template">
+                                                <Setter.Value>
+                                                    <ControlTemplate TargetType="{x:Type ScrollViewer}">
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                            </Grid.ColumnDefinitions>
+                                                            <Grid.RowDefinitions>
+                                                                <RowDefinition Height="Auto"/>
+                                                                <RowDefinition Height="*"/>
+                                                                <RowDefinition Height="Auto"/>
+                                                            </Grid.RowDefinitions>
+                                                            <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"/>
+                                                            <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
+                                                                Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                                                CanContentScroll="{TemplateBinding CanContentScroll}"/>
+                                                            <ScrollBar x:Name="PART_VerticalScrollBar"
+                                                                Grid.Row="1" Grid.Column="1" Orientation="Vertical"
+                                                                Maximum="{TemplateBinding ScrollableHeight}"
+                                                                ViewportSize="{TemplateBinding ViewportHeight}"
+                                                                Value="{Binding VerticalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"/>
+                                                            <ScrollBar x:Name="PART_HorizontalScrollBar"
+                                                                Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal"
+                                                                Maximum="{TemplateBinding ScrollableWidth}"
+                                                                ViewportSize="{TemplateBinding ViewportWidth}"
+                                                                Value="{Binding HorizontalOffset, Mode=OneWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                                                Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"/>
+                                                        </Grid>
+                                                    </ControlTemplate>
+                                                </Setter.Value>
+                                            </Setter>
+                                        </Style>
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <!-- FLAG + IP (combined first column for quick geo identification) -->
@@ -2061,7 +2097,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="120" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>

@@ -1561,7 +1561,10 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                int tagW = UiPrefs.GetInt("ColWidth_TAG", 0);
+                col.Width = tagW > 0
+                    ? new System.Windows.Controls.DataGridLength(tagW)
+                    : new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
@@ -1583,7 +1586,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
+            if (string.IsNullOrEmpty(header)) continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
         }
