@@ -44,7 +44,7 @@ public partial class ServerWindow : ThemedWindow
         {
             // O(n+m) HashSet-based removal — avoids O(n×m) from Items.Remove() linear scan
             // which would freeze the UI thread on mass disconnects (e.g. 1000 drops at once).
-            var toRemove = new HashSet<T>(items, ReferenceEqualityComparer.Instance);
+            var toRemove = new HashSet<T>(items);
             if (toRemove.Count == 0) return;
             _bulk = true;
             for (int i = Items.Count - 1; i >= 0; i--)
