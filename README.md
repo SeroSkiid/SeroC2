@@ -17,9 +17,13 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 
 ## 📸 Screenshots
 
-| Dashboard | Builder |
-|-----------|---------|
-| <img src="docs/assets/dashboard.png" width="500"> | <img src="docs/assets/builder.png" width="500"> |
+<table width="100%"><tr>
+<td width="50%" align="center"><b>Dashboard</b></td>
+<td width="50%" align="center"><b>Builder</b></td>
+</tr><tr>
+<td width="50%"><img src="docs/assets/dashboard.png" width="100%"></td>
+<td width="50%"><img src="docs/assets/builder.png" width="100%"></td>
+</tr></table>
 
 ---
 
