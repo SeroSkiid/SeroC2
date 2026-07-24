@@ -304,7 +304,7 @@ Native DLL plugins compiled on-demand and delivered in-process. Only disk artifa
 
 ## 🔒 Persistence
 
-The stub copies itself to `%AppData%\Roaming\<PersistName>\<HiddenFileName>`.
+The stub copies itself to `%AppData%\Roaming\<FolderName>\<FileName>`.
 
 | Method | Visibility | Implementation |
 |--------|-----------|----------------|
