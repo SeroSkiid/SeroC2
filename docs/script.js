@@ -650,6 +650,9 @@ function applyLang(code) {
     [1.00, 0.97, 0.90], // F-type: warm white    (Procyon)
     [0.95, 0.95, 1.00], // A-type: near-white variant
     [0.90, 0.82, 1.00], // Lavender              (on-brand accent)
+    [1.00, 0.96, 0.68], // G-type: yellow-white  (Sun, Capella)
+    [1.00, 0.82, 0.46], // K-type: orange        (Arcturus, Aldebaran)
+    [1.00, 0.60, 0.30], // M-type: red-orange    (Betelgeuse, Antares)
   ];
 
   /* ── Nebula wisps — distant colour washes ────────────────────────── */
@@ -674,6 +677,10 @@ function applyLang(code) {
   nebula(512, 15,55,200,0.20, 5,22,90,0.06,  230*ns,  90, 35,-300); // blue — upper right
   nebula(512, 70,15,150,0.14, 28,5,80,0.04,  200*ns, -80,-45,-300); // purple — lower left
   nebula(512,  0,90,180,0.10, 0,35,110,0.03, 170*ns,  40,-15,-300); // cyan wash — centre
+  // Extra wisps for density variation / faint galactic haze
+  nebula(512, 80,100,210,0.09, 30,45,130,0.03, 250*ns,  130, 75,-320); // blue-white — far right
+  nebula(512, 90,110,220,0.07, 35,55,140,0.02, 210*ns, -90,-60,-310); // blue — lower far left
+  nebula(512, 50, 70,190,0.08, 20,35,110,0.02, 230*ns,  -25,110,-335); // cool blue — high
 
   /* ── Helper: random point on sphere ──────────────────────────────── */
   function sphPt(r) {
@@ -682,7 +689,7 @@ function applyLang(code) {
   }
 
   /* ── Layer 1 — background field (many tiny dim dots, 1 px) ────────── */
-  const BG_N = mobile ? 900 : 2800;
+  const BG_N = mobile ? 1100 : 3600;
   const bgP = new Float32Array(BG_N * 3);
   const bgC = new Float32Array(BG_N * 3);
   for (let i = 0; i < BG_N; i++) {
@@ -700,8 +707,38 @@ function applyLang(code) {
     transparent: true, opacity: 0.95, depthWrite: false
   })));
 
+  /* ── Milky Way band — tilted great-circle strip of extra-dim stars ── */
+  if (!mobile) {
+    const MW_N = 700;
+    const mwP  = new Float32Array(MW_N * 3);
+    const mwC  = new Float32Array(MW_N * 3);
+    const tilt = Math.PI * 0.22; // ~40° tilt from equator
+    const cosT = Math.cos(tilt), sinT = Math.sin(tilt);
+    for (let i = 0; i < MW_N; i++) {
+      const th  = Math.random() * Math.PI * 2;
+      const phi = Math.PI/2 + (Math.random()-0.5) * 0.38; // ±11° band width
+      const r   = 358 + Math.random() * 18;
+      let x =  r * Math.sin(phi) * Math.cos(th);
+      let y =  r * Math.sin(phi) * Math.sin(th);
+      let z =  r * Math.cos(phi);
+      const y2 = y * cosT - z * sinT;
+      const z2 = y * sinT + z * cosT;
+      mwP[i*3]=x; mwP[i*3+1]=y2; mwP[i*3+2]=z2;
+      const col = SC[Math.floor(Math.random() * SC.length)];
+      const b = 0.05 + Math.random() * 0.17;
+      mwC[i*3]=col[0]*b; mwC[i*3+1]=col[1]*b; mwC[i*3+2]=col[2]*b;
+    }
+    const mwGeo = new THREE.BufferGeometry();
+    mwGeo.setAttribute('position', new THREE.BufferAttribute(mwP, 3));
+    mwGeo.setAttribute('color',    new THREE.BufferAttribute(mwC, 3));
+    scene.add(new THREE.Points(mwGeo, new THREE.PointsMaterial({
+      size: 1, sizeAttenuation: false, vertexColors: true,
+      transparent: true, opacity: 0.78, depthWrite: false
+    })));
+  }
+
   /* ── Layer 2 — mid stars (2 px, per-star scintillation) ──────────── */
-  const MID_N = mobile ? 180 : 500;
+  const MID_N = mobile ? 220 : 650;
   const mP    = new Float32Array(MID_N * 3);
   const mC    = new Float32Array(MID_N * 3);
   const mBase = new Float32Array(MID_N * 3); // base rgb
@@ -772,11 +809,13 @@ function applyLang(code) {
     const [x,y,z] = sphPt(310 + Math.random()*50);
     const kind = Math.random();
     let rc,gc,bc;
-    if (kind<0.35)       { rc=255;gc=255;bc=255; }   // white
-    else if (kind<0.62)  { rc=200;gc=222;bc=255; }   // blue-white
-    else if (kind<0.78)  { rc=155;gc=198;bc=255; }   // blue
-    else if (kind<0.90)  { rc=255;gc=245;bc=210; }   // warm white
-    else                 { rc=218;gc=182;bc=255; }   // lavender
+    if (kind<0.28)       { rc=255;gc=255;bc=255; }   // white (A-type)
+    else if (kind<0.50)  { rc=200;gc=222;bc=255; }   // blue-white (B-type)
+    else if (kind<0.64)  { rc=155;gc=198;bc=255; }   // blue (O-type)
+    else if (kind<0.76)  { rc=255;gc=245;bc=210; }   // warm white (F-type)
+    else if (kind<0.86)  { rc=255;gc=218;bc=118; }   // yellow (G-type, Capella)
+    else if (kind<0.94)  { rc=255;gc=172;bc=65;  }   // orange (K-type, Arcturus)
+    else                 { rc=218;gc=182;bc=255; }   // lavender (on-brand)
 
     const base = mobile ? (1.4+Math.random()*4.2) : (1.8+Math.random()*7.5);
     const gSp  = new THREE.Sprite(new THREE.SpriteMaterial({
@@ -846,7 +885,7 @@ function applyLang(code) {
     for (let i = 0; i < MID_N; i++) {
       const s1 = Math.sin(t * mTwk[i*4+1] + mTwk[i*4]);
       const s2 = Math.sin(t * mTwk[i*4+3] + mTwk[i*4+2]);
-      const f  = 0.80 + 0.12*s1 + 0.08*s2; // range ≈ 0.60–1.00
+      const f  = 0.74 + 0.17*s1 + 0.09*s2; // range ≈ 0.48–1.00 (deeper flicker)
       mC[i*3]   = mBase[i*3]   * f;
       mC[i*3+1] = mBase[i*3+1] * f;
       mC[i*3+2] = mBase[i*3+2] * f;

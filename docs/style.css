@@ -35,6 +35,19 @@ body {
   transform: translateZ(0);
 }
 
+/* Scanlines — very subtle CRT texture over the whole viewport */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 50; pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0,0,0,0.024) 2px,
+    rgba(0,0,0,0.024) 4px
+  );
+}
+
 /* Gradient fades — center darkened so network stays on the edges */
 body::before {
   content: '';
@@ -65,6 +78,8 @@ body::before {
   font-size: 1.05rem; font-weight: 700; letter-spacing: 0.03em;
   background: linear-gradient(90deg, #4a85f5 0%, #7c5ce8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  display: inline-block;
+  animation: brandGlitch 13s infinite;
 }
 .brand-rat {
   font-size: 1.05rem; font-weight: 600;
@@ -124,6 +139,12 @@ body::before {
   font-size: 0.75rem; color: var(--muted); margin-bottom: 28px;
 }
 .prompt { color: var(--green); font-weight: 600; user-select: none; }
+.eyebrow::after {
+  content: '▋';
+  color: var(--green);
+  animation: cursorBlink 1.15s step-end infinite;
+  flex-shrink: 0;
+}
 .dot-live {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--green); flex-shrink: 0;
@@ -131,6 +152,14 @@ body::before {
   animation: pulse 2.5s ease-in-out infinite;
 }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes cursorBlink { 0%, 100% { opacity: 0.85; } 50% { opacity: 0; } }
+@keyframes brandGlitch {
+  0%, 86%, 100% { filter: none; transform: none; }
+  87%           { filter: hue-rotate(38deg) saturate(2.2) brightness(1.18); transform: translateX(-2px); }
+  88%           { filter: hue-rotate(-24deg) saturate(1.8) brightness(0.92); transform: translateX(3px); }
+  89%           { filter: hue-rotate(18deg) saturate(1.4) brightness(1.05); transform: translateX(-1px); }
+  90%           { filter: none; transform: none; }
+}
 .hero h1 {
   font-size: clamp(1.5rem, 5vw, 3.2rem);
   font-weight: 700; line-height: 1.08;
@@ -141,6 +170,7 @@ body::before {
   font-style: normal;
   background: linear-gradient(90deg, var(--blue) 0%, #818cf8 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  filter: drop-shadow(0 0 18px rgba(74,133,245,0.50)) drop-shadow(0 0 44px rgba(74,133,245,0.22));
 }
 .hero-free { color: var(--green); }
 .hero-lead {
@@ -162,7 +192,7 @@ body::before {
 }
 .btn-primary:hover {
   background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%);
-  box-shadow: 0 0 0 1px rgba(99,102,241,0.4), 0 6px 24px rgba(59,130,246,0.28);
+  box-shadow: 0 0 0 1px rgba(99,102,241,0.55), 0 6px 32px rgba(59,130,246,0.42), 0 0 52px rgba(59,130,246,0.18);
   transform: translateY(-1px);
 }
 .btn-outline {
@@ -244,11 +274,15 @@ body::before {
 .feat-col li {
   font-size: 0.865rem; color: var(--muted);
   padding-left: 16px; position: relative; line-height: 1.5;
+  transition: color 0.15s;
 }
+.feat-col li:hover { color: var(--text); }
 .feat-col li::before {
   content: '→'; position: absolute; left: 0;
   color: var(--blue); font-size: 0.72rem; top: 2px;
+  transition: text-shadow 0.15s;
 }
+.feat-col li:hover::before { text-shadow: 0 0 8px rgba(74,133,245,0.9); }
 
 /* ── Pricing ── */
 .price-table-wrap { overflow-x: auto; margin-top: 44px; -webkit-overflow-scrolling: touch; }
@@ -317,6 +351,13 @@ body::before {
 .deepdive-card {
   background: rgba(255,255,255,0.018); border: 1px solid var(--border);
   border-left: 2px solid rgba(59,130,246,0.35); border-radius: 10px; padding: 32px;
+  transition: border-color 0.22s, border-left-color 0.22s, background 0.22s, box-shadow 0.22s;
+}
+.deepdive-card:hover {
+  border-color: rgba(74,133,245,0.24);
+  border-left-color: rgba(74,133,245,0.80);
+  background: rgba(255,255,255,0.028);
+  box-shadow: -6px 0 30px rgba(74,133,245,0.14), 0 4px 32px rgba(74,133,245,0.05);
 }
 .dd-icon {
   width: 40px; height: 40px; border-radius: 8px;
