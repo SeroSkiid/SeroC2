@@ -32,7 +32,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog that can\'t be killed','tech.wd.p':'4 guardian processes in dllhost/SearchProtocolHost with PPID spoofing, staggered 800ms apart. File lock + FileSystemWatcher for instant restore.',
     'feat.mon.1':'Remote Desktop — DXGI + GDI fallback','feat.mon.2':'HVNC — isolated hidden desktop','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microphone — live listen + WAV save','feat.mon.5':'Keylogger — disk logging by date','feat.mon.6':'Performance Monitor — CPU / RAM / Net','feat.mon.7':'Remote Shell — cmd / PowerShell',
     'feat.adm.1':'File Manager — browse / upload / exec','feat.adm.2':'Process Manager — tree view, icons','feat.adm.3':'Registry Editor — HKLM + HKCU','feat.adm.4':'Service / Window / Device Manager','feat.adm.5':'TCP Connections + firewall rules','feat.adm.6':'Startup Manager','feat.adm.7':'Installed Programs — silent uninstall',
-    'feat.off.1':'RunPE — in-memory + PPID spoof','feat.off.2':'Reverse SOCKS5 proxy','feat.off.3':'Crypto Clipper — 10 coins','feat.off.4':'AutoTask DLL plugins — C++, compiled on demand','feat.off.5':'XMR Miner — configurable hollow target, idle throttle','feat.off.6':'Telegram first-exec notification','feat.off.7':'Per-HWID AutoTask deduplication',
+    'feat.off.1':'RunPE — in-memory + PPID spoof','feat.off.2':'Reverse SOCKS5 proxy','feat.off.3':'Crypto Clipper — 10 coins','feat.off.4':'AutoTask DLL plugins — C++, compiled on demand','feat.off.5':'XMR Miner — configurable hollow target','feat.off.6':'Telegram first-exec notification','feat.off.7':'Per-HWID AutoTask deduplication','hero.features':'40+ features','footer.built':'Built by ','footer.lic':' — authorized use only.',
   },
   fr: {
     'nav.features':'Fonctionnalités','nav.showcase':'Galerie','nav.pricing':'Tarifs',
@@ -64,7 +64,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog impossible à tuer','tech.wd.p':'4 processus gardiens dans dllhost/SearchProtocolHost avec PPID spoofing, décalés de 800ms. Verrou fichier + FileSystemWatcher pour restauration instantanée.',
     'feat.mon.1':'Bureau distant — DXGI + GDI fallback','feat.mon.2':'HVNC — bureau caché isolé','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microphone — écoute en direct + sauvegarde WAV','feat.mon.5':'Keylogger — journalisation disque par date','feat.mon.6':'Moniteur de performances — CPU / RAM / Réseau','feat.mon.7':'Shell distant — cmd / PowerShell',
     'feat.adm.1':'Gestionnaire de fichiers — parcourir / télécharger / exécuter','feat.adm.2':'Gestionnaire de processus — vue arbre, icônes','feat.adm.3':'Éditeur de registre — HKLM + HKCU','feat.adm.4':'Gestionnaire de services / fenêtres / périphériques','feat.adm.5':'Connexions TCP + règles pare-feu','feat.adm.6':'Gestionnaire de démarrage','feat.adm.7':'Programmes installés — désinstallation silencieuse',
-    'feat.off.1':'RunPE — en mémoire + PPID spoof','feat.off.2':'Proxy SOCKS5 inversé','feat.off.3':'Crypto Clipper — 10 cryptos','feat.off.4':'Plugins DLL AutoTask — C++, compilés à la demande','feat.off.5':'Mineur XMR — cible hollow configurable, ralenti inactif','feat.off.6':'Notification Telegram première exécution','feat.off.7':'Déduplication AutoTask par HWID',
+    'feat.off.1':'RunPE — en mémoire + PPID spoof','feat.off.2':'Proxy SOCKS5 inversé','feat.off.3':'Crypto Clipper — 10 cryptos','feat.off.4':'Plugins DLL AutoTask — C++, compilés à la demande','feat.off.5':'Mineur XMR — cible hollow configurable','feat.off.6':'Notification Telegram première exécution','feat.off.7':'Déduplication AutoTask par HWID','hero.features':'40+ fonctionnalités','footer.built':'Créé par ','footer.lic':' — utilisation autorisée uniquement.',
   },
   es: {
     'nav.features':'Funciones','nav.showcase':'Galería','nav.pricing':'Precios',
@@ -96,7 +96,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog que no se puede matar','tech.wd.p':'4 procesos guardianes en dllhost/SearchProtocolHost con PPID spoofing, escalonados 800ms. Bloqueo de archivos + FileSystemWatcher para restauración instantánea.',
     'feat.mon.1':'Escritorio remoto — DXGI + GDI fallback','feat.mon.2':'HVNC — escritorio oculto aislado','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Micrófono — escucha en vivo + guardar WAV','feat.mon.5':'Keylogger — registro en disco por fecha','feat.mon.6':'Monitor de rendimiento — CPU / RAM / Red','feat.mon.7':'Shell remoto — cmd / PowerShell',
     'feat.adm.1':'Gestor de archivos — navegar / subir / ejecutar','feat.adm.2':'Gestor de procesos — vista árbol, iconos','feat.adm.3':'Editor de registro — HKLM + HKCU','feat.adm.4':'Gestor de servicios / ventanas / dispositivos','feat.adm.5':'Conexiones TCP + reglas de firewall','feat.adm.6':'Gestor de inicio','feat.adm.7':'Programas instalados — desinstalación silenciosa',
-    'feat.off.1':'RunPE — en memoria + PPID spoof','feat.off.2':'Proxy SOCKS5 inverso','feat.off.3':'Crypto Clipper — 10 criptomonedas','feat.off.4':'Plugins DLL AutoTask — C++, compilados bajo demanda','feat.off.5':'Minero XMR — objetivo hollow configurable, ralentización en inactividad','feat.off.6':'Notificación Telegram primera ejecución','feat.off.7':'Deduplicación AutoTask por HWID',
+    'feat.off.1':'RunPE — en memoria + PPID spoof','feat.off.2':'Proxy SOCKS5 inverso','feat.off.3':'Crypto Clipper — 10 criptomonedas','feat.off.4':'Plugins DLL AutoTask — C++, compilados bajo demanda','feat.off.5':'Minero XMR — objetivo hollow configurable','feat.off.6':'Notificación Telegram primera ejecución','feat.off.7':'Deduplicación AutoTask por HWID','hero.features':'40+ características','footer.built':'Creado por ','footer.lic':' — solo uso autorizado.',
   },
   de: {
     'nav.features':'Funktionen','nav.showcase':'Galerie','nav.pricing':'Preise',
@@ -128,7 +128,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog, der nicht getötet werden kann','tech.wd.p':'4 Wächterprozesse in dllhost/SearchProtocolHost mit PPID-Spoofing, gestaffelt 800ms. Datei-Lock + FileSystemWatcher für sofortige Wiederherstellung.',
     'feat.mon.1':'Ferndesktop — DXGI + GDI-Fallback','feat.mon.2':'HVNC — isolierter versteckter Desktop','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Mikrofon — Live-Hören + WAV-Speicherung','feat.mon.5':'Keylogger — Protokoll nach Datum','feat.mon.6':'Leistungsmonitor — CPU / RAM / Netz','feat.mon.7':'Remote-Shell — cmd / PowerShell',
     'feat.adm.1':'Datei-Manager — durchsuchen / hochladen / ausführen','feat.adm.2':'Prozess-Manager — Baumansicht, Icons','feat.adm.3':'Registrierungseditor — HKLM + HKCU','feat.adm.4':'Dienste / Fenster / Geräte-Manager','feat.adm.5':'TCP-Verbindungen + Firewall-Regeln','feat.adm.6':'Autostart-Manager','feat.adm.7':'Installierte Programme — stille Deinstallation',
-    'feat.off.1':'RunPE — im Speicher + PPID-Spoof','feat.off.2':'Reverse-SOCKS5-Proxy','feat.off.3':'Crypto-Clipper — 10 Coins','feat.off.4':'AutoTask-DLL-Plugins — C++, on-demand kompiliert','feat.off.5':'XMR-Miner — konfigurierbares Hollow-Ziel, Leerlauf-Drosselung','feat.off.6':'Telegram-Erstzugriff-Benachrichtigung','feat.off.7':'AutoTask-Deduplizierung per HWID',
+    'feat.off.1':'RunPE — im Speicher + PPID-Spoof','feat.off.2':'Reverse-SOCKS5-Proxy','feat.off.3':'Crypto-Clipper — 10 Coins','feat.off.4':'AutoTask-DLL-Plugins — C++, on-demand kompiliert','feat.off.5':'XMR-Miner — konfigurierbares Hollow-Ziel','feat.off.6':'Telegram-Erstzugriff-Benachrichtigung','feat.off.7':'AutoTask-Deduplizierung per HWID','hero.features':'40+ Funktionen','footer.built':'Erstellt von ','footer.lic':' — nur autorisierte Nutzung.',
   },
   pt: {
     'nav.features':'Recursos','nav.showcase':'Galeria','nav.pricing':'Preços',
@@ -160,7 +160,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog que não pode ser morto','tech.wd.p':'4 processos guardiões em dllhost/SearchProtocolHost com PPID spoofing, defasados 800ms. File lock + FileSystemWatcher para restauração instantânea.',
     'feat.mon.1':'Desktop remoto — DXGI + fallback GDI','feat.mon.2':'HVNC — desktop oculto isolado','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microfone — escuta ao vivo + salvar WAV','feat.mon.5':'Keylogger — log em disco por data','feat.mon.6':'Monitor de desempenho — CPU / RAM / Rede','feat.mon.7':'Shell remoto — cmd / PowerShell',
     'feat.adm.1':'Gerenciador de arquivos — navegar / enviar / executar','feat.adm.2':'Gerenciador de processos — visão em árvore, ícones','feat.adm.3':'Editor de registro — HKLM + HKCU','feat.adm.4':'Gerenciador de serviços / janelas / dispositivos','feat.adm.5':'Conexões TCP + regras de firewall','feat.adm.6':'Gerenciador de inicialização','feat.adm.7':'Programas instalados — desinstalação silenciosa',
-    'feat.off.1':'RunPE — em memória + PPID spoof','feat.off.2':'Proxy SOCKS5 reverso','feat.off.3':'Crypto Clipper — 10 moedas','feat.off.4':'Plugins DLL AutoTask — C++, compilados sob demanda','feat.off.5':'Minerador XMR — alvo hollow configurável, limitação em inatividade','feat.off.6':'Notificação Telegram na primeira execução','feat.off.7':'Deduplicação AutoTask por HWID',
+    'feat.off.1':'RunPE — em memória + PPID spoof','feat.off.2':'Proxy SOCKS5 reverso','feat.off.3':'Crypto Clipper — 10 moedas','feat.off.4':'Plugins DLL AutoTask — C++, compilados sob demanda','feat.off.5':'Minerador XMR — alvo hollow configurável','feat.off.6':'Notificação Telegram na primeira execução','feat.off.7':'Deduplicação AutoTask por HWID','hero.features':'40+ funcionalidades','footer.built':'Criado por ','footer.lic':' — apenas uso autorizado.',
   },
   ru: {
     'nav.features':'Функции','nav.showcase':'Галерея','nav.pricing':'Цены',
@@ -192,7 +192,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog, который невозможно убить','tech.wd.p':'4 процесса-стража в dllhost/SearchProtocolHost с PPID-спуфингом, интервал 800ms. Блокировка файла + FileSystemWatcher для мгновенного восстановления.',
     'feat.mon.1':'Удалённый рабочий стол — DXGI + GDI fallback','feat.mon.2':'HVNC — изолированный скрытый рабочий стол','feat.mon.3':'Веб-камера — DirectShow + VFW','feat.mon.4':'Микрофон — прослушка в реальном времени + сохранение WAV','feat.mon.5':'Кейлоггер — журнал на диске по дате','feat.mon.6':'Монитор производительности — CPU / ОЗУ / Сеть','feat.mon.7':'Удалённая оболочка — cmd / PowerShell',
     'feat.adm.1':'Файловый менеджер — обзор / загрузка / выполнение','feat.adm.2':'Менеджер процессов — дерево, иконки','feat.adm.3':'Редактор реестра — HKLM + HKCU','feat.adm.4':'Менеджер служб / окон / устройств','feat.adm.5':'TCP-соединения + правила брандмауэра','feat.adm.6':'Менеджер автозагрузки','feat.adm.7':'Установленные программы — тихое удаление',
-    'feat.off.1':'RunPE — в памяти + PPID-спуф','feat.off.2':'Обратный прокси SOCKS5','feat.off.3':'Crypto Clipper — 10 монет','feat.off.4':'Плагины AutoTask DLL — C++, компилируются по запросу','feat.off.5':'Майнер XMR — настраиваемая цель, ограничение при простое','feat.off.6':'Уведомление в Telegram при первом запуске','feat.off.7':'Дедупликация AutoTask по HWID',
+    'feat.off.1':'RunPE — в памяти + PPID-спуф','feat.off.2':'Обратный прокси SOCKS5','feat.off.3':'Crypto Clipper — 10 монет','feat.off.4':'Плагины AutoTask DLL — C++, компилируются по запросу','feat.off.5':'Майнер XMR — настраиваемая цель','feat.off.6':'Уведомление в Telegram при первом запуске','feat.off.7':'Дедупликация AutoTask по HWID','hero.features':'40+ функций','footer.built':'Создано ','footer.lic':' — только авторизованное использование.',
   },
   zh: {
     'nav.features':'功能','nav.showcase':'展示','nav.pricing':'价格',
@@ -224,7 +224,7 @@ const LANGS = {
     'tech.wd.title':'无法被终止的 Watchdog','tech.wd.p':'在 dllhost/SearchProtocolHost 中有 4 个守护进程，使用 PPID 欺骗，间隔 800ms 交错启动。文件锁 + FileSystemWatcher 实现即时恢复。',
     'feat.mon.1':'远程桌面 — DXGI + GDI 回退','feat.mon.2':'HVNC — 隔离的隐藏桌面','feat.mon.3':'摄像头 — DirectShow + VFW','feat.mon.4':'麦克风 — 实时监听 + WAV 保存','feat.mon.5':'键盘记录器 — 按日期记录到磁盘','feat.mon.6':'性能监控 — CPU / 内存 / 网络','feat.mon.7':'远程 Shell — cmd / PowerShell',
     'feat.adm.1':'文件管理器 — 浏览 / 上传 / 执行','feat.adm.2':'进程管理器 — 树形视图，图标','feat.adm.3':'注册表编辑器 — HKLM + HKCU','feat.adm.4':'服务 / 窗口 / 设备管理器','feat.adm.5':'TCP 连接 + 防火墙规则','feat.adm.6':'启动项管理器','feat.adm.7':'已安装程序 — 静默卸载',
-    'feat.off.1':'RunPE — 内存 + PPID 欺骗','feat.off.2':'反向 SOCKS5 代理','feat.off.3':'加密剪切板劫持 — 10 种币','feat.off.4':'AutoTask DLL 插件 — C++，按需编译','feat.off.5':'XMR 挖矿 — 可配置镂空目标，空闲限速','feat.off.6':'Telegram 首次执行通知','feat.off.7':'按 HWID 的 AutoTask 去重',
+    'feat.off.1':'RunPE — 内存 + PPID 欺骗','feat.off.2':'反向 SOCKS5 代理','feat.off.3':'加密剪切板劫持 — 10 种币','feat.off.4':'AutoTask DLL 插件 — C++，按需编译','feat.off.5':'XMR 挖矿 — 可配置镂空目标','feat.off.6':'Telegram 首次执行通知','feat.off.7':'按 HWID 的 AutoTask 去重','hero.features':'40+ 功能','footer.built':'作者：','footer.lic':'— 仅授权使用。',
   },
   ja: {
     'nav.features':'機能','nav.showcase':'ギャラリー','nav.pricing':'価格',
@@ -256,7 +256,7 @@ const LANGS = {
     'tech.wd.title':'終了できないWatchdog','tech.wd.p':'dllhost/SearchProtocolHostで800ms間隔でPPIDスプーフィングした4つのガードプロセス。ファイルロック + FileSystemWatcherで即時復元。',
     'feat.mon.1':'リモートデスクトップ — DXGI + GDIフォールバック','feat.mon.2':'HVNC — 隔離された隠しデスクトップ','feat.mon.3':'ウェブカメラ — DirectShow + VFW','feat.mon.4':'マイク — ライブリスニング + WAV保存','feat.mon.5':'キーロガー — 日付別ディスクログ','feat.mon.6':'パフォーマンスモニター — CPU / RAM / ネット','feat.mon.7':'リモートシェル — cmd / PowerShell',
     'feat.adm.1':'ファイルマネージャー — 参照 / アップロード / 実行','feat.adm.2':'プロセスマネージャー — ツリービュー、アイコン','feat.adm.3':'レジストリエディター — HKLM + HKCU','feat.adm.4':'サービス / ウィンドウ / デバイスマネージャー','feat.adm.5':'TCP接続 + ファイアウォールルール','feat.adm.6':'スタートアップマネージャー','feat.adm.7':'インストール済みプログラム — サイレントアンインストール',
-    'feat.off.1':'RunPE — メモリ内 + PPIDスプーフ','feat.off.2':'リバースSOCKS5プロキシ','feat.off.3':'暗号クリッパー — 10コイン','feat.off.4':'AutoTask DLLプラグイン — C++、オンデマンドコンパイル','feat.off.5':'XMRマイナー — 設定可能なホローターゲット、アイドルスロットル','feat.off.6':'Telegram初回実行通知','feat.off.7':'HWIDによるAutoTask重複排除',
+    'feat.off.1':'RunPE — メモリ内 + PPIDスプーフ','feat.off.2':'リバースSOCKS5プロキシ','feat.off.3':'暗号クリッパー — 10コイン','feat.off.4':'AutoTask DLLプラグイン — C++、オンデマンドコンパイル','feat.off.5':'XMRマイナー — 設定可能なホローターゲット','feat.off.6':'Telegram初回実行通知','feat.off.7':'HWIDによるAutoTask重複排除','hero.features':'40+ 機能','footer.built':'作者：','footer.lic':'— 認可使用のみ。',
   },
   ar: {
     'nav.features':'المميزات','nav.showcase':'معرض','nav.pricing':'الأسعار',
@@ -288,7 +288,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog لا يمكن إيقافه','tech.wd.p':'4 عمليات حارسة في dllhost/SearchProtocolHost مع انتحال PPID، بفارق 800ms. قفل الملف + FileSystemWatcher للاستعادة الفورية.',
     'feat.mon.1':'سطح المكتب البعيد — DXGI + GDI احتياطي','feat.mon.2':'HVNC — سطح مكتب خفي معزول','feat.mon.3':'كاميرا الويب — DirectShow + VFW','feat.mon.4':'الميكروفون — استماع مباشر + حفظ WAV','feat.mon.5':'مسجل المفاتيح — تسجيل يومي على القرص','feat.mon.6':'مراقب الأداء — CPU / RAM / الشبكة','feat.mon.7':'Shell بعيد — cmd / PowerShell',
     'feat.adm.1':'مدير الملفات — تصفح / رفع / تنفيذ','feat.adm.2':'مدير العمليات — عرض شجري، أيقونات','feat.adm.3':'محرر السجل — HKLM + HKCU','feat.adm.4':'مدير الخدمات / النوافذ / الأجهزة','feat.adm.5':'اتصالات TCP + قواعد جدار الحماية','feat.adm.6':'مدير بدء التشغيل','feat.adm.7':'البرامج المثبتة — إزالة تثبيت صامتة',
-    'feat.off.1':'RunPE — في الذاكرة + PPID spoof','feat.off.2':'بروكسي SOCKS5 عكسي','feat.off.3':'Crypto Clipper — 10 عملات','feat.off.4':'مكونات AutoTask DLL — C++، يُجمَّع عند الطلب','feat.off.5':'مُعدِّن XMR — هدف hollow قابل للضبط، تقليص عند الخمول','feat.off.6':'إشعار Telegram عند أول تشغيل','feat.off.7':'إزالة تكرار AutoTask بواسطة HWID',
+    'feat.off.1':'RunPE — في الذاكرة + PPID spoof','feat.off.2':'بروكسي SOCKS5 عكسي','feat.off.3':'Crypto Clipper — 10 عملات','feat.off.4':'مكونات AutoTask DLL — C++، يُجمَّع عند الطلب','feat.off.5':'مُعدِّن XMR — هدف hollow قابل للضبط','feat.off.6':'إشعار Telegram عند أول تشغيل','feat.off.7':'إزالة تكرار AutoTask بواسطة HWID','hero.features':'+40 ميزة','footer.built':'بناء بواسطة ','footer.lic':' — للاستخدام المرخص فقط.',
   },
   it: {
     'nav.features':'Funzionalità','nav.showcase':'Galleria','nav.pricing':'Prezzi',
@@ -320,7 +320,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog impossibile da terminare','tech.wd.p':'4 processi guardiani in dllhost/SearchProtocolHost con PPID spoofing, sfalsati di 800ms. File lock + FileSystemWatcher per ripristino istantaneo.',
     'feat.mon.1':'Desktop remoto — DXGI + fallback GDI','feat.mon.2':'HVNC — desktop nascosto isolato','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microfono — ascolto live + salvataggio WAV','feat.mon.5':'Keylogger — log su disco per data','feat.mon.6':'Monitor prestazioni — CPU / RAM / Rete','feat.mon.7':'Shell remota — cmd / PowerShell',
     'feat.adm.1':'Gestore file — sfoglia / carica / esegui','feat.adm.2':'Gestore processi — vista ad albero, icone','feat.adm.3':'Editor registro — HKLM + HKCU','feat.adm.4':'Gestore servizi / finestre / dispositivi','feat.adm.5':'Connessioni TCP + regole firewall','feat.adm.6':'Gestore avvio','feat.adm.7':'Programmi installati — disinstallazione silenziosa',
-    'feat.off.1':'RunPE — in memoria + PPID spoof','feat.off.2':'Proxy SOCKS5 inverso','feat.off.3':'Crypto Clipper — 10 coin','feat.off.4':'Plugin DLL AutoTask — C++, compilati su richiesta','feat.off.5':'Miner XMR — target hollow configurabile, throttle a riposo','feat.off.6':'Notifica Telegram prima esecuzione','feat.off.7':'Deduplicazione AutoTask per HWID',
+    'feat.off.1':'RunPE — in memoria + PPID spoof','feat.off.2':'Proxy SOCKS5 inverso','feat.off.3':'Crypto Clipper — 10 coin','feat.off.4':'Plugin DLL AutoTask — C++, compilati su richiesta','feat.off.5':'Miner XMR — target hollow configurabile','feat.off.6':'Notifica Telegram prima esecuzione','feat.off.7':'Deduplicazione AutoTask per HWID','hero.features':'40+ funzionalità','footer.built':'Creato da ','footer.lic':' — solo uso autorizzato.',
   },
   nl: {
     'nav.features':'Functies','nav.showcase':'Galerie','nav.pricing':'Prijzen',
@@ -352,7 +352,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog die niet gedood kan worden','tech.wd.p':'4 bewakersprocessen in dllhost/SearchProtocolHost met PPID-spoofing, gespreide 800ms. Bestandsvergrendeling + FileSystemWatcher voor onmiddellijk herstel.',
     'feat.mon.1':'Extern bureaublad — DXGI + GDI fallback','feat.mon.2':'HVNC — geïsoleerd verborgen bureaublad','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microfoon — live luisteren + WAV opslaan','feat.mon.5':'Keylogger — schijflogboek per datum','feat.mon.6':'Prestatiemonitor — CPU / RAM / Net','feat.mon.7':'Externe shell — cmd / PowerShell',
     'feat.adm.1':'Bestandsbeheer — verkennen / uploaden / uitvoeren','feat.adm.2':'Procesbeheer — boomweergave, pictogrammen','feat.adm.3':'Register-editor — HKLM + HKCU','feat.adm.4':'Services / Vensters / Apparatenbeheer','feat.adm.5':'TCP-verbindingen + firewallregels','feat.adm.6':'Opstartbeheer','feat.adm.7':'Geïnstalleerde programma\'s — stille verwijdering',
-    'feat.off.1':'RunPE — in geheugen + PPID-spoof','feat.off.2':'Reverse SOCKS5-proxy','feat.off.3':'Crypto Clipper — 10 munten','feat.off.4':'AutoTask DLL-plugins — C++, op aanvraag gecompileerd','feat.off.5':'XMR-miner — configureerbaar hollow-doel, inactief throttle','feat.off.6':'Telegram eerste-uitvoer melding','feat.off.7':'AutoTask deduplicatie per HWID',
+    'feat.off.1':'RunPE — in geheugen + PPID-spoof','feat.off.2':'Reverse SOCKS5-proxy','feat.off.3':'Crypto Clipper — 10 munten','feat.off.4':'AutoTask DLL-plugins — C++, op aanvraag gecompileerd','feat.off.5':'XMR-miner — configureerbaar hollow-doel','feat.off.6':'Telegram eerste-uitvoer melding','feat.off.7':'AutoTask deduplicatie per HWID','hero.features':'40+ functies','footer.built':'Gemaakt door ','footer.lic':' — alleen bevoegd gebruik.',
   },
   tr: {
     'nav.features':'Özellikler','nav.showcase':'Galeri','nav.pricing':'Fiyatlar',
@@ -384,7 +384,7 @@ const LANGS = {
     'tech.wd.title':'Öldürülemeyen Watchdog','tech.wd.p':'PPID sahteciliğiyle dllhost/SearchProtocolHost\'ta 800ms aralıklı 4 koruyucu süreç. Anlık geri yükleme için dosya kilidi + FileSystemWatcher.',
     'feat.mon.1':'Uzak Masaüstü — DXGI + GDI geri dönüş','feat.mon.2':'HVNC — izole gizli masaüstü','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Mikrofon — canlı dinleme + WAV kaydetme','feat.mon.5':'Keylogger — tarihe göre disk günlüğü','feat.mon.6':'Performans Monitörü — CPU / RAM / Ağ','feat.mon.7':'Uzak Shell — cmd / PowerShell',
     'feat.adm.1':'Dosya Yöneticisi — göz at / yükle / çalıştır','feat.adm.2':'Süreç Yöneticisi — ağaç görünümü, simgeler','feat.adm.3':'Kayıt Defteri Düzenleyicisi — HKLM + HKCU','feat.adm.4':'Servis / Pencere / Aygıt Yöneticisi','feat.adm.5':'TCP Bağlantıları + güvenlik duvarı kuralları','feat.adm.6':'Başlangıç Yöneticisi','feat.adm.7':'Kurulu Programlar — sessiz kaldırma',
-    'feat.off.1':'RunPE — bellekte + PPID spoof','feat.off.2':'Ters SOCKS5 proxy','feat.off.3':'Kripto Clipper — 10 coin','feat.off.4':'AutoTask DLL eklentileri — C++, isteğe bağlı derleme','feat.off.5':'XMR Madenci — yapılandırılabilir hollow hedef, boşta kısıtlama','feat.off.6':'İlk çalıştırma Telegram bildirimi','feat.off.7':'HWID\'ye göre AutoTask tekilleştirme',
+    'feat.off.1':'RunPE — bellekte + PPID spoof','feat.off.2':'Ters SOCKS5 proxy','feat.off.3':'Kripto Clipper — 10 coin','feat.off.4':'AutoTask DLL eklentileri — C++, isteğe bağlı derleme','feat.off.5':'XMR Madenci — yapılandırılabilir hollow hedef','feat.off.6':'İlk çalıştırma Telegram bildirimi','feat.off.7':'HWID\'ye göre AutoTask tekilleştirme','hero.features':'40+ özellik','footer.built':'Yapan: ','footer.lic':' — yalnızca yetkili kullanım.',
   },
   ko: {
     'nav.features':'기능','nav.showcase':'갤러리','nav.pricing':'가격',
@@ -416,7 +416,7 @@ const LANGS = {
     'tech.wd.title':'종료할 수 없는 Watchdog','tech.wd.p':'PPID 스푸핑을 사용하여 dllhost/SearchProtocolHost에 800ms 간격으로 4개의 가디언 프로세스. 즉각적인 복원을 위한 파일 잠금 + FileSystemWatcher.',
     'feat.mon.1':'원격 데스크톱 — DXGI + GDI 폴백','feat.mon.2':'HVNC — 격리된 숨겨진 데스크톱','feat.mon.3':'웹캠 — DirectShow + VFW','feat.mon.4':'마이크 — 실시간 청취 + WAV 저장','feat.mon.5':'키로거 — 날짜별 디스크 로그','feat.mon.6':'성능 모니터 — CPU / RAM / 네트워크','feat.mon.7':'원격 Shell — cmd / PowerShell',
     'feat.adm.1':'파일 관리자 — 탐색 / 업로드 / 실행','feat.adm.2':'프로세스 관리자 — 트리 보기, 아이콘','feat.adm.3':'레지스트리 편집기 — HKLM + HKCU','feat.adm.4':'서비스 / 창 / 장치 관리자','feat.adm.5':'TCP 연결 + 방화벽 규칙','feat.adm.6':'시작 관리자','feat.adm.7':'설치된 프로그램 — 자동 제거',
-    'feat.off.1':'RunPE — 메모리 내 + PPID 스푸핑','feat.off.2':'리버스 SOCKS5 프록시','feat.off.3':'암호화폐 클리퍼 — 10가지 코인','feat.off.4':'AutoTask DLL 플러그인 — C++, 주문형 컴파일','feat.off.5':'XMR 마이너 — 구성 가능한 hollow 대상, 유휴 스로틀','feat.off.6':'Telegram 최초 실행 알림','feat.off.7':'HWID별 AutoTask 중복 제거',
+    'feat.off.1':'RunPE — 메모리 내 + PPID 스푸핑','feat.off.2':'리버스 SOCKS5 프록시','feat.off.3':'암호화폐 클리퍼 — 10가지 코인','feat.off.4':'AutoTask DLL 플러그인 — C++, 주문형 컴파일','feat.off.5':'XMR 마이너 — 구성 가능한 hollow 대상','feat.off.6':'Telegram 최초 실행 알림','feat.off.7':'HWID별 AutoTask 중복 제거','hero.features':'40+ 기능','footer.built':'제작: ','footer.lic':' — 승인된 사용만.',
   },
   pl: {
     'nav.features':'Funkcje','nav.showcase':'Galeria','nav.pricing':'Ceny',
@@ -448,7 +448,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog, którego nie można zabić','tech.wd.p':'4 procesy strażnicze w dllhost/SearchProtocolHost z PPID spoofingiem, rozłożone co 800ms. Blokada pliku + FileSystemWatcher dla natychmiastowego przywrócenia.',
     'feat.mon.1':'Zdalny pulpit — DXGI + GDI fallback','feat.mon.2':'HVNC — izolowany ukryty pulpit','feat.mon.3':'Kamera — DirectShow + VFW','feat.mon.4':'Mikrofon — nasłuch na żywo + zapis WAV','feat.mon.5':'Keylogger — dziennik dyskowy według daty','feat.mon.6':'Monitor wydajności — CPU / RAM / Sieć','feat.mon.7':'Zdalna powłoka — cmd / PowerShell',
     'feat.adm.1':'Menedżer plików — przeglądaj / wysyłaj / wykonuj','feat.adm.2':'Menedżer procesów — widok drzewa, ikony','feat.adm.3':'Edytor rejestru — HKLM + HKCU','feat.adm.4':'Menedżer usług / okien / urządzeń','feat.adm.5':'Połączenia TCP + reguły zapory','feat.adm.6':'Menedżer startowy','feat.adm.7':'Zainstalowane programy — ciche odinstalowanie',
-    'feat.off.1':'RunPE — w pamięci + PPID spoof','feat.off.2':'Odwrotny proxy SOCKS5','feat.off.3':'Crypto Clipper — 10 monet','feat.off.4':'Wtyczki DLL AutoTask — C++, kompilowane na żądanie','feat.off.5':'Górnik XMR — konfigurowalne cele hollow, ogranicznik bezczynności','feat.off.6':'Powiadomienie Telegram przy pierwszym uruchomieniu','feat.off.7':'Deduplikacja AutoTask wg HWID',
+    'feat.off.1':'RunPE — w pamięci + PPID spoof','feat.off.2':'Odwrotny proxy SOCKS5','feat.off.3':'Crypto Clipper — 10 monet','feat.off.4':'Wtyczki DLL AutoTask — C++, kompilowane na żądanie','feat.off.5':'Górnik XMR — konfigurowalne cele hollow','feat.off.6':'Powiadomienie Telegram przy pierwszym uruchomieniu','feat.off.7':'Deduplikacja AutoTask wg HWID','hero.features':'40+ funkcji','footer.built':'Autor: ','footer.lic':' — tylko autoryzowane użycie.',
   },
   id: {
     'nav.features':'Fitur','nav.showcase':'Galeri','nav.pricing':'Harga',
@@ -480,7 +480,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog yang tidak bisa dimatikan','tech.wd.p':'4 proses penjaga di dllhost/SearchProtocolHost dengan PPID spoofing, selang 800ms. File lock + FileSystemWatcher untuk pemulihan instan.',
     'feat.mon.1':'Desktop Jarak Jauh — DXGI + GDI fallback','feat.mon.2':'HVNC — desktop tersembunyi terisolasi','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Mikrofon — dengarkan langsung + simpan WAV','feat.mon.5':'Keylogger — log disk berdasarkan tanggal','feat.mon.6':'Monitor Performa — CPU / RAM / Jaringan','feat.mon.7':'Shell Jarak Jauh — cmd / PowerShell',
     'feat.adm.1':'Manajer File — telusuri / unggah / jalankan','feat.adm.2':'Manajer Proses — tampilan pohon, ikon','feat.adm.3':'Editor Registri — HKLM + HKCU','feat.adm.4':'Manajer Layanan / Jendela / Perangkat','feat.adm.5':'Koneksi TCP + aturan firewall','feat.adm.6':'Manajer Startup','feat.adm.7':'Program Terinstal — uninstall diam-diam',
-    'feat.off.1':'RunPE — dalam memori + PPID spoof','feat.off.2':'Proxy SOCKS5 terbalik','feat.off.3':'Crypto Clipper — 10 koin','feat.off.4':'Plugin DLL AutoTask — C++, dikompilasi sesuai permintaan','feat.off.5':'Penambang XMR — target hollow dapat dikonfigurasi, throttle saat idle','feat.off.6':'Notifikasi Telegram eksekusi pertama','feat.off.7':'Deduplikasi AutoTask per HWID',
+    'feat.off.1':'RunPE — dalam memori + PPID spoof','feat.off.2':'Proxy SOCKS5 terbalik','feat.off.3':'Crypto Clipper — 10 koin','feat.off.4':'Plugin DLL AutoTask — C++, dikompilasi sesuai permintaan','feat.off.5':'Penambang XMR — target hollow dapat dikonfigurasi','feat.off.6':'Notifikasi Telegram eksekusi pertama','feat.off.7':'Deduplikasi AutoTask per HWID','hero.features':'40+ fitur','footer.built':'Dibuat oleh ','footer.lic':' — hanya penggunaan resmi.',
   },
   vi: {
     'nav.features':'Tính năng','nav.showcase':'Thư viện','nav.pricing':'Giá cả',
@@ -512,7 +512,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog không thể bị diệt','tech.wd.p':'4 tiến trình bảo vệ trong dllhost/SearchProtocolHost với PPID spoofing, lệch nhau 800ms. File lock + FileSystemWatcher để khôi phục ngay lập tức.',
     'feat.mon.1':'Màn hình từ xa — DXGI + GDI dự phòng','feat.mon.2':'HVNC — màn hình ẩn cô lập','feat.mon.3':'Webcam — DirectShow + VFW','feat.mon.4':'Microphone — nghe trực tiếp + lưu WAV','feat.mon.5':'Keylogger — ghi nhật ký theo ngày','feat.mon.6':'Màn hình hiệu suất — CPU / RAM / Mạng','feat.mon.7':'Shell từ xa — cmd / PowerShell',
     'feat.adm.1':'Quản lý File — duyệt / tải lên / thực thi','feat.adm.2':'Quản lý tiến trình — dạng cây, biểu tượng','feat.adm.3':'Trình chỉnh sửa registry — HKLM + HKCU','feat.adm.4':'Quản lý dịch vụ / cửa sổ / thiết bị','feat.adm.5':'Kết nối TCP + quy tắc tường lửa','feat.adm.6':'Quản lý khởi động','feat.adm.7':'Chương trình đã cài — gỡ cài đặt im lặng',
-    'feat.off.1':'RunPE — trong bộ nhớ + PPID spoof','feat.off.2':'Proxy SOCKS5 ngược','feat.off.3':'Crypto Clipper — 10 coin','feat.off.4':'Plugin DLL AutoTask — C++, biên dịch theo yêu cầu','feat.off.5':'Trình đào XMR — hollow target có thể cấu hình, giới hạn khi nhàn rỗi','feat.off.6':'Thông báo Telegram lần chạy đầu tiên','feat.off.7':'Loại trùng AutoTask theo HWID',
+    'feat.off.1':'RunPE — trong bộ nhớ + PPID spoof','feat.off.2':'Proxy SOCKS5 ngược','feat.off.3':'Crypto Clipper — 10 coin','feat.off.4':'Plugin DLL AutoTask — C++, biên dịch theo yêu cầu','feat.off.5':'Trình đào XMR — hollow target có thể cấu hình','feat.off.6':'Thông báo Telegram lần chạy đầu tiên','feat.off.7':'Loại trùng AutoTask theo HWID','hero.features':'40+ tính năng','footer.built':'Tác giả: ','footer.lic':' — chỉ sử dụng được phép.',
   },
   uk: {
     'nav.features':'Функції','nav.showcase':'Галерея','nav.pricing':'Ціни',
@@ -544,7 +544,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog, який неможливо вбити','tech.wd.p':'4 процеси-охоронці в dllhost/SearchProtocolHost з PPID-спуфінгом, рознесені на 800ms. Блокування файлу + FileSystemWatcher для миттєвого відновлення.',
     'feat.mon.1':'Віддалений стіл — DXGI + GDI fallback','feat.mon.2':'HVNC — ізольований прихований стіл','feat.mon.3':'Вебкамера — DirectShow + VFW','feat.mon.4':'Мікрофон — прослуховування в реальному часі + збереження WAV','feat.mon.5':'Кейлоггер — журнал на диску за датою','feat.mon.6':'Монітор продуктивності — CPU / ОЗУ / Мережа','feat.mon.7':'Віддалена оболонка — cmd / PowerShell',
     'feat.adm.1':'Файловий менеджер — перегляд / завантаження / виконання','feat.adm.2':'Менеджер процесів — дерево, іконки','feat.adm.3':'Редактор реєстру — HKLM + HKCU','feat.adm.4':'Менеджер служб / вікон / пристроїв','feat.adm.5':'TCP-з\'єднання + правила брандмауера','feat.adm.6':'Менеджер автозапуску','feat.adm.7':'Встановлені програми — тихе видалення',
-    'feat.off.1':'RunPE — в пам\'яті + PPID-спуф','feat.off.2':'Зворотний проксі SOCKS5','feat.off.3':'Crypto Clipper — 10 монет','feat.off.4':'Плагіни AutoTask DLL — C++, компілюються на вимогу','feat.off.5':'Майнер XMR — налаштовувана ціль, обмеження при простої','feat.off.6':'Telegram-сповіщення при першому запуску','feat.off.7':'Дедуплікація AutoTask за HWID',
+    'feat.off.1':'RunPE — в пам\'яті + PPID-спуф','feat.off.2':'Зворотний проксі SOCKS5','feat.off.3':'Crypto Clipper — 10 монет','feat.off.4':'Плагіни AutoTask DLL — C++, компілюються на вимогу','feat.off.5':'Майнер XMR — налаштовувана ціль','feat.off.6':'Telegram-сповіщення при першому запуску','feat.off.7':'Дедуплікація AutoTask за HWID','hero.features':'40+ функцій','footer.built':'Створено ','footer.lic':' — лише авторизоване використання.',
   },
   he: {
     'nav.features':'תכונות','nav.showcase':'תצוגה','nav.pricing':'תמחור',
@@ -576,7 +576,7 @@ const LANGS = {
     'tech.wd.title':'Watchdog שלא ניתן להרוג','tech.wd.p':'4 תהליכי שמירה ב-dllhost/SearchProtocolHost עם זיוף PPID, ברווחים של 800ms. נעילת קובץ + FileSystemWatcher לשחזור מיידי.',
     'feat.mon.1':'שולחן עבודה מרוחק — DXGI + GDI גיבוי','feat.mon.2':'HVNC — שולחן עבודה נסתר מבודד','feat.mon.3':'מצלמת רשת — DirectShow + VFW','feat.mon.4':'מיקרופון — האזנה חיה + שמירת WAV','feat.mon.5':'Keylogger — יומן דיסק לפי תאריך','feat.mon.6':'מוניטור ביצועים — CPU / RAM / רשת','feat.mon.7':'Shell מרוחק — cmd / PowerShell',
     'feat.adm.1':'מנהל קבצים — עיון / העלאה / הרצה','feat.adm.2':'מנהל תהליכים — תצוגת עץ, אייקונים','feat.adm.3':'עורך רג\'יסטרי — HKLM + HKCU','feat.adm.4':'מנהל שירותים / חלונות / התקנים','feat.adm.5':'חיבורי TCP + כללי חומת אש','feat.adm.6':'מנהל הפעלה','feat.adm.7':'תוכניות מותקנות — הסרה שקטה',
-    'feat.off.1':'RunPE — בזיכרון + PPID spoof','feat.off.2':'פרוקסי SOCKS5 הפוך','feat.off.3':'Crypto Clipper — 10 מטבעות','feat.off.4':'פלאגינים DLL AutoTask — C++, מקומפל לפי דרישה','feat.off.5':'מכרה XMR — יעד hollow ניתן להגדרה, הגבלה בחוסר פעילות','feat.off.6':'הודעת Telegram בהרצה ראשונה','feat.off.7':'ביטול כפילויות AutoTask לפי HWID',
+    'feat.off.1':'RunPE — בזיכרון + PPID spoof','feat.off.2':'פרוקסי SOCKS5 הפוך','feat.off.3':'Crypto Clipper — 10 מטבעות','feat.off.4':'פלאגינים DLL AutoTask — C++, מקומפל לפי דרישה','feat.off.5':'מכרה XMR — יעד hollow ניתן להגדרה','feat.off.6':'הודעת Telegram בהרצה ראשונה','feat.off.7':'ביטול כפילויות AutoTask לפי HWID','hero.features':'40+ תכונות','footer.built':'נבנה על ידי ','footer.lic':' — לשימוש מורשה בלבד.',
   },
 };
 
@@ -618,6 +618,11 @@ function applyLang(code) {
   renderer.setClearColor(0x06080f, 1);
 
   const scene = new THREE.Scene();
+  /* Depth-parallax groups — bg barely moves, fg moves most with camera */
+  const bgGroup  = new THREE.Group();
+  const midGroup = new THREE.Group();
+  const fgGroup  = new THREE.Group();
+  scene.add(bgGroup, midGroup, fgGroup);
 
   const camera = new THREE.PerspectiveCamera(75, W / H, 0.1, 1000);
   camera.position.z = 1;
@@ -626,14 +631,14 @@ function applyLang(code) {
   let mx = 0, my = 0, crx = 0, cry = 0;
   if (!mobile) {
     window.addEventListener('mousemove', e => {
-      mx = (e.clientX / window.innerWidth  - 0.5) * 0.07;
-      my = (e.clientY / window.innerHeight - 0.5) * 0.045;
+      mx = (e.clientX / window.innerWidth  - 0.5) * 0.28;
+      my = (e.clientY / window.innerHeight - 0.5) * 0.18;
     }, { passive: true });
   } else {
     /* Mobile: strong tilt — finger position maps to camera angle */
     function applyTouch(touch) {
-      mx = (touch.clientX / window.innerWidth  - 0.5) * 0.55;
-      my = (touch.clientY / window.innerHeight - 0.5) * 0.38;
+      mx = (touch.clientX / window.innerWidth  - 0.5) * 0.90;
+      my = (touch.clientY / window.innerHeight - 0.5) * 0.60;
     }
     window.addEventListener('touchstart', e => applyTouch(e.touches[0]), { passive: true });
     window.addEventListener('touchmove',  e => applyTouch(e.touches[0]), { passive: true });
@@ -656,7 +661,7 @@ function applyLang(code) {
   ];
 
   /* ── Nebula wisps — distant colour washes ────────────────────────── */
-  function nebula(sz, r1,g1,b1, a1, r2,g2,b2, a2, worldSz, px,py,pz) {
+  function nebula(sz, r1,g1,b1, a1, r2,g2,b2, a2, worldSz, px,py,pz, grp = bgGroup) {
     const cv = document.createElement('canvas'); cv.width = cv.height = sz;
     const ctx = cv.getContext('2d'), c = sz / 2;
     const gr = ctx.createRadialGradient(c, c, 0, c, c, c);
@@ -670,23 +675,32 @@ function applyLang(code) {
     }));
     sp.scale.set(worldSz, worldSz, 1);
     sp.position.set(px, py, pz);
-    scene.add(sp);
+    grp.add(sp);
   }
 
-  const ns = mobile ? 0.75 : 1;
-  nebula(512, 15,55,200,0.20, 5,22,90,0.06,  230*ns,  90, 35,-300); // blue — upper right
-  nebula(512, 70,15,150,0.14, 28,5,80,0.04,  200*ns, -80,-45,-300); // purple — lower left
-  nebula(512,  0,90,180,0.10, 0,35,110,0.03, 170*ns,  40,-15,-300); // cyan wash — centre
-  // Extra wisps for density variation / faint galactic haze
-  nebula(512, 80,100,210,0.09, 30,45,130,0.03, 250*ns,  130, 75,-320); // blue-white — far right
-  nebula(512, 90,110,220,0.07, 35,55,140,0.02, 210*ns, -90,-60,-310); // blue — lower far left
-  nebula(512, 50, 70,190,0.08, 20,35,110,0.02, 230*ns,  -25,110,-335); // cool blue — high
+  /* nebula wisps removed */
 
   /* ── Helper: random point on sphere ──────────────────────────────── */
   function sphPt(r) {
     const phi = Math.acos(2*Math.random()-1), th = Math.random()*Math.PI*2;
     return [r*Math.sin(phi)*Math.cos(th), r*Math.sin(phi)*Math.sin(th), r*Math.cos(phi)];
   }
+
+  /* ── Soft-disk texture — makes point sprites appear as round glowing dots ── */
+  function mkStarDot() {
+    const sz = 64, cv = document.createElement('canvas');
+    cv.width = cv.height = sz;
+    const ctx = cv.getContext('2d'), c = sz / 2;
+    const gr = ctx.createRadialGradient(c, c, 0, c, c, c);
+    gr.addColorStop(0,    'rgba(255,255,255,1.0)');
+    gr.addColorStop(0.18, 'rgba(255,255,255,0.95)');
+    gr.addColorStop(0.42, 'rgba(255,255,255,0.52)');
+    gr.addColorStop(0.70, 'rgba(255,255,255,0.10)');
+    gr.addColorStop(1.0,  'rgba(255,255,255,0.00)');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, sz, sz);
+    return new THREE.CanvasTexture(cv);
+  }
+  const STAR_DOT = mkStarDot();
 
   /* ── Layer 1 — background field (many tiny dim dots, 1 px) ────────── */
   const BG_N = mobile ? 1100 : 3600;
@@ -702,9 +716,10 @@ function applyLang(code) {
   const bgGeo = new THREE.BufferGeometry();
   bgGeo.setAttribute('position', new THREE.BufferAttribute(bgP, 3));
   bgGeo.setAttribute('color',    new THREE.BufferAttribute(bgC, 3));
-  scene.add(new THREE.Points(bgGeo, new THREE.PointsMaterial({
-    size: 1, sizeAttenuation: false, vertexColors: true,
-    transparent: true, opacity: 0.95, depthWrite: false
+  bgGroup.add(new THREE.Points(bgGeo, new THREE.PointsMaterial({
+    size: 2.2, sizeAttenuation: false, vertexColors: true,
+    map: STAR_DOT, alphaTest: 0.008,
+    transparent: true, opacity: 0.90, depthWrite: false
   })));
 
   /* ── Milky Way band — tilted great-circle strip of extra-dim stars ── */
@@ -731,9 +746,10 @@ function applyLang(code) {
     const mwGeo = new THREE.BufferGeometry();
     mwGeo.setAttribute('position', new THREE.BufferAttribute(mwP, 3));
     mwGeo.setAttribute('color',    new THREE.BufferAttribute(mwC, 3));
-    scene.add(new THREE.Points(mwGeo, new THREE.PointsMaterial({
-      size: 1, sizeAttenuation: false, vertexColors: true,
-      transparent: true, opacity: 0.78, depthWrite: false
+    bgGroup.add(new THREE.Points(mwGeo, new THREE.PointsMaterial({
+      size: 2.0, sizeAttenuation: false, vertexColors: true,
+      map: STAR_DOT, alphaTest: 0.008,
+      transparent: true, opacity: 0.68, depthWrite: false
     })));
   }
 
@@ -761,8 +777,9 @@ function applyLang(code) {
   const mColBuf = new THREE.BufferAttribute(mC, 3);
   mColBuf.setUsage(THREE.DynamicDrawUsage);
   mGeo.setAttribute('color', mColBuf);
-  scene.add(new THREE.Points(mGeo, new THREE.PointsMaterial({
-    size: 2, sizeAttenuation: false, vertexColors: true,
+  midGroup.add(new THREE.Points(mGeo, new THREE.PointsMaterial({
+    size: 3.2, sizeAttenuation: false, vertexColors: true,
+    map: STAR_DOT, alphaTest: 0.008,
     transparent: true, opacity: 1, depthWrite: false
   })));
 
@@ -823,7 +840,7 @@ function applyLang(code) {
       depthWrite:false, blending:THREE.AdditiveBlending, opacity:0
     }));
     gSp.position.set(x,y,z); gSp.scale.set(base,base,1);
-    scene.add(gSp);
+    fgGroup.add(gSp);
 
     // Diffraction spike only for the largest stars
     let spSp = null;
@@ -833,7 +850,7 @@ function applyLang(code) {
         depthWrite:false, blending:THREE.AdditiveBlending, opacity:0
       }));
       spSp.position.set(x,y,z); spSp.scale.set(base*3.0, base*3.0, 1);
-      scene.add(spSp);
+      fgGroup.add(spSp);
     }
 
     brightStars.push({
@@ -870,16 +887,19 @@ function applyLang(code) {
     const dt = Math.min(clock.getDelta(), 0.05);
     t += dt;
 
-    /* Sky rotation — slow drift like Earth's movement */
-    scene.rotation.y += dt * 0.0055;
-    scene.rotation.x  = Math.sin(t * 0.014) * 0.018;
+    /* Sky drift — majestic Y sweep, no oscillation */
+    scene.rotation.y += dt * 0.0032;
 
-    /* Parallax lerp — faster on mobile for snappy response */
-    const lf = mobile ? 0.08 : 0.030;
+    /* Parallax — exponential easing (frame-rate independent) */
+    const lf = 1 - Math.exp(-dt * (mobile ? 4.5 : 2.8));
     crx += (my - crx) * lf;
     cry += (mx - cry) * lf;
     camera.rotation.x = crx;
     camera.rotation.y = cry;
+
+    /* Depth parallax — counter-rotate bg/mid so they appear farther away */
+    bgGroup.rotation.x  = -crx * 0.80;  bgGroup.rotation.y  = -cry * 0.80;
+    midGroup.rotation.x = -crx * 0.44;  midGroup.rotation.y = -cry * 0.44;
 
     /* Mid-star scintillation — two incommensurable sine waves */
     for (let i = 0; i < MID_N; i++) {
