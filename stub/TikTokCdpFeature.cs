@@ -454,6 +454,23 @@ internal static class TikTokCdpFeature
             await _ns.WriteAsync(masked, ct);
         }
 
+        private async Task WritePongAsync(byte[] payload, int len, CancellationToken ct)
+        {
+            int plen = Math.Min(len, 125);
+            var mask = RandomNumberGenerator.GetBytes(4);
+            var hdr = new byte[6];
+            hdr[0] = 0x8A; // FIN=1, opcode=0xA (pong)
+            hdr[1] = (byte)(0x80 | plen);
+            Buffer.BlockCopy(mask, 0, hdr, 2, 4);
+            await _ns!.WriteAsync(hdr, ct);
+            if (plen > 0)
+            {
+                var masked = new byte[plen];
+                for (int i = 0; i < plen; i++) masked[i] = (byte)(payload[i] ^ mask[i % 4]);
+                await _ns.WriteAsync(masked, ct);
+            }
+        }
+
         private static byte[] BuildFrameHeader(int length, byte[] mask)
         {
             byte[] h;
@@ -512,7 +529,7 @@ internal static class TikTokCdpFeature
             }
 
             if (opcode == 8) return "";
-            if (opcode == 9) { await WriteFrameAsync([], ct); return ""; }
+            if (opcode == 9) { await WritePongAsync(buf, len, ct); return ""; }
 
             return Encoding.UTF8.GetString(buf, 0, len);
         }

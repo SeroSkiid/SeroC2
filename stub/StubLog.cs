@@ -11,7 +11,9 @@ internal static class StubLog
 
     private static void Write(string level, string msg)
     {
+#if DEBUG
         try { System.IO.File.AppendAllText(_path, $"[{DateTime.Now:HH:mm:ss.fff}][{level}] {msg}\r\n"); }
         catch { }
+#endif
     }
 }
