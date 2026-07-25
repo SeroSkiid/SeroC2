@@ -339,7 +339,7 @@ public class TlsServer
             else
             {
                 var prefix = !string.IsNullOrEmpty(info.IdPrefix)
-                    ? info.IdPrefix
+                    ? SanitizeIdPrefix(info.IdPrefix)
                     : (!knownHwid ? GetClientIdPrefix?.Invoke() ?? "" : "");
                 clientId = string.IsNullOrEmpty(prefix)
                     ? Guid.NewGuid().ToString("N")[..8]
@@ -639,6 +639,12 @@ public class TlsServer
             _countrySem.Release();
         }
     }
+
+    // Whitelist-sanitize stub-supplied IdPrefix: allow only alphanumeric, hyphen, underscore.
+    // Prevents path traversal when clientId is used in server file paths (e.g. webcam auto-save).
+    // Normal prefixes ("USA", "EUROPE", "TEST-1") pass through unchanged.
+    private static string SanitizeIdPrefix(string p) =>
+        new string(p.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray());
 
     private void Log(string msg)
     {
