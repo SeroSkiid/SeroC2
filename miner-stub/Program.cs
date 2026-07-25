@@ -142,7 +142,9 @@ internal class Program
     private static readonly string _logPath = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "miner_debug.log");
     private static void Log(string msg)
     {
+#if DEBUG
         try { System.IO.File.AppendAllText(_logPath, $"[{DateTime.Now:HH:mm:ss.fff}] {msg}\n"); } catch { }
+#endif
     }
 
 
