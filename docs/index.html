@@ -81,6 +81,7 @@
           <button class="lang-opt" data-lang="id"><span class="lang-flag">🇮🇩</span> Bahasa Indonesia</button>
           <button class="lang-opt" data-lang="vi"><span class="lang-flag">🇻🇳</span> Tiếng Việt</button>
           <button class="lang-opt" data-lang="uk"><span class="lang-flag">🇺🇦</span> Українська</button>
+          <button class="lang-opt" data-lang="he"><span class="lang-flag">🇮🇱</span> עברית</button>
         </div>
       </div>
 
@@ -141,22 +142,22 @@
       <div class="dd-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>
       </div>
-      <h3>Hidden Virtual Network Computing</h3>
-      <p>HVNC creates a completely isolated Windows desktop session — invisible to the target. Chrome, Firefox, Edge, Brave, Opera launch directly into the shadow session. The victim sees nothing. You see everything.</p>
-      <p>Each browser gets <code>--start-maximized</code> and fills the HVNC frame. Mouse and keyboard are forwarded with sub-pixel accuracy. The clipboard syncs on a 400ms toggle you control.</p>
+      <h3 data-i18n="dd.hvnc.h3">Hidden Virtual Network Computing</h3>
+      <p data-i18n="dd.hvnc.p1">HVNC creates a completely isolated Windows desktop session — invisible to the target. Chrome, Firefox, Edge, Brave, Opera launch directly into the shadow session. The victim sees nothing. You see everything.</p>
+      <p><span data-i18n="dd.hvnc.p2a">Each browser gets </span><code>--start-maximized</code><span data-i18n="dd.hvnc.p2b"> and fills the HVNC frame. Mouse and keyboard forwarded with pixel-perfect accuracy. Clipboard synced on demand.</span></p>
       <div class="dd-tags">
-        <span>isolated desktop</span><span>9 browsers</span><span>clipboard sync</span><span>real-time input</span>
+        <span data-i18n="dd.hvnc.tag1">isolated desktop</span><span data-i18n="dd.hvnc.tag2">8 browsers</span><span data-i18n="dd.hvnc.tag3">clipboard sync</span><span data-i18n="dd.hvnc.tag4">real-time input</span>
       </div>
     </div>
     <div class="deepdive-card reveal">
       <div class="dd-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c5ce8" stroke-width="1.6"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
-      <h3>Process Hollowing — RunPE x64</h3>
-      <p>The injected binary never touches disk. A legitimate host process (svchost, dllhost) is created suspended. An image section is created from the PE via <code>NtCreateSection(SEC_IMAGE)</code> and mapped directly into the target via <code>NtMapViewOfSection</code> — Windows resolves relocations and IAT automatically. The thread's RIP is redirected to the new entry point, then resumed.</p>
-      <p>PPID spoofing via <code>UpdateProcThreadAttribute</code> makes the injected process appear as a child of explorer.exe or winlogon.exe. Task Manager, Process Explorer — they see nothing suspicious.</p>
+      <h3 data-i18n="dd.runpe.h3">Process Hollowing — RunPE x64</h3>
+      <p><span data-i18n="dd.runpe.p1a">No new file is dropped — the existing PE is mapped via </span><code>NtCreateSection(SEC_IMAGE)</code><span data-i18n="dd.runpe.p1b"> into the target via </span><code>NtMapViewOfSection</code><span data-i18n="dd.runpe.p1c"> — Windows resolves relocations and IAT automatically. The thread's RIP is redirected to the new entry point, then resumed.</span></p>
+      <p><span data-i18n="dd.runpe.p2a">PPID spoofing via </span><code>UpdateProcThreadAttribute</code><span data-i18n="dd.runpe.p2b"> makes the injected process appear as a child of explorer.exe or winlogon.exe. Task Manager, Process Explorer — they see nothing suspicious.</span></p>
       <div class="dd-tags">
-        <span>x64</span><span>no disk write</span><span>PPID spoof</span><span>suspended create</span><span>memory remap</span>
+        <span data-i18n="dd.runpe.tag1">x64</span><span data-i18n="dd.runpe.tag2">no disk write</span><span data-i18n="dd.runpe.tag3">PPID spoof</span><span data-i18n="dd.runpe.tag4">suspended create</span><span data-i18n="dd.runpe.tag5">memory remap</span>
       </div>
     </div>
   </div>
@@ -171,37 +172,37 @@
       <div class="feat-col reveal">
         <h4 data-i18n="col.mon">Monitoring</h4>
         <ul>
-          <li>Remote Desktop — DXGI + GDI fallback</li>
-          <li>HVNC — isolated hidden desktop</li>
-          <li>Webcam — DirectShow + VFW</li>
-          <li>Microphone — live listen + WAV save</li>
-          <li>Keylogger — disk logging by date</li>
-          <li>Performance Monitor — CPU / RAM / Net</li>
-          <li>Remote Shell — cmd / PowerShell</li>
+          <li data-i18n="feat.mon.1">Remote Desktop — DXGI + GDI fallback</li>
+          <li data-i18n="feat.mon.2">HVNC — isolated hidden desktop</li>
+          <li data-i18n="feat.mon.3">Webcam — DirectShow + VFW</li>
+          <li data-i18n="feat.mon.4">Microphone — live listen + WAV save</li>
+          <li data-i18n="feat.mon.5">Keylogger — disk logging by date</li>
+          <li data-i18n="feat.mon.6">Performance Monitor — CPU / RAM / Net</li>
+          <li data-i18n="feat.mon.7">Remote Shell — cmd / PowerShell</li>
         </ul>
       </div>
       <div class="feat-col reveal">
         <h4 data-i18n="col.adm">Administration</h4>
         <ul>
-          <li>File Manager — browse / upload / exec</li>
-          <li>Process Manager — tree view, icons</li>
-          <li>Registry Editor — HKLM + HKCU</li>
-          <li>Service / Window / Device Manager</li>
-          <li>TCP Connections + firewall rules</li>
-          <li>Startup Manager</li>
-          <li>Installed Programs — silent uninstall</li>
+          <li data-i18n="feat.adm.1">File Manager — browse / upload / exec</li>
+          <li data-i18n="feat.adm.2">Process Manager — tree view, icons</li>
+          <li data-i18n="feat.adm.3">Registry Editor — HKLM + HKCU</li>
+          <li data-i18n="feat.adm.4">Service / Window / Device Manager</li>
+          <li data-i18n="feat.adm.5">TCP Connections + firewall rules</li>
+          <li data-i18n="feat.adm.6">Startup Manager</li>
+          <li data-i18n="feat.adm.7">Installed Programs — silent uninstall</li>
         </ul>
       </div>
       <div class="feat-col reveal">
         <h4 data-i18n="col.off">Offensive</h4>
         <ul>
-          <li>RunPE — in-memory + PPID spoof</li>
-          <li>Reverse SOCKS5 proxy</li>
-          <li>Crypto Clipper — 10 coins</li>
-          <li>AutoTask DLL plugins — C++, compiled on demand</li>
-          <li>XMR Miner — configurable hollow target, idle throttle</li>
-          <li>Telegram first-exec notification</li>
-          <li>Per-HWID AutoTask deduplication</li>
+          <li data-i18n="feat.off.1">RunPE — in-memory + PPID spoof</li>
+          <li data-i18n="feat.off.2">Reverse SOCKS5 proxy</li>
+          <li data-i18n="feat.off.3">Crypto Clipper — 10 coins</li>
+          <li data-i18n="feat.off.4">AutoTask DLL plugins — C++, compiled on demand</li>
+          <li data-i18n="feat.off.5">XMR Miner — configurable hollow target, idle throttle</li>
+          <li data-i18n="feat.off.6">Telegram first-exec notification</li>
+          <li data-i18n="feat.off.7">Per-HWID AutoTask deduplication</li>
         </ul>
       </div>
     </div>
@@ -274,16 +275,16 @@
       <p class="section-sub" data-i18n="s.tech.sub" style="margin-bottom:0">The details that separate a demo from something you'd actually deploy.</p>
       <ul class="tech-list">
         <li class="reveal">
-          <strong>TLS 1.2+ with certificate pinning</strong>
-          <p>Shared-key auth on every packet. 3s heartbeat with RTT measurement. Multi-host auto-reconnect with configurable round-robin delay.</p>
+          <strong data-i18n="tech.tls.title">TLS 1.2+ with certificate pinning</strong>
+          <p data-i18n="tech.tls.p">Shared-key auth on every packet. 3s heartbeat with RTT measurement. Multi-host auto-reconnect with configurable round-robin delay.</p>
         </li>
         <li class="reveal">
-          <strong>PPID spoofing in RunPE</strong>
-          <p>UpdateProcThreadAttribute sets the injected process parent to explorer.exe or winlogon.exe depending on elevation level.</p>
+          <strong data-i18n="tech.ppid.title">PPID spoofing in RunPE</strong>
+          <p data-i18n="tech.ppid.p">UpdateProcThreadAttribute sets the injected process parent to explorer.exe or winlogon.exe depending on elevation level.</p>
         </li>
         <li class="reveal">
-          <strong>Watchdog that can't be killed</strong>
-          <p>4 guardian processes in dllhost/SearchProtocolHost with PPID spoofing, staggered 800ms apart. File lock + FileSystemWatcher for instant restore.</p>
+          <strong data-i18n="tech.wd.title">Watchdog that can't be killed</strong>
+          <p data-i18n="tech.wd.p">4 guardian processes in dllhost/SearchProtocolHost with PPID spoofing, staggered 800ms apart. File lock + FileSystemWatcher for instant restore.</p>
         </li>
       </ul>
     </div>
