@@ -807,7 +807,7 @@ try {{ gwmi -Namespace $ns -Class __EventFilter -Filter ""Name='$n'"" -ErrorActi
     // Format: Shell Link Header (76 bytes) + LinkInfo block with VolumeID + LocalBasePath.
     private static void WriteLnkFile(string lnkPath, string targetPath)
     {
-        var pathBytes = System.Text.Encoding.Unicode.GetBytes(targetPath);
+        var pathBytes = System.Text.Encoding.Default.GetBytes(targetPath);
 
         const uint liHdrSize = 28;
         const uint volIdSize = 17;  // 16-byte struct + 1-byte null label
