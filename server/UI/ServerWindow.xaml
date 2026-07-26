@@ -1170,7 +1170,8 @@
                     SnapsToDevicePixels="True">
                 <ScrollViewer x:Name="DG_ScrollViewer" Focusable="False" Background="Transparent"
                               HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"
-                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}">
+                              VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}"
+                              CanContentScroll="{TemplateBinding ScrollViewer.CanContentScroll}">
                     <ScrollViewer.Template>
                         <ControlTemplate TargetType="{x:Type ScrollViewer}">
                             <Grid>
