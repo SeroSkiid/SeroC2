@@ -35,6 +35,7 @@ public class ConnectedClient : INotifyPropertyChanged
     public DateTime FirstSeen { get; set; } = DateTime.UtcNow;
     public DateTime ConnectedAt { get; set; } = DateTime.UtcNow;
     public DateTime LastHeartbeat { get; set; } = DateTime.UtcNow;
+    public DateTime LastHwStatsAt { get; set; } = DateTime.MinValue;
     public DateTime PingSentAt { get; set; }
     public SslStream? Stream { get; set; }
     public SemaphoreSlim WriteLock { get; } = new(1, 1);

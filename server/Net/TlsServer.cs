@@ -442,6 +442,7 @@ public class TlsServer
                         var hwStats = JsonConvert.DeserializeObject<HardwareStatsData>(packet.Data);
                         if (hwStats != null)
                         {
+                            client.LastHwStatsAt = DateTime.UtcNow;
                             client.CpuUsage    = hwStats.CpuUsage;
                             client.RamUsed     = hwStats.RamUsed;
                             client.RamTotal    = hwStats.RamTotal;

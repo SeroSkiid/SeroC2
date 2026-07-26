@@ -1844,6 +1844,16 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="40" />
                                     </Grid.ColumnDefinitions>
+                                    <!-- Selection count badge — visible only when ≥1 row selected -->
+                                    <Border Grid.Column="0" x:Name="SelCountBadge"
+                                            Visibility="Collapsed"
+                                            Background="{DynamicResource AccentBrush}"
+                                            CornerRadius="10" Margin="8,5" Padding="10,2"
+                                            VerticalAlignment="Center">
+                                        <TextBlock x:Name="TxtSelCount" Text=""
+                                                   FontSize="11" FontFamily="Consolas" FontWeight="SemiBold"
+                                                   Foreground="White" VerticalAlignment="Center"/>
+                                    </Border>
                                     <TextBlock Grid.Column="1" Text="&#xE721;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="14"
                                                HorizontalAlignment="Center" VerticalAlignment="Center"
                                                Foreground="{DynamicResource LabelBrush}" />
@@ -1904,6 +1914,7 @@
                                           MinWidth="1440"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
+                                          Template="{StaticResource DataGridFullHeightScrollbar}"
                                           PreviewKeyDown="GridClients_PreviewKeyDown"
                                           PreviewMouseLeftButtonDown="GridClients_PreviewMouseLeftButtonDown"
                                           MouseRightButtonDown="GridClients_MouseRightButtonDown"
@@ -1917,6 +1928,7 @@
                                           CanUserResizeColumns="True" CanUserReorderColumns="False"
                                           VirtualizingStackPanel.IsVirtualizing="True"
                                           VirtualizingStackPanel.VirtualizationMode="Recycling"
+                                          VirtualizingPanel.ScrollUnit="Pixel"
                                           EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"

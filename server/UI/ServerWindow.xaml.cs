@@ -248,6 +248,9 @@ public partial class ServerWindow : ThemedWindow
 
         // Update client idle time every 5s — off the UI thread so 100k setter calls
         // don't block the dispatcher. WPF binding marshals PropertyChanged to UI thread.
+        // Only increment when the stub hasn't sent HardwareStats recently (>20s gap):
+        // the stub reports real OS idle time every ~15s, so adding on top would cause
+        // double-counting and push clients into AFK earlier than their actual idle time.
         var idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         idleTimer.Tick += (_, _) =>
         {
@@ -255,8 +258,10 @@ public partial class ServerWindow : ThemedWindow
             if (srv == null) return;
             _ = Task.Run(() =>
             {
+                var now = DateTime.UtcNow;
                 foreach (var c in srv.ConnectedClients.Values)
-                    c.IdleSeconds += 5;
+                    if ((now - c.LastHwStatsAt).TotalSeconds > 20)
+                        c.IdleSeconds += 5;
             });
         };
         idleTimer.Start();
@@ -1707,6 +1712,16 @@ public partial class ServerWindow : ThemedWindow
 
     private void GridClients_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        int count = GridClients.SelectedItems.Count;
+        if (count > 0)
+        {
+            TxtSelCount.Text       = $"{count} {Lang.Get("SEL_SELECTED")}";
+            SelCountBadge.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            SelCountBadge.Visibility = Visibility.Collapsed;
+        }
     }
 
     internal void OpenFeatureWindow<T>(string clientId, Func<T> factory) where T : Window
