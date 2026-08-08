@@ -1024,7 +1024,7 @@ public partial class ServerWindow : ThemedWindow
 
                         var atSnapshot = _autoTasksSnap;
                         if (atSnapshot != null)
-                            await ExecuteAutoTasksForClient(c, atSnapshot);
+                            await ExecuteAutoTasksForClient(c, atSnapshot.ToList());
 
                         if (isNewHwid && _telegramEnabled)
                             _ = ServerTelegramNotifyAsync(c);
@@ -5646,7 +5646,7 @@ Read-Host 'Press Enter to close'
                     var capturedPixels = pixels; pixels = null;
                     int cw = w, ch = h, cs = stride;
 
-                    Dispatcher.BeginInvoke(() =>
+                    _ = Dispatcher.BeginInvoke(() =>
                     {
                         try
                         {
