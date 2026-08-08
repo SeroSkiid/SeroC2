@@ -1586,10 +1586,7 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                int tagW = UiPrefs.GetInt("ColWidth_TAG", 0);
-                col.Width = tagW > 0
-                    ? new System.Windows.Controls.DataGridLength(tagW)
-                    : new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
@@ -1611,7 +1608,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
+            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
         }
@@ -6368,7 +6365,7 @@ Read-Host 'Press Enter to close'
             // VISUAL STUDIO
             // ══════════════════════════════════════════════════════════════════
             case "VS2010":
-                res["NavIconBrush"]            = B("#4070A8");
+                res["NavIconBrush"]            = B("#80A8D8");
                 res["NavTextBrush"]            = B("#5080B0");
                 res["NavHoverBgBrush"]         = B("#1E2240");
                 res["NavHoverIconBrush"]       = B("#60A0D8");
@@ -6438,7 +6435,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "VS2017Dark":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#999999");
                 res["NavHoverBgBrush"]         = B("#1F3A5F");
                 res["NavHoverIconBrush"]       = B("#AABCCC");
@@ -6546,7 +6543,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2010Black":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#C0C0C0");
                 res["NavHoverBgBrush"]         = B("#2A2A50");
                 res["NavHoverIconBrush"]       = B("#B0C0D8");
@@ -6659,7 +6656,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2019Black":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#A0A8B8");
                 res["NavHoverBgBrush"]         = B("#202040");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
@@ -6729,7 +6726,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2019DarkGray":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#A0A8B8");
                 res["NavHoverBgBrush"]         = B("#1E2850");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
@@ -6802,7 +6799,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2016DarkGraySE":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#A0A8B8");
                 res["NavHoverBgBrush"]         = B("#202840");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
@@ -6837,7 +6834,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2016Black":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#A0A8B8");
                 res["NavHoverBgBrush"]         = B("#18203A");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
@@ -6910,7 +6907,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "Office2013DarkGray":
-                res["NavIconBrush"]            = B("#8090A8");
+                res["NavIconBrush"]            = B("#C0D0E8");
                 res["NavTextBrush"]            = B("#B0B8C8");
                 res["NavHoverBgBrush"]         = B("#202840");
                 res["NavHoverIconBrush"]       = B("#C0D0E8");
@@ -6988,7 +6985,7 @@ Read-Host 'Press Enter to close'
                 break;
 
             case "MetropolisDark":
-                res["NavIconBrush"]            = B("#6070A0");
+                res["NavIconBrush"]            = B("#9AAAD0");
                 res["NavTextBrush"]            = B("#7888B8");
                 res["NavHoverBgBrush"]         = B("#1E2848");
                 res["NavHoverIconBrush"]       = B("#8898C8");
@@ -7153,7 +7150,7 @@ Read-Host 'Press Enter to close'
             // ══════════════════════════════════════════════════════════════════
             default:
                 // SeroDark — flat dark aesthetic, no card borders, section contrast via bg elevation
-                res["NavIconBrush"]            = B("#6070A8");    // brighter icons
+                res["NavIconBrush"]            = B("#9AAAD0");    // brighter icons
                 res["NavTextBrush"]            = B("#8090B8");    // brighter, clearly readable text
                 res["NavHoverBgBrush"]         = B("#12152E");
                 res["NavHoverIconBrush"]       = B("#90A0C8");
@@ -7195,7 +7192,7 @@ Read-Host 'Press Enter to close'
             // VECTOR
             // ══════════════════════════════════════════════════════════════════
             case "TheBezier":
-                res["NavIconBrush"]            = B("#6878A8");
+                res["NavIconBrush"]            = B("#9AAAD0");
                 res["NavTextBrush"]            = B("#8090B8");
                 res["NavHoverBgBrush"]         = B("#2A3050");
                 res["NavHoverIconBrush"]       = B("#90A0C8");
@@ -8577,20 +8574,20 @@ Read-Host 'Press Enter to close'
             { "IP",       new DataGridLength(96)  },
             { "STATUS",   new DataGridLength(68)  },
             { "COUNTRY",  new DataGridLength(68)  },
-            { "USERNAME",  DataGridLength.Auto     },
+            { "USER",     DataGridLength.Auto     },
             { "OS",       new DataGridLength(66)  },
             { "MACHINE",  new DataGridLength(70)  },
-            { "PRIVILEGE",new DataGridLength(86)  },
+            { "PRIV",     new DataGridLength(100) },
             { "ID",       new DataGridLength(56)  },
             { "CAM",      new DataGridLength(64)  },
             { "CPU",      new DataGridLength(86)  },
             { "LOAD",     DataGridLength.Auto     },
             { "AV",       new DataGridLength(68)  },
-            { "RAM",      new DataGridLength(54)  },
+            { "RAM",      new DataGridLength(90)  },
             { "GPU",      new DataGridLength(86)  },
             { "PING",     DataGridLength.Auto     },
             { "WINDOW",   new DataGridLength(82)  },
-            { "1ST SEEN", new DataGridLength(68)  },
+            { "1ST SEEN", new DataGridLength(92)  },
             { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
@@ -8606,6 +8603,7 @@ Read-Host 'Press Enter to close'
             }
         }
 
+        GridClients.UpdateLayout();
         UpdateSettingsCheckboxStates();
         RefreshClientFilters();
     }

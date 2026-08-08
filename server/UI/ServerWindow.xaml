@@ -288,14 +288,19 @@
                                 </Border.Background>
                             </Border>
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="12,0">
-                                <ContentPresenter x:Name="Icon"
-                                              Content="{TemplateBinding Tag}"
-                                              Width="16"
-                                              Height="16"
-                                              Margin="0,0,9,0"
-                                              VerticalAlignment="Center"
-                                              HorizontalAlignment="Center"
-                                              TextElement.Foreground="{DynamicResource NavIconBrush}"/>
+                                <!-- Icon: DX image acts as opacity mask shape; Rectangle provides theme color -->
+                                <Grid Width="16" Height="16" Margin="0,0,9,0" VerticalAlignment="Center">
+                                    <ContentPresenter x:Name="Icon"
+                                                      Content="{TemplateBinding Tag}"
+                                                      Width="16" Height="16"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"/>
+                                    <Rectangle x:Name="IconTint" Fill="{DynamicResource NavIconBrush}">
+                                        <Rectangle.OpacityMask>
+                                            <VisualBrush Visual="{Binding ElementName=Icon}" Stretch="Uniform"/>
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Grid>
                                 <TextBlock x:Name="Label" Text="{TemplateBinding Content}"
                                            FontSize="12" Foreground="{DynamicResource NavTextBrush}"
                                            VerticalAlignment="Center"/>
@@ -306,12 +311,12 @@
                                 <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
                                 <Setter TargetName="SpotGlow" Property="Opacity"    Value="1"/>
                                 <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
-                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavHoverIconBrush}"/>
+                                <Setter TargetName="IconTint" Property="Fill"       Value="{DynamicResource NavHoverIconBrush}"/>
                             </Trigger>
                             <Trigger Property="IsChecked" Value="True">
                                 <Setter TargetName="Bg"       Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
                                 <Setter TargetName="Label"    Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
-                                <Setter TargetName="Icon"     Property="TextElement.Foreground" Value="{DynamicResource NavSelIconBrush}"/>
+                                <Setter TargetName="IconTint" Property="Fill"       Value="{DynamicResource NavSelIconBrush}"/>
                                 <Setter TargetName="SpotGlow" Property="Opacity"    Value="0.15"/>
                             </Trigger>
                             <MultiTrigger>
@@ -3321,19 +3326,28 @@
                             <StackPanel Orientation="Horizontal">
                                 <Button x:Name="BtnBinderAdd" Style="{StaticResource SBtn}" Margin="0,0,4,0" Height="26" Padding="10,0" Click="BtnBinderAdd_Click">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}" Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                        <Grid Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <dx:DXImage x:Name="BinderAddIco" Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}" Width="13" Height="13"/>
+                                            <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=BinderAddIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                        </Grid>
                                         <TextBlock x:Name="BtnBinderAddTxt" Text="Add" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button x:Name="BtnBinderRemove" Style="{StaticResource SBtn}" Margin="0,0,4,0" Height="26" Padding="10,0" Click="BtnBinderRemove_Click">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                        <Grid Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <dx:DXImage x:Name="BinderRemIco" Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="13" Height="13"/>
+                                            <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=BinderRemIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                        </Grid>
                                         <TextBlock x:Name="BtnBinderRemoveTxt" Text="Remove" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
                                 <Button x:Name="BtnBinderClearAll" Style="{StaticResource SBtn}" Margin="4,0,0,0" Height="26" Padding="10,0" Click="BtnBinderClearAll_Click">
                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                        <Grid Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center">
+                                            <dx:DXImage x:Name="BinderClrIco" Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="13" Height="13"/>
+                                            <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=BinderClrIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                        </Grid>
                                         <TextBlock x:Name="BtnBinderClearAllTxt" Text="Clear All" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Button>
@@ -3349,7 +3363,10 @@
                                     </Border>
                                     <Button x:Name="BtnBinderSelectIcon" Style="{StaticResource SBtn}" Height="24" Padding="8,0" Click="BtnBinderSelectIcon_Click" FontSize="11">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_FileAttachment.svg'}" Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                                            <Grid Width="13" Height="13" Margin="0,0,4,0" VerticalAlignment="Center">
+                                                <dx:DXImage x:Name="BinderSelIco" Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_FileAttachment.svg'}" Width="13" Height="13"/>
+                                                <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=BinderSelIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                            </Grid>
                                             <TextBlock x:Name="BtnBinderSelectTxt" Text="Select" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
@@ -3357,7 +3374,10 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Button x:Name="BtnBinderBuild" Style="{StaticResource SGreenBtn}" Height="30" Width="110" Click="BtnBinderBuild_Click">
                                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="14" Height="14" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                            <Grid Width="14" Height="14" Margin="0,0,5,0" VerticalAlignment="Center">
+                                                <dx:DXImage x:Name="BinderBuildIco" Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="14" Height="14"/>
+                                                <Rectangle Fill="White"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=BinderBuildIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                            </Grid>
                                             <TextBlock x:Name="BtnBinderBuildTxt" Text="Build" VerticalAlignment="Center"/>
                                         </StackPanel>
                                     </Button>
@@ -3372,7 +3392,7 @@
                                   RowBackground="{DynamicResource InputBgBrush}" AlternatingRowBackground="Transparent"
                                   GridLinesVisibility="None"
                                   HeadersVisibility="Column" FontFamily="Segoe UI" FontSize="12"
-                                  SelectionMode="Single" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  SelectionMode="Extended" CanUserAddRows="False" CanUserDeleteRows="False"
                                   CanUserResizeColumns="True" AlternationCount="2"
                                   VirtualizingStackPanel.IsVirtualizing="True"
                                   CellStyle="{StaticResource SMainDGCell}"
@@ -3410,10 +3430,20 @@
                             <DataGrid.ContextMenu>
                                 <ContextMenu>
                                     <MenuItem x:Name="BinderMenuRemove" Header="Remove Entry" Click="BtnBinderRemove_Click">
-                                        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Delete.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                        <MenuItem.Icon>
+                                            <Grid Width="14" Height="14">
+                                                <dx:DXImage x:Name="MnuRemIco" Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Delete.svg'}" Width="14" Height="14"/>
+                                                <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=MnuRemIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                            </Grid>
+                                        </MenuItem.Icon>
                                     </MenuItem>
                                     <MenuItem x:Name="BinderMenuClearAll" Header="Clear All" Click="BtnBinderClearAll_Click">
-                                        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                        <MenuItem.Icon>
+                                            <Grid Width="14" Height="14">
+                                                <dx:DXImage x:Name="MnuClrIco" Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/>
+                                                <Rectangle Fill="{DynamicResource ContentTextBrush}"><Rectangle.OpacityMask><VisualBrush Visual="{Binding ElementName=MnuClrIco}" Stretch="Uniform"/></Rectangle.OpacityMask></Rectangle>
+                                            </Grid>
+                                        </MenuItem.Icon>
                                     </MenuItem>
                                     <Separator />
                                     <MenuItem x:Name="BinderMenuUp" Header="Move Up" Click="BtnBinderUp_Click">
