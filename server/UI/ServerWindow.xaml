@@ -1894,7 +1894,7 @@
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="tb" Property="Foreground" Value="#4A85F5"/>
+                                                        <Setter TargetName="tb" Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
@@ -1903,7 +1903,8 @@
                                 </Grid>
                             </Border>
 
-                            <Grid Grid.Row="1">
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -1982,7 +1983,7 @@
                                                             <Canvas Width="8" Height="10">
                                                                 <Path x:Name="PersonIcon"
                                                                       Data="M6,2.5 A2,2 0 1 0 2,2.5 A2,2 0 1 0 6,2.5 Z M0,10 C0,5.5 2,5 4,5 C6,5 8,5.5 8,10 Z"
-                                                                      Fill="#22C55E"/>
+                                                                      Fill="{DynamicResource StatusSuccessBrush}"/>
                                                             </Canvas>
                                                         </Viewbox>
                                                         <Ellipse x:Name="BusyDot" Width="5" Height="5"
@@ -1994,7 +1995,7 @@
                                                             </Ellipse.Effect>
                                                         </Ellipse>
                                                         <TextBlock x:Name="StatusTxt" Text="{Binding StatusText}" FontSize="10"
-                                                                   Foreground="#22C55E" VerticalAlignment="Center"/>
+                                                                   Foreground="{DynamicResource StatusSuccessBrush}" VerticalAlignment="Center"/>
                                                     </StackPanel>
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding StatusColor}" Value="Yellow">
@@ -2016,7 +2017,7 @@
                                         <DataGridTextColumn Header="USER"     Binding="{Binding Username}"                            Width="120" MinWidth="80"/>
                                         <DataGridTextColumn Header="OS"       Binding="{Binding OS}"                                  Width="66" MinWidth="40"/>
                                         <DataGridTextColumn Header="MACHINE"  Binding="{Binding MachineName}"                         Width="70" MinWidth="40"/>
-                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="86"  MinWidth="66" FontSize="11"/>
+                                        <DataGridTextColumn Header="PRIV"     Binding="{Binding Privilege}"                           Width="100" MinWidth="76" FontSize="11"/>
                                         <DataGridTextColumn Header="ID"       Binding="{Binding Id}"                                  Width="56"  MinWidth="36" FontFamily="Consolas" FontSize="11"/>
                                         <!-- CAM: shows camera icon when webcam detected -->
                                         <DataGridTemplateColumn x:Name="ColCamHdr" Header="CAM" Width="64" MinWidth="50" SortMemberPath="CameraIcon">
@@ -2071,7 +2072,7 @@
                                             </DataGridTemplateColumn.CellTemplate>
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="44"/>
-                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="68"  MinWidth="44" FontFamily="Consolas" FontSize="11"/>
+                                        <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="92"  MinWidth="72" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
@@ -2247,6 +2248,7 @@
                                     </Grid>
                                 </Border>
                             </Grid>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -2330,6 +2332,7 @@
                                       AutoGenerateColumns="False" IsReadOnly="True"
                                       HorizontalAlignment="Stretch" MinWidth="750"
                                       UseLayoutRounding="True"
+                                      Template="{StaticResource DataGridFullHeightScrollbar}"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
