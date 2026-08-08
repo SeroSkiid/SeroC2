@@ -59,16 +59,42 @@
         <!-- Header bar -->
         <Border Grid.Row="0" Background="{DynamicResource SectionBgBrush}"
                 BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="0,0,0,1"
-                Padding="16,12">
+                Padding="16,10">
             <Grid>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: icon + status indicator -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="#F59E0B" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="WndTitle" Text="MINER STATS"
-                               Foreground="{DynamicResource ContentTextBrush}" FontSize="14" FontWeight="Bold"/>
-                </StackPanel>
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Ellipse x:Name="StatusDot" Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center"
+                             Fill="#6B7280"/>
+                    <TextBlock x:Name="LblStatus" Text="Stopped" Foreground="{DynamicResource LabelBrush}"
+                               FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
                     <TextBlock x:Name="LblEndpoint" Text="" Foreground="{DynamicResource LabelBrush}"
-                               FontSize="9" FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                               FontSize="9" FontFamily="Consolas" VerticalAlignment="Center" Margin="14,0,0,0"/>
+                </StackPanel>
+
+                <!-- Right: port + start/stop + refresh -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Port field (only visible when stopped) -->
+                    <StackPanel x:Name="PortPanel" Orientation="Horizontal" Margin="0,0,8,0">
+                        <TextBlock Text="Port:" Foreground="{DynamicResource LabelBrush}" FontSize="10"
+                                   FontFamily="Consolas" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                        <TextBox x:Name="TxtStatsPort" Text="8081" Width="52" Height="26"
+                                 FontFamily="Consolas" FontSize="11"
+                                 Background="{DynamicResource InputBgBrush}"
+                                 Foreground="{DynamicResource ContentTextBrush}"
+                                 BorderBrush="{DynamicResource InputBorderBrush}"
+                                 VerticalContentAlignment="Center" Padding="4,0"/>
+                    </StackPanel>
+                    <Button x:Name="BtnStart" Content="START" Height="26" Padding="12,0" Margin="0,0,6,0"
+                            Style="{StaticResource SGreenBtn}" FontSize="10" Click="BtnStart_Click"/>
+                    <Button x:Name="BtnStop" Content="STOP" Height="26" Padding="12,0" Margin="0,0,6,0"
+                            Style="{StaticResource SRedBtn}" FontSize="10" Click="BtnStop_Click"
+                            Visibility="Collapsed"/>
                     <Button x:Name="BtnRefresh" Content="&#xE72C;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons"
                             Width="28" Height="28" Padding="0" Click="BtnRefresh_Click"
                             Style="{StaticResource SBtn}" ToolTip="Refresh"/>

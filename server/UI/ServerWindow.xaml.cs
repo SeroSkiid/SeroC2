@@ -1677,6 +1677,13 @@ public partial class ServerWindow : ThemedWindow
     }
 
 
+    private void GridAllClients_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        Dispatcher.BeginInvoke(() => {
+            try { GridAllClients.CurrentCell = new System.Windows.Controls.DataGridCellInfo(); } catch { }
+        }, System.Windows.Threading.DispatcherPriority.Background);
+    }
+
     private void GridAllClients_MouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var hit = VisualTreeHelper.HitTest(GridAllClients, e.GetPosition(GridAllClients));
@@ -4677,14 +4684,12 @@ Read-Host 'Press Enter to close'
 
     private void BtnDashMinerStats_Click(object sender, RoutedEventArgs e)
     {
-        if (_minerStatsHost == null)
-        {
-            System.Windows.MessageBox.Show(
-                Lang.Get("MNR_STATS_NOT_RUNNING"), "Miner Stats",
-                System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
-            return;
-        }
-        var win = new MinerStatsWindow(_minerStatsHost) { Owner = this };
+        var win = new MinerStatsWindow(
+            _minerStatsHost,
+            MinerStatsPort,
+            EnsureMinerToken(),
+            host => _minerStatsHost = host)
+        { Owner = this };
         win.Show();
     }
 
@@ -8004,6 +8009,7 @@ Read-Host 'Press Enter to close'
         if (DashLblUptime      != null) DashLblUptime.Text      = Lang.Get("DASH_UPTIME");
         if (DashSubUptime      != null) DashSubUptime.Text      = Lang.Get("DASH_SUB_UPTIME");
         if (DashLblConnChart   != null) DashLblConnChart.Text   = Lang.Get("DASH_CONN_CHART");
+        if (DashPeakLbl        != null) DashPeakLbl.Text        = Lang.Get("DASH_PEAK") + " ";
         if (DashLblOsBreakdown != null) DashLblOsBreakdown.Text = Lang.Get("DASH_OS_BREAKDOWN");
         if (DashLblWebcam      != null) DashLblWebcam.Text      = Lang.Get("DASH_WEBCAM");
         if (DashSubWebcam      != null) DashSubWebcam.Text      = Lang.Get("DASH_SUB_WEBCAM");

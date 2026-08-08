@@ -1685,7 +1685,7 @@
                                             <Grid Margin="14,11,14,8">
                                                 <TextBlock x:Name="DashLblConnChart" Text="CONNECTIONS · LAST 24H" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="peak " Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                                    <TextBlock x:Name="DashPeakLbl" Text="peak " Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                                     <TextBlock x:Name="DashPeak" Text="--" Foreground="{DynamicResource AccentBrush}" FontSize="9" FontWeight="SemiBold"/>
                                                 </StackPanel>
                                             </Grid>
@@ -1908,7 +1908,8 @@
                                 </Grid>
                             </Border>
 
-                            <Grid Grid.Row="1">
+                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <Grid MinWidth="1360">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -1936,7 +1937,7 @@
                                           VirtualizingPanel.ScrollUnit="Pixel"
                                           EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
-                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                           MinHeight="300"
                                       CellStyle="{StaticResource SMainDGCell}"
@@ -2251,6 +2252,7 @@
                                     </Grid>
                                 </Border>
                             </Grid>
+                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -2335,6 +2337,7 @@
                                       HorizontalAlignment="Stretch" MinWidth="750"
                                       UseLayoutRounding="True"
                                       Template="{StaticResource DataGridFullHeightScrollbar}"
+                                      SelectionChanged="GridAllClients_SelectionChanged"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
