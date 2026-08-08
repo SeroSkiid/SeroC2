@@ -1932,7 +1932,7 @@
                                           VirtualizingPanel.ScrollUnit="Pixel"
                                           EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
-                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                           MinHeight="300"
                                       CellStyle="{StaticResource SMainDGCell}"
