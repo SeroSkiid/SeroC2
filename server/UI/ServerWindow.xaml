@@ -1908,8 +1908,7 @@
                                 </Grid>
                             </Border>
 
-                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <Grid>
+                            <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -1918,7 +1917,6 @@
                                 <DataGrid Grid.Column="0" x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           RowHeight="24"
-                                          MinWidth="1440"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
                                           Template="{StaticResource DataGridFullHeightScrollbar}"
@@ -1938,7 +1936,7 @@
                                           VirtualizingPanel.ScrollUnit="Pixel"
                                           EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
-                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                           MinHeight="300"
                                       CellStyle="{StaticResource SMainDGCell}"
@@ -2253,7 +2251,6 @@
                                     </Grid>
                                 </Border>
                             </Grid>
-                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -3168,7 +3165,11 @@
                                         Background="{DynamicResource InputBgBrush}"
                                         BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <Grid>
-                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" MinWidth="0"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
                                             <!-- Bitcoin logo -->
                                             <Image Source="/Resources/crypto/btc.png" Width="28" Height="28"
                                                    Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
@@ -3176,7 +3177,8 @@
                                                 <TextBlock x:Name="LblClipperTitle" Text="CRYPTO CLIPPER" FontSize="10" FontWeight="Bold"
                                                            FontFamily="Consolas" Foreground="#C8A060"/>
                                                 <TextBlock x:Name="LblClipperSubtitle" Text="clipboard address interceptor" FontSize="9"
-                                                           Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas"/>
+                                                           Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas"
+                                                           TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                             <Border x:Name="ClipperActiveBadge" Margin="12,0,0,0" CornerRadius="3"
                                                     Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
@@ -3192,7 +3194,7 @@
                                                        Foreground="{DynamicResource LabelBrush}" FontSize="11" FontFamily="Consolas"
                                                        VerticalAlignment="Center" Margin="14,0,0,0"/>
                                         </StackPanel>
-                                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                                             <Button x:Name="BtnClipperStart" Content="START" Height="30" Padding="14,0"
                                                     Margin="0,0,6,0" Style="{StaticResource SGreenBtn}"
                                                     Click="ClipperStart_Click"

