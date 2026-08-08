@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -22,6 +23,11 @@ public static class DiagnosticLogger
     private static StreamWriter? _writer;
     private static readonly object _lock = new();
     private static bool _enabled = true;
+
+    // Queue-based async path — callers enqueue a pre-formatted line without taking _lock.
+    // A 500ms timer drains the queue in a single batched write+flush under _lock.
+    private static readonly ConcurrentQueue<string> _pending = new();
+    private static System.Timers.Timer? _flushTimer;
 
     public static bool Enabled
     {
@@ -54,9 +60,20 @@ public static class DiagnosticLogger
             }
             catch { _enabled = false; }
         }
+        _flushTimer = new System.Timers.Timer(500) { AutoReset = true };
+        _flushTimer.Elapsed += (_, _) => FlushPending();
+        _flushTimer.Start();
     }
 
     // ── Public write API ───────────────────────────────────────────────────────
+
+    // Enqueue a plain message without taking _lock — zero contention on hot paths.
+    // Formatted as INFO; use Info/Warn/Error for level-tagged writes.
+    public static void Enqueue(string msg)
+    {
+        if (!_enabled) return;
+        _pending.Enqueue($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [INFO ] {msg}");
+    }
 
     public static void Info(string msg,  [CallerMemberName] string? caller = null) => Write("INFO ", msg, caller);
     public static void Warn(string msg,  [CallerMemberName] string? caller = null) => Write("WARN ", msg, caller);
@@ -130,8 +147,29 @@ public static class DiagnosticLogger
         catch { _writer = null; }
     }
 
+    private static void FlushPending()
+    {
+        if (_pending.IsEmpty) return;
+        lock (_lock)
+        {
+            if (_writer == null) return;
+            try
+            {
+                while (_pending.TryDequeue(out var line))
+                {
+                    _writer.WriteLine(line);
+                    _currentSize += Encoding.UTF8.GetByteCount(line) + 2;
+                    if (_currentSize >= MaxFileSizeBytes) Rotate();
+                }
+                _writer.Flush();
+            }
+            catch { }
+        }
+    }
+
     private static void CloseWriter()
     {
+        FlushPending();
         try { _writer?.Flush(); _writer?.Dispose(); } catch { }
         _writer = null;
     }

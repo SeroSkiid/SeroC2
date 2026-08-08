@@ -74,9 +74,14 @@ public class DataStore
         lock (_logsLock)
         {
             Logs.Add(entry);
-            // Remove oldest 500 entries when over limit — avoids Clear() which resets scroll position
+            // Trim: keep newest 500 entries via Clear+re-add (O(n)) instead of
+            // 500× RemoveAt(0) (O(n²) due to List<T> shift on every removal).
             if (Logs.Count > 1000)
-                for (int i = 0; i < 500; i++) Logs.RemoveAt(0);
+            {
+                var keep = Logs.Skip(500).ToList();
+                Logs.Clear();
+                foreach (var l in keep) Logs.Add(l);
+            }
         }
         // Queue for async disk write — never blocks the caller
         _logQueue.Enqueue(entry);

