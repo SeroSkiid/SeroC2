@@ -191,6 +191,7 @@ public partial class MicrophoneWindow : ThemedWindow
     private int     _recSeconds;
     private float[] _waveform = new float[100];
     private int     _wavePos;
+    private long    _lastStatusMs;
 
     private static readonly SolidColorBrush _waveAccent = MakeWaveBrush();
     private static SolidColorBrush MakeWaveBrush()
@@ -270,9 +271,14 @@ public partial class MicrophoneWindow : ThemedWindow
         // Capture to local — _player can be set null on UI thread at any moment
         _player?.Enqueue(pcm);
 
-        // BeginInvoke (fire-and-forget) — never block the network receive thread
-        int count; lock (_chunks) count = _chunks.Count;
-        Dispatcher.BeginInvoke(() => TxtStatus.Text = string.Format(Lang.Get("MIC_RECORDING"), count));
+        // Rate-limited status update — at most every 500ms to avoid flooding the UI thread
+        long nowMs = Environment.TickCount64;
+        if (nowMs - _lastStatusMs >= 500)
+        {
+            _lastStatusMs = nowMs;
+            int count; lock (_chunks) count = _chunks.Count;
+            Dispatcher.BeginInvoke(() => TxtStatus.Text = string.Format(Lang.Get("MIC_RECORDING"), count));
+        }
     }
 
     private async void Record_Click(object s, RoutedEventArgs e)

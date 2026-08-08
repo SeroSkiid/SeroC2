@@ -5365,6 +5365,8 @@ Read-Host 'Press Enter to close'
     private readonly HashSet<string> _screenHandlers = new();
     // Reused WriteableBitmap per tile — avoids allocating a new WIC texture every frame
     private readonly Dictionary<string, System.Windows.Media.Imaging.WriteableBitmap> _tileWb = new();
+    private static readonly System.Threading.SemaphoreSlim _screenshotDecodeSlots =
+        new(Math.Max(2, Environment.ProcessorCount / 2), Math.Max(2, Environment.ProcessorCount / 2));
     private int _screenRoundRobinOffset;
     private const int ScreenMaxPerTick = 50;
 
@@ -5620,9 +5622,12 @@ Read-Host 'Press Enter to close'
             if (result == null || string.IsNullOrEmpty(result.Data)) return;
             var b64 = result.Data;
 
-            // Decode JPEG off the UI thread, then blit pixels into reused WriteableBitmap
-            System.Threading.Tasks.Task.Run(() =>
+            // Decode JPEG off the UI thread with a slot cap, blit pixels into reused WriteableBitmap.
+            // ArrayPool<byte> avoids allocating a fresh ~4-8 MB buffer per screenshot decode.
+            System.Threading.Tasks.Task.Run(async () =>
             {
+                await _screenshotDecodeSlots.WaitAsync();
+                byte[]? pixels = null;
                 try
                 {
                     var bytes = Convert.FromBase64String(b64);
@@ -5636,27 +5641,34 @@ Read-Host 'Press Enter to close'
                         frame, System.Windows.Media.PixelFormats.Bgr32, null, 0);
                     src.Freeze();
                     int w = src.PixelWidth, h = src.PixelHeight, stride = w * 4;
-                    var pixels = new byte[stride * h];
+                    pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(stride * h);
                     src.CopyPixels(pixels, stride, 0);
+                    var capturedPixels = pixels; pixels = null;
+                    int cw = w, ch = h, cs = stride;
 
                     Dispatcher.BeginInvoke(() =>
                     {
-                        if (!_screenTiles.TryGetValue(clientId, out var img)) return;
-                        if (!_tileWb.TryGetValue(clientId, out var wb)
-                            || wb.PixelWidth != w || wb.PixelHeight != h)
+                        try
                         {
-                            wb = new System.Windows.Media.Imaging.WriteableBitmap(
-                                w, h, 96, 96, System.Windows.Media.PixelFormats.Bgr32, null);
-                            _tileWb[clientId] = wb;
-                            img.Source = wb;
+                            if (!_screenTiles.TryGetValue(clientId, out var img)) return;
+                            if (!_tileWb.TryGetValue(clientId, out var wb)
+                                || wb.PixelWidth != cw || wb.PixelHeight != ch)
+                            {
+                                wb = new System.Windows.Media.Imaging.WriteableBitmap(
+                                    cw, ch, 96, 96, System.Windows.Media.PixelFormats.Bgr32, null);
+                                _tileWb[clientId] = wb;
+                                img.Source = wb;
+                            }
+                            wb.Lock();
+                            wb.WritePixels(new Int32Rect(0, 0, cw, ch), capturedPixels, cs, 0);
+                            wb.AddDirtyRect(new Int32Rect(0, 0, cw, ch));
+                            wb.Unlock();
                         }
-                        wb.Lock();
-                        wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
-                        wb.AddDirtyRect(new Int32Rect(0, 0, w, h));
-                        wb.Unlock();
+                        finally { System.Buffers.ArrayPool<byte>.Shared.Return(capturedPixels); }
                     });
                 }
-                catch { }
+                catch { if (pixels != null) System.Buffers.ArrayPool<byte>.Shared.Return(pixels); }
+                finally { _screenshotDecodeSlots.Release(); }
             });
         }
         catch { }

