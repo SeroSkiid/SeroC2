@@ -175,29 +175,8 @@
                 <DataGridTemplateColumn Width="30" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid Width="16" Height="16" Margin="6,0" VerticalAlignment="Center">
-                                <Image x:Name="WinIcon" Source="{Binding Icon}" Width="16" Height="16"
-                                       RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
-                                <dx:DXImage x:Name="WinFallback"
-                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Window.svg'}"
-                                            Width="14" Height="14" VerticalAlignment="Center"
-                                            Visibility="Collapsed"/>
-                            </Grid>
-                            <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding Icon}" Value="{x:Null}">
-                                    <Setter TargetName="WinFallback" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="WinIcon"     Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
-                            </DataTemplate.Triggers>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <!-- Visible dot -->
-                <DataGridTemplateColumn Header="?" Width="32" CanUserSort="True" SortMemberPath="Visible">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Ellipse Width="8" Height="8" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     Fill="{Binding VisibleColor}" ToolTip="{Binding VisibleStr}"/>
+                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
+                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
