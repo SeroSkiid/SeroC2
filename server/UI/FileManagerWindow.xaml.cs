@@ -19,7 +19,8 @@ public partial class FileManagerWindow : ThemedWindow
 
     // Pending async results
     private TaskCompletionSource<string>? _pendingList;
-    private TaskCompletionSource<string>? _pendingData;
+    private TaskCompletionSource<string>? _pendingData;    // Download_Click
+    private TaskCompletionSource<string>? _pendingPreview; // BtnPreview_Click
     private TaskCompletionSource<string>? _pendingHash;
     private TaskCompletionSource<string>? _pendingAck;
 
@@ -33,7 +34,10 @@ public partial class FileManagerWindow : ThemedWindow
         GridFiles.ItemsSource = _entries;
 
         _server.RegisterHandler(clientId, PacketType.FmListResult, pkt => { _pendingList?.TrySetResult(pkt.Data); });
-        _server.RegisterHandler(clientId, PacketType.FmFileData,   pkt => { _pendingData?.TrySetResult(pkt.Data); });
+        // FmFileData is used by both Download and Preview — route to whichever is waiting.
+        // Separate fields prevent the race where a mid-download selection change overwrites
+        // _pendingData with Preview's TCS, causing the download to time out.
+        _server.RegisterHandler(clientId, PacketType.FmFileData,   pkt => { (_pendingData ?? _pendingPreview)?.TrySetResult(pkt.Data); });
         _server.RegisterHandler(clientId, PacketType.FmHashResult,  pkt => { _pendingHash?.TrySetResult(pkt.Data); });
         _server.RegisterHandler(clientId, PacketType.FmAck,         pkt => { _pendingAck?.TrySetResult(pkt.Data); });
 
@@ -226,7 +230,8 @@ public partial class FileManagerWindow : ThemedWindow
             var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
             if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error); return; }
             ShowTransfer(row.Name, Lang.Get("FM_DECODING"));
-            var bytes = Convert.FromBase64String(result.Data);
+            // Offload Base64 decode to background thread — large files block UI if decoded inline
+            var bytes = await Task.Run(() => Convert.FromBase64String(result.Data));
             TxtTransferPct.Text = "50%";
             ShowTransfer(row.Name, Lang.Get("FM_WRITING"));
             await File.WriteAllBytesAsync(dlg.FileName, bytes);
@@ -259,14 +264,17 @@ public partial class FileManagerWindow : ThemedWindow
         {
             var bytes = await File.ReadAllBytesAsync(dlg.FileName);
             ShowTransfer(uploadName, string.Format(Lang.Get("FM_ENCODING"), bytes.Length.ToString("N0")));
-            var b64 = Convert.ToBase64String(bytes);
+            // Base64 encoding + JSON serialisation are CPU-heavy — run off the UI thread
+            // so the window stays responsive and large files don't cause a freeze/OOM crash.
+            var payload = await Task.Run(() =>
+                JsonConvert.SerializeObject(new FmUploadData { Path = destPath, Data = Convert.ToBase64String(bytes) }));
             TxtTransferPct.Text = "50%";
             _pendingAck = new TaskCompletionSource<string>();
             ShowTransfer(uploadName, Lang.Get("FM_SENDING"));
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmUpload,
-                Data = JsonConvert.SerializeObject(new FmUploadData { Path = destPath, Data = b64 })
+                Data = payload
             });
             await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(30));
             sw.Stop();
@@ -869,19 +877,23 @@ public partial class FileManagerWindow : ThemedWindow
 
         try
         {
-            _pendingData = new TaskCompletionSource<string>();
+            _pendingPreview = new TaskCompletionSource<string>();
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
             });
             bool isVideoExt = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
-            var json   = await _pendingData.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
-            var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
-            if (result == null || !string.IsNullOrEmpty(result.Error))
+            var json   = await _pendingPreview.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
+            // Offload JSON decode + Base64 decode to background thread
+            var (result, bytes) = await Task.Run(() =>
+            {
+                var r = JsonConvert.DeserializeObject<FmFileDataResult>(json);
+                var b = (r != null && string.IsNullOrEmpty(r.Error)) ? Convert.FromBase64String(r.Data) : null;
+                return (r, b);
+            });
+            if (result == null || bytes == null || !string.IsNullOrEmpty(result.Error))
             { TxtPreviewInfo.Text = result?.Error ?? "Error"; ShowPreviewPanel("empty"); return; }
-
-            var bytes = Convert.FromBase64String(result.Data);
 
             bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
             bool isVideo = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
@@ -927,7 +939,7 @@ public partial class FileManagerWindow : ThemedWindow
             }
         }
         catch (Exception ex) { TxtPreviewInfo.Text = ex.Message; ShowPreviewPanel("empty"); }
-        finally { _pendingData = null; BtnPreview.IsEnabled = true; }
+        finally { _pendingPreview = null; BtnPreview.IsEnabled = true; }
     }
 
     private void ShowPreviewPanel(string which)
