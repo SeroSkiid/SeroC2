@@ -129,40 +129,6 @@
                   EnableRowVirtualization="True"
                   ContextMenuOpening="GridServices_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="Height" Value="24"/>
-                    <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
-                </Style>
-            </DataGrid.RowStyle>
-            <DataGrid.CellStyle>
-                <Style TargetType="DataGridCell">
-                    <Setter Property="OverridesDefaultStyle" Value="True"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="Padding" Value="0"/>
-                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                    <Setter Property="Template">
-                        <Setter.Value>
-                            <ControlTemplate TargetType="DataGridCell">
-                                <Border x:Name="CellBd" Background="Transparent" Padding="10,4" BorderThickness="0">
-                                    <ContentPresenter VerticalAlignment="Center"/>
-                                </Border>
-                                <ControlTemplate.Triggers>
-                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
-                                        <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
-                                        <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                        <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                                    </DataTrigger>
-                                </ControlTemplate.Triggers>
-                            </ControlTemplate>
-                        </Setter.Value>
-                    </Setter>
-                </Style>
-            </DataGrid.CellStyle>
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="MnuSvcStart"   Header="Start"   Click="BtnStart_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Validation.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>

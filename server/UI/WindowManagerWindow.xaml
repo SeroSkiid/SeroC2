@@ -31,48 +31,6 @@
             <Setter Property="FontSize"   Value="12"/>
             <Setter Property="Cursor"     Value="Hand"/>
         </Style>
-        <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                </Trigger>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
-                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                </Trigger>
-                <MultiTrigger>
-                    <MultiTrigger.Conditions>
-                        <Condition Property="IsSelected" Value="True"/>
-                        <Condition Property="IsMouseOver" Value="True"/>
-                    </MultiTrigger.Conditions>
-                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                </MultiTrigger>
-            </Style.Triggers>
-        </Style>
-        <Style TargetType="DataGridCell">
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="DataGridCell">
-                        <Border Background="{TemplateBinding Background}" Padding="10,4" BorderThickness="0">
-                            <ContentPresenter VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="Transparent"/>
-                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
     </dx:ThemedWindow.Resources>
 
     <DockPanel>

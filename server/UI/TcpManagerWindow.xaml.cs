@@ -224,4 +224,7 @@ public partial class TcpManagerWindow : ThemedWindow
     }
 }
 
-public record TcpEntryVM(int Pid, string ProcessName, string LocalAddr, string RemoteAddr, string State);
+public record TcpEntryVM(int Pid, string ProcessName, string LocalAddr, string RemoteAddr, string State)
+{
+    public static System.Windows.Media.ImageSource? ExeIcon { get; } = ShellIcon.Get(".exe", false);
+}

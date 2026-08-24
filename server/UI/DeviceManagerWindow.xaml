@@ -63,42 +63,6 @@
                       ScrollViewer.CanContentScroll="True"
                       ContextMenuOpening="GridDevs_ContextMenuOpening"
                       ColumnHeaderStyle="{StaticResource SColHeader}">
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Height" Value="24"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
-                                <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.RowStyle>
-                <DataGrid.CellStyle>
-                    <Style TargetType="DataGridCell">
-                        <Setter Property="OverridesDefaultStyle" Value="True"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="DataGridCell">
-                                    <Border Background="{TemplateBinding Background}" Padding="8,4" BorderThickness="0">
-                                        <ContentPresenter VerticalAlignment="Center"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </DataGrid.CellStyle>
                 <DataGrid.ContextMenu>
                     <ContextMenu>
                         <MenuItem x:Name="MnuDevUninstall" Header="Uninstall"    Click="BtnUninstall_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
@@ -110,6 +74,13 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
+                    <DataGridTemplateColumn Width="30" CanUserSort="False">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Mouse.svg'}" Width="14" Height="14" Margin="6,0" VerticalAlignment="Center"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn x:Name="ColDevName"  Header="NAME"         Binding="{Binding Name}"         Width="*"/>
                     <DataGridTextColumn x:Name="ColDevClass" Header="CLASS"        Binding="{Binding Class}"         Width="120"/>
                     <DataGridTextColumn x:Name="ColDevStatus" Header="STATUS"       Binding="{Binding Status}"        Width="80"/>

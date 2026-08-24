@@ -71,35 +71,6 @@
                   ScrollViewer.CanContentScroll="True"
                   ContextMenuOpening="GridApps_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">
-            <DataGrid.RowStyle>
-                <Style TargetType="DataGridRow">
-                    <Setter Property="Height" Value="24"/>
-                    <Style.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                        </Trigger>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
-                            <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                            <Setter Property="BorderThickness" Value="0"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.RowStyle>
-            <DataGrid.CellStyle>
-                <Style TargetType="DataGridCell">
-                    <Setter Property="Background"      Value="Transparent"/>
-                    <Setter Property="BorderThickness" Value="0"/>
-                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
-                    <Style.Triggers>
-                        <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>
-            </DataGrid.CellStyle>
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem x:Name="MnuAppUninstall"     Header="Uninstall"        Click="BtnUninstall_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
