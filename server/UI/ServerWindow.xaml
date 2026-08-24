@@ -1908,14 +1908,8 @@
                                 </Grid>
                             </Border>
 
-                            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                            <Grid MinWidth="1360">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <DataGrid Grid.Column="0" x:Name="GridClients"
+                            <Grid Grid.Row="1">
+                                <DataGrid x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
                                           RowHeight="24"
                                           HorizontalAlignment="Stretch"
@@ -1937,9 +1931,8 @@
                                           VirtualizingPanel.ScrollUnit="Pixel"
                                           EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
-                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                          ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                          MinHeight="300"
                                       CellStyle="{StaticResource SMainDGCell}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                     <DataGrid.Resources>
@@ -2169,7 +2162,7 @@
                                 </DataGrid>
 
                                 <!-- Empty state overlay for Online -->
-                                <Grid Grid.Column="0" IsHitTestVisible="False">
+                                <Grid IsHitTestVisible="False">
                                     <Grid.Style>
                                         <Style TargetType="Grid">
                                             <Setter Property="Visibility" Value="Collapsed"/>
@@ -2188,7 +2181,7 @@
                                 </Grid>
 
                                 <!-- Grid Settings Panel — overlays on top of the DataGrid, no layout shift -->
-                                <Border Grid.Column="0" x:Name="GridSettingsPanel"
+                                <Border x:Name="GridSettingsPanel"
                                         Width="260"
                                         HorizontalAlignment="Right"
                                         Panel.ZIndex="10"
@@ -2252,7 +2245,6 @@
                                     </Grid>
                                 </Border>
                             </Grid>
-                            </ScrollViewer>
                         </Grid>
                     </Border>
                 </TabItem>
@@ -2332,9 +2324,9 @@
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <DataGrid Grid.Column="0" x:Name="GridAllClients"
+                                <DataGrid x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
-                                      HorizontalAlignment="Stretch" MinWidth="750"
+                                      HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
                                       Template="{StaticResource DataGridFullHeightScrollbar}"
                                       SelectionChanged="GridAllClients_SelectionChanged"
@@ -2350,9 +2342,9 @@
                                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                                       EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                      VerticalAlignment="Stretch" MinHeight="300" RowHeight="24"
+                                      VerticalAlignment="Stretch" RowHeight="24"
                                       CellStyle="{StaticResource SMainDGCellNoSel}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Resources>
