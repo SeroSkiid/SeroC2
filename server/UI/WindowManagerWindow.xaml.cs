@@ -113,6 +113,8 @@ public partial class WindowManagerWindow : ThemedWindow
         if (d == null) return;
         Dispatcher.BeginInvoke(() =>
         {
+            var selectedHandles = GridWins.SelectedItems.Cast<WindowEntryVM>()
+                                          .Select(v => v.Handle).ToHashSet();
             _windows.Clear();
             foreach (var w in d.Windows)
                 _windows.Add(new WindowEntryVM
@@ -126,6 +128,9 @@ public partial class WindowManagerWindow : ThemedWindow
                     Icon        = DecodeIcon(w.IconB64),
                 });
             _view?.Refresh();
+            if (selectedHandles.Count > 0)
+                foreach (var vm in _windows.Where(v => selectedHandles.Contains(v.Handle)))
+                    GridWins.SelectedItems.Add(vm);
             int visible = _windows.Count(x => FilterWindow(x));
             TxtCount.Text  = $"({visible}/{d.Windows.Count})";
             TxtStatus.Text = string.Format(Lang.Get("WIN_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Windows.Count);

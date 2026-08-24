@@ -10,6 +10,13 @@ namespace SeroServer.UI;
 
 public class DeviceEntryVM
 {
+    public static System.Windows.Media.ImageSource? DeviceIcon { get; } = LoadIcon();
+    private static System.Windows.Media.ImageSource? LoadIcon()
+    {
+        var msc = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "devmgmt.msc");
+        return ShellIcon.GetFromPath(msc) ?? ShellIcon.Get(".inf", false);
+    }
+
     public string DeviceId     { get; set; } = "";
     public string Name         { get; set; } = "";
     public string Class        { get; set; } = "";

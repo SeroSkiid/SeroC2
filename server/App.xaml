@@ -697,14 +697,37 @@
             </Setter>
         </Style>
 
-        <!-- ── DataGrid row hover + selection ──────────────── -->
-        <!-- BorderThickness stays 0 always — accent bar lives in DataGridRowHeader (no layout shift) -->
+        <!-- ── DataGrid row — custom template kills default VSM selection highlight ── -->
         <Style TargetType="DataGridRow">
-            <Setter Property="Background"      Value="Transparent"/>
-            <Setter Property="BorderBrush"     Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="MinHeight"       Value="30"/>
-            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="FocusVisualStyle"      Value="{x:Null}"/>
+            <Setter Property="Background"            Value="Transparent"/>
+            <Setter Property="BorderBrush"           Value="Transparent"/>
+            <Setter Property="BorderThickness"       Value="0"/>
+            <Setter Property="MinHeight"             Value="30"/>
+            <Setter Property="Foreground"            Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridRow">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                SnapsToDevicePixels="True">
+                            <SelectiveScrollingGrid>
+                                <SelectiveScrollingGrid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </SelectiveScrollingGrid.ColumnDefinitions>
+                                <DataGridRowHeader Grid.Column="0"
+                                    SelectiveScrollingGrid.SelectiveScrollingOrientation="Fixed"/>
+                                <DataGridCellsPresenter Grid.Column="1"
+                                    ItemsPanel="{TemplateBinding ItemsPanel}"
+                                    SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                            </SelectiveScrollingGrid>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
                     <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>

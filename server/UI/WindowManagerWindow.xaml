@@ -130,11 +130,12 @@
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <!-- Icon -->
-                <DataGridTemplateColumn Width="30" CanUserSort="False">
+                <DataGridTemplateColumn Width="40" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Source="{Binding Icon}" Width="16" Height="16" Margin="6,0"
-                                   RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center"/>
+                            <Image Source="{Binding Icon}" Width="16" Height="16"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   RenderOptions.BitmapScalingMode="HighQuality"/>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
