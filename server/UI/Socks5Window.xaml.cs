@@ -64,18 +64,18 @@ public partial class Socks5Window : ThemedWindow
         ServerWindow.ReportGlobalActivity("SOCKS5 Proxy", $"Port {port}", "running");
         ServerWindow.LogGlobal($"[SOCKS5] Starting SOCKS5 proxy on local port {port} targeting client {_clientId}...");
 
-        await _server.SendToClient(_clientId, new Packet
-        {
-            Type = PacketType.SocksStart,
-            Data = JsonConvert.SerializeObject(new SocksStartData { LocalPort = port })
-        });
-
-        _running = true;
-        BtnStart.IsEnabled = false; BtnStop.IsEnabled = true;
-        BadgeActive.Visibility = Visibility.Visible;
-
         try
         {
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.SocksStart,
+                Data = JsonConvert.SerializeObject(new SocksStartData { LocalPort = port })
+            });
+
+            _running = true;
+            BtnStart.IsEnabled = false; BtnStop.IsEnabled = true;
+            BadgeActive.Visibility = Visibility.Visible;
+
             _listener = new TcpListener(IPAddress.Loopback, port);
             _listener.Start();
             TxtStatus.Text = string.Format(Lang.Get("SOCKS5_LISTENING"), port);
@@ -95,7 +95,7 @@ public partial class Socks5Window : ThemedWindow
 
     private async void BtnStop_Click(object s, RoutedEventArgs e)
     {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.SocksStop });
+        try { await _server.SendToClient(_clientId, new Packet { Type = PacketType.SocksStop }); } catch { }
         StopProxy(logStop: true);
     }
 

@@ -109,7 +109,17 @@ public partial class InstalledAppsWindow : ThemedWindow
             {
                 if (string.Equals(_all[i].Name, d.Name, StringComparison.OrdinalIgnoreCase))
                 {
-                    _all[i] = new InstalledAppVM { Icon = icon, Name = _all[i].Name, Version = _all[i].Version, Publisher = _all[i].Publisher, InstallDate = _all[i].InstallDate, UninstallString = _all[i].UninstallString, Verified = _all[i].Verified };
+                    var updated = new InstalledAppVM { Icon = icon, Name = _all[i].Name, Version = _all[i].Version, Publisher = _all[i].Publisher, InstallDate = _all[i].InstallDate, UninstallString = _all[i].UninstallString, Verified = _all[i].Verified };
+                    _all[i] = updated;
+                    // _view is a separate snapshot when a filter is active — update it too
+                    if (!ReferenceEquals(_view, _all))
+                    {
+                        for (int j = 0; j < _view.Count; j++)
+                        {
+                            if (string.Equals(_view[j].Name, d.Name, StringComparison.OrdinalIgnoreCase))
+                            { _view[j] = updated; break; }
+                        }
+                    }
                     break;
                 }
             }
