@@ -764,6 +764,12 @@ public partial class FileManagerWindow : ThemedWindow
 
     private async void DownloadUrl_Click(object s, RoutedEventArgs e)
     {
+        if (string.IsNullOrEmpty(_currentPath))
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Navigate to a folder first");
+            return;
+        }
+
         var url = PromptInput(Lang.Get("FM_URL_PROMPT"), "https://");
         if (string.IsNullOrWhiteSpace(url)) return;
 
