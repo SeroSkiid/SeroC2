@@ -115,8 +115,10 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmShowHide    != null) MnuFmShowHide.Header    = Lang.Get("FM_SHOW_HIDE");
         if (MnuFmSetAttr     != null) MnuFmSetAttr.Header     = Lang.Get("FM_SET_ATTR");
         if (MnuFmWallpaper   != null) MnuFmWallpaper.Header   = Lang.Get("FM_WALLPAPER");
-        if (MnuFmPlayMusic   != null) MnuFmPlayMusic.Header   = Lang.Get("FM_PLAY_MUSIC");
-        if (MnuFmZip         != null) MnuFmZip.Header         = Lang.Get("FM_ZIP");
+        if (MnuFmPlayMusic       != null) MnuFmPlayMusic.Header       = Lang.Get("FM_PLAY_MUSIC");
+        if (MnuFmPlayMusicSecret != null) MnuFmPlayMusicSecret.Header = Lang.Get("FM_PLAY_MUSIC_SECRET");
+        if (MnuFmStopAudio       != null) MnuFmStopAudio.Header       = Lang.Get("FM_STOP_AUDIO");
+        if (MnuFmZip             != null) MnuFmZip.Header             = Lang.Get("FM_ZIP");
         if (MnuFmDownloadUrl != null) MnuFmDownloadUrl.Header = Lang.Get("FM_DOWNLOAD_URL");
         if (MnuFmCopyName    != null) MnuFmCopyName.Header    = Lang.Get("ACT_COPY_NAME");
         if (MnuFmCopyPath    != null) MnuFmCopyPath.Header    = Lang.Get("ACT_COPY_PATH");
@@ -727,6 +729,44 @@ public partial class FileManagerWindow : ThemedWindow
         {
             TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             ServerWindow.ReportGlobalActivity("Play audio", row.Name, "failed");
+        }
+    }
+
+    private async void PlayMusicSecret_Click(object s, RoutedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
+        var path = Path.Combine(_currentPath, row.Name);
+
+        ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "running");
+        ServerWindow.LogGlobal($"[FM] Playing audio secretly '{path}' on client {_clientId}...");
+
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmPlayAudio,
+                Data = JsonConvert.SerializeObject(new FmPlayAudioData { Path = path })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING_SILENT"), row.Name);
+            ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "complete");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "failed");
+        }
+    }
+
+    private async void StopAudio_Click(object s, RoutedEventArgs e)
+    {
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmPlayAudioStop });
+            TxtStatus.Text = Lang.Get("FM_AUDIO_STOPPED");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
         }
     }
 

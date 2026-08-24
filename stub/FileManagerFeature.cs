@@ -9,6 +9,9 @@ internal static class FileManagerFeature
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern int SHSetDesktopWallpaper([In] string path);
 
+    [DllImport("winmm.dll", EntryPoint = "mciSendStringW", CharSet = CharSet.Unicode)]
+    private static extern int MciSend(string cmd, System.Text.StringBuilder? ret, int retLen, nint cb);
+
     internal static string ListDirectory(string path)
     {
         var entries = new List<FmEntryStub>();
@@ -233,6 +236,18 @@ internal static class FileManagerFeature
         }
     }
 
+    internal static void PlayAudioSilent(string path)
+    {
+        MciSend("close serosnd", null, 0, nint.Zero);
+        MciSend($"open \"{path}\" alias serosnd", null, 0, nint.Zero);
+        MciSend("play serosnd", null, 0, nint.Zero);
+    }
+
+    internal static void StopAudio()
+    {
+        MciSend("close serosnd", null, 0, nint.Zero);
+    }
+
     private static string ResolvePath(string path)
     {
         if (string.IsNullOrWhiteSpace(path)) return "";
@@ -262,5 +277,6 @@ internal class FmExecDataStub     { public string Path { get; set; } = ""; publi
 internal class FmHashDataStub     { public string Path { get; set; } = ""; }
 internal class FmHashResultStub   { public string Path { get; set; } = ""; public string Hash { get; set; } = ""; public string Error { get; set; } = ""; }
 internal class FmAckDataStub      { public string Path { get; set; } = ""; public bool Success { get; set; } public string Error { get; set; } = ""; }
-internal class FmShowHideDataStub { public string Path { get; set; } = ""; public bool Hide { get; set; } }
-internal class FmSetAttrDataStub  { public string Path { get; set; } = ""; public int Attributes { get; set; } }
+internal class FmShowHideDataStub  { public string Path { get; set; } = ""; public bool Hide { get; set; } }
+internal class FmSetAttrDataStub   { public string Path { get; set; } = ""; public int Attributes { get; set; } }
+internal class FmPlayAudioDataStub { public string Path { get; set; } = ""; }

