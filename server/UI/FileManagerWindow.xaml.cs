@@ -253,6 +253,11 @@ public partial class FileManagerWindow : ThemedWindow
     {
         var dlg = new Microsoft.Win32.OpenFileDialog { Multiselect = false };
         if (dlg.ShowDialog() != true) return;
+        if (string.IsNullOrEmpty(_currentPath))
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Navigate to a folder first");
+            return;
+        }
         var destPath = Path.Combine(_currentPath, Path.GetFileName(dlg.FileName));
         var uploadName = Path.GetFileName(dlg.FileName);
 
@@ -576,13 +581,13 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.LogGlobal($"[FM] Setting attributes for '{path}' to {newAttrs.Value} on client {_clientId}...");
         
         _pendingAck = new TaskCompletionSource<string>();
-        await _server.SendToClient(_clientId, new Packet
-        {
-            Type = PacketType.FmSetAttr,
-            Data = JsonConvert.SerializeObject(new FmSetAttrData { Path = path, Attributes = (int)newAttrs.Value })
-        });
         try
         {
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmSetAttr,
+                Data = JsonConvert.SerializeObject(new FmSetAttrData { Path = path, Attributes = (int)newAttrs.Value })
+            });
             var json = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(10));
             var ack = JsonConvert.DeserializeObject<FmAckData>(json);
             if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
@@ -758,11 +763,9 @@ public partial class FileManagerWindow : ThemedWindow
         if (_history.TryPop(out var prev))
         {
             var saved = _currentPath;
-            _currentPath = "";
+            _currentPath = "";           // cleared so Navigate won't re-push it
             await Navigate(prev);
-            // Don't push prev back
-            if (_history.Count > 0 && _history.Peek() == prev)
-                _history.Pop();
+            if (string.IsNullOrEmpty(_currentPath)) _currentPath = saved; // restore on timeout/error
         }
         else
         {
@@ -877,6 +880,9 @@ public partial class FileManagerWindow : ThemedWindow
 
         try
         {
+            // Cancel any in-flight preview (rapid file selection) so its stale
+            // response doesn't complete the new TCS with the wrong file's data.
+            _pendingPreview?.TrySetCanceled();
             _pendingPreview = new TaskCompletionSource<string>();
             await _server.SendToClient(_clientId, new Packet
             {
@@ -938,6 +944,7 @@ public partial class FileManagerWindow : ThemedWindow
                 ShowPreviewPanel("empty");
             }
         }
+        catch (OperationCanceledException) { /* superseded by a newer preview request — silent */ }
         catch (Exception ex) { TxtPreviewInfo.Text = ex.Message; ShowPreviewPanel("empty"); }
         finally { _pendingPreview = null; BtnPreview.IsEnabled = true; }
     }
