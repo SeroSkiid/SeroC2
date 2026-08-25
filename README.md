@@ -48,9 +48,9 @@ Configure and build the client stub from the **Builder** tab.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| Remote Desktop | ✅ | DXGI + GDI capture, 64×64 block diff, input injection, clipboard sync |
+| Remote Desktop | ✅ | DXGI + GDI capture, 64×64 block diff + H264 stream, input injection, clipboard sync |
 | Remote Webcam | ✅ | DirectShow SampleGrabber + VFW fallback |
-| HVNC | ✅ | Hidden virtual desktop — isolated session, full browser support |
+| HVNC | ✅ | Hidden virtual desktop — isolated session, full browser support, H264 stream |
 | Remote Shell | ✅ | Interactive cmd/PowerShell |
 | File Manager | ✅ | Navigate, download, upload, rename, delete, hash, exec, wallpaper, 7-zip |
 | TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, Block IP / Block Port toolbar buttons |
@@ -566,9 +566,9 @@ SeroC2/
 ## 🗺️ Roadmap
 
 ### ✅ Done
-- [x] Remote Desktop — DXGI + GDI, 64×64 block diff, multi-monitor
+- [x] Remote Desktop — DXGI + GDI, 64×64 block diff + H264 full-frame stream, multi-monitor
 - [x] Remote Webcam — DirectShow SampleGrabber + VFW fallback
-- [x] HVNC — hidden virtual desktop, browser launchers (Chrome, Edge, Firefox, Brave, Opera…)
+- [x] HVNC — hidden virtual desktop, browser launchers (Chrome, Edge, Firefox, Brave, Opera…), H264 stream
 - [x] Remote Shell — interactive cmd / PowerShell
 - [x] File Manager — browse, download, upload, exec, hash, wallpaper, 7-zip
 - [x] TCP Manager — list connections, force-close via SetTcpEntry
