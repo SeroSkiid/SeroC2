@@ -44,6 +44,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private volatile bool _closed;
     private volatile bool _updatingMonitors;
     private WriteableBitmap? _frame;
+    private H264Decoder? _h264Dec;
     private readonly List<(int Index, string Name, int X, int Y, int W, int H)> _monitors = [];
     private bool _uiReady;
     private bool _autoStarted;
@@ -93,6 +94,8 @@ public partial class RemoteDesktopWindow : ThemedWindow
         // Use O(1) per-client handler instead of broadcast event — critical for 100+ open windows
         _server.RegisterHandler(clientId, PacketType.RdpFrame,
             pkt => OnFrame(clientId, pkt.Data));
+        _server.RegisterHandler(clientId, PacketType.RdpH264Frame,
+            pkt => OnH264Frame(clientId, pkt.Data));
         _server.RegisterHandler(clientId, PacketType.RdpClipboard, pkt =>
         {
             var d = Newtonsoft.Json.JsonConvert.DeserializeObject<RdpClipboardData>(pkt.Data);
@@ -107,7 +110,9 @@ public partial class RemoteDesktopWindow : ThemedWindow
             _closed = true;
             _reconnectTimer?.Stop();
             _server.UnregisterHandler(_clientId, PacketType.RdpFrame);
+            _server.UnregisterHandler(_clientId, PacketType.RdpH264Frame);
             _server.UnregisterHandler(_clientId, PacketType.RdpClipboard);
+            _h264Dec?.Dispose(); _h264Dec = null;
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
             if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
@@ -464,9 +469,13 @@ public partial class RemoteDesktopWindow : ThemedWindow
 
             // Re-register per-client packet handlers on the new client ID
             _server.UnregisterHandler(oldId, PacketType.RdpFrame);
+            _server.UnregisterHandler(oldId, PacketType.RdpH264Frame);
             _server.UnregisterHandler(oldId, PacketType.RdpClipboard);
+            _h264Dec?.Dispose(); _h264Dec = null;
             _server.RegisterHandler(_clientId, PacketType.RdpFrame,
                 pkt => OnFrame(_clientId, pkt.Data));
+            _server.RegisterHandler(_clientId, PacketType.RdpH264Frame,
+                pkt => OnH264Frame(_clientId, pkt.Data));
             _server.RegisterHandler(_clientId, PacketType.RdpClipboard, pkt =>
             {
                 var d = Newtonsoft.Json.JsonConvert.DeserializeObject<RdpClipboardData>(pkt.Data);
@@ -537,6 +546,38 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private void SendAck() =>
         _ = _server.SendToClient(_clientId,
             new Packet { Type = PacketType.RdpFrameAck, Data = "{}" });
+
+    // ── Incoming frames — H264 ────────────────────────────────────────────────
+
+    private void OnH264Frame(string clientId, string json)
+    {
+        if (_closed || clientId != _clientId) return;
+        if (!_streaming) { SendAck(); return; }
+        if (_renderBusy) { SendAck(); return; }
+        _renderBusy = true;
+        _bytesReceived += json.Length;
+
+        try
+        {
+            var frame = Newtonsoft.Json.JsonConvert.DeserializeObject<H264FrameData>(json);
+            if (frame == null || string.IsNullOrEmpty(frame.D)) { _renderBusy = false; SendAck(); return; }
+            var h264Bytes = Convert.FromBase64String(frame.D);
+            int fw = frame.W, fh = frame.H;
+            Task.Run(() =>
+            {
+                try
+                {
+                    if (_h264Dec == null) _h264Dec = H264Decoder.Create();
+                    var pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
+                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    SendAck();
+                    _ = Dispatcher.BeginInvoke(() => BlitFullFrame(fw, fh, pixels, fw * 4));
+                }
+                catch { _renderBusy = false; SendAck(); }
+            });
+        }
+        catch { _renderBusy = false; SendAck(); }
+    }
 
     // ── Monitor list ──────────────────────────────────────────────────────────
 

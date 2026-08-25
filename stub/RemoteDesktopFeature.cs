@@ -158,6 +158,10 @@ internal static class RemoteDesktopFeature
 
     private static string _lastClip = "";
 
+    // H264 encoder — null when MF is unavailable (falls back to JPEG block mode)
+    private static H264Encoder? _h264Enc;
+    private static int _h264W, _h264H; // last encoded frame dimensions for packet JSON
+
     // Adaptive bandwidth: quality ramps down when acks are slow, recovers when they're fast.
     // _adaptiveQuality starts at _cfg.Quality (the server-configured max) and is clamped to [15, _cfg.Quality].
     private static volatile int _adaptiveQuality;
@@ -179,6 +183,10 @@ internal static class RemoteDesktopFeature
         EnsureGdiplus();
         _monitors = EnumMonitors();
 
+        // H264 encoder is created lazily on first capture (dimensions depend on actual monitor size)
+        _h264Enc?.Dispose(); _h264Enc = null;
+        _h264W = 0; _h264H = 0;
+
         Interlocked.Exchange(ref _pendingRequests, 3); // 3 credits: limits in-flight frames so slow tunnels (localtonet) don't saturate the TCP buffer
         _running = true;
         _thread = new Thread(CaptureLoop)
@@ -196,6 +204,8 @@ internal static class RemoteDesktopFeature
         _thread = null;
         Interlocked.Exchange(ref _pendingRequests, 0);
         if (_prevPixels != null) { System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels); _prevPixels = null; }
+        _h264Enc?.Dispose(); _h264Enc = null;
+        _h264W = 0; _h264H = 0;
     }
 
     public static void SignalAck()
@@ -288,16 +298,35 @@ internal static class RemoteDesktopFeature
                     int srcW = mon.W > 0 ? mon.W : GetSystemMetrics(0);
                     int srcH = mon.H > 0 ? mon.H : GetSystemMetrics(1);
 
-                    string? json = CaptureAndDiff(mon.X, mon.Y, srcW, srcH);
-                    if (json != null)
+                    // H264 path: capture full frame and feed to MF H264 encoder
+                    byte[]? h264 = CaptureAndEncodeH264(mon.X, mon.Y, srcW, srcH);
+                    if (h264 != null)
                     {
                         Interlocked.Exchange(ref _lastFrameSendMs, Environment.TickCount64);
-                        _send?.Invoke((int)PacketType.RdpFrame, json)
+                        var json264 = "{\"W\":" + _h264W + ",\"H\":" + _h264H +
+                                      ",\"D\":\"" + Convert.ToBase64String(h264) + "\"}";
+                        _send?.Invoke((int)PacketType.RdpH264Frame, json264)
                               .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
+                    }
+                    else if (_h264Enc == null)
+                    {
+                        // H264 unavailable — fall back to JPEG block mode
+                        string? json = CaptureAndDiff(mon.X, mon.Y, srcW, srcH);
+                        if (json != null)
+                        {
+                            Interlocked.Exchange(ref _lastFrameSendMs, Environment.TickCount64);
+                            _send?.Invoke((int)PacketType.RdpFrame, json)
+                                  .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
+                        }
+                        else
+                        {
+                            // No change detected — give credit back immediately so we keep polling
+                            Interlocked.Increment(ref _pendingRequests);
+                        }
                     }
                     else
                     {
-                        // No change detected — give credit back immediately so we keep polling
+                        // H264 encoder exists but returned no output (priming or no frame yet)
                         Interlocked.Increment(ref _pendingRequests);
                     }
 
@@ -372,6 +401,85 @@ internal static class RemoteDesktopFeature
             if (hbm       != 0) DeleteObject(hbm);
             if (hdcMem    != 0) DeleteDC(hdcMem);
             ReleaseDC(0, hdcScreen);
+        }
+    }
+
+    // ── H264 capture path ─────────────────────────────────────────────────────
+
+    // Captures a full BGRA frame and encodes it as H264.
+    // Creates/recreates the encoder lazily when dimensions change.
+    // Returns null when H264 is unavailable (caller falls back to JPEG) or when
+    // the encoder is still priming (first 1-2 frames may return no output).
+    private static byte[]? CaptureAndEncodeH264(int srcX, int srcY, int srcW, int srcH)
+    {
+        int scale = Math.Clamp(_cfg.Scale, 25, 100);
+        int dstW  = srcW * scale / 100;
+        int dstH  = srcH * scale / 100;
+        if ((dstW & 1) != 0) dstW--;   // H264 requires even dimensions
+        if ((dstH & 1) != 0) dstH--;
+        if (dstW <= 0 || dstH <= 0) return null;
+
+        // Create or recreate encoder when dimensions change
+        if (_h264Enc == null || _h264W != dstW || _h264H != dstH)
+        {
+            _h264Enc?.Dispose();
+            _h264Enc = H264Encoder.Create(dstW, dstH, _cfg.Fps);
+            if (_h264Enc == null) return null; // MF unavailable
+            _h264W = dstW;
+            _h264H = dstH;
+        }
+
+        byte[]? pixels = null;
+        bool fromDxgi  = false;
+
+        if (scale == 100 && DxgiCapture.IsInitialized)
+        {
+            pixels = DxgiCapture.CaptureFrame(out dstW, out dstH, 16);
+            if (pixels != null)
+            {
+                TryAddCursorToFrame(pixels, dstW, dstH, srcX, srcY);
+                fromDxgi = true;
+            }
+            else if (DxgiCapture.IsInitialized)
+                return null; // VBLANK timeout — no new frame
+        }
+
+        if (pixels == null)
+        {
+            int reqLen = dstW * dstH * 4;
+            pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(reqLen);
+            if (!CaptureGdi(srcX, srcY, srcW, srcH, dstW, dstH, pixels))
+            {
+                System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
+                return null;
+            }
+        }
+
+        try
+        {
+            // Recreate encoder if DXGI gave us different dimensions
+            if (dstW != _h264W || dstH != _h264H)
+            {
+                if ((dstW & 1) != 0) dstW--;
+                if ((dstH & 1) != 0) dstH--;
+                if (dstW <= 0 || dstH <= 0) return null;
+                _h264Enc?.Dispose();
+                _h264Enc = H264Encoder.Create(dstW, dstH, _cfg.Fps);
+                if (_h264Enc == null) return null;
+                _h264W = dstW;
+                _h264H = dstH;
+            }
+
+            unsafe
+            {
+                fixed (byte* pPixels = pixels)
+                    return _h264Enc.Encode((nint)pPixels, dstW * 4);
+            }
+        }
+        finally
+        {
+            if (!fromDxgi)
+                System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
         }
     }
 

