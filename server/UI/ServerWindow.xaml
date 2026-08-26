@@ -50,8 +50,7 @@
         </Style>
 
         <!-- Named cell style — set directly on DataGrid.CellStyle (FrameworkElement context finds
-             Window.Resources). Uses Border right-side border as separator: simpler and more reliable
-             than a Grid+Rectangle which can disappear at certain sub-pixel window widths. -->
+             Window.Resources). Overrides the implicit DataGridCell style in App.xaml (SDGCell). -->
         <Style x:Key="SMainDGCell" TargetType="DataGridCell">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="BorderThickness"       Value="0"/>
@@ -1920,7 +1919,7 @@
                             <Grid Grid.Row="1">
                                 <DataGrid x:Name="GridClients"
                                           AutoGenerateColumns="False" IsReadOnly="True"
-                                          RowHeight="24"
+                                          RowHeight="30" RowHeaderWidth="0"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
                                           Template="{StaticResource DataGridFullHeightScrollbar}"
@@ -2326,6 +2325,7 @@
                             <Grid Grid.Row="1">
                                 <DataGrid x:Name="GridAllClients"
                                       AutoGenerateColumns="False" IsReadOnly="True"
+                                      RowHeight="30" RowHeaderWidth="0"
                                       HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
                                       Template="{StaticResource DataGridFullHeightScrollbar}"
@@ -2345,7 +2345,7 @@
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                      VerticalAlignment="Stretch" RowHeight="24"
+                                      VerticalAlignment="Stretch"
                                       CellStyle="{StaticResource SMainDGCell}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Resources>
