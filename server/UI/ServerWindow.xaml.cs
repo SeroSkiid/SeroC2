@@ -6412,7 +6412,7 @@ Read-Host 'Press Enter to close'
                 res["BtnHoverBorderBrush"]     = B("#4A5090");
                 res["BtnPressedBgBrush"]       = B("#1A1C28");
                 res["BtnFgBrush"]              = B("#E0E8F0");
-                res["ColHeaderBgBrush"]        = B("#1A1C2E");
+                res["ColHeaderBgBrush"]        = B("#22243C");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
                 res["ColHeaderBorderBrush"]    = B("#252840");
                 break;
@@ -6590,7 +6590,7 @@ Read-Host 'Press Enter to close'
                 res["BtnHoverBorderBrush"]     = B("#808080");
                 res["BtnPressedBgBrush"]       = B("#303030");
                 res["BtnFgBrush"]              = B("#E8E8E8");
-                res["ColHeaderBgBrush"]        = B("#2A2A2A");
+                res["ColHeaderBgBrush"]        = B("#333333");
                 res["ColHeaderFgBrush"]        = B("#909090");
                 res["ColHeaderBorderBrush"]    = B("#505050");
                 break;
@@ -8591,31 +8591,52 @@ Read-Host 'Press Enter to close'
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
     {
+        var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "IP",       new DataGridLength(120) },
+            { "STATUS",   new DataGridLength(70)  },
+            { "COUNTRY",  new DataGridLength(90)  },
+            { "USER",     new DataGridLength(110) },
+            { "OS",       new DataGridLength(85)  },
+            { "MACHINE",  new DataGridLength(105) },
+            { "PRIV",     new DataGridLength(100) },
+            { "ID",       new DataGridLength(65)  },
+            { "CAM",      new DataGridLength(44)  },
+            { "CPU",      new DataGridLength(150) },
+            { "LOAD",     new DataGridLength(50)  },
+            { "AV",       new DataGridLength(120) },
+            { "RAM",      new DataGridLength(75)  },
+            { "GPU",      new DataGridLength(160) },
+            { "PING",     new DataGridLength(50)  },
+            { "WINDOW",   new DataGridLength(115) },
+            { "1ST SEEN", new DataGridLength(95)  },
+            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
+        };
+
+        // Detect whether the grid already matches the default state — if so, no-op
+        bool hasChanges = _webcamFilterOnly
+            || _adminFilterOnly
+            || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
+
+        if (!hasChanges)
+        {
+            foreach (var col in GridClients.Columns)
+            {
+                string h = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(h)) continue;
+                if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
+                if (h == "TAG") continue;
+                if (defaultWidths.TryGetValue(h, out var dw)
+                    && Math.Abs(col.ActualWidth - dw.Value) > 3.0)
+                { hasChanges = true; break; }
+            }
+        }
+
+        if (!hasChanges) return;
+
         _webcamFilterOnly = false;
         _adminFilterOnly = false;
         if (TxtSearch != null) TxtSearch.Text = "";
-
-        var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "IP",       new DataGridLength(130) },
-            { "STATUS",   new DataGridLength(70)  },
-            { "COUNTRY",  new DataGridLength(100) },
-            { "USER",     new DataGridLength(120) },
-            { "OS",       new DataGridLength(80)  },
-            { "MACHINE",  new DataGridLength(110) },
-            { "PRIV",     new DataGridLength(100) },
-            { "ID",       new DataGridLength(90)  },
-            { "CAM",      new DataGridLength(46)  },
-            { "CPU",      new DataGridLength(130) },
-            { "LOAD",     new DataGridLength(52)  },
-            { "AV",       new DataGridLength(100) },
-            { "RAM",      new DataGridLength(70)  },
-            { "GPU",      new DataGridLength(140) },
-            { "PING",     new DataGridLength(52)  },
-            { "WINDOW",   new DataGridLength(110) },
-            { "1ST SEEN", new DataGridLength(115) },
-            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
-        };
 
         _suppressColumnSave = true;
         try

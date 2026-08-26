@@ -79,7 +79,7 @@
         <!-- Unknown flag placeholder — bright/visible in both themes -->
         <SolidColorBrush x:Key="FlagUnknownBrush"     Color="#9CA3AF"/>
         <!-- Column header — distinct from row content; overridden per theme by ApplyTheme() -->
-        <SolidColorBrush x:Key="ColHeaderBgBrush"     Color="#0D0E1A"/>
+        <SolidColorBrush x:Key="ColHeaderBgBrush"     Color="#131426"/>
         <SolidColorBrush x:Key="ColHeaderFgBrush"     Color="#8090B8"/>
         <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#1E2038"/>
         <!-- Buttons -->
@@ -814,8 +814,8 @@
             <Setter Property="Foreground"      Value="{DynamicResource ColHeaderFgBrush}"/>
             <Setter Property="FontSize"        Value="10"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="BorderBrush"     Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource ColHeaderBorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
