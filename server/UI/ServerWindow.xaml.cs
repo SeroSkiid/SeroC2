@@ -8479,12 +8479,17 @@ Read-Host 'Press Enter to close'
             string h = header;
             cb.Checked += (s, ev) =>
             {
+                _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
+                _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 1);
+                SaveGridColumnWidths();
             };
             cb.Unchecked += (s, ev) =>
             {
+                _suppressColumnSave = true;
                 col.Visibility = Visibility.Collapsed;
+                _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 0);
             };
             

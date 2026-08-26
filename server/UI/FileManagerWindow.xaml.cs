@@ -956,12 +956,12 @@ public partial class FileManagerWindow : ThemedWindow
         }
         TxtPreviewName.Text = vm.Name;
         BtnPreview.IsEnabled = true;
-        // Auto-preview for images, text, and small videos (< 150 MB)
+        // Auto-preview for images, text, and small videos (< 30 MB)
         var ext = Path.GetExtension(vm.Name).ToLowerInvariant();
         bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
         bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
         bool isVideo = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
-        if (isImage || isText || (isVideo && vm.SizeRaw < 150L * 1024 * 1024))
+        if (isImage || isText || (isVideo && vm.SizeRaw < 30L * 1024 * 1024))
             BtnPreview_Click(null!, new RoutedEventArgs());
     }
 
@@ -970,6 +970,14 @@ public partial class FileManagerWindow : ThemedWindow
         if (GridFiles.SelectedItem is not FileEntryVM vm || vm.IsDir) return;
         var path = _currentPath.TrimEnd('\\', '/') + "\\" + vm.Name;
         var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
+
+        bool isVideoPreview = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+        if (isVideoPreview && vm.SizeRaw >= 30L * 1024 * 1024)
+        {
+            TxtPreviewInfo.Text = $"Video too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 30 MB.";
+            ShowPreviewPanel("empty");
+            return;
+        }
 
         TxtPreviewInfo.Text = Lang.Get("STATUS_LOADING");
         ShowPreviewPanel("empty");
