@@ -1628,6 +1628,21 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
+    private static readonly Dictionary<string, double> _allClientsDefaultStars =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "IP",         120 },
+            { "ID",          65 },
+            { "USER",       100 },
+            { "COUNTRY",     80 },
+            { "MACHINE",    110 },
+            { "OS",          85 },
+            { "AV",         105 },
+            { "RAM",         75 },
+            { "FIRST SEEN", 132 },
+            { "LAST SEEN",  132 },
+        };
+
     private void RestoreAllClientsColumnWidths()
     {
         foreach (var col in GridAllClients.Columns)
@@ -1636,11 +1651,18 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                col.Width = new DataGridLength(73, DataGridLengthUnitType.Star);
                 continue;
             }
             int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
-            if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
+            if (w > 20)
+            {
+                col.Width = new DataGridLength(w);
+            }
+            else if (_allClientsDefaultStars.TryGetValue(header, out double star))
+            {
+                col.Width = new DataGridLength(star, DataGridLengthUnitType.Star);
+            }
         }
     }
 
@@ -6428,7 +6450,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#E0E8F0");
                 res["ColHeaderBgBrush"]        = B("#252840");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
-                res["ColHeaderBorderBrush"]    = B("#353858");
+                res["ColHeaderBorderBrush"]    = B("#505880");
                 break;
 
             case "VS2017Blue":
@@ -6463,7 +6485,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#FFFFFF");
                 res["ColHeaderBgBrush"]        = B("#2040A0");
                 res["ColHeaderFgBrush"]        = B("#9ABCE8");
-                res["ColHeaderBorderBrush"]    = B("#3050C0");
+                res["ColHeaderBorderBrush"]    = B("#5870D8");
                 break;
 
             case "VS2017Dark":
@@ -6498,7 +6520,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D4D4D4");
                 res["ColHeaderBgBrush"]        = B("#2D2D30");
                 res["ColHeaderFgBrush"]        = B("#808080");
-                res["ColHeaderBorderBrush"]    = B("#3F3F46");
+                res["ColHeaderBorderBrush"]    = B("#606068");
                 break;
 
             case "VS2017Light":
@@ -6606,7 +6628,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#E8E8E8");
                 res["ColHeaderBgBrush"]        = B("#333333");
                 res["ColHeaderFgBrush"]        = B("#909090");
-                res["ColHeaderBorderBrush"]    = B("#505050");
+                res["ColHeaderBorderBrush"]    = B("#787878");
                 break;
 
             case "Office2010Silver":
@@ -6719,7 +6741,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D0D0");
                 res["ColHeaderBgBrush"]        = B("#252525");
                 res["ColHeaderFgBrush"]        = B("#707070");
-                res["ColHeaderBorderBrush"]    = B("#404040");
+                res["ColHeaderBorderBrush"]    = B("#656565");
                 break;
 
             case "Office2019White":
@@ -6789,7 +6811,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D0D0");
                 res["ColHeaderBgBrush"]        = B("#333333");
                 res["ColHeaderFgBrush"]        = B("#909090");
-                res["ColHeaderBorderBrush"]    = B("#484848");
+                res["ColHeaderBorderBrush"]    = B("#787878");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -6862,7 +6884,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D0D0");
                 res["ColHeaderBgBrush"]        = B("#3A3A3A");
                 res["ColHeaderFgBrush"]        = B("#808080");
-                res["ColHeaderBorderBrush"]    = B("#505050");
+                res["ColHeaderBorderBrush"]    = B("#787878");
                 break;
 
             case "Office2016Black":
@@ -6897,7 +6919,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D0D0");
                 res["ColHeaderBgBrush"]        = B("#222222");
                 res["ColHeaderFgBrush"]        = B("#707070");
-                res["ColHeaderBorderBrush"]    = B("#383838");
+                res["ColHeaderBorderBrush"]    = B("#606060");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -6970,7 +6992,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#EBEBEB");
                 res["ColHeaderBgBrush"]        = B("#4C4C4C");
                 res["ColHeaderFgBrush"]        = B("#B0B0B0");
-                res["ColHeaderBorderBrush"]    = B("#606060");
+                res["ColHeaderBorderBrush"]    = B("#888888");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -7048,7 +7070,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#B8C0D8");
                 res["ColHeaderBgBrush"]        = B("#1E2438");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
-                res["ColHeaderBorderBrush"]    = B("#2E3858");
+                res["ColHeaderBorderBrush"]    = B("#485A80");
                 break;
 
             case "Office2019HighContrast":
@@ -7215,7 +7237,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#E0E4F8");
                 res["ColHeaderBgBrush"]        = B("#0D0E1A");
                 res["ColHeaderFgBrush"]        = B("#8090B8");
-                res["ColHeaderBorderBrush"]    = B("#1E2038");
+                res["ColHeaderBorderBrush"]    = B("#3A4568");
                 res["WindowOutlineBrush"]      = B("#1E2038");   // navy inner border matching SeroDark palette
                 res["WindowOutlineThickness"]  = new System.Windows.Thickness(1);
                 break;
@@ -7257,7 +7279,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D8E8");
                 res["ColHeaderBgBrush"]        = B("#1E2238");
                 res["ColHeaderFgBrush"]        = B("#7880A0");
-                res["ColHeaderBorderBrush"]    = B("#2A3050");
+                res["ColHeaderBorderBrush"]    = B("#404878");
                 break;
 
         }

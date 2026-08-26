@@ -81,7 +81,7 @@
         <!-- Column header — distinct from row content; overridden per theme by ApplyTheme() -->
         <SolidColorBrush x:Key="ColHeaderBgBrush"     Color="#131426"/>
         <SolidColorBrush x:Key="ColHeaderFgBrush"     Color="#8090B8"/>
-        <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#1E2038"/>
+        <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#3A4060"/>
         <!-- Buttons -->
         <SolidColorBrush x:Key="BtnBgBrush"           Color="#141526"/>
         <SolidColorBrush x:Key="BtnBorderBrush"       Color="#1E2038"/>
@@ -822,8 +822,7 @@
                         <Grid>
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}">
+                                    BorderThickness="0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -844,6 +843,10 @@
                             <!-- Accent bottom bar — adapts to active theme palette -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
                                        Fill="{DynamicResource AccentBrush}" Opacity="0.75"/>
+                            <!-- Separator — pixel-snapped Rectangle always renders at 1 crisp device pixel -->
+                            <Rectangle x:Name="Separator" HorizontalAlignment="Right" Width="1"
+                                       Fill="{DynamicResource ColHeaderBorderBrush}"
+                                       SnapsToDevicePixels="True" UseLayoutRounding="True"/>
                             <!-- Resize grippers — transparent but fully functional -->
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Width="6"
                                    Cursor="SizeWE" Background="Transparent">
