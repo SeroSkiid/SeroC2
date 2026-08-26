@@ -8,7 +8,7 @@
         ResizeMode="CanResize"
         ShowGlow="False">
 
-    <Window.Resources>
+    <dx:ThemedWindow.Resources>
         <Style TargetType="DataGridRow">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -72,7 +72,7 @@
             <Setter Property="FontSize"   Value="12"/>
             <Setter Property="Cursor"     Value="Hand"/>
         </Style>
-    </Window.Resources>
+    </dx:ThemedWindow.Resources>
 
     <DockPanel LastChildFill="True">
 

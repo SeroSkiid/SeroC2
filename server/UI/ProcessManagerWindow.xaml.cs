@@ -169,12 +169,14 @@ public partial class ProcessManagerWindow : ThemedWindow
         _autoTimer.Start();
 
         _server.RegisterHandler(clientId, PacketType.ProcListResult, OnProcList);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _autoTimer.Stop();
             _server.UnregisterHandler(clientId, PacketType.ProcListResult);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -280,23 +282,27 @@ public partial class ProcessManagerWindow : ThemedWindow
                 TxtStatus.Text = string.Format(Lang.Get("PM_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Processes.Count);
             });
 
-            // Phase 2: load icons in background, push each one to its VM as it arrives.
-            // Cached icons (subsequent refreshes) return instantly from _iconCache.
+            // Phase 2: load all icons in background, then push the whole batch in one Dispatcher call.
+            var iconBatch = new System.Collections.Generic.List<(int Pid, BitmapSource Icon)>();
             foreach (var p in d.Processes)
             {
                 if (!string.IsNullOrEmpty(p.ExePath))
                 {
                     var icon = GetIcon(p.ExePath);
                     if (icon != null)
-                    {
-                        var pid = p.Pid;
-                        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
-                        {
-                            var vm = _all.FirstOrDefault(x => x.Pid == pid);
-                            if (vm != null) vm.IconImage = icon;
-                        });
-                    }
+                        iconBatch.Add((p.Pid, icon));
                 }
+            }
+            if (iconBatch.Count > 0)
+            {
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+                {
+                    foreach (var (pid, icon) in iconBatch)
+                    {
+                        var vm = _all.FirstOrDefault(x => x.Pid == pid);
+                        if (vm != null) vm.IconImage = icon;
+                    }
+                });
             }
         });
     }
@@ -439,15 +445,19 @@ public partial class ProcessManagerWindow : ThemedWindow
         BitmapSource? result = null;
         try
         {
-            if (!string.IsNullOrEmpty(path) && System.IO.File.Exists(path))
+            if (!string.IsNullOrEmpty(path))
             {
-                using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
-                if (icon != null)
+                try
                 {
-                    result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                        icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                    result?.Freeze();
+                    using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
+                    if (icon != null)
+                    {
+                        result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                            icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        result?.Freeze();
+                    }
                 }
+                catch { /* file not found on server — fall through to SHGetFileInfo */ }
             }
             if (result == null)
             {
@@ -468,7 +478,14 @@ public partial class ProcessManagerWindow : ThemedWindow
         catch { }
 
         _iconCache[key] = result;
+        if (_iconCache.Count > 500) _iconCache.Clear();
         return result;
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() => _autoTimer.Stop());
     }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestRefresh();

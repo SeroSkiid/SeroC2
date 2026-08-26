@@ -30,6 +30,7 @@ public partial class HvncWindow : ThemedWindow
     private volatile bool _renderBusy;
     private WriteableBitmap? _wb;
     private H264Decoder? _h264Dec;
+    private readonly object _decodeLock = new object();
 
     // Canvas dimensions reported by last frame
     private int _remoteW = 1280;
@@ -85,7 +86,7 @@ public partial class HvncWindow : ThemedWindow
             _server.UnregisterHandler(_clientId, PacketType.HvncFrame);
             _server.UnregisterHandler(_clientId, PacketType.HvncH264Frame);
             _server.UnregisterHandler(_clientId, PacketType.HvncProgress);
-            _h264Dec?.Dispose(); _h264Dec = null;
+            lock (_decodeLock) { _h264Dec?.Dispose(); _h264Dec = null; }
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
             if (_streaming) SendStop();
@@ -289,10 +290,10 @@ public partial class HvncWindow : ThemedWindow
                     int cw = w, ch = h, cs = stride;
                     Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs));
                 }
-                catch { _renderBusy = false; SendAck(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); _renderBusy = false; SendAck(); }
             });
         }
-        catch { SendAck(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); SendAck(); }
     }
 
     private void OnHvncH264Frame(string clientId, string json)
@@ -316,12 +317,17 @@ public partial class HvncWindow : ThemedWindow
             {
                 try
                 {
-                    if (_h264Dec == null) _h264Dec = H264Decoder.Create();
-                    var pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
+                    H264Decoder? localDec;
+                    lock (_decodeLock)
+                    {
+                        if (_h264Dec == null) _h264Dec = H264Decoder.Create();
+                        localDec = _h264Dec;
+                    }
+                    var pixels = localDec?.Decode(h264Bytes, fw, fh);
                     if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
                     Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4));
                 }
-                catch { _renderBusy = false; SendAck(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); _renderBusy = false; SendAck(); }
             });
         }
         catch { _renderBusy = false; SendAck(); }
@@ -350,7 +356,7 @@ public partial class HvncWindow : ThemedWindow
                 }
             });
         }
-        catch { }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); }
     }
 
     private void ShowFrame(byte[] pixels, int w, int h, int stride)
@@ -516,7 +522,7 @@ public partial class HvncWindow : ThemedWindow
             _server.RegisterHandler(_clientId, PacketType.HvncProgress,
                 pkt => OnHvncProgress(pkt.Data));
             // Reset H264 decoder on reconnect so it re-initializes with the new stream's SPS/PPS
-            _h264Dec?.Dispose(); _h264Dec = null;
+            lock (_decodeLock) { _h264Dec?.Dispose(); _h264Dec = null; }
 
             // Hide overlays, cancel timer
             _reconnectTimer?.Stop();

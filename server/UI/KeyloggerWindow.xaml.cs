@@ -31,17 +31,13 @@ public partial class KeyloggerWindow : ThemedWindow
         _autoRefresh.Tick += (_, _) => { if (_capturing) RequestLogs(); };
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
-        // Unregister early (Closing) so no packets arrive while dispatcher is shutting down
-        Closing += (_, _) =>
+        Closed += (_, _) =>
         {
             _autoRefresh.Stop();
             _server.UnregisterHandler(clientId, PacketType.KeyloggerLogsResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFilesResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFileContent);
             Lang.LanguageChanged -= ApplyLanguage;
-        };
-        Closed += (_, _) =>
-        {
             ServerWindow.ReportGlobalActivity("Keylogger stopped", _clientId, "complete");
             ServerWindow.LogGlobal($"[KEYLOG] Keylogger stopped for client {_clientId}.");
         };
@@ -64,10 +60,14 @@ public partial class KeyloggerWindow : ThemedWindow
         this.Title = Lang.Get("FEAT_KEYLOGGER");
         if (TxtBtnActions   != null) TxtBtnActions.Text   = Lang.Get("ACT_ACTIONS");
         if (TxtBtnKlRefresh != null) TxtBtnKlRefresh.Text = Lang.Get("ACT_REFRESH");
-        if (MnuKlDownload != null) MnuKlDownload.Header = Lang.Get("ACT_DOWNLOAD");
-        if (MnuKlDelete   != null) MnuKlDelete.Header   = Lang.Get("ACT_DELETE");
-        if (MnuKlCopyName != null) MnuKlCopyName.Header = Lang.Get("ACT_COPY_NAME");
-        if (MnuKlRefresh  != null) MnuKlRefresh.Header  = Lang.Get("ACT_REFRESH");
+        if (MnuKlDownload   != null) MnuKlDownload.Header = Lang.Get("ACT_DOWNLOAD");
+        if (MnuKlDelete     != null) MnuKlDelete.Header   = Lang.Get("ACT_DELETE");
+        if (MnuKlCopyName   != null) MnuKlCopyName.Header = Lang.Get("ACT_COPY_NAME");
+        if (MnuKlRefresh    != null) MnuKlRefresh.Header  = Lang.Get("ACT_REFRESH");
+        if (BtnDownloadFile != null) BtnDownloadFile.Content = Lang.Get("ACT_DOWNLOAD");
+        if (BtnDeleteFile   != null) BtnDeleteFile.Content   = Lang.Get("ACT_DELETE");
+        if (TxtViewerTitle  != null && TxtViewerTitle.Text == "Select a log file to view")
+            TxtViewerTitle.Text = Lang.Get("KL_SELECT_FILE");
     }
 
     // ── Outgoing ────────────────────────────────────────────────────────────
@@ -98,8 +98,10 @@ public partial class KeyloggerWindow : ThemedWindow
             {
                 NotificationService.NotifyKeylogReceived();
                 TxtLog.AppendText(data.Logs);
+                if (TxtLog.Text.Length > 50000)
+                    TxtLog.Text = TxtLog.Text[^50000..];
                 TxtLog.ScrollToEnd();
-                TxtViewerTitle.Text = $"Live buffer — {_capturing}";
+                TxtViewerTitle.Text = $"Live buffer — {(_capturing ? "ON" : "OFF")}";
             }
             TxtStatus.Text = _capturing ? Lang.Get("KL_CAPTURING") : Lang.Get("STOPPED");
         });

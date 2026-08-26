@@ -27,21 +27,27 @@ public partial class WebcamWindow : ThemedWindow
     private int _frameCount;
     private DateTime _fpsTime = DateTime.UtcNow;
 
-    private static readonly System.Windows.Media.SolidColorBrush _dotActive  = MakeBrush(0x22, 0xC5, 0x5E);
-    private static readonly System.Windows.Media.SolidColorBrush _dotInactive = MakeBrush(0x25, 0x28, 0x40);
-    private static readonly System.Windows.Media.SolidColorBrush _sigGreen   = MakeBrush(0x22, 0xC5, 0x5E);
-    private static readonly System.Windows.Media.SolidColorBrush _sigOrange  = MakeBrush(0xF5, 0x9E, 0x0B);
-    private static readonly System.Windows.Media.SolidColorBrush _sigRed     = MakeBrush(0xEF, 0x44, 0x44);
+    private readonly System.Windows.Media.SolidColorBrush _dotActive;
+    private readonly System.Windows.Media.SolidColorBrush _dotInactive;
+    private readonly System.Windows.Media.SolidColorBrush _sigGreen;
+    private readonly System.Windows.Media.SolidColorBrush _sigOrange;
+    private readonly System.Windows.Media.SolidColorBrush _sigRed;
     private static System.Windows.Media.SolidColorBrush MakeBrush(byte r, byte g, byte b)
     { var br = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(r, g, b)); br.Freeze(); return br; }
     private DateTime _lastAutoSave = DateTime.MinValue;
     private WriteableBitmap? _wb;
+    private System.Windows.Threading.DispatcherTimer? _resumeTimer;
 
     public WebcamWindow(TlsServer server, string clientId)
     {
         _server   = server;
         _clientId = clientId;
         _hwid     = server.ConnectedClients.TryGetValue(clientId, out var cc) ? cc.Hwid : string.Empty;
+        _dotActive   = MakeBrush(0x22, 0xC5, 0x5E);
+        _dotInactive = MakeBrush(0x25, 0x28, 0x40);
+        _sigGreen    = MakeBrush(0x22, 0xC5, 0x5E);
+        _sigOrange   = MakeBrush(0xF5, 0x9E, 0x0B);
+        _sigRed      = MakeBrush(0xEF, 0x44, 0x44);
         InitializeComponent();
         WindowResizer.Enable(this);
 
@@ -70,6 +76,7 @@ public partial class WebcamWindow : ThemedWindow
         {
             _closed = true;
             _reconnectTimer?.Stop();
+            _resumeTimer?.Stop();
             UnregisterWcamHandlers(_clientId);
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
@@ -192,8 +199,9 @@ public partial class WebcamWindow : ThemedWindow
         TxtClientId.Text = Lang.Get("COPIED");
         TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
         await Task.Delay(1500);
+        if (_closed) return;
         TxtClientId.Text = _clientId;
-        TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x88, 0x90, 0xB8));
+        TxtClientId.Foreground = (Brush)FindResource("FieldLabelBrush");
     }
 
     private void SendStart()
@@ -343,8 +351,8 @@ public partial class WebcamWindow : ThemedWindow
             ImgFrame.Source = _wb;
         }
         _wb.Lock();
-        _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
-        _wb.Unlock();
+        try { _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0); }
+        finally { _wb.Unlock(); }
         TxtPlaceholder.Visibility = Visibility.Collapsed;
         _frameCount++;
         var now = DateTime.UtcNow;
@@ -366,7 +374,7 @@ public partial class WebcamWindow : ThemedWindow
         if (!_closed) SendAck();
     }
     
-    private int _bytesReceived;
+    private volatile int _bytesReceived;
     
     private void UpdateMetrics()
     {
@@ -455,13 +463,13 @@ public partial class WebcamWindow : ThemedWindow
                 _wasStreaming = false;
                 SendProbe(); // request device list first
                 // Delay slightly to let device list arrive, then start
-                var resumeTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
-                resumeTimer.Tick += (_, _) =>
+                _resumeTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
+                _resumeTimer.Tick += (_, _) =>
                 {
-                    resumeTimer.Stop();
+                    _resumeTimer.Stop();
                     if (!_closed && !_streaming) SendStart();
                 };
-                resumeTimer.Start();
+                _resumeTimer.Start();
             }
         });
     }

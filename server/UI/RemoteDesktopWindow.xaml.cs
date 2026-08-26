@@ -21,10 +21,10 @@ public partial class RemoteDesktopWindow : ThemedWindow
     // RdpStart packets all firing at the same time when the user opens many windows.
     private static int _openCount = 0;
 
-    // Global cap on concurrent JPEG decode work across all open RDP windows.
-    // Each window's Parallel.ForEach is bounded to 2 threads; this semaphore
-    // prevents all N windows from saturating the thread pool simultaneously.
-    private static readonly SemaphoreSlim _decodeSlots =
+    // Per-instance cap on concurrent JPEG decode work.
+    // Each window's Parallel.ForEach is bounded to 2 threads; making this instance-level
+    // prevents semaphore count drift when a window closes mid-decode.
+    private readonly SemaphoreSlim _decodeSlots =
         new(Math.Max(2, Environment.ProcessorCount / 2),
             Math.Max(2, Environment.ProcessorCount / 2));
 
@@ -45,6 +45,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private volatile bool _updatingMonitors;
     private WriteableBitmap? _frame;
     private H264Decoder? _h264Dec;
+    private readonly object _decodeLock = new object();
     private readonly List<(int Index, string Name, int X, int Y, int W, int H)> _monitors = [];
     private bool _uiReady;
     private bool _autoStarted;
@@ -104,22 +105,23 @@ public partial class RemoteDesktopWindow : ThemedWindow
         _server.ClientDisconnected += OnClientDisconnected;
         _server.ClientConnected += OnClientConnected;
 
+        Closing += (_, _) =>
+        {
+            if (_streaming) SendStop();
+        };
         Closed += (_, _) =>
         {
             UninstallHook();
             _closed = true;
+            Interlocked.Decrement(ref _openCount);
             _reconnectTimer?.Stop();
             _server.UnregisterHandler(_clientId, PacketType.RdpFrame);
             _server.UnregisterHandler(_clientId, PacketType.RdpH264Frame);
             _server.UnregisterHandler(_clientId, PacketType.RdpClipboard);
-            _h264Dec?.Dispose(); _h264Dec = null;
+            lock (_decodeLock) { _h264Dec?.Dispose(); _h264Dec = null; }
+            _decodeSlots.Dispose();
             _server.ClientDisconnected -= OnClientDisconnected;
             _server.ClientConnected -= OnClientConnected;
-            if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
-            {
-                client.PropertyChanged -= OnClientPropertyChanged;
-            }
-            if (_streaming) SendStop();
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -138,11 +140,6 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 LocalhostWarning.Visibility = Visibility.Visible;
         }
         ApplyLanguage();
-
-        if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
-        {
-            client.PropertyChanged += OnClientPropertyChanged;
-        }
 
         // Fade-in animation on open
         Opacity = 0;
@@ -171,22 +168,9 @@ public partial class RemoteDesktopWindow : ThemedWindow
         TxtClientId.Text = Lang.Get("COPIED");
         TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
         await Task.Delay(1500);
+        if (_closed) return;
         TxtClientId.Text = _clientId;
         TxtClientId.SetResourceReference(System.Windows.Controls.TextBlock.ForegroundProperty, "TitleTextBrush");
-    }
-
-    // ── Fullscreen toggle ─────────────────────────────────────────────────────
-
-    private void BtnFullscreen_Click(object s, RoutedEventArgs e)
-    {
-        if (WindowState == WindowState.Maximized)
-        {
-            WindowState = WindowState.Normal;
-        }
-        else
-        {
-            WindowState = WindowState.Maximized;
-        }
     }
 
     // ── Hamburger menu ───────────────────────────────────────────────────────
@@ -471,7 +455,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
             _server.UnregisterHandler(oldId, PacketType.RdpFrame);
             _server.UnregisterHandler(oldId, PacketType.RdpH264Frame);
             _server.UnregisterHandler(oldId, PacketType.RdpClipboard);
-            _h264Dec?.Dispose(); _h264Dec = null;
+            lock (_decodeLock) { _h264Dec?.Dispose(); _h264Dec = null; }
             _server.RegisterHandler(_clientId, PacketType.RdpFrame,
                 pkt => OnFrame(_clientId, pkt.Data));
             _server.RegisterHandler(_clientId, PacketType.RdpH264Frame,
@@ -481,11 +465,6 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 var d = Newtonsoft.Json.JsonConvert.DeserializeObject<RdpClipboardData>(pkt.Data);
                 if (d?.Text is { Length: > 0 }) OnRemoteClipboard(_clientId, d.Text);
             });
-
-            // Update property change subscription
-            if (_server.ConnectedClients.TryGetValue(oldId, out var oldClient))
-                oldClient.PropertyChanged -= OnClientPropertyChanged;
-            c.PropertyChanged += OnClientPropertyChanged;
 
             // Hide overlay, cancel timer
             _reconnectTimer?.Stop();
@@ -529,7 +508,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
         }
     }
     
-    private int _bytesReceived;
+    private volatile int _bytesReceived;
     
     private void UpdateMetrics()
     {
@@ -567,8 +546,13 @@ public partial class RemoteDesktopWindow : ThemedWindow
             {
                 try
                 {
-                    if (_h264Dec == null) _h264Dec = H264Decoder.Create();
-                    var pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
+                    H264Decoder? localDec;
+                    lock (_decodeLock)
+                    {
+                        if (_h264Dec == null) _h264Dec = H264Decoder.Create();
+                        localDec = _h264Dec;
+                    }
+                    var pixels = localDec?.Decode(h264Bytes, fw, fh);
                     if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
                     SendAck();
                     _ = Dispatcher.BeginInvoke(() => BlitFullFrame(fw, fh, pixels, fw * 4));
@@ -805,8 +789,4 @@ public partial class RemoteDesktopWindow : ThemedWindow
 
     private void Img_Loaded(object s, RoutedEventArgs e) => ImgFrame.Focus();
     private void Close_Click(object s, RoutedEventArgs e)  => Close();
-
-    private void OnClientPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-    }
 }

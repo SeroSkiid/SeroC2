@@ -104,6 +104,8 @@ public partial class RemoteShellWindow : ThemedWindow
             if (TxtOutput.Text == "Type a command and press Enter...")
                 TxtOutput.Text = "";
             TxtOutput.AppendText($"\n{prefix}{output}");
+            if (TxtOutput.Text.Length > 50000)
+                TxtOutput.Text = TxtOutput.Text[^50000..];
             OutputScroller.ScrollToEnd();
         });
     }

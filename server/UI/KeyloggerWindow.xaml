@@ -71,12 +71,12 @@
                 <DockPanel LastChildFill="True">
                     <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
                         <Grid>
-                            <TextBlock Text="LOG FILES" Foreground="{DynamicResource FieldLabelBrush}" FontSize="9"
+                            <TextBlock x:Name="TxtLogFilesHeader" Text="LOG FILES" Foreground="{DynamicResource FieldLabelBrush}" FontSize="9"
                                        FontWeight="Bold" FontFamily="Consolas" VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                                <Button Content="Download" Height="22" Padding="8,0" Margin="0,0,4,0"
+                                <Button x:Name="BtnDownloadFile" Content="Download" Height="22" Padding="8,0" Margin="0,0,4,0"
                                         Style="{StaticResource SBtn}" FontSize="9" Click="BtnDownload_Click"/>
-                                <Button Content="Delete" Height="22" Padding="8,0"
+                                <Button x:Name="BtnDeleteFile" Content="Delete" Height="22" Padding="8,0"
                                         Style="{StaticResource SRedBtn}" FontSize="9" Click="BtnDelete_Click"/>
                             </StackPanel>
                         </Grid>
@@ -151,7 +151,7 @@
                         <Grid>
                             <TextBlock x:Name="TxtViewerTitle" Text="Select a log file to view"
                                        Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
-                            <Button Content="Save as .txt" Height="22" Padding="10,0" HorizontalAlignment="Right"
+                            <Button x:Name="BtnSaveAsTxt" Content="Save as .txt" Height="22" Padding="10,0" HorizontalAlignment="Right"
                                     Style="{StaticResource SBtn}" FontSize="9" Click="BtnSave_Click"/>
                         </Grid>
                     </Border>

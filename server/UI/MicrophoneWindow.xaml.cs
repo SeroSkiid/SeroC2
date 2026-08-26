@@ -164,11 +164,23 @@ internal sealed class WaveOutPlayer : IDisposable
         }
     }
 
+    private bool _disposed;
+
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    ~WaveOutPlayer() => Dispose(false);
+
+    private void Dispose(bool disposing)
+    {
+        if (_disposed) return;
+        _disposed = true;
         _running = false;
         _queue.CompleteAdding();
-        _thread.Join(2000);
+        if (disposing) _thread.Join(2000);
         if (_open) { waveOutReset(_hwo); waveOutClose(_hwo); }
         if (_hEvent != IntPtr.Zero) CloseHandle(_hEvent);
     }
@@ -331,7 +343,7 @@ public partial class MicrophoneWindow : ThemedWindow
         await _server.SendToClient(_clientId, new Packet { Type = PacketType.MicStop });
     }
 
-    private void SaveWav_Click(object s, RoutedEventArgs e)
+    private async void SaveWav_Click(object s, RoutedEventArgs e)
     {
         List<byte[]> data;
         lock (_chunks) data = [.. _chunks];
@@ -344,28 +356,33 @@ public partial class MicrophoneWindow : ThemedWindow
         };
         if (dlg.ShowDialog() != true) return;
 
-        using var fs = File.OpenWrite(dlg.FileName);
-        using var bw = new BinaryWriter(fs);
+        var fileName = dlg.FileName;
         int dataSize = data.Sum(d => d.Length);
         int byteRate = SampleRate * Channels * (BitsPerSample / 8);
-        // WAV header
-        bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
-        bw.Write(36 + dataSize);
-        bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
-        bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
-        bw.Write(16);               // subchunk1 size
-        bw.Write((short)1);         // PCM
-        bw.Write((short)Channels);
-        bw.Write(SampleRate);
-        bw.Write(byteRate);
-        bw.Write((short)(Channels * BitsPerSample / 8));
-        bw.Write((short)BitsPerSample);
-        bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
-        bw.Write(dataSize);
-        foreach (var chunk in data) bw.Write(chunk);
 
-        TxtStatus.Text = string.Format(Lang.Get("SAVED"), dlg.FileName);
-        MessageBox.Show(string.Format(Lang.Get("MIC_WAV_SAVED"), dlg.FileName, (dataSize / (double)byteRate).ToString("F1")),
+        await Task.Run(() =>
+        {
+            using var fs = File.OpenWrite(fileName);
+            using var bw = new BinaryWriter(fs);
+            // WAV header
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+            bw.Write(36 + dataSize);
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+            bw.Write(16);               // subchunk1 size
+            bw.Write((short)1);         // PCM
+            bw.Write((short)Channels);
+            bw.Write(SampleRate);
+            bw.Write(byteRate);
+            bw.Write((short)(Channels * BitsPerSample / 8));
+            bw.Write((short)BitsPerSample);
+            bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+            bw.Write(dataSize);
+            foreach (var chunk in data) bw.Write(chunk);
+        });
+
+        TxtStatus.Text = string.Format(Lang.Get("SAVED"), fileName);
+        MessageBox.Show(string.Format(Lang.Get("MIC_WAV_SAVED"), fileName, (dataSize / (double)byteRate).ToString("F1")),
             "Sero — Microphone", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 

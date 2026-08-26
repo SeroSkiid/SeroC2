@@ -130,8 +130,8 @@ public partial class PerformanceMonitorWindow : ThemedWindow
     private static void SetBar(System.Windows.Controls.Border bar, float fraction)
     {
         fraction = Math.Max(0f, Math.Min(1f, fraction));
-        var parent = (System.Windows.Controls.Border)bar.Parent;
-        bar.Width = Math.Max(0, parent.ActualWidth * fraction);
+        if (bar.Parent is System.Windows.Controls.Border parentBorder)
+            bar.Width = Math.Max(0, parentBorder.ActualWidth * fraction);
     }
 
     private void DrawSparkline(Canvas canvas, List<float> data, float max, Color lineColor, Color fillColor)

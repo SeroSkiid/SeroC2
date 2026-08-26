@@ -55,8 +55,12 @@ public class ServiceEntryVM : INotifyPropertyChanged
     public static System.Windows.Media.ImageSource? SvcIcon { get; } = LoadSvcIcon();
     private static System.Windows.Media.ImageSource? LoadSvcIcon()
     {
-        var p = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "services.msc");
-        return ShellIcon.GetFromPath(p);
+        try
+        {
+            var p = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.System), "services.msc");
+            return ShellIcon.GetFromPath(p);
+        }
+        catch { return null; }
     }
 
     private static readonly Brush _green = Freeze(new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E)));
@@ -96,6 +100,7 @@ public partial class ServiceManagerWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.SvcListResult, OnList);
         _server.RegisterHandler(clientId, PacketType.SvcAck,        OnAck);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
@@ -103,6 +108,7 @@ public partial class ServiceManagerWindow : ThemedWindow
             _autoRefresh.Stop();
             _server.UnregisterHandler(clientId, PacketType.SvcListResult);
             _server.UnregisterHandler(clientId, PacketType.SvcAck);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -151,6 +157,12 @@ public partial class ServiceManagerWindow : ThemedWindow
         }
     }
 
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() => _autoRefresh.Stop());
+    }
+
     private void Refresh()
     {
         _countdown = 30;
@@ -164,17 +176,36 @@ public partial class ServiceManagerWindow : ThemedWindow
         if (d == null) return;
         Dispatcher.BeginInvoke(() =>
         {
-            _services.Clear();
+            // Diff update: remove absent, update existing, add new
+            var incoming = d.Services.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
+            for (int i = _services.Count - 1; i >= 0; i--)
+            {
+                if (!incoming.ContainsKey(_services[i].Name))
+                    _services.RemoveAt(i);
+            }
             foreach (var s in d.Services)
-                _services.Add(new ServiceEntryVM
+            {
+                var existing = _services.FirstOrDefault(v => string.Equals(v.Name, s.Name, StringComparison.OrdinalIgnoreCase));
+                if (existing != null)
                 {
-                    Name        = s.Name,
-                    DisplayName = s.DisplayName.Length > 0 ? s.DisplayName : s.Name,
-                    Status      = s.Status,
-                    StartType   = s.StartType,
-                    Description = s.Description,
-                    LogOnAs     = s.LogOnAs,
-                });
+                    existing.Status      = s.Status;
+                    existing.StartType   = s.StartType;
+                    existing.Description = s.Description;
+                    existing.LogOnAs     = s.LogOnAs;
+                }
+                else
+                {
+                    _services.Add(new ServiceEntryVM
+                    {
+                        Name        = s.Name,
+                        DisplayName = s.DisplayName.Length > 0 ? s.DisplayName : s.Name,
+                        Status      = s.Status,
+                        StartType   = s.StartType,
+                        Description = s.Description,
+                        LogOnAs     = s.LogOnAs,
+                    });
+                }
+            }
             TxtCount.Text  = $"({d.Services.Count})";
             TxtStatus.Text = string.Format(Lang.Get("SVC_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Services.Count);
         });

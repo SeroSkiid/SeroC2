@@ -118,9 +118,6 @@ public partial class RegistryEditorWindow : ThemedWindow
     }
 
     private TreeViewItem? _pendingExpand;
-#pragma warning disable CS0414
-    private string?       _pendingPath;
-#pragma warning restore CS0414
 
     private void TreeItem_Expanded(object s, RoutedEventArgs e)
     {
@@ -129,7 +126,6 @@ public partial class RegistryEditorWindow : ThemedWindow
         if (node.IsLoaded) return;
 
         _pendingExpand = item;
-        _pendingPath   = null; // Children response will populate this
         RequestChildren(node.FullPath);
         e.Handled = true;
     }
@@ -207,11 +203,8 @@ public partial class RegistryEditorWindow : ThemedWindow
             if (obj is not TreeViewItem tvi) continue;
             if (tvi.Tag is RegKeyNode node && node.FullPath.Equals(path, StringComparison.OrdinalIgnoreCase))
                 return tvi;
-            if (tvi.IsExpanded)
-            {
-                var found = FindTreeItem(tvi.Items, path);
-                if (found != null) return found;
-            }
+            var found = FindTreeItem(tvi.Items, path);
+            if (found != null) return found;
         }
         return null;
     }
@@ -343,7 +336,7 @@ public partial class RegistryEditorWindow : ThemedWindow
 
     // ── Input dialog ──────────────────────────────────────────────────────────
 
-    private static string? SimpleInput(string prompt, string? def = null)
+    private string? SimpleInput(string prompt, string? def = null)
     {
         static Brush R(string key, Color fallback) =>
             Application.Current.TryFindResource(key) as Brush
@@ -353,6 +346,7 @@ public partial class RegistryEditorWindow : ThemedWindow
         {
             Title = Lang.Get("DLG_REG_TITLE"), Width = 420, Height = 130,
             WindowStartupLocation = WindowStartupLocation.CenterOwner,
+            Owner = this,
             ResizeMode = ResizeMode.NoResize, WindowStyle = WindowStyle.ToolWindow,
             Background = R("WindowBgBrush", Color.FromRgb(0x0C, 0x0D, 0x18))
         };

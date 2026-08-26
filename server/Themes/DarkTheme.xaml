@@ -9,6 +9,7 @@
     <SolidColorBrush x:Key="PanelBackgroundBrush" Color="#0D0E1A" />
     <SolidColorBrush x:Key="AccentPanelBackgroundBrush" Color="#1A1E36" />
     <SolidColorBrush x:Key="CardBackgroundBrush" Color="#0A0D1A" />
+    <SolidColorBrush x:Key="SidebarCtrlBgBrush" Color="#1A1C2E" />
 
     <!-- Borders -->
     <SolidColorBrush x:Key="WindowBorderBrush" Color="#2A2E50" />

@@ -73,7 +73,6 @@ public partial class StartupManagerWindow : ThemedWindow
 
     private void OnList(Packet pkt)
     {
-        _refreshCts?.Cancel(); // Response arrived — kill the timeout
         try
         {
             var data = JsonConvert.DeserializeObject<StartupListResultData>(pkt.Data);

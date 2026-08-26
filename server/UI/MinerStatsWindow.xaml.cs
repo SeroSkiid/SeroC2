@@ -50,7 +50,7 @@ public partial class MinerStatsWindow : DevExpress.Xpf.Core.ThemedWindow
     {
         if (!int.TryParse(TxtStatsPort.Text.Trim(), out int port) || port < 1 || port > 65535)
         {
-            System.Windows.MessageBox.Show("Invalid port number.", "Miner Stats",
+            System.Windows.MessageBox.Show(Lang.Get("ERR_INVALID_PORT"), "Miner Stats",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
             return;
         }

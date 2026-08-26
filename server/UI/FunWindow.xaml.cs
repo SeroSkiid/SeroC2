@@ -29,7 +29,11 @@ public partial class FunWindow : ThemedWindow
         _server.RegisterHandler(clientId, PacketType.FunResult, pkt =>
         {
             var r = JsonConvert.DeserializeObject<FunResultData>(pkt.Data);
-            Dispatcher.BeginInvoke(() => TxtStatus.Text = $"{r?.Action}: {r?.Result}");
+            Dispatcher.BeginInvoke(() =>
+            {
+                if (r == null) { TxtStatus.Text = "No response from client."; return; }
+                TxtStatus.Text = $"{r.Action}: {r.Result}";
+            });
         });
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();

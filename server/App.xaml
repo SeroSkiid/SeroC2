@@ -105,6 +105,9 @@
         <SolidColorBrush x:Key="SelectionBgBrush"     Color="#6A85F5"/>
         <SolidColorBrush x:Key="SelectionFgBrush"     Color="#FFFFFF"/>
 
+        <!-- Fallback AccentBrush — overridden by each theme; prevents DynamicResource miss at startup -->
+        <SolidColorBrush x:Key="AccentBrush"          Color="#5B6ACF"/>
+
         <!-- Primary gradient — uses AccentBrush so it adapts per theme -->
         <SolidColorBrush x:Key="PrimaryGradient"      Color="#4A85F5"/>
         <LinearGradientBrush x:Key="AccentBarBrush" StartPoint="0,0" EndPoint="1,0">
