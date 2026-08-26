@@ -8625,21 +8625,7 @@ Read-Host 'Press Enter to close'
             { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
-        // Scale pixel columns proportionally to fit the current grid width.
-        // In a full-screen window (>1604px grid area) scale=1.0 → exact defaults.
-        // In a smaller window columns shrink uniformly so no horizontal scrollbar appears.
-        double pixelTotal = defaultWidths.Values
-            .Where(v => v.UnitType == DataGridLengthUnitType.Pixel)
-            .Sum(v => v.Value);
-        double available = GridClients.ActualWidth - 12; // 12px reserve for vertical scrollbar
-        double scale = (available > 0) ? Math.Min(1.0, available / pixelTotal) : 1.0;
-
-        DataGridLength ScaledWidth(DataGridLength dw) =>
-            dw.UnitType == DataGridLengthUnitType.Pixel
-                ? new DataGridLength(Math.Max(1.0, Math.Floor(dw.Value * scale)))
-                : dw;
-
-        // Change detection: compare against scaled defaults so a second click is a no-op.
+        // Change detection: compare col.Width.Value (assigned logical width, exact) not ActualWidth
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
@@ -8654,9 +8640,8 @@ Read-Host 'Press Enter to close'
                 if (h == "TAG") continue;
                 if (defaultWidths.TryGetValue(h, out var dw))
                 {
-                    var sdw = ScaledWidth(dw);
                     bool isPixel = col.Width.UnitType == System.Windows.Controls.DataGridLengthUnitType.Pixel;
-                    if (!isPixel || Math.Abs(col.Width.Value - sdw.Value) > 0.5)
+                    if (!isPixel || Math.Abs(col.Width.Value - dw.Value) > 0.5)
                     { hasChanges = true; break; }
                 }
             }
@@ -8680,10 +8665,9 @@ Read-Host 'Press Enter to close'
                     UiPrefs.Set($"ColVis_{key}", 1);
                     if (defaultWidths.TryGetValue(key, out var w))
                     {
-                        var sw = ScaledWidth(w);
-                        col.Width = sw;
-                        if (sw.UnitType == DataGridLengthUnitType.Pixel)
-                            UiPrefs.Set($"ColWidth_{key}", (int)sw.Value);
+                        col.Width = w;
+                        if (w.UnitType == DataGridLengthUnitType.Pixel)
+                            UiPrefs.Set($"ColWidth_{key}", (int)w.Value);
                     }
                 }
             }
