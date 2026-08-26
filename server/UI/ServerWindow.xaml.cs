@@ -5439,30 +5439,50 @@ Read-Host 'Press Enter to close'
         base.OnStateChanged(e);
         bool nowMaximized = WindowState == WindowState.Maximized;
         bool nowNormal    = WindowState == WindowState.Normal;
-        if (nowNormal    &&  _isFullscreen) _isFullscreen = false;
-        if (nowMaximized && !_isFullscreen) _isFullscreen = true;
 
-        if (nowMaximized)
+        if (nowMaximized && !_isFullscreen)
         {
-            // Apply full-width defaults synchronously so the first maximized frame already
-            // shows correct sizes — avoids the one-frame flash at small column widths.
-            ApplyFullOnlineWidths();
-            ApplyFullAllClientsWidths();
+            // Layout hasn't updated yet — ActualWidth is still the pre-maximize value.
+            _premaximizeOnlineGridWidth      = GridClients.ActualWidth;
+            _premaximizeAllClientsGridWidth  = GridAllClients?.ActualWidth ?? 0;
+            _isFullscreen = true;
+            BeginColumnTransition(BuildTransitionTargets(1.0, 1.0));
         }
-        else if (nowNormal)
+        else if (nowNormal && _isFullscreen)
         {
-            // Deferred: restored window size isn't known until layout settles.
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+            _isFullscreen = false;
+            if (_premaximizeOnlineGridWidth > 50)
             {
-                ApplyAdaptiveOnlineWidths();
-                ApplyAdaptiveAllClientsWidths();
-            }));
+                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth,     1651.0, 1134.0);
+                double tA = ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0,  763.0);
+                BeginColumnTransition(BuildTransitionTargets(tO, tA));
+            }
+            else
+            {
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                {
+                    ApplyAdaptiveOnlineWidths();
+                    ApplyAdaptiveAllClientsWidths();
+                }));
+            }
         }
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private bool _isFullscreen;
+
+    // Grid widths captured the moment the user maximizes (before layout updates),
+    // so we can animate columns back to the exact right sizes on restore.
+    private double _premaximizeOnlineGridWidth;
+    private double _premaximizeAllClientsGridWidth;
+
+    // Column transition animation state
+    private System.Windows.Threading.DispatcherTimer?                          _colAnimTimer;
+    private DateTime                                                            _colAnimStart;
+    private List<(DataGridColumn col, double from, double to, bool isOnline)>? _colAnimList;
+    private const double ColAnimMs = 160;
+    private static double ColEase(double t) => 1 - (1 - t) * (1 - t); // quadratic ease-out
 
     private void Fullscreen_Click(object sender, RoutedEventArgs e)
     {
@@ -8845,6 +8865,95 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
+    }
+
+    private static double ComputeAdaptiveT(double gridWidth, double kFull, double kMin)
+    {
+        if (gridWidth < 50) return 0.0;
+        double avail = gridWidth - 8.0 - 60.0;
+        return avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
+    }
+
+    // Builds a list of (column, fromWidth, toWidth, isOnline) for the animation.
+    // tOnline / tAll are the target interpolation values [0,1].
+    private List<(DataGridColumn col, double from, double to, bool isOnline)> BuildTransitionTargets(
+        double tOnline, double tAll)
+    {
+        var list = new List<(DataGridColumn, double, double, bool)>();
+
+        foreach (var col in GridClients.Columns)
+        {
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
+            double from = col.Width.UnitType == DataGridLengthUnitType.Pixel ? col.Width.Value : spec.min;
+            double to   = spec.min + (spec.full - spec.min) * tOnline;
+            list.Add((col, from, to, true));
+        }
+
+        if (GridAllClients != null)
+        {
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
+                double from = col.Width.UnitType == DataGridLengthUnitType.Pixel ? col.Width.Value : spec.min;
+                double to   = spec.min + (spec.full - spec.min) * tAll;
+                list.Add((col, from, to, false));
+            }
+        }
+
+        return list;
+    }
+
+    private void BeginColumnTransition(List<(DataGridColumn col, double from, double to, bool isOnline)> targets)
+    {
+        _colAnimTimer?.Stop();
+        _colAnimList  = targets;
+        _colAnimStart = DateTime.UtcNow;
+        _colAnimTimer = new System.Windows.Threading.DispatcherTimer(
+            System.Windows.Threading.DispatcherPriority.Normal)
+        {
+            Interval = TimeSpan.FromMilliseconds(16)
+        };
+        _colAnimTimer.Tick += ColAnim_Tick;
+        _colAnimTimer.Start();
+    }
+
+    private void ColAnim_Tick(object? sender, EventArgs e)
+    {
+        double elapsed = (DateTime.UtcNow - _colAnimStart).TotalMilliseconds;
+        double raw = Math.Min(elapsed / ColAnimMs, 1.0);
+        double t   = ColEase(raw);
+
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var (col, from, to, _) in _colAnimList!)
+                col.Width = new DataGridLength((int)Math.Round(from + (to - from) * t));
+        }
+        finally { _suppressColumnSave = false; }
+
+        if (raw >= 1.0)
+        {
+            _colAnimTimer?.Stop();
+            _colAnimTimer = null;
+            // Persist final widths
+            _suppressColumnSave = true;
+            try
+            {
+                foreach (var (col, _, to, isOnline) in _colAnimList!)
+                {
+                    string key = isOnline ? GetOriginalKey(col) : (col.Header?.ToString() ?? "");
+                    if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+                    int px = (int)Math.Round(to);
+                    if (isOnline) UiPrefs.Set($"ColWidth_{key}", px);
+                    else          UiPrefs.Set($"AllColWidth_{key}", px);
+                }
+            }
+            finally { _suppressColumnSave = false; }
+        }
     }
 
     private void RefreshClientFilters()
