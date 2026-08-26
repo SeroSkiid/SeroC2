@@ -1579,30 +1579,31 @@ public partial class ServerWindow : ThemedWindow
     // ── Column width persistence ──────────────────────────────────────────────
 
     // Per-column (full, min) pixel widths for the Online DataGrid.
-    // Full = ideal width at 1604 px+ available; min = minimum readable across all 10 UI languages.
-    // Interpolates between min and full based on available grid width so no column gets unreadably tiny.
+    // Full = ideal at wide window. Min = minimum for content + header readability (all 10 langs).
+    // ContentPresenter has Margin="10,9" → 20 px horizontal padding; min accounts for that.
+    // Icon/number columns (CAM, LOAD, PING) have larger full widths to fit French headers.
     private static readonly Dictionary<string, (int full, int min)> _onlineColSpec =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            ["IP"]       = (120, 90),   // IPv4 content
-            ["STATUS"]   = (70,  50),   // icon column
-            ["COUNTRY"]  = (90,  65),   // flag + 2-letter code
-            ["USER"]     = (110, 95),   // "UTILISATEUR"/"ПОЛЬЗОВАТЕЛЬ" header + "Administrator" content
-            ["OS"]       = (85,  60),
-            ["MACHINE"]  = (105, 78),   // "COMPUTER"/"RECHNER" header
-            ["PRIV"]     = (100, 82),   // "PRIVILEGIO"/"ПРИВИЛЕГИЯ" header
-            ["ID"]       = (65,  50),
-            ["CAM"]      = (44,  44),   // icon column, fixed
-            ["CPU"]      = (150, 78),   // long content, always truncated
-            ["LOAD"]     = (50,  44),
-            ["AV"]       = (120, 78),
+            ["IP"]       = (120, 82),   // IPv4 "192.168.1.x" content
+            ["STATUS"]   = (70,  58),   // "STATUT"(fr,6ch×6.5+20=59px) → 58 min
+            ["COUNTRY"]  = (90,  60),   // flag + code
+            ["USER"]     = (110, 95),   // "UTILISATEUR"(fr,11ch) / "Administrator" content
+            ["OS"]       = (85,  55),
+            ["MACHINE"]  = (105, 75),   // hostname content
+            ["PRIV"]     = (105, 85),   // "PRIVILÈGE"(fr,9ch×6.5+20=79px) → 85 min
+            ["ID"]       = (65,  46),
+            ["CAM"]      = (64,  56),   // "CAMÉRA"(fr,6ch×6.5+20=59px) → 56 min; full=64
+            ["CPU"]      = (150, 68),   // long content, always truncated
+            ["LOAD"]     = (68,  58),   // "PAYLOAD"(7ch×6.5+20=66px) → 58 min; full=68
+            ["AV"]       = (120, 75),
             ["RAM"]      = (75,  50),
-            ["GPU"]      = (160, 78),   // long content, always truncated
-            ["PING"]     = (50,  44),
-            ["WINDOW"]   = (115, 80),   // "FINESTRA"/"PENCERE" header
-            ["1ST SEEN"] = (95,  80),   // "İLK GÖRÜŞ"/"1ÈRE VUE" header + "2024-01-15" content
+            ["GPU"]      = (160, 68),   // long content, always truncated
+            ["PING"]     = (54,  50),   // "PING"(4ch×6.5+20=46px) → 50 min; full=54
+            ["WINDOW"]   = (115, 75),   // "FENÊTRE"(fr,7ch)
+            ["1ST SEEN"] = (95,  78),   // "1ÈRE VUE"(fr,8ch×6.5+20=72px) + "2024-01-15" content
         };
-    // kFull=1604, kMin=1146
+    // kFull=1651 (sum of full widths), kMin=1134 (sum of minimum widths incl. 20px ContentPresenter padding)
 
     private void RestoreGridColumnWidths()
     {
@@ -5440,13 +5441,23 @@ Read-Host 'Press Enter to close'
         bool nowNormal    = WindowState == WindowState.Normal;
         if (nowNormal    &&  _isFullscreen) _isFullscreen = false;
         if (nowMaximized && !_isFullscreen) _isFullscreen = true;
-        // Re-fit column widths after layout settles for the new window size.
-        if (nowMaximized || nowNormal)
+
+        if (nowMaximized)
+        {
+            // Apply full-width defaults synchronously so the first maximized frame already
+            // shows correct sizes — avoids the one-frame flash at small column widths.
+            ApplyFullOnlineWidths();
+            ApplyFullAllClientsWidths();
+        }
+        else if (nowNormal)
+        {
+            // Deferred: restored window size isn't known until layout settles.
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
             {
                 ApplyAdaptiveOnlineWidths();
                 ApplyAdaptiveAllClientsWidths();
             }));
+        }
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -8698,7 +8709,7 @@ Read-Host 'Press Enter to close'
             if (gw >= 50)
             {
                 double avail = gw - 8.0 - 60.0;
-                const double kF = 1604.0, kM = 1146.0;
+                const double kF = 1651.0, kM = 1134.0;
                 double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
                 foreach (var col in GridClients.Columns)
                 {
@@ -8740,14 +8751,14 @@ Read-Host 'Press Enter to close'
     }
 
     // Interpolates each column between its min and full width based on available grid space.
-    // kFull=1604 (sum of full widths), kMin=1146 (sum of minimum readable widths, all languages).
+    // kFull=1651 (sum of full widths), kMin=1134 (sum of minimum readable widths, all languages).
     // Below kMin: use per-column minimums (scrollbar visible). Above kFull: use full defaults.
     private void ApplyAdaptiveOnlineWidths()
     {
         double gridWidth = GridClients.ActualWidth;
         if (gridWidth < 50) return;
         double avail = gridWidth - 8.0 - 60.0; // scrollbar (8) + TAG MinWidth reserve (60)
-        const double kFull = 1604.0, kMin = 1146.0;
+        const double kFull = 1651.0, kMin = 1134.0;
         double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
 
         _suppressColumnSave = true;
@@ -8793,6 +8804,45 @@ Read-Host 'Press Enter to close'
                 UiPrefs.Set($"AllColWidth_{key}", px);
             }
             GridAllClients.UpdateLayout();
+        }
+        finally { _suppressColumnSave = false; }
+    }
+
+    // Sets all online columns to their full (t=1.0) defaults without measuring ActualWidth.
+    // Used synchronously on maximize so the first rendered frame already has correct widths.
+    private void ApplyFullOnlineWidths()
+    {
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
+                col.Width = new DataGridLength(spec.full);
+                UiPrefs.Set($"ColWidth_{key}", spec.full);
+            }
+        }
+        finally { _suppressColumnSave = false; }
+    }
+
+    private void ApplyFullAllClientsWidths()
+    {
+        if (GridAllClients == null) return;
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
+                col.Width = new DataGridLength(spec.full);
+                UiPrefs.Set($"AllColWidth_{key}", spec.full);
+            }
         }
         finally { _suppressColumnSave = false; }
     }
