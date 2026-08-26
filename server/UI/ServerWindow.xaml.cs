@@ -1605,6 +1605,7 @@ public partial class ServerWindow : ThemedWindow
 
     private void SaveGridColumnWidths()
     {
+        if (_suppressColumnSave) return;
         foreach (var col in GridClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
@@ -1641,6 +1642,7 @@ public partial class ServerWindow : ThemedWindow
 
     private void SaveAllClientsColumnWidths()
     {
+        if (_suppressColumnSave) return;
         foreach (var col in GridAllClients.Columns)
         {
             string header = col.Header?.ToString() ?? "";
@@ -8442,6 +8444,7 @@ Read-Host 'Press Enter to close'
     // --- Grid Visibility, Filters, and Tag Customizations ---
     private bool _webcamFilterOnly = false;
     private bool _adminFilterOnly = false;
+    private bool _suppressColumnSave = false;
 
     private void LoadColumnVisibility()
     {
@@ -8589,39 +8592,48 @@ Read-Host 'Press Enter to close'
 
         var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
         {
-            { "IP",       new DataGridLength(96)  },
-            { "STATUS",   new DataGridLength(68)  },
-            { "COUNTRY",  new DataGridLength(68)  },
+            { "IP",       new DataGridLength(130) },
+            { "STATUS",   new DataGridLength(70)  },
+            { "COUNTRY",  new DataGridLength(100) },
             { "USER",     DataGridLength.Auto     },
-            { "OS",       new DataGridLength(66)  },
-            { "MACHINE",  new DataGridLength(70)  },
+            { "OS",       new DataGridLength(80)  },
+            { "MACHINE",  new DataGridLength(110) },
             { "PRIV",     new DataGridLength(100) },
-            { "ID",       new DataGridLength(56)  },
-            { "CAM",      new DataGridLength(64)  },
-            { "CPU",      new DataGridLength(86)  },
-            { "LOAD",     DataGridLength.Auto     },
-            { "AV",       new DataGridLength(68)  },
-            { "RAM",      new DataGridLength(90)  },
-            { "GPU",      new DataGridLength(86)  },
-            { "PING",     DataGridLength.Auto     },
-            { "WINDOW",   new DataGridLength(82)  },
-            { "1ST SEEN", new DataGridLength(92)  },
+            { "ID",       new DataGridLength(90)  },
+            { "CAM",      new DataGridLength(46)  },
+            { "CPU",      new DataGridLength(130) },
+            { "LOAD",     new DataGridLength(52)  },
+            { "AV",       new DataGridLength(100) },
+            { "RAM",      new DataGridLength(70)  },
+            { "GPU",      new DataGridLength(140) },
+            { "PING",     new DataGridLength(52)  },
+            { "WINDOW",   new DataGridLength(110) },
+            { "1ST SEEN", new DataGridLength(115) },
             { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
-        foreach (var col in GridClients.Columns)
+        _suppressColumnSave = true;
+        try
         {
-            string headerName = col.Header?.ToString() ?? "";
-            if (!string.IsNullOrEmpty(headerName))
+            foreach (var col in GridClients.Columns)
             {
-                col.Visibility = Visibility.Visible;
-                UiPrefs.Set($"ColVis_{headerName}", 1);
-                if (defaultWidths.TryGetValue(headerName, out var w))
-                    col.Width = w;
+                string headerName = col.Header?.ToString() ?? "";
+                if (!string.IsNullOrEmpty(headerName))
+                {
+                    col.Visibility = Visibility.Visible;
+                    UiPrefs.Set($"ColVis_{headerName}", 1);
+                    if (defaultWidths.TryGetValue(headerName, out var w))
+                        col.Width = w;
+                }
             }
+        }
+        finally
+        {
+            _suppressColumnSave = false;
         }
 
         GridClients.UpdateLayout();
+        SaveGridColumnWidths();
         UpdateSettingsCheckboxStates();
         RefreshClientFilters();
     }
