@@ -1739,43 +1739,6 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
-    // Resize handlers — arm a debounce timer (150 ms after the last SizeChanged tick).
-    // Applying adaptive widths mid-drag causes an intermediate layout frame where WPF
-    // renders the new grid width before the column widths are settled, producing an
-    // empty filler column after TAG.  Deferring to after the drag stops avoids all
-    // intermediate artifacts while still snapping columns to the correct sizes quickly.
-    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (!e.WidthChanged || _suppressColumnSave) return;
-        if (_colAnimTimer?.IsEnabled == true) return;
-        ArmResizeApplyTimer();
-    }
-
-    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (!e.WidthChanged || _suppressColumnSave) return;
-        if (_colAnimTimer?.IsEnabled == true) return;
-        ArmResizeApplyTimer();
-    }
-
-    private void ArmResizeApplyTimer()
-    {
-        _resizeSaveTimer?.Stop();
-        _resizeSaveTimer = new System.Windows.Threading.DispatcherTimer(
-            System.Windows.Threading.DispatcherPriority.Background)
-        {
-            Interval = TimeSpan.FromMilliseconds(150)
-        };
-        _resizeSaveTimer.Tick += (s, _) =>
-        {
-            _resizeSaveTimer?.Stop();
-            _resizeSaveTimer = null;
-            ApplyAdaptiveOnlineWidths();
-            ApplyAdaptiveAllClientsWidths();
-        };
-        _resizeSaveTimer.Start();
-    }
-
     private void GridClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
@@ -5514,7 +5477,6 @@ Read-Host 'Press Enter to close'
     private double _premaximizeOnlineGridWidth;
     private double _premaximizeAllClientsGridWidth;
 
-    // Debounce timer: persists column widths 300 ms after the last live-resize tick.
     private System.Windows.Threading.DispatcherTimer? _resizeSaveTimer;
 
     // Column transition animation state
