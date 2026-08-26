@@ -822,9 +822,7 @@
                         <Grid UseLayoutRounding="True">
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    SnapsToDevicePixels="True">
+                                    BorderThickness="0">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -845,6 +843,14 @@
                             <!-- Accent bottom bar — adapts to active theme palette -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
                                        Fill="{DynamicResource AccentBrush}" Opacity="0.75"/>
+                            <!-- Separator — 1px inside right edge (Margin right=1) so it is never clipped
+                                 at a sub-pixel column boundary; EdgeMode=Aliased = solid, no anti-aliasing. -->
+                            <Rectangle x:Name="Separator"
+                                       HorizontalAlignment="Right" Width="1" Margin="0,0,1,0"
+                                       Fill="{DynamicResource ColHeaderBorderBrush}"
+                                       SnapsToDevicePixels="True"
+                                       RenderOptions.EdgeMode="Aliased"
+                                       IsHitTestVisible="False"/>
                             <!-- Resize grippers — transparent but fully functional -->
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Width="6"
                                    Cursor="SizeWE" Background="Transparent">
