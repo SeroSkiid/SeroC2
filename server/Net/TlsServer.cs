@@ -159,7 +159,6 @@ public class TlsServer
         }
         ConnectedClients.Clear();
         _hwidToClient.Clear();
-        Log("[*] Server stopped.");
     }
 
     public async Task SendToClient(string clientId, Packet packet)

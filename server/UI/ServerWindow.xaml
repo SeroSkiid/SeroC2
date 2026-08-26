@@ -1081,50 +1081,97 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Default implicit ScrollBar style (thin/modern). ApplyTheme swaps per theme. -->
+        <!-- Default implicit ScrollBar style (thin/modern). ApplyTheme swaps per theme.
+             Separate Orientation triggers are required: Width=8 on a horizontal scrollbar makes it
+             8px wide (a tiny dot) — the horizontal bar needs Height=8 and its own Track template. -->
         <Style TargetType="{x:Type ScrollBar}">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="Width" Value="8"/>
-            <Setter Property="MinWidth" Value="8"/>
             <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="{x:Type ScrollBar}">
-                        <Grid Width="8" SnapsToDevicePixels="True">
-                            <Border Background="{DynamicResource InputBgBrush}" CornerRadius="4" Opacity="0.6"/>
-                            <Track x:Name="PART_Track" IsDirectionReversed="True" Margin="0,0,0,0">
-                                <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
-                                                  Opacity="0" IsTabStop="False" Focusable="False"/>
-                                </Track.DecreaseRepeatButton>
-                                <Track.Thumb>
-                                    <Thumb>
-                                        <Thumb.Template>
-                                            <ControlTemplate TargetType="{x:Type Thumb}">
-                                                <Border x:Name="Bd" Background="{DynamicResource AccentBrush}"
-                                                        CornerRadius="4" Margin="2,0" Opacity="0.55"/>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="Bd" Property="Opacity" Value="0.80"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsDragging" Value="True">
-                                                        <Setter TargetName="Bd" Property="Opacity" Value="1.0"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Thumb.Template>
-                                    </Thumb>
-                                </Track.Thumb>
-                                <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
-                                                  Opacity="0" IsTabStop="False" Focusable="False"/>
-                                </Track.IncreaseRepeatButton>
-                            </Track>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Vertical">
+                    <Setter Property="Width"    Value="8"/>
+                    <Setter Property="MinWidth" Value="8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Grid Width="8" SnapsToDevicePixels="True">
+                                    <Border Background="{DynamicResource InputBgBrush}" CornerRadius="4" Opacity="0.6"/>
+                                    <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageUpCommand}"
+                                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb>
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="{x:Type Thumb}">
+                                                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}"
+                                                                CornerRadius="4" Margin="2,0" Opacity="0.55"/>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Bd" Property="Opacity" Value="0.80"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsDragging" Value="True">
+                                                                <Setter TargetName="Bd" Property="Opacity" Value="1.0"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageDownCommand}"
+                                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+                <Trigger Property="Orientation" Value="Horizontal">
+                    <Setter Property="Height"    Value="8"/>
+                    <Setter Property="MinHeight" Value="8"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ScrollBar}">
+                                <Grid Height="8" SnapsToDevicePixels="True">
+                                    <Border Background="{DynamicResource InputBgBrush}" CornerRadius="4" Opacity="0.6"/>
+                                    <Track x:Name="PART_Track" IsDirectionReversed="False" Orientation="Horizontal">
+                                        <Track.DecreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageLeftCommand}"
+                                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                                        </Track.DecreaseRepeatButton>
+                                        <Track.Thumb>
+                                            <Thumb>
+                                                <Thumb.Template>
+                                                    <ControlTemplate TargetType="{x:Type Thumb}">
+                                                        <Border x:Name="Bd" Background="{DynamicResource AccentBrush}"
+                                                                CornerRadius="4" Margin="0,2" Opacity="0.55"/>
+                                                        <ControlTemplate.Triggers>
+                                                            <Trigger Property="IsMouseOver" Value="True">
+                                                                <Setter TargetName="Bd" Property="Opacity" Value="0.80"/>
+                                                            </Trigger>
+                                                            <Trigger Property="IsDragging" Value="True">
+                                                                <Setter TargetName="Bd" Property="Opacity" Value="1.0"/>
+                                                            </Trigger>
+                                                        </ControlTemplate.Triggers>
+                                                    </ControlTemplate>
+                                                </Thumb.Template>
+                                            </Thumb>
+                                        </Track.Thumb>
+                                        <Track.IncreaseRepeatButton>
+                                            <RepeatButton Command="{x:Static ScrollBar.PageRightCommand}"
+                                                          Opacity="0" IsTabStop="False" Focusable="False"/>
+                                        </Track.IncreaseRepeatButton>
+                                    </Track>
+                                </Grid>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
         </Style>
 
         <!-- DataGrid ControlTemplate: vertical scrollbar spans the full height including column headers.

@@ -149,7 +149,7 @@ public partial class ServerWindow : ThemedWindow
         }
         else
         {
-            Recolor(_brushLogTime,       0x3B, 0x42, 0x52); // slate-700 — dim prefix
+            Recolor(_brushLogTime,       0x64, 0x74, 0x8B); // slate-500 — dim but readable on dark bg
             Recolor(_brushLogDefault,    0xE2, 0xE8, 0xF0); // slate-200 — crisp white body
             Recolor(_brushLogSuccess,    0x4A, 0xDE, 0x80); // green-400
             Recolor(_brushLogConnect,    0x2D, 0xD4, 0xBF); // teal-400 — clearly ≠ green
@@ -1622,6 +1622,7 @@ public partial class ServerWindow : ThemedWindow
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (col.Width.UnitType == DataGridLengthUnitType.Star) continue; // star = default, not persisted
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"ColWidth_{key}", (int)w);
         }
@@ -1659,6 +1660,7 @@ public partial class ServerWindow : ThemedWindow
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (col.Width.UnitType == DataGridLengthUnitType.Star) continue; // star = default, not persisted
             double w = col.ActualWidth;
             if (w > 0) UiPrefs.Set($"AllColWidth_{key}", (int)w);
         }
@@ -8603,29 +8605,33 @@ Read-Host 'Press Enter to close'
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
     {
+        // Star weights mirror the original pixel defaults so proportions are preserved.
+        // Using Star means all columns scale with the window — no horizontal overflow after Reset,
+        // no flicker when resizing. The weights sum to 1677 so in a ~1677px grid (full screen)
+        // each column gets almost exactly its original pixel width.
         var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
         {
-            { "IP",       new DataGridLength(120) },
-            { "STATUS",   new DataGridLength(70)  },
-            { "COUNTRY",  new DataGridLength(90)  },
-            { "USER",     new DataGridLength(110) },
-            { "OS",       new DataGridLength(85)  },
-            { "MACHINE",  new DataGridLength(105) },
-            { "PRIV",     new DataGridLength(100) },
-            { "ID",       new DataGridLength(65)  },
-            { "CAM",      new DataGridLength(44)  },
-            { "CPU",      new DataGridLength(150) },
-            { "LOAD",     new DataGridLength(50)  },
-            { "AV",       new DataGridLength(120) },
-            { "RAM",      new DataGridLength(75)  },
-            { "GPU",      new DataGridLength(160) },
-            { "PING",     new DataGridLength(50)  },
-            { "WINDOW",   new DataGridLength(115) },
-            { "1ST SEEN", new DataGridLength(95)  },
-            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
+            { "IP",       new DataGridLength(120, DataGridLengthUnitType.Star) },
+            { "STATUS",   new DataGridLength(70,  DataGridLengthUnitType.Star) },
+            { "COUNTRY",  new DataGridLength(90,  DataGridLengthUnitType.Star) },
+            { "USER",     new DataGridLength(110, DataGridLengthUnitType.Star) },
+            { "OS",       new DataGridLength(85,  DataGridLengthUnitType.Star) },
+            { "MACHINE",  new DataGridLength(105, DataGridLengthUnitType.Star) },
+            { "PRIV",     new DataGridLength(100, DataGridLengthUnitType.Star) },
+            { "ID",       new DataGridLength(65,  DataGridLengthUnitType.Star) },
+            { "CAM",      new DataGridLength(44,  DataGridLengthUnitType.Star) },
+            { "CPU",      new DataGridLength(150, DataGridLengthUnitType.Star) },
+            { "LOAD",     new DataGridLength(50,  DataGridLengthUnitType.Star) },
+            { "AV",       new DataGridLength(120, DataGridLengthUnitType.Star) },
+            { "RAM",      new DataGridLength(75,  DataGridLengthUnitType.Star) },
+            { "GPU",      new DataGridLength(160, DataGridLengthUnitType.Star) },
+            { "PING",     new DataGridLength(50,  DataGridLengthUnitType.Star) },
+            { "WINDOW",   new DataGridLength(115, DataGridLengthUnitType.Star) },
+            { "1ST SEEN", new DataGridLength(95,  DataGridLengthUnitType.Star) },
+            { "TAG",      new DataGridLength(73,  DataGridLengthUnitType.Star) }, // 73* ≈ TAG's share at full screen
         };
 
-        // Change detection: compare col.Width.Value (assigned logical width, exact) not ActualWidth
+        // Change detection: any column NOT at its star default (or not visible) triggers a reset.
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
@@ -8640,9 +8646,9 @@ Read-Host 'Press Enter to close'
                 if (h == "TAG") continue;
                 if (defaultWidths.TryGetValue(h, out var dw))
                 {
-                    bool isPixel = col.Width.UnitType == System.Windows.Controls.DataGridLengthUnitType.Pixel;
-                    if (!isPixel || Math.Abs(col.Width.Value - dw.Value) > 0.5)
-                    { hasChanges = true; break; }
+                    bool atDefault = col.Width.UnitType == DataGridLengthUnitType.Star
+                                  && Math.Abs(col.Width.Value - dw.Value) < 0.01;
+                    if (!atDefault) { hasChanges = true; break; }
                 }
             }
         }
@@ -8666,8 +8672,8 @@ Read-Host 'Press Enter to close'
                     if (defaultWidths.TryGetValue(key, out var w))
                     {
                         col.Width = w;
-                        if (w.UnitType == DataGridLengthUnitType.Pixel)
-                            UiPrefs.Set($"ColWidth_{key}", (int)w.Value);
+                        // Star widths are the default state — not persisted to UiPrefs.
+                        // Only explicit pixel widths (from manual resizes) are saved.
                     }
                 }
             }
