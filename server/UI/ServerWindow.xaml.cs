@@ -8613,7 +8613,9 @@ Read-Host 'Press Enter to close'
             { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
-        // Detect whether the grid already matches the default state — if so, no-op
+        // Change detection: compare col.Width.Value (assigned logical width, exact) not ActualWidth
+        // (ActualWidth is post-layout and can drift slightly from the assigned value, causing
+        //  repeated clicks to always detect a "change" and keep nudging columns)
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
@@ -8626,9 +8628,12 @@ Read-Host 'Press Enter to close'
                 if (string.IsNullOrEmpty(h)) continue;
                 if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
                 if (h == "TAG") continue;
-                if (defaultWidths.TryGetValue(h, out var dw)
-                    && Math.Abs(col.ActualWidth - dw.Value) > 3.0)
-                { hasChanges = true; break; }
+                if (defaultWidths.TryGetValue(h, out var dw))
+                {
+                    bool isPixel = col.Width.UnitType == System.Windows.Controls.DataGridLengthUnitType.Pixel;
+                    if (!isPixel || Math.Abs(col.Width.Value - dw.Value) > 0.5)
+                    { hasChanges = true; break; }
+                }
             }
         }
 
@@ -8649,7 +8654,13 @@ Read-Host 'Press Enter to close'
                     col.Visibility = Visibility.Visible;
                     UiPrefs.Set($"ColVis_{headerName}", 1);
                     if (defaultWidths.TryGetValue(headerName, out var w))
+                    {
                         col.Width = w;
+                        // Write exact defaults to UiPrefs directly — never use ActualWidth here
+                        // because ActualWidth is post-layout and can be slightly off
+                        if (w.UnitType == System.Windows.Controls.DataGridLengthUnitType.Pixel)
+                            UiPrefs.Set($"ColWidth_{headerName}", (int)w.Value);
+                    }
                 }
             }
             GridClients.UpdateLayout();
@@ -8659,7 +8670,8 @@ Read-Host 'Press Enter to close'
             _suppressColumnSave = false;
         }
 
-        SaveGridColumnWidths();
+        // Do NOT call SaveGridColumnWidths() here — exact defaults already written above;
+        // calling it would overwrite with ActualWidth values that may be slightly off
         UpdateSettingsCheckboxStates();
         RefreshClientFilters();
     }
