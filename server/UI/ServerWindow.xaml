@@ -2008,9 +2008,6 @@
                                         <DataGridTextColumn Header="ID"       Binding="{Binding Id}"                                  Width="65"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                         <!-- CAM: shows camera icon when webcam detected -->
                                         <DataGridTemplateColumn x:Name="ColCamHdr" Header="CAM" Width="44" MinWidth="0" SortMemberPath="CameraIcon">
-                                            <DataGridTemplateColumn.CellStyle>
-                                                <Style TargetType="DataGridCell" BasedOn="{StaticResource SMainDGCell}"/>
-                                            </DataGridTemplateColumn.CellStyle>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -2045,9 +2042,6 @@
                                         <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="75"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="160" MinWidth="0" FontSize="11"/>
                                         <DataGridTemplateColumn Header="PING" Width="50" MinWidth="0" SortMemberPath="PingMs">
-                                            <DataGridTemplateColumn.CellStyle>
-                                                <Style TargetType="DataGridCell" BasedOn="{StaticResource SMainDGCell}"/>
-                                            </DataGridTemplateColumn.CellStyle>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
