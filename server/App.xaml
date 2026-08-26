@@ -819,7 +819,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
-                        <Grid>
+                        <Grid UseLayoutRounding="True">
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
                                     BorderThickness="0">

@@ -1578,19 +1578,61 @@ public partial class ServerWindow : ThemedWindow
 
     // ── Column width persistence ──────────────────────────────────────────────
 
+    // Per-column (full, min) pixel widths for the Online DataGrid.
+    // Full = ideal width at 1604 px+ available; min = minimum readable across all 10 UI languages.
+    // Interpolates between min and full based on available grid width so no column gets unreadably tiny.
+    private static readonly Dictionary<string, (int full, int min)> _onlineColSpec =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["IP"]       = (120, 90),   // IPv4 content
+            ["STATUS"]   = (70,  50),   // icon column
+            ["COUNTRY"]  = (90,  65),   // flag + 2-letter code
+            ["USER"]     = (110, 95),   // "UTILISATEUR"/"ПОЛЬЗОВАТЕЛЬ" header + "Administrator" content
+            ["OS"]       = (85,  60),
+            ["MACHINE"]  = (105, 78),   // "COMPUTER"/"RECHNER" header
+            ["PRIV"]     = (100, 82),   // "PRIVILEGIO"/"ПРИВИЛЕГИЯ" header
+            ["ID"]       = (65,  50),
+            ["CAM"]      = (44,  44),   // icon column, fixed
+            ["CPU"]      = (150, 78),   // long content, always truncated
+            ["LOAD"]     = (50,  44),
+            ["AV"]       = (120, 78),
+            ["RAM"]      = (75,  50),
+            ["GPU"]      = (160, 78),   // long content, always truncated
+            ["PING"]     = (50,  44),
+            ["WINDOW"]   = (115, 80),   // "FINESTRA"/"PENCERE" header
+            ["1ST SEEN"] = (95,  80),   // "İLK GÖRÜŞ"/"1ÈRE VUE" header + "2024-01-15" content
+        };
+    // kFull=1604, kMin=1146
+
     private void RestoreGridColumnWidths()
     {
+        bool hasSaved = false;
         foreach (var col in GridClients.Columns)
         {
-            string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
-            if (header == "TAG")
+            string h = col.Header?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(h) && h != "TAG" && UiPrefs.GetInt($"ColWidth_{h}", 0) > 20)
+            { hasSaved = true; break; }
+        }
+
+        if (hasSaved)
+        {
+            foreach (var col in GridClients.Columns)
             {
-                col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
-                continue;
+                string header = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(header)) continue;
+                if (header == "TAG")
+                {
+                    col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                    continue;
+                }
+                int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
+                if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
             }
-            int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
-            if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                new Action(ApplyAdaptiveOnlineWidths));
         }
     }
 
@@ -1628,36 +1670,49 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
-    private static readonly Dictionary<string, int> _allClientsDefaultPx =
+    // Per-column (full, min) pixel widths for the All Clients DataGrid.
+    // Full = ideal at 1004 px+ available; min = minimum readable across all 10 UI languages.
+    private static readonly Dictionary<string, (int full, int min)> _allClientsColSpec =
         new(StringComparer.OrdinalIgnoreCase)
         {
-            { "IP",         120 },
-            { "ID",          65 },
-            { "USER",       100 },
-            { "COUNTRY",     80 },
-            { "MACHINE",    110 },
-            { "OS",          85 },
-            { "AV",         105 },
-            { "RAM",         75 },
-            { "FIRST SEEN", 132 },
-            { "LAST SEEN",  132 },
+            ["IP"]         = (120, 90),
+            ["ID"]         = (65,  50),
+            ["USER"]       = (100, 90),  // "UTILISATEUR"/"ПОЛЬЗОВАТЕЛЬ" header
+            ["COUNTRY"]    = (80,  65),
+            ["MACHINE"]    = (110, 80),
+            ["OS"]         = (85,  60),
+            ["AV"]         = (105, 78),
+            ["RAM"]        = (75,  50),
+            ["FIRST SEEN"] = (132, 100), // "1ÈRE VUE"/"İLK GÖRÜŞ" header + datetime
+            ["LAST SEEN"]  = (132, 100), // "DERNIÈRE VUE"(fr=12 chars) header
         };
+    // kFull=1004, kMin=763
 
     private void RestoreAllClientsColumnWidths()
     {
+        bool hasSaved = false;
         foreach (var col in GridAllClients.Columns)
         {
-            string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header)) continue;
-            if (header == "TAG")
+            string h = col.Header?.ToString() ?? "";
+            if (!string.IsNullOrEmpty(h) && h != "TAG" && UiPrefs.GetInt($"AllColWidth_{h}", 0) > 20)
+            { hasSaved = true; break; }
+        }
+
+        if (hasSaved)
+        {
+            foreach (var col in GridAllClients.Columns)
             {
-                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                continue;
+                string header = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(header)) continue;
+                if (header == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                int saved = UiPrefs.GetInt($"AllColWidth_{header}", 0);
+                if (saved > 20) col.Width = new DataGridLength(saved);
             }
-            int saved = UiPrefs.GetInt($"AllColWidth_{header}", 0);
-            int px = saved > 20 ? saved
-                   : _allClientsDefaultPx.TryGetValue(header, out int def) ? def : 0;
-            if (px > 0) col.Width = new DataGridLength(px);
+        }
+        else
+        {
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                new Action(ApplyAdaptiveAllClientsWidths));
         }
     }
 
@@ -5385,10 +5440,13 @@ Read-Host 'Press Enter to close'
         bool nowNormal    = WindowState == WindowState.Normal;
         if (nowNormal    &&  _isFullscreen) _isFullscreen = false;
         if (nowMaximized && !_isFullscreen) _isFullscreen = true;
-        // Re-fit column widths after the layout pass settles for the new window size.
+        // Re-fit column widths after layout settles for the new window size.
         if (nowMaximized || nowNormal)
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                new Action(ApplyAdaptiveOnlineWidths));
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+            {
+                ApplyAdaptiveOnlineWidths();
+                ApplyAdaptiveAllClientsWidths();
+            }));
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -8639,25 +8697,20 @@ Read-Host 'Press Enter to close'
             double gw = GridClients.ActualWidth;
             if (gw >= 50)
             {
-                double sc = Math.Max(Math.Min((gw - 8.0 - 60.0) / 1604.0, 1.0), 0.45);
-                int Exp(double v) => (int)Math.Max(v * sc, 20);
-                var exp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
-                {
-                    { "IP",       Exp(120) }, { "STATUS",   Exp(70)  }, { "COUNTRY",  Exp(90)  },
-                    { "USER",     Exp(110) }, { "OS",       Exp(85)  }, { "MACHINE",  Exp(105) },
-                    { "PRIV",     Exp(100) }, { "ID",       Exp(65)  }, { "CAM",      Exp(44)  },
-                    { "CPU",      Exp(150) }, { "LOAD",     Exp(50)  }, { "AV",       Exp(120) },
-                    { "RAM",      Exp(75)  }, { "GPU",      Exp(160) }, { "PING",     Exp(50)  },
-                    { "WINDOW",   Exp(115) }, { "1ST SEEN", Exp(95)  },
-                };
+                double avail = gw - 8.0 - 60.0;
+                const double kF = 1604.0, kM = 1146.0;
+                double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
                 foreach (var col in GridClients.Columns)
                 {
                     if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
                     string h = GetOriginalKey(col);
                     if (string.IsNullOrEmpty(h) || h == "TAG") continue;
-                    if (exp.TryGetValue(h, out int ep) &&
-                        (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0))
-                    { hasChanges = true; break; }
+                    if (_onlineColSpec.TryGetValue(h, out var spec))
+                    {
+                        int ep = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
+                        if (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0)
+                        { hasChanges = true; break; }
+                    }
                 }
             }
             else { hasChanges = true; }
@@ -8686,15 +8739,16 @@ Read-Host 'Press Enter to close'
         RefreshClientFilters();
     }
 
-    // Pixel widths scaled to the current GridClients width so columns fill the window
-    // without horizontal overflow. Scale clamps to [0.45, 1.0] of the full 1604 px defaults.
-    // TAG stays as Star(1) to absorb any remaining space.
+    // Interpolates each column between its min and full width based on available grid space.
+    // kFull=1604 (sum of full widths), kMin=1146 (sum of minimum readable widths, all languages).
+    // Below kMin: use per-column minimums (scrollbar visible). Above kFull: use full defaults.
     private void ApplyAdaptiveOnlineWidths()
     {
         double gridWidth = GridClients.ActualWidth;
         if (gridWidth < 50) return;
-        double scale = Math.Max(Math.Min((gridWidth - 8.0 - 60.0) / 1604.0, 1.0), 0.45);
-        int Px(double v) => (int)Math.Max(v * scale, 20);
+        double avail = gridWidth - 8.0 - 60.0; // scrollbar (8) + TAG MinWidth reserve (60)
+        const double kFull = 1604.0, kMin = 1146.0;
+        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
 
         _suppressColumnSave = true;
         try
@@ -8704,39 +8758,43 @@ Read-Host 'Press Enter to close'
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
                 if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
-                int px = key switch
-                {
-                    "IP"       => Px(120),
-                    "STATUS"   => Px(70),
-                    "COUNTRY"  => Px(90),
-                    "USER"     => Px(110),
-                    "OS"       => Px(85),
-                    "MACHINE"  => Px(105),
-                    "PRIV"     => Px(100),
-                    "ID"       => Px(65),
-                    "CAM"      => Px(44),
-                    "CPU"      => Px(150),
-                    "LOAD"     => Px(50),
-                    "AV"       => Px(120),
-                    "RAM"      => Px(75),
-                    "GPU"      => Px(160),
-                    "PING"     => Px(50),
-                    "WINDOW"   => Px(115),
-                    "1ST SEEN" => Px(95),
-                    _ => 0
-                };
-                if (px > 0)
-                {
-                    col.Width = new DataGridLength(px);
-                    UiPrefs.Set($"ColWidth_{key}", px);
-                }
+                if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
+                int px = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
+                col.Width = new DataGridLength(px);
+                UiPrefs.Set($"ColWidth_{key}", px);
             }
             GridClients.UpdateLayout();
         }
-        finally
+        finally { _suppressColumnSave = false; }
+    }
+
+    // Same adaptive interpolation for All Clients DataGrid.
+    // kFull=1004, kMin=763 → fits without scrollbar from ~831 px grid width.
+    private void ApplyAdaptiveAllClientsWidths()
+    {
+        if (GridAllClients == null) return;
+        double gridWidth = GridAllClients.ActualWidth;
+        if (gridWidth < 50) return;
+        double avail = gridWidth - 8.0 - 60.0;
+        const double kFull = 1004.0, kMin = 763.0;
+        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
+
+        _suppressColumnSave = true;
+        try
         {
-            _suppressColumnSave = false;
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
+                int px = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
+                col.Width = new DataGridLength(px);
+                UiPrefs.Set($"AllColWidth_{key}", px);
+            }
+            GridAllClients.UpdateLayout();
         }
+        finally { _suppressColumnSave = false; }
     }
 
     private void RefreshClientFilters()
