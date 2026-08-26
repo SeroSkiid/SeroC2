@@ -6412,9 +6412,9 @@ Read-Host 'Press Enter to close'
                 res["BtnHoverBorderBrush"]     = B("#4A5090");
                 res["BtnPressedBgBrush"]       = B("#1A1C28");
                 res["BtnFgBrush"]              = B("#E0E8F0");
-                res["ColHeaderBgBrush"]        = B("#22243C");
+                res["ColHeaderBgBrush"]        = B("#252840");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
-                res["ColHeaderBorderBrush"]    = B("#252840");
+                res["ColHeaderBorderBrush"]    = B("#353858");
                 break;
 
             case "VS2017Blue":
@@ -7032,9 +7032,9 @@ Read-Host 'Press Enter to close'
                 res["BtnHoverBorderBrush"]     = B("#4060A8");
                 res["BtnPressedBgBrush"]       = B("#141820");
                 res["BtnFgBrush"]              = B("#B8C0D8");
-                res["ColHeaderBgBrush"]        = B("#1A1E30");
+                res["ColHeaderBgBrush"]        = B("#1E2438");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
-                res["ColHeaderBorderBrush"]    = B("#242A40");
+                res["ColHeaderBorderBrush"]    = B("#2E3858");
                 break;
 
             case "Office2019HighContrast":
