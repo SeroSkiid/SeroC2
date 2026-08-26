@@ -1603,15 +1603,27 @@ public partial class ServerWindow : ThemedWindow
             desc.AddValueChanged(col, (_, _) => SaveGridColumnWidths());
     }
 
+    // Returns the original English header key for a column regardless of current language translation.
+    // DataGridTextColumns are tracked in _colOriginalHeader; named TemplateColumns are handled explicitly.
+    private string GetOriginalKey(System.Windows.Controls.DataGridColumn col)
+    {
+        if (col is System.Windows.Controls.DataGridTextColumn tc &&
+            _colOriginalHeader.TryGetValue(tc, out var orig))
+            return orig;
+        if (col == ColStatusHdr) return "STATUS";
+        if (col == ColCamHdr)    return "CAM";
+        return col.Header?.ToString() ?? "";
+    }
+
     private void SaveGridColumnWidths()
     {
         if (_suppressColumnSave) return;
         foreach (var col in GridClients.Columns)
         {
-            string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
             double w = col.ActualWidth;
-            if (w > 0) UiPrefs.Set($"ColWidth_{header}", (int)w);
+            if (w > 0) UiPrefs.Set($"ColWidth_{key}", (int)w);
         }
     }
 
@@ -1645,10 +1657,10 @@ public partial class ServerWindow : ThemedWindow
         if (_suppressColumnSave) return;
         foreach (var col in GridAllClients.Columns)
         {
-            string header = col.Header?.ToString() ?? "";
-            if (string.IsNullOrEmpty(header) || header == "TAG") continue;
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
             double w = col.ActualWidth;
-            if (w > 0) UiPrefs.Set($"AllColWidth_{header}", (int)w);
+            if (w > 0) UiPrefs.Set($"AllColWidth_{key}", (int)w);
         }
     }
 
@@ -8624,7 +8636,7 @@ Read-Host 'Press Enter to close'
         {
             foreach (var col in GridClients.Columns)
             {
-                string h = col.Header?.ToString() ?? "";
+                string h = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(h)) continue;
                 if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
                 if (h == "TAG") continue;
@@ -8648,18 +8660,16 @@ Read-Host 'Press Enter to close'
         {
             foreach (var col in GridClients.Columns)
             {
-                string headerName = col.Header?.ToString() ?? "";
-                if (!string.IsNullOrEmpty(headerName))
+                string key = GetOriginalKey(col);
+                if (!string.IsNullOrEmpty(key))
                 {
                     col.Visibility = Visibility.Visible;
-                    UiPrefs.Set($"ColVis_{headerName}", 1);
-                    if (defaultWidths.TryGetValue(headerName, out var w))
+                    UiPrefs.Set($"ColVis_{key}", 1);
+                    if (defaultWidths.TryGetValue(key, out var w))
                     {
                         col.Width = w;
-                        // Write exact defaults to UiPrefs directly — never use ActualWidth here
-                        // because ActualWidth is post-layout and can be slightly off
                         if (w.UnitType == System.Windows.Controls.DataGridLengthUnitType.Pixel)
-                            UiPrefs.Set($"ColWidth_{headerName}", (int)w.Value);
+                            UiPrefs.Set($"ColWidth_{key}", (int)w.Value);
                     }
                 }
             }

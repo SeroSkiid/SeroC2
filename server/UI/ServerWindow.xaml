@@ -2061,9 +2061,6 @@
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="115" MinWidth="0"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="95"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="1" SortMemberPath="Tag" CanUserResize="True">
-                                            <DataGridTemplateColumn.CellStyle>
-                                                <Style TargetType="DataGridCell" BasedOn="{StaticResource SMainDGCell}"/>
-                                            </DataGridTemplateColumn.CellStyle>
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2335,7 +2332,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch" RowHeight="24"
-                                      CellStyle="{StaticResource SMainDGCellNoSel}"
+                                      CellStyle="{StaticResource SMainDGCell}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Resources>
                                     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
@@ -2383,9 +2380,6 @@
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="1" SortMemberPath="Tag" CanUserResize="True">
-                                        <DataGridTemplateColumn.CellStyle>
-                                            <Style TargetType="DataGridCell" BasedOn="{StaticResource SMainDGCellNoSel}"/>
-                                        </DataGridTemplateColumn.CellStyle>
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>
