@@ -2332,6 +2332,7 @@
                                       SelectionChanged="GridAllClients_SelectionChanged"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
+                                      Sorting="GridAllClients_Sorting"
                                       Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                       BorderThickness="0" RowBackground="{DynamicResource InputBgBrush}"
                                       GridLinesVisibility="None"

