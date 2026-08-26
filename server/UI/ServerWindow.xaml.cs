@@ -7070,7 +7070,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#B8C0D8");
                 res["ColHeaderBgBrush"]        = B("#1E2438");
                 res["ColHeaderFgBrush"]        = B("#6878A8");
-                res["ColHeaderBorderBrush"]    = B("#485A80");
+                res["ColHeaderBorderBrush"]    = B("#607090");
                 break;
 
             case "Office2019HighContrast":
@@ -7237,7 +7237,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#E0E4F8");
                 res["ColHeaderBgBrush"]        = B("#0D0E1A");
                 res["ColHeaderFgBrush"]        = B("#8090B8");
-                res["ColHeaderBorderBrush"]    = B("#3A4568");
+                res["ColHeaderBorderBrush"]    = B("#606888");
                 res["WindowOutlineBrush"]      = B("#1E2038");   // navy inner border matching SeroDark palette
                 res["WindowOutlineThickness"]  = new System.Windows.Thickness(1);
                 break;
@@ -7279,7 +7279,7 @@ Read-Host 'Press Enter to close'
                 res["BtnFgBrush"]              = B("#D0D8E8");
                 res["ColHeaderBgBrush"]        = B("#1E2238");
                 res["ColHeaderFgBrush"]        = B("#7880A0");
-                res["ColHeaderBorderBrush"]    = B("#404878");
+                res["ColHeaderBorderBrush"]    = B("#606888");
                 break;
 
         }
@@ -8627,33 +8627,32 @@ Read-Host 'Press Enter to close'
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
     {
-        // Star weights mirror the original pixel defaults so proportions are preserved.
-        // Using Star means all columns scale with the window — no horizontal overflow after Reset,
-        // no flicker when resizing. The weights sum to 1677 so in a ~1677px grid (full screen)
-        // each column gets almost exactly its original pixel width.
+        // Fixed pixel widths — columns stay at these values regardless of window size.
+        // The horizontal scrollbar (already visible) handles small windows.
+        // TAG is kept as Star so it fills the remaining space without overflowing.
         var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
         {
-            { "IP",       new DataGridLength(120, DataGridLengthUnitType.Star) },
-            { "STATUS",   new DataGridLength(70,  DataGridLengthUnitType.Star) },
-            { "COUNTRY",  new DataGridLength(90,  DataGridLengthUnitType.Star) },
-            { "USER",     new DataGridLength(110, DataGridLengthUnitType.Star) },
-            { "OS",       new DataGridLength(85,  DataGridLengthUnitType.Star) },
-            { "MACHINE",  new DataGridLength(105, DataGridLengthUnitType.Star) },
-            { "PRIV",     new DataGridLength(100, DataGridLengthUnitType.Star) },
-            { "ID",       new DataGridLength(65,  DataGridLengthUnitType.Star) },
-            { "CAM",      new DataGridLength(44,  DataGridLengthUnitType.Star) },
-            { "CPU",      new DataGridLength(150, DataGridLengthUnitType.Star) },
-            { "LOAD",     new DataGridLength(50,  DataGridLengthUnitType.Star) },
-            { "AV",       new DataGridLength(120, DataGridLengthUnitType.Star) },
-            { "RAM",      new DataGridLength(75,  DataGridLengthUnitType.Star) },
-            { "GPU",      new DataGridLength(160, DataGridLengthUnitType.Star) },
-            { "PING",     new DataGridLength(50,  DataGridLengthUnitType.Star) },
-            { "WINDOW",   new DataGridLength(115, DataGridLengthUnitType.Star) },
-            { "1ST SEEN", new DataGridLength(95,  DataGridLengthUnitType.Star) },
-            { "TAG",      new DataGridLength(73,  DataGridLengthUnitType.Star) }, // 73* ≈ TAG's share at full screen
+            { "IP",       new DataGridLength(120) },
+            { "STATUS",   new DataGridLength(70)  },
+            { "COUNTRY",  new DataGridLength(90)  },
+            { "USER",     new DataGridLength(110) },
+            { "OS",       new DataGridLength(85)  },
+            { "MACHINE",  new DataGridLength(105) },
+            { "PRIV",     new DataGridLength(100) },
+            { "ID",       new DataGridLength(65)  },
+            { "CAM",      new DataGridLength(44)  },
+            { "CPU",      new DataGridLength(150) },
+            { "LOAD",     new DataGridLength(50)  },
+            { "AV",       new DataGridLength(120) },
+            { "RAM",      new DataGridLength(75)  },
+            { "GPU",      new DataGridLength(160) },
+            { "PING",     new DataGridLength(50)  },
+            { "WINDOW",   new DataGridLength(115) },
+            { "1ST SEEN", new DataGridLength(95)  },
+            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
         };
 
-        // Change detection: any column NOT at its star default (or not visible) triggers a reset.
+        // Change detection: any column not at its pixel default (or hidden) triggers a reset.
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
@@ -8668,8 +8667,8 @@ Read-Host 'Press Enter to close'
                 if (h == "TAG") continue;
                 if (defaultWidths.TryGetValue(h, out var dw))
                 {
-                    bool atDefault = col.Width.UnitType == DataGridLengthUnitType.Star
-                                  && Math.Abs(col.Width.Value - dw.Value) < 0.01;
+                    bool atDefault = col.Width.UnitType == DataGridLengthUnitType.Pixel
+                                  && Math.Abs(col.Width.Value - dw.Value) < 0.5;
                     if (!atDefault) { hasChanges = true; break; }
                 }
             }
@@ -8694,8 +8693,8 @@ Read-Host 'Press Enter to close'
                     if (defaultWidths.TryGetValue(key, out var w))
                     {
                         col.Width = w;
-                        // Star widths are the default state — not persisted to UiPrefs.
-                        // Only explicit pixel widths (from manual resizes) are saved.
+                        if (key != "TAG" && w.UnitType == DataGridLengthUnitType.Pixel)
+                            UiPrefs.Set($"ColWidth_{key}", (int)w.Value);
                     }
                 }
             }
@@ -8706,8 +8705,8 @@ Read-Host 'Press Enter to close'
             _suppressColumnSave = false;
         }
 
-        // Do NOT call SaveGridColumnWidths() here — exact defaults already written above;
-        // calling it would overwrite with ActualWidth values that may be slightly off
+        // Pixel defaults are already written to UiPrefs in the loop above; skip SaveGridColumnWidths()
+        // here to avoid overwriting with ActualWidth values that may be slightly off before layout.
         UpdateSettingsCheckboxStates();
         RefreshClientFilters();
     }
