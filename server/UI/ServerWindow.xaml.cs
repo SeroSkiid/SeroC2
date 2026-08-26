@@ -1628,7 +1628,7 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
-    private static readonly Dictionary<string, double> _allClientsDefaultStars =
+    private static readonly Dictionary<string, int> _allClientsDefaultPx =
         new(StringComparer.OrdinalIgnoreCase)
         {
             { "IP",         120 },
@@ -1651,18 +1651,13 @@ public partial class ServerWindow : ThemedWindow
             if (string.IsNullOrEmpty(header)) continue;
             if (header == "TAG")
             {
-                col.Width = new DataGridLength(73, DataGridLengthUnitType.Star);
+                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 continue;
             }
-            int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
-            if (w > 20)
-            {
-                col.Width = new DataGridLength(w);
-            }
-            else if (_allClientsDefaultStars.TryGetValue(header, out double star))
-            {
-                col.Width = new DataGridLength(star, DataGridLengthUnitType.Star);
-            }
+            int saved = UiPrefs.GetInt($"AllColWidth_{header}", 0);
+            int px = saved > 20 ? saved
+                   : _allClientsDefaultPx.TryGetValue(header, out int def) ? def : 0;
+            if (px > 0) col.Width = new DataGridLength(px);
         }
     }
 
