@@ -852,10 +852,11 @@
                             <!-- Accent bottom bar — hidden by default; slides in on sort/hover -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
                                        Fill="{DynamicResource AccentBrush}" Opacity="0"/>
-                            <!-- Separator — 1px inside right edge; EdgeMode=Aliased = solid, no AA bleed -->
+                            <!-- Separator — 1px tick inset 5px top/bottom; brightens to 0.9 on hover -->
                             <Rectangle x:Name="Separator"
-                                       HorizontalAlignment="Right" Width="1" Margin="0,0,1,0"
+                                       HorizontalAlignment="Right" Width="1" Margin="0,5,1,5"
                                        Fill="{DynamicResource ColHeaderBorderBrush}"
+                                       Opacity="0.45"
                                        SnapsToDevicePixels="True"
                                        RenderOptions.EdgeMode="Aliased"
                                        IsHitTestVisible="False"/>
@@ -889,7 +890,7 @@
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,1 L4,5 L8,1"/>
                                 <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
-                            <!-- Hover: fade overlay bg in (120ms), bring accent bar to full, brighten text -->
+                            <!-- Hover: fade overlay bg in (120ms), bring accent bar to full, brighten separator -->
                             <EventTrigger RoutedEvent="MouseEnter">
                                 <BeginStoryboard>
                                     <Storyboard>
@@ -899,11 +900,14 @@
                                         <DoubleAnimation Storyboard.TargetName="AccentBar"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="1" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="Separator"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.9" Duration="0:0:0.12"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
-                            <!-- Leave: fade out (100ms); FillBehavior=Stop releases hold so sorted-column -->
-                            <!-- opacity (0.80) re-asserts naturally from the property trigger above.      -->
+                            <!-- Leave: fade out (100ms); FillBehavior=Stop releases hold so sorted-column    -->
+                            <!-- opacity (0.80) and Separator local value (0.45) re-assert naturally.      -->
                             <EventTrigger RoutedEvent="MouseLeave">
                                 <BeginStoryboard>
                                     <Storyboard FillBehavior="Stop">
@@ -913,11 +917,19 @@
                                         <DoubleAnimation Storyboard.TargetName="AccentBar"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="0" Duration="0:0:0.10"/>
+                                        <DoubleAnimation Storyboard.TargetName="Separator"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0.45" Duration="0:0:0.10"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                            </Trigger>
+                            <!-- TAG column: right gripper inactive (star must never become pixel) -->
+                            <Trigger Property="CanUserResize" Value="False">
+                                <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
+                                <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
