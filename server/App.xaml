@@ -812,46 +812,52 @@
             <Setter Property="OverridesDefaultStyle" Value="True"/>
             <Setter Property="Background"      Value="{DynamicResource ColHeaderBgBrush}"/>
             <Setter Property="Foreground"      Value="{DynamicResource ColHeaderFgBrush}"/>
-            <Setter Property="FontSize"        Value="10"/>
+            <Setter Property="FontSize"        Value="11"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Cursor"          Value="Hand"/>
             <Setter Property="BorderThickness" Value="0,0,1,0"/>
             <Setter Property="BorderBrush"     Value="{DynamicResource ColHeaderBorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
                         <Grid UseLayoutRounding="True">
+                            <!-- Base background -->
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
-                                    BorderThickness="0">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <ContentPresenter Grid.Column="0"
-                                                      HorizontalAlignment="Left"
-                                                      VerticalAlignment="Center"
-                                                      Margin="10,9"/>
-                                    <Path x:Name="SortArrow" Grid.Column="1"
-                                          Visibility="Collapsed"
-                                          Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
-                                          StrokeLineJoin="Round"
-                                          VerticalAlignment="Center"
-                                          Margin="4,0,10,0"/>
-                                </Grid>
-                            </Border>
-                            <!-- Accent bottom bar — adapts to active theme palette -->
+                                    BorderThickness="0"/>
+                            <!-- Hover overlay — smooth fade via EventTrigger storyboard, never overrides base bg resource -->
+                            <Border x:Name="HoverOverlay"
+                                    Background="{DynamicResource NavHoverBgBrush}"
+                                    Opacity="0"
+                                    IsHitTestVisible="False"/>
+                            <!-- Content row: label + sort chevron -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <ContentPresenter Grid.Column="0"
+                                                  HorizontalAlignment="Left"
+                                                  VerticalAlignment="Center"
+                                                  Margin="10,9"/>
+                                <Path x:Name="SortArrow" Grid.Column="1"
+                                      Visibility="Collapsed"
+                                      Stroke="{DynamicResource AccentBrush}" StrokeThickness="1.5"
+                                      StrokeLineJoin="Round"
+                                      VerticalAlignment="Center"
+                                      Margin="4,0,10,0"/>
+                            </Grid>
+                            <!-- Accent bottom bar — hidden by default; slides in on sort/hover -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
-                                       Fill="{DynamicResource AccentBrush}" Opacity="0.75"/>
-                            <!-- Separator — 1px inside right edge (Margin right=1) so it is never clipped
-                                 at a sub-pixel column boundary; EdgeMode=Aliased = solid, no anti-aliasing. -->
+                                       Fill="{DynamicResource AccentBrush}" Opacity="0"/>
+                            <!-- Separator — 1px inside right edge; EdgeMode=Aliased = solid, no AA bleed -->
                             <Rectangle x:Name="Separator"
                                        HorizontalAlignment="Right" Width="1" Margin="0,0,1,0"
                                        Fill="{DynamicResource ColHeaderBorderBrush}"
                                        SnapsToDevicePixels="True"
                                        RenderOptions.EdgeMode="Aliased"
                                        IsHitTestVisible="False"/>
-                            <!-- Resize grippers — transparent but fully functional -->
+                            <!-- Resize grippers — transparent hit area only -->
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Width="6"
                                    Cursor="SizeWE" Background="Transparent">
                                 <Thumb.Template>
@@ -870,18 +876,46 @@
                             </Thumb>
                         </Grid>
                         <ControlTemplate.Triggers>
+                            <!-- Sort indicators: show chevron + accent bar at 0.8 opacity -->
                             <Trigger Property="SortDirection" Value="Ascending">
                                 <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,5 L4,1 L8,5"/>
+                                <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
                             <Trigger Property="SortDirection" Value="Descending">
                                 <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,1 L4,5 L8,1"/>
+                                <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
+                            <!-- Hover: fade overlay bg in (120ms), bring accent bar to full, brighten text -->
+                            <EventTrigger RoutedEvent="MouseEnter">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12"/>
+                                        <DoubleAnimation Storyboard.TargetName="AccentBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                            <!-- Leave: fade out (100ms); FillBehavior=Stop releases hold so sorted-column -->
+                            <!-- opacity (0.80) re-asserts naturally from the property trigger above.      -->
+                            <EventTrigger RoutedEvent="MouseLeave">
+                                <BeginStoryboard>
+                                    <Storyboard FillBehavior="Stop">
+                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.10"/>
+                                        <DoubleAnimation Storyboard.TargetName="AccentBar"
+                                                         Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.10"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="bd"        Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
-                                <Setter TargetName="AccentBar" Property="Opacity"    Value="1"/>
-                                <Setter Property="Foreground"                        Value="{DynamicResource ContentTextBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
