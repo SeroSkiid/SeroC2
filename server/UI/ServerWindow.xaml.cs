@@ -1643,7 +1643,48 @@ public partial class ServerWindow : ThemedWindow
             .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
                           typeof(System.Windows.Controls.DataGridColumn));
         foreach (var col in GridClients.Columns)
-            desc.AddValueChanged(col, (_, _) => SaveGridColumnWidths());
+        {
+            var c = col;
+            if (GetOriginalKey(c) == "TAG")
+            {
+                // TAG must always stay Star — right-gripper drag converts it to Pixel; snap it back.
+                desc.AddValueChanged(c, (_, _) =>
+                {
+                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    {
+                        _suppressColumnSave = true;
+                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                        _suppressColumnSave = false;
+                    }
+                });
+            }
+            else
+            {
+                desc.AddValueChanged(c, (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    // Resize to ~0px: collapse column and uncheck its settings checkbox.
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel &&
+                        c.Width.Value < 3 && c.Visibility == Visibility.Visible)
+                        CollapseColumnAndUncheck(c);
+                    else
+                        SaveGridColumnWidths();
+                });
+            }
+        }
+    }
+
+    // Collapses a column that was resized to near-zero, persists its hidden state,
+    // and syncs the settings-panel checkbox so the UI stays coherent.
+    private void CollapseColumnAndUncheck(DataGridColumn col)
+    {
+        _suppressColumnSave = true;
+        col.Visibility = Visibility.Collapsed;
+        _suppressColumnSave = false;
+        string key = GetOriginalKey(col);
+        UiPrefs.Set($"ColVis_{key}", 0);
+        SaveGridColumnWidths();
+        UpdateSettingsCheckboxStates();
     }
 
     // Returns the original English header key for a column regardless of current language translation.
@@ -1694,7 +1735,7 @@ public partial class ServerWindow : ThemedWindow
         bool hasSaved = false;
         foreach (var col in GridAllClients.Columns)
         {
-            string h = col.Header?.ToString() ?? "";
+            string h = GetOriginalKey(col);
             if (!string.IsNullOrEmpty(h) && h != "TAG" && UiPrefs.GetInt($"AllColWidth_{h}", 0) > 20)
             { hasSaved = true; break; }
         }
@@ -1703,10 +1744,10 @@ public partial class ServerWindow : ThemedWindow
         {
             foreach (var col in GridAllClients.Columns)
             {
-                string header = col.Header?.ToString() ?? "";
-                if (string.IsNullOrEmpty(header)) continue;
-                if (header == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
-                int saved = UiPrefs.GetInt($"AllColWidth_{header}", 0);
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
         }
@@ -1723,7 +1764,25 @@ public partial class ServerWindow : ThemedWindow
             .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
                           typeof(System.Windows.Controls.DataGridColumn));
         foreach (var col in GridAllClients.Columns)
-            desc.AddValueChanged(col, (_, _) => SaveAllClientsColumnWidths());
+        {
+            var c = col;
+            if (GetOriginalKey(c) == "TAG")
+            {
+                desc.AddValueChanged(c, (_, _) =>
+                {
+                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    {
+                        _suppressColumnSave = true;
+                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                        _suppressColumnSave = false;
+                    }
+                });
+            }
+            else
+            {
+                desc.AddValueChanged(c, (_, _) => SaveAllClientsColumnWidths());
+            }
+        }
     }
 
     private void SaveAllClientsColumnWidths()
@@ -5453,8 +5512,11 @@ Read-Host 'Press Enter to close'
             _isFullscreen = false;
             if (_premaximizeOnlineGridWidth > 50)
             {
-                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth,     1651.0, 1134.0);
-                double tA = ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0,  763.0);
+                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth, 1651.0, 1134.0);
+                // If AllClients tab was never visited its ActualWidth is 0 — default to full (t=1.0).
+                double tA = _premaximizeAllClientsGridWidth > 50
+                    ? ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0, 763.0)
+                    : 1.0;
                 BeginColumnTransition(BuildTransitionTargets(tO, tA));
             }
             else
@@ -8643,6 +8705,7 @@ Read-Host 'Press Enter to close'
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 0);
+                SaveGridColumnWidths();
             };
 
             StackColumnCheckboxes.Children.Add(cb);
@@ -8841,7 +8904,7 @@ Read-Host 'Press Enter to close'
         {
             foreach (var col in GridAllClients.Columns)
             {
-                string key = col.Header?.ToString() ?? "";
+                string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
                 if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
@@ -8882,7 +8945,7 @@ Read-Host 'Press Enter to close'
         {
             foreach (var col in GridAllClients.Columns)
             {
-                string key = col.Header?.ToString() ?? "";
+                string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
                 if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
@@ -8921,7 +8984,7 @@ Read-Host 'Press Enter to close'
         {
             foreach (var col in GridAllClients.Columns)
             {
-                string key = col.Header?.ToString() ?? "";
+                string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key) || key == "TAG") continue;
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
                 double from = col.Width.UnitType == DataGridLengthUnitType.Pixel ? col.Width.Value : spec.min;
