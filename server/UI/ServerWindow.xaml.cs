@@ -1590,7 +1590,7 @@ public partial class ServerWindow : ThemedWindow
                 continue;
             }
             int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
-            if (w > 0) col.Width = new System.Windows.Controls.DataGridLength(w);
+            if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
         }
     }
 
@@ -1627,7 +1627,7 @@ public partial class ServerWindow : ThemedWindow
                 continue;
             }
             int w = UiPrefs.GetInt($"AllColWidth_{header}", 0);
-            if (w > 0) col.Width = new System.Windows.Controls.DataGridLength(w);
+            if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
         }
     }
 
@@ -8600,7 +8600,7 @@ Read-Host 'Press Enter to close'
             { "IP",       new DataGridLength(130) },
             { "STATUS",   new DataGridLength(70)  },
             { "COUNTRY",  new DataGridLength(100) },
-            { "USER",     DataGridLength.Auto     },
+            { "USER",     new DataGridLength(120)  },
             { "OS",       new DataGridLength(80)  },
             { "MACHINE",  new DataGridLength(110) },
             { "PRIV",     new DataGridLength(100) },
@@ -8631,13 +8631,13 @@ Read-Host 'Press Enter to close'
                         col.Width = w;
                 }
             }
+            GridClients.UpdateLayout();
         }
         finally
         {
             _suppressColumnSave = false;
         }
 
-        GridClients.UpdateLayout();
         SaveGridColumnWidths();
         UpdateSettingsCheckboxStates();
         RefreshClientFilters();
