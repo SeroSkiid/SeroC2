@@ -5381,8 +5381,14 @@ Read-Host 'Press Enter to close'
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);
-        if (WindowState == WindowState.Normal && _isFullscreen)
-            _isFullscreen = false;
+        bool nowMaximized = WindowState == WindowState.Maximized;
+        bool nowNormal    = WindowState == WindowState.Normal;
+        if (nowNormal    &&  _isFullscreen) _isFullscreen = false;
+        if (nowMaximized && !_isFullscreen) _isFullscreen = true;
+        // Re-fit column widths after the layout pass settles for the new window size.
+        if (nowMaximized || nowNormal)
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                new Action(ApplyAdaptiveOnlineWidths));
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -8622,51 +8628,39 @@ Read-Host 'Press Enter to close'
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
     {
-        // Fixed pixel widths — columns stay at these values regardless of window size.
-        // The horizontal scrollbar (already visible) handles small windows.
-        // TAG is kept as Star so it fills the remaining space without overflowing.
-        var defaultWidths = new Dictionary<string, DataGridLength>(StringComparer.OrdinalIgnoreCase)
-        {
-            { "IP",       new DataGridLength(120) },
-            { "STATUS",   new DataGridLength(70)  },
-            { "COUNTRY",  new DataGridLength(90)  },
-            { "USER",     new DataGridLength(110) },
-            { "OS",       new DataGridLength(85)  },
-            { "MACHINE",  new DataGridLength(105) },
-            { "PRIV",     new DataGridLength(100) },
-            { "ID",       new DataGridLength(65)  },
-            { "CAM",      new DataGridLength(44)  },
-            { "CPU",      new DataGridLength(150) },
-            { "LOAD",     new DataGridLength(50)  },
-            { "AV",       new DataGridLength(120) },
-            { "RAM",      new DataGridLength(75)  },
-            { "GPU",      new DataGridLength(160) },
-            { "PING",     new DataGridLength(50)  },
-            { "WINDOW",   new DataGridLength(115) },
-            { "1ST SEEN", new DataGridLength(95)  },
-            { "TAG",      new DataGridLength(1, DataGridLengthUnitType.Star) },
-        };
-
-        // Change detection: any column not at its pixel default (or hidden) triggers a reset.
+        // Change detection: compare current widths against the scale-adjusted defaults for
+        // the current window width so Reset is a no-op only when nothing has changed.
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
 
         if (!hasChanges)
         {
-            foreach (var col in GridClients.Columns)
+            double gw = GridClients.ActualWidth;
+            if (gw >= 50)
             {
-                string h = GetOriginalKey(col);
-                if (string.IsNullOrEmpty(h)) continue;
-                if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
-                if (h == "TAG") continue;
-                if (defaultWidths.TryGetValue(h, out var dw))
+                double sc = Math.Max(Math.Min((gw - 8.0 - 60.0) / 1604.0, 1.0), 0.45);
+                int Exp(double v) => (int)Math.Max(v * sc, 20);
+                var exp = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
                 {
-                    bool atDefault = col.Width.UnitType == DataGridLengthUnitType.Pixel
-                                  && Math.Abs(col.Width.Value - dw.Value) < 0.5;
-                    if (!atDefault) { hasChanges = true; break; }
+                    { "IP",       Exp(120) }, { "STATUS",   Exp(70)  }, { "COUNTRY",  Exp(90)  },
+                    { "USER",     Exp(110) }, { "OS",       Exp(85)  }, { "MACHINE",  Exp(105) },
+                    { "PRIV",     Exp(100) }, { "ID",       Exp(65)  }, { "CAM",      Exp(44)  },
+                    { "CPU",      Exp(150) }, { "LOAD",     Exp(50)  }, { "AV",       Exp(120) },
+                    { "RAM",      Exp(75)  }, { "GPU",      Exp(160) }, { "PING",     Exp(50)  },
+                    { "WINDOW",   Exp(115) }, { "1ST SEEN", Exp(95)  },
+                };
+                foreach (var col in GridClients.Columns)
+                {
+                    if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
+                    string h = GetOriginalKey(col);
+                    if (string.IsNullOrEmpty(h) || h == "TAG") continue;
+                    if (exp.TryGetValue(h, out int ep) &&
+                        (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0))
+                    { hasChanges = true; break; }
                 }
             }
+            else { hasChanges = true; }
         }
 
         if (!hasChanges) return;
@@ -8675,22 +8669,66 @@ Read-Host 'Press Enter to close'
         _adminFilterOnly = false;
         if (TxtSearch != null) TxtSearch.Text = "";
 
+        // Restore visibility before applying widths.
         _suppressColumnSave = true;
         try
         {
             foreach (var col in GridClients.Columns)
             {
                 string key = GetOriginalKey(col);
-                if (!string.IsNullOrEmpty(key))
+                if (!string.IsNullOrEmpty(key)) { col.Visibility = Visibility.Visible; UiPrefs.Set($"ColVis_{key}", 1); }
+            }
+        }
+        finally { _suppressColumnSave = false; }
+
+        ApplyAdaptiveOnlineWidths();
+        UpdateSettingsCheckboxStates();
+        RefreshClientFilters();
+    }
+
+    // Pixel widths scaled to the current GridClients width so columns fill the window
+    // without horizontal overflow. Scale clamps to [0.45, 1.0] of the full 1604 px defaults.
+    // TAG stays as Star(1) to absorb any remaining space.
+    private void ApplyAdaptiveOnlineWidths()
+    {
+        double gridWidth = GridClients.ActualWidth;
+        if (gridWidth < 50) return;
+        double scale = Math.Max(Math.Min((gridWidth - 8.0 - 60.0) / 1604.0, 1.0), 0.45);
+        int Px(double v) => (int)Math.Max(v * scale, 20);
+
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                int px = key switch
                 {
-                    col.Visibility = Visibility.Visible;
-                    UiPrefs.Set($"ColVis_{key}", 1);
-                    if (defaultWidths.TryGetValue(key, out var w))
-                    {
-                        col.Width = w;
-                        if (key != "TAG" && w.UnitType == DataGridLengthUnitType.Pixel)
-                            UiPrefs.Set($"ColWidth_{key}", (int)w.Value);
-                    }
+                    "IP"       => Px(120),
+                    "STATUS"   => Px(70),
+                    "COUNTRY"  => Px(90),
+                    "USER"     => Px(110),
+                    "OS"       => Px(85),
+                    "MACHINE"  => Px(105),
+                    "PRIV"     => Px(100),
+                    "ID"       => Px(65),
+                    "CAM"      => Px(44),
+                    "CPU"      => Px(150),
+                    "LOAD"     => Px(50),
+                    "AV"       => Px(120),
+                    "RAM"      => Px(75),
+                    "GPU"      => Px(160),
+                    "PING"     => Px(50),
+                    "WINDOW"   => Px(115),
+                    "1ST SEEN" => Px(95),
+                    _ => 0
+                };
+                if (px > 0)
+                {
+                    col.Width = new DataGridLength(px);
+                    UiPrefs.Set($"ColWidth_{key}", px);
                 }
             }
             GridClients.UpdateLayout();
@@ -8699,11 +8737,6 @@ Read-Host 'Press Enter to close'
         {
             _suppressColumnSave = false;
         }
-
-        // Pixel defaults are already written to UiPrefs in the loop above; skip SaveGridColumnWidths()
-        // here to avoid overwriting with ActualWidth values that may be slightly off before layout.
-        UpdateSettingsCheckboxStates();
-        RefreshClientFilters();
     }
 
     private void RefreshClientFilters()
