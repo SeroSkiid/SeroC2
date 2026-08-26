@@ -719,7 +719,7 @@
                                     <ColumnDefinition Width="*"/>
                                 </SelectiveScrollingGrid.ColumnDefinitions>
                                 <DataGridRowHeader Grid.Column="0"
-                                    SelectiveScrollingGrid.SelectiveScrollingOrientation="Fixed"/>
+                                    SelectiveScrollingGrid.SelectiveScrollingOrientation="None"/>
                                 <DataGridCellsPresenter Grid.Column="1"
                                     ItemsPanel="{TemplateBinding ItemsPanel}"
                                     SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
