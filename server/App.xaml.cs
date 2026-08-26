@@ -60,11 +60,12 @@ public partial class App : Application
             e.Handled = true;
             return;
         }
-        // Unknown crash — log full details live and show dialog
+        // Unknown crash — log full details live, show dialog, then let the process terminate.
+        // Do NOT set e.Handled = true here: swallowing unknown exceptions lets the app continue
+        // in a corrupted state. WPF will terminate after the handler returns.
         var shortMsg = $"{e.Exception?.GetType().Name}: {e.Exception?.Message?.Split('\n')[0]}";
         LiveLog?.Invoke($"[CRASH] {shortMsg}");
         LiveLog?.Invoke($"[CRASH] Stack: {e.Exception?.StackTrace?.Split('\n').FirstOrDefault()?.Trim()}");
-        e.Handled = true;
         MessageBox.Show(e.Exception?.ToString() ?? "Unknown error",
                         "Crash — voir crash.log", MessageBoxButton.OK, MessageBoxImage.Error);
     }

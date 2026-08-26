@@ -14,7 +14,6 @@
         Closing="ServerWindow_Closing">
 
     <dx:ThemedWindow.Resources>
-        <BooleanToVisibilityConverter x:Key="BoolToVis" />
         <!-- Row-level defaults — overridden per-theme by ApplyTheme code -->
         <Thickness x:Key="RowBorderThicknessKey">0</Thickness>
 
@@ -1571,7 +1570,7 @@
                 <!-- Tab content (no tab strip) -->
                 <TabControl x:Name="MainTabControl" Grid.Column="1"
                             Background="Transparent" BorderThickness="0"
-                            Foreground="{StaticResource TextBrush}"
+                            Foreground="{DynamicResource TextBrush}"
                             SelectionChanged="MainTabControl_SelectionChanged">
                     <TabControl.Template>
                         <ControlTemplate TargetType="TabControl">

@@ -84,6 +84,9 @@
         <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#606888"/>
         <!-- Hover bg — auto-computed by ApplyTheme: dark→+20 RGB brighter, light→-18 RGB darker -->
         <SolidColorBrush x:Key="ColHeaderHoverBrush"  Color="#21223A"/>
+        <!-- Accent color scalar — overridden by ApplyTheme(); default guards SlimSlider in feature windows
+             that open before the first ApplyTheme() call completes. -->
+        <Color x:Key="AccentColor">#5B6ACF</Color>
         <!-- Buttons -->
         <SolidColorBrush x:Key="BtnBgBrush"           Color="#141526"/>
         <SolidColorBrush x:Key="BtnBorderBrush"       Color="#1E2038"/>

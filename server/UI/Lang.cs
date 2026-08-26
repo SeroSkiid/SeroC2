@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace SeroServer.UI
 {
@@ -196,7 +196,6 @@ namespace SeroServer.UI
             ["SETT_CHK_DEVLOGS"]       = new() { ["en"]="Enable diagnostic logging",    ["fr"]="Journaux de diagnostic",         ["es"]="Registro de diagnóstico",    ["de"]="Diagnoseprotokoll aktivieren",  ["pt"]="Registro de diagnóstico",["it"]="Abilita log diagnostici", ["ru"]="Журнал диагностики",["zh"]="启用诊断日志",["ar"]="تسجيل التشخيص",["tr"]="Tanılama günlüğü" },
             ["SETT_CHK_HIDE_LOGO"]     = new() { ["en"]="Hide background logo",         ["fr"]="Masquer le logo d'arrière-plan", ["es"]="Ocultar logotipo de fondo",  ["de"]="Hintergrundlogo ausblenden",    ["pt"]="Ocultar logotipo de fundo",["it"]="Nascondi logo sfondo",  ["ru"]="Скрыть логотип фона",["zh"]="隐藏背景图标",["ar"]="إخفاء شعار الخلفية",["tr"]="Arka plan logosunu gizle" },
             ["SETT_CHK_SHOW_SECONDS"]  = new() { ["en"]="Show seconds in timestamps",   ["fr"]="Afficher les secondes",          ["es"]="Mostrar segundos",           ["de"]="Sekunden in Zeitstempeln",      ["pt"]="Mostrar segundos",       ["it"]="Mostra secondi",         ["ru"]="Показывать секунды",["zh"]="时间戳显示秒",["ar"]="إظهار الثواني",["tr"]="Zaman damgasında saniye" },
-            ["SETT_CHK_HIDE_ACTIVITY"] = new() { ["en"]="Hide activity log panel",      ["fr"]="Masquer le journal d'activité",  ["es"]="Ocultar panel de actividad", ["de"]="Aktivitätsprotokoll ausblenden",["pt"]="Ocultar painel atividade",["it"]="Nascondi log attività",  ["ru"]="Скрыть журнал активности",["zh"]="隐藏活动日志",["ar"]="إخفاء لوحة النشاط",["tr"]="Etkinlik günlüğünü gizle" },
             ["SETT_CHK_BLOCK_CAPTURE"] = new() { ["en"]="Block screen recording",       ["fr"]="Bloquer l'enregistrement écran", ["es"]="Bloquear captura de pantalla",["de"]="Bildschirmaufnahme blockieren",["pt"]="Bloquear captura de tela",["it"]="Blocca registrazione schermo",["ru"]="Блокировать запись экрана",["zh"]="阻止屏幕录制",["ar"]="حظر تسجيل الشاشة",["tr"]="Ekran kaydını engelle" },
 
             // ── Context menu group headers ─────────────────────────────────────
