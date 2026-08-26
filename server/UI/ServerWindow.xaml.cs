@@ -5446,12 +5446,7 @@ Read-Host 'Press Enter to close'
             _premaximizeOnlineGridWidth      = GridClients.ActualWidth;
             _premaximizeAllClientsGridWidth  = GridAllClients?.ActualWidth ?? 0;
             _isFullscreen = true;
-            // Unlock TAG back to star so it fills the maximized space during animation.
-            _suppressColumnSave = true;
-            UnlockTagColumn(GridClients);
-            if (GridAllClients != null) UnlockTagColumn(GridAllClients);
-            _suppressColumnSave = false;
-            BeginColumnTransition(BuildTransitionTargets(1.0, 1.0), lockTagOnEnd: false);
+            BeginColumnTransition(BuildTransitionTargets(1.0, 1.0));
         }
         else if (nowNormal && _isFullscreen)
         {
@@ -5460,8 +5455,7 @@ Read-Host 'Press Enter to close'
             {
                 double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth,     1651.0, 1134.0);
                 double tA = ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0,  763.0);
-                // lockTagOnEnd=true: lock TAG to pixel after animation so it stays frozen during manual resize
-                BeginColumnTransition(BuildTransitionTargets(tO, tA), lockTagOnEnd: true);
+                BeginColumnTransition(BuildTransitionTargets(tO, tA));
             }
             else
             {
@@ -5469,10 +5463,6 @@ Read-Host 'Press Enter to close'
                 {
                     ApplyAdaptiveOnlineWidths();
                     ApplyAdaptiveAllClientsWidths();
-                    _suppressColumnSave = true;
-                    LockTagColumn(GridClients);
-                    if (GridAllClients != null) LockTagColumn(GridAllClients);
-                    _suppressColumnSave = false;
                 }));
             }
         }
@@ -5491,7 +5481,6 @@ Read-Host 'Press Enter to close'
     private System.Windows.Threading.DispatcherTimer?                          _colAnimTimer;
     private DateTime                                                            _colAnimStart;
     private List<(DataGridColumn col, double from, double to, bool isOnline)>? _colAnimList;
-    private bool                                                                _lockTagOnAnimEnd; // true = restore path: lock TAG to pixel, don't overwrite user widths
     private const double ColAnimMs = 160;
     private static double ColEase(double t) => 1 - (1 - t) * (1 - t); // quadratic ease-out
 
@@ -8944,14 +8933,11 @@ Read-Host 'Press Enter to close'
         return list;
     }
 
-    private void BeginColumnTransition(
-        List<(DataGridColumn col, double from, double to, bool isOnline)> targets,
-        bool lockTagOnEnd = false)
+    private void BeginColumnTransition(List<(DataGridColumn col, double from, double to, bool isOnline)> targets)
     {
         _colAnimTimer?.Stop();
-        _colAnimList      = targets;
-        _colAnimStart     = DateTime.UtcNow;
-        _lockTagOnAnimEnd = lockTagOnEnd;
+        _colAnimList  = targets;
+        _colAnimStart = DateTime.UtcNow;
         _colAnimTimer = new System.Windows.Threading.DispatcherTimer(
             System.Windows.Threading.DispatcherPriority.Normal)
         {
@@ -8980,62 +8966,20 @@ Read-Host 'Press Enter to close'
             _colAnimTimer?.Stop();
             _colAnimTimer = null;
 
-            if (_lockTagOnAnimEnd)
+            // Persist final widths so they survive app restarts.
+            _suppressColumnSave = true;
+            try
             {
-                // Restore path: lock TAG to pixel so it doesn't drift during manual window resize.
-                // Don't overwrite the user's saved windowed column widths — only maximize saves them.
-                _suppressColumnSave = true;
-                try
+                foreach (var (col, _, to, isOnline) in _colAnimList!)
                 {
-                    LockTagColumn(GridClients);
-                    if (GridAllClients != null) LockTagColumn(GridAllClients);
+                    string key = isOnline ? GetOriginalKey(col) : (col.Header?.ToString() ?? "");
+                    if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+                    int px = (int)Math.Round(to);
+                    if (isOnline) UiPrefs.Set($"ColWidth_{key}", px);
+                    else          UiPrefs.Set($"AllColWidth_{key}", px);
                 }
-                finally { _suppressColumnSave = false; }
             }
-            else
-            {
-                // Maximize path: save the full widths so they survive app restarts.
-                _suppressColumnSave = true;
-                try
-                {
-                    foreach (var (col, _, to, isOnline) in _colAnimList!)
-                    {
-                        string key = isOnline ? GetOriginalKey(col) : (col.Header?.ToString() ?? "");
-                        if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-                        int px = (int)Math.Round(to);
-                        if (isOnline) UiPrefs.Set($"ColWidth_{key}", px);
-                        else          UiPrefs.Set($"AllColWidth_{key}", px);
-                    }
-                }
-                finally { _suppressColumnSave = false; }
-            }
-        }
-    }
-
-    // Lock the TAG column to its current pixel size so it stops adapting to window width.
-    private void LockTagColumn(System.Windows.Controls.DataGrid grid)
-    {
-        foreach (var col in grid.Columns)
-        {
-            if ((col.Header?.ToString() ?? "") == "TAG")
-            {
-                double px = col.ActualWidth > 0 ? col.ActualWidth : 80;
-                col.Width = new DataGridLength(px, DataGridLengthUnitType.Pixel);
-                return;
-            }
-        }
-    }
-
-    // Unlock the TAG column back to star so it can absorb animation slack during maximize.
-    private void UnlockTagColumn(System.Windows.Controls.DataGrid grid)
-    {
-        foreach (var col in grid.Columns)
-        {
-            if ((col.Header?.ToString() ?? "") == "TAG")
-            {
-                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                return;
-            }
+            finally { _suppressColumnSave = false; }
         }
     }
 
