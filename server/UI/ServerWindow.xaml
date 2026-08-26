@@ -2060,7 +2060,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="82"  MinWidth="0"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="92"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="True">
+                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="1" SortMemberPath="Tag" CanUserResize="True">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2379,7 +2379,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="70"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="140" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="True">
+                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="1" SortMemberPath="Tag" CanUserResize="True">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>

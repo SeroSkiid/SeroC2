@@ -8600,7 +8600,7 @@ Read-Host 'Press Enter to close'
             { "IP",       new DataGridLength(130) },
             { "STATUS",   new DataGridLength(70)  },
             { "COUNTRY",  new DataGridLength(100) },
-            { "USER",     new DataGridLength(120)  },
+            { "USER",     new DataGridLength(120) },
             { "OS",       new DataGridLength(80)  },
             { "MACHINE",  new DataGridLength(110) },
             { "PRIV",     new DataGridLength(100) },

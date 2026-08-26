@@ -814,8 +814,8 @@
             <Setter Property="Foreground"      Value="{DynamicResource ColHeaderFgBrush}"/>
             <Setter Property="FontSize"        Value="10"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
-            <Setter Property="BorderThickness" Value="0,0,1,0"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource ColHeaderBorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush"     Value="Transparent"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
