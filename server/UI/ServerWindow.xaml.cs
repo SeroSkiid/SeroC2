@@ -7385,6 +7385,27 @@ Read-Host 'Press Enter to close'
 
         }
 
+        // Auto-derive ColHeaderHoverBrush from ColHeaderBgBrush.
+        // Dark headers (brightness < 128) lighten by +20 RGB; light headers darken by -18 RGB.
+        // This avoids per-theme hover definitions and works correctly across all 14+ themes.
+        if (res["ColHeaderBgBrush"] is System.Windows.Media.SolidColorBrush colHdrBg)
+        {
+            var hc = colHdrBg.Color;
+            int hBri = (hc.R + hc.G + hc.B) / 3;
+            var hoverColor = hBri < 128
+                ? System.Windows.Media.Color.FromRgb(
+                    (byte)Math.Min(hc.R + 20, 255),
+                    (byte)Math.Min(hc.G + 20, 255),
+                    (byte)Math.Min(hc.B + 20, 255))
+                : System.Windows.Media.Color.FromRgb(
+                    (byte)Math.Max(hc.R - 18, 0),
+                    (byte)Math.Max(hc.G - 18, 0),
+                    (byte)Math.Max(hc.B - 18, 0));
+            var hoverBrush = new System.Windows.Media.SolidColorBrush(hoverColor);
+            hoverBrush.Freeze();
+            res["ColHeaderHoverBrush"] = hoverBrush;
+        }
+
         // Auto-derive card/chart/progress colors from the window background brightness.
         // Light themes get tinted light cards; dark themes keep the deep dark cards.
         if (res["WindowBgBrush"] is System.Windows.Media.SolidColorBrush wb)
@@ -7527,7 +7548,7 @@ Read-Host 'Press Enter to close'
             "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
             "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
             "ContainerCornerRadius"
         })

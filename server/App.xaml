@@ -82,6 +82,8 @@
         <SolidColorBrush x:Key="ColHeaderBgBrush"     Color="#131426"/>
         <SolidColorBrush x:Key="ColHeaderFgBrush"     Color="#8090B8"/>
         <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#606888"/>
+        <!-- Hover bg — auto-computed by ApplyTheme: dark→+20 RGB brighter, light→-18 RGB darker -->
+        <SolidColorBrush x:Key="ColHeaderHoverBrush"  Color="#21223A"/>
         <!-- Buttons -->
         <SolidColorBrush x:Key="BtnBgBrush"           Color="#141526"/>
         <SolidColorBrush x:Key="BtnBorderBrush"       Color="#1E2038"/>
@@ -827,7 +829,7 @@
                                     BorderThickness="0"/>
                             <!-- Hover overlay — smooth fade via EventTrigger storyboard, never overrides base bg resource -->
                             <Border x:Name="HoverOverlay"
-                                    Background="{DynamicResource NavHoverBgBrush}"
+                                    Background="{DynamicResource ColHeaderHoverBrush}"
                                     Opacity="0"
                                     IsHitTestVisible="False"/>
                             <!-- Content row: label + sort chevron -->
