@@ -1739,6 +1739,78 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
+    // Live-resize handlers — re-apply adaptive widths on every SizeChanged tick so columns
+    // always fill the available space as the user drags the window edge.  No UiPrefs.Set per
+    // tick; a 300 ms debounce timer saves the final widths once resizing stops.
+    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!e.WidthChanged || _suppressColumnSave) return;
+        if (_colAnimTimer?.IsEnabled == true) return; // animation in progress, hands off
+        double gridWidth = GridClients.ActualWidth;
+        if (gridWidth < 50) return;
+        double avail = gridWidth - 8.0 - 60.0;
+        const double kFull = 1651.0, kMin = 1134.0;
+        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
+                col.Width = new DataGridLength((int)Math.Round(spec.min + (spec.full - spec.min) * t));
+            }
+        }
+        finally { _suppressColumnSave = false; }
+        ArmResizeSaveTimer();
+    }
+
+    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!e.WidthChanged || _suppressColumnSave) return;
+        if (_colAnimTimer?.IsEnabled == true) return;
+        if (GridAllClients == null) return;
+        double gridWidth = GridAllClients.ActualWidth;
+        if (gridWidth < 50) return;
+        double avail = gridWidth - 8.0 - 60.0;
+        const double kFull = 1004.0, kMin = 763.0;
+        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = col.Header?.ToString() ?? "";
+                if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
+                col.Width = new DataGridLength((int)Math.Round(spec.min + (spec.full - spec.min) * t));
+            }
+        }
+        finally { _suppressColumnSave = false; }
+        ArmResizeSaveTimer();
+    }
+
+    private void ArmResizeSaveTimer()
+    {
+        _resizeSaveTimer?.Stop();
+        _resizeSaveTimer = new System.Windows.Threading.DispatcherTimer(
+            System.Windows.Threading.DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(300)
+        };
+        _resizeSaveTimer.Tick += (s, _) =>
+        {
+            _resizeSaveTimer?.Stop();
+            _resizeSaveTimer = null;
+            SaveGridColumnWidths();
+            SaveAllClientsColumnWidths();
+        };
+        _resizeSaveTimer.Start();
+    }
+
     private void GridClients_PreviewMouseLeftButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         var row = FindVisualAncestor<DataGridRow>(e.OriginalSource as DependencyObject);
@@ -5476,6 +5548,9 @@ Read-Host 'Press Enter to close'
     // so we can animate columns back to the exact right sizes on restore.
     private double _premaximizeOnlineGridWidth;
     private double _premaximizeAllClientsGridWidth;
+
+    // Debounce timer: persists column widths 300 ms after the last live-resize tick.
+    private System.Windows.Threading.DispatcherTimer? _resizeSaveTimer;
 
     // Column transition animation state
     private System.Windows.Threading.DispatcherTimer?                          _colAnimTimer;
