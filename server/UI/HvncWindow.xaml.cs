@@ -317,13 +317,12 @@ public partial class HvncWindow : ThemedWindow
             {
                 try
                 {
-                    H264Decoder? localDec;
+                    byte[]? pixels;
                     lock (_decodeLock)
                     {
                         if (_h264Dec == null) _h264Dec = H264Decoder.Create();
-                        localDec = _h264Dec;
+                        pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
                     }
-                    var pixels = localDec?.Decode(h264Bytes, fw, fh);
                     if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
                     Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4));
                 }
