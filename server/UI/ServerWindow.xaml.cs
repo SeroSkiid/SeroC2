@@ -1598,7 +1598,7 @@ public partial class ServerWindow : ThemedWindow
         bool hasSaved = false;
         foreach (var col in GridClients.Columns)
         {
-            string h = col.Header?.ToString() ?? "";
+            string h = GetOriginalKey(col);
             if (!string.IsNullOrEmpty(h) && h != "TAG" && UiPrefs.GetInt($"ColWidth_{h}", 0) > 20)
             { hasSaved = true; break; }
         }
@@ -1607,7 +1607,7 @@ public partial class ServerWindow : ThemedWindow
         {
             foreach (var col in GridClients.Columns)
             {
-                string header = col.Header?.ToString() ?? "";
+                string header = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(header)) continue;
                 if (header == "TAG")
                 {
@@ -1630,13 +1630,16 @@ public partial class ServerWindow : ThemedWindow
         var desc = System.ComponentModel.DependencyPropertyDescriptor
             .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
                           typeof(System.Windows.Controls.DataGridColumn));
+        var actDesc = System.ComponentModel.DependencyPropertyDescriptor
+            .FromProperty(System.Windows.Controls.DataGridColumn.ActualWidthProperty,
+                          typeof(System.Windows.Controls.DataGridColumn));
         foreach (var col in GridClients.Columns)
         {
             var c = col;
             if (GetOriginalKey(c) == "TAG")
             {
                 // TAG must always stay Star — right-gripper drag converts it to Pixel; snap it back.
-                desc.AddValueChanged(c, (_, _) =>
+                EventHandler tagWidthH = (_, _) =>
                 {
                     if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
                     {
@@ -1644,22 +1647,24 @@ public partial class ServerWindow : ThemedWindow
                         c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                         _suppressColumnSave = false;
                     }
-                });
+                };
+                desc.AddValueChanged(c, tagWidthH);
+                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
+
                 // Collapse TAG when the user drags the previous column's gripper far enough right
                 // that TAG's rendered width drops below 3px (same threshold as other columns).
-                var actDesc = System.ComponentModel.DependencyPropertyDescriptor
-                    .FromProperty(System.Windows.Controls.DataGridColumn.ActualWidthProperty,
-                                  typeof(System.Windows.Controls.DataGridColumn));
-                actDesc.AddValueChanged(c, (_, _) =>
+                EventHandler tagActualH = (_, _) =>
                 {
                     if (_suppressColumnSave) return;
                     if (c.ActualWidth < 3 && c.Visibility == Visibility.Visible)
                         CollapseColumnAndUncheck(c);
-                });
+                };
+                actDesc.AddValueChanged(c, tagActualH);
+                _columnPersistenceHandlers.Add((actDesc, c, tagActualH));
             }
             else
             {
-                desc.AddValueChanged(c, (_, _) =>
+                EventHandler widthH = (_, _) =>
                 {
                     if (_suppressColumnSave) return;
                     // Resize to ~0px: collapse column and uncheck its settings checkbox.
@@ -1668,7 +1673,9 @@ public partial class ServerWindow : ThemedWindow
                         CollapseColumnAndUncheck(c);
                     else
                         SaveGridColumnWidths();
-                });
+                };
+                desc.AddValueChanged(c, widthH);
+                _columnPersistenceHandlers.Add((desc, c, widthH));
             }
         }
     }
@@ -1781,7 +1788,7 @@ public partial class ServerWindow : ThemedWindow
             var c = col;
             if (GetOriginalKey(c) == "TAG")
             {
-                desc.AddValueChanged(c, (_, _) =>
+                EventHandler tagWidthH = (_, _) =>
                 {
                     if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
                     {
@@ -1789,17 +1796,32 @@ public partial class ServerWindow : ThemedWindow
                         c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                         _suppressColumnSave = false;
                     }
-                });
-                actDesc.AddValueChanged(c, (_, _) =>
+                };
+                desc.AddValueChanged(c, tagWidthH);
+                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
+
+                EventHandler tagActualH = (_, _) =>
                 {
                     if (_suppressColumnSave) return;
                     if (c.ActualWidth < 3 && c.Visibility == Visibility.Visible)
                         CollapseAllClientsColumnAndUncheck(c);
-                });
+                };
+                actDesc.AddValueChanged(c, tagActualH);
+                _columnPersistenceHandlers.Add((actDesc, c, tagActualH));
             }
             else
             {
-                desc.AddValueChanged(c, (_, _) => SaveAllClientsColumnWidths());
+                EventHandler widthH = (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel &&
+                        c.Width.Value < 3 && c.Visibility == Visibility.Visible)
+                        CollapseAllClientsColumnAndUncheck(c);
+                    else
+                        SaveAllClientsColumnWidths();
+                };
+                desc.AddValueChanged(c, widthH);
+                _columnPersistenceHandlers.Add((desc, c, widthH));
             }
         }
     }
@@ -8350,8 +8372,6 @@ Read-Host 'Press Enter to close'
             UpdateColHeader(GridAllClients, "MACHINE",    Lang.Get("COL_MACHINE"));
             UpdateColHeader(GridAllClients, "OS",         Lang.Get("COL_OS"));
             UpdateColHeader(GridAllClients, "AV",         Lang.Get("COL_AV"));
-            UpdateColHeader(GridAllClients, "CPU",        Lang.Get("COL_CPU"));
-            UpdateColHeader(GridAllClients, "GPU",        Lang.Get("COL_GPU"));
             UpdateColHeader(GridAllClients, "RAM",        Lang.Get("COL_RAM"));
             UpdateColHeader(GridAllClients, "FIRST SEEN", Lang.Get("COL_FIRST_SEEN"));
             UpdateColHeader(GridAllClients, "LAST SEEN",  Lang.Get("COL_LAST_SEEN"));
@@ -8725,6 +8745,16 @@ Read-Host 'Press Enter to close'
     private bool _adminFilterOnly = false;
     private bool _suppressColumnSave = false;
 
+    private readonly List<(System.ComponentModel.DependencyPropertyDescriptor dpd, System.Windows.DependencyObject obj, EventHandler h)>
+        _columnPersistenceHandlers = new();
+
+    private void CleanupColumnPersistence()
+    {
+        foreach (var (dpd, obj, h) in _columnPersistenceHandlers)
+            dpd.RemoveValueChanged(obj, h);
+        _columnPersistenceHandlers.Clear();
+    }
+
     private void LoadColumnVisibility()
     {
         foreach (var col in GridClients.Columns)
@@ -8733,6 +8763,14 @@ Read-Host 'Press Enter to close'
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
 
             int isVisible = UiPrefs.GetInt($"ColVis_{key}", 1);
+            col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
+        }
+        foreach (var col in GridAllClients.Columns)
+        {
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+
+            int isVisible = UiPrefs.GetInt($"AllColVis_{key}", 1);
             col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
         }
     }
@@ -9105,7 +9143,7 @@ Read-Host 'Press Enter to close'
             {
                 foreach (var (col, _, to, isOnline) in _colAnimList!)
                 {
-                    string key = isOnline ? GetOriginalKey(col) : (col.Header?.ToString() ?? "");
+                    string key = GetOriginalKey(col);
                     if (string.IsNullOrEmpty(key) || key == "TAG") continue;
                     int px = (int)Math.Round(to);
                     if (isOnline) UiPrefs.Set($"ColWidth_{key}", px);
