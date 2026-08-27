@@ -60,6 +60,18 @@ public partial class App : Application
             e.Handled = true;
             return;
         }
+        // Suppress WPF Storyboard name-scope resolution failure on column-header drag phantom.
+        // When the user drags a column header, WPF creates a floating copy that uses SColHeader's
+        // ControlTemplate but does not fully register named elements (HoverOverlay, etc.) in its
+        // name scope. The mouse-enter EventTrigger fires on the phantom and cannot resolve the names.
+        if (e.Exception is InvalidOperationException
+            && e.Exception.Message.Contains("cannot be found in the name scope")
+            && e.Exception.StackTrace is { } st4
+            && (st4.Contains("Storyboard") || st4.Contains("DataGridColumnHeader")))
+        {
+            e.Handled = true;
+            return;
+        }
         // Unknown crash — log full details live, show dialog, then let the process terminate.
         // Do NOT set e.Handled = true here: swallowing unknown exceptions lets the app continue
         // in a corrupted state. WPF will terminate after the handler returns.

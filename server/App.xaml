@@ -859,11 +859,11 @@
                                       VerticalAlignment="Center"
                                       Margin="4,0,10,0"/>
                             </Grid>
-                            <!-- Accent bottom bar — always visible at 0.20; brightens to 1.0 on hover,
-                                 stays at 0.80 on sorted column (trigger setter reasserts via FillBehavior=Stop).
-                                 Fill is ColAccentBarBrush: contrast-shifted in ApplyTheme when accent ≈ header bg. -->
+                            <!-- Accent bottom bar — always visible at base opacity 0.40 (no hover animation).
+                                 Sorted column: trigger setter overrides to 0.80 for more prominence.
+                                 Fill = ColAccentBarBrush: accent on dark themes, neutral separator on light themes. -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
-                                       Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.20"/>
+                                       Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.40"/>
                             <!-- Separator — 1px tick inset 5px top/bottom; brightens to 1.0 on hover.
                                  Color is auto-derived in ApplyTheme for contrast on all themes. -->
                             <Rectangle x:Name="Separator"
@@ -903,14 +903,12 @@
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,1 L4,5 L8,1"/>
                                 <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
-                            <!-- Hover: fade overlay bg in (120ms), bring accent bar to full, brighten separator -->
+                            <!-- Hover: fade overlay bg in (120ms) + brighten separator. AccentBar is NOT
+                                 animated — it stays at its local value (0.40) or sort-trigger value (0.80). -->
                             <EventTrigger RoutedEvent="MouseEnter">
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOverlay"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12"/>
-                                        <DoubleAnimation Storyboard.TargetName="AccentBar"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="1" Duration="0:0:0.12"/>
                                         <DoubleAnimation Storyboard.TargetName="Separator"
@@ -919,17 +917,14 @@
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
-                            <!-- Leave: fade out (100ms); FillBehavior=Stop releases hold so sorted-column    -->
-                            <!-- opacity (0.80) and Separator local value (0.45) re-assert naturally.      -->
+                            <!-- Leave: fade overlay out (100ms); FillBehavior=Stop releases hold so
+                                 Separator local value (0.75) and sort-trigger setters re-assert. -->
                             <EventTrigger RoutedEvent="MouseLeave">
                                 <BeginStoryboard>
                                     <Storyboard FillBehavior="Stop">
                                         <DoubleAnimation Storyboard.TargetName="HoverOverlay"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="0" Duration="0:0:0.10"/>
-                                        <DoubleAnimation Storyboard.TargetName="AccentBar"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="0.20" Duration="0:0:0.10"/>
                                         <DoubleAnimation Storyboard.TargetName="Separator"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="0.75" Duration="0:0:0.10"/>
@@ -939,10 +934,14 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Trigger>
-                            <!-- TAG column: right gripper inactive (CanUserResize lives on DataGridColumn, not the header) -->
+                            <!-- TAG column: both grippers inactive (CanUserResize on DataGridColumn, not header).
+                                 Left gripper disabled too: dragging it LEFT grows TAG (counter-intuitive).
+                                 User resizes TAG via the RIGHT gripper of the adjacent PREVIOUS column instead. -->
                             <DataTrigger Binding="{Binding Column.CanUserResize, RelativeSource={RelativeSource Self}}" Value="False">
                                 <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
                                 <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
+                                <Setter TargetName="PART_LeftHeaderGripper"  Property="Cursor" Value="Arrow"/>
+                                <Setter TargetName="PART_LeftHeaderGripper"  Property="IsHitTestVisible" Value="False"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
