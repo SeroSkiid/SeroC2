@@ -1619,6 +1619,10 @@ public partial class ServerWindow : ThemedWindow
                 if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
             }
         }
+        else if (_autoFitColumns)
+        {
+            FitColumnsToContent(GridClients);
+        }
         else
         {
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
@@ -1664,12 +1668,7 @@ public partial class ServerWindow : ThemedWindow
             }
         }
 
-        GridClients.SizeChanged += (s, e) =>
-        {
-            if (_autoFitColumns && e.WidthChanged)
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(ApplyAdaptiveOnlineWidths));
-        };
+        // Auto columns self-manage width — no action needed on resize.
     }
 
     // Collapses a column that was resized to near-zero, persists its hidden state,
@@ -1743,6 +1742,10 @@ public partial class ServerWindow : ThemedWindow
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
         }
+        else if (_autoFitColumns)
+        {
+            FitColumnsToContent(GridAllClients);
+        }
         else
         {
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
@@ -1785,12 +1788,7 @@ public partial class ServerWindow : ThemedWindow
             }
         }
 
-        GridAllClients.SizeChanged += (s, e) =>
-        {
-            if (_autoFitColumns && e.WidthChanged)
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(ApplyAdaptiveAllClientsWidths));
-        };
+        // Auto columns self-manage width — no action needed on resize.
     }
 
     private void SaveAllClientsColumnWidths()
@@ -9035,17 +9033,7 @@ Read-Host 'Press Enter to close'
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
             col.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
         }
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
-        {
-            foreach (var col in grid.Columns)
-            {
-                string key = GetOriginalKey(col);
-                if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-                double w = col.ActualWidth;
-                col.Width = new DataGridLength(w > 20 ? w : Math.Max(col.MinWidth, 60));
-            }
-            _suppressColumnSave = false;
-        });
+        _suppressColumnSave = false;
     }
 
     private void ChkAutoFill_Unchecked(object sender, RoutedEventArgs e)
@@ -9053,6 +9041,8 @@ Read-Host 'Press Enter to close'
         if (_suppressCheckboxUpdate) return;
         _autoFitColumns = false;
         UiPrefs.Set("AutoFitColumns", 0);
+        ApplyAdaptiveOnlineWidths();
+        ApplyAdaptiveAllClientsWidths();
     }
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
