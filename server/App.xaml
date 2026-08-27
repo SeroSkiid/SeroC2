@@ -86,6 +86,8 @@
         <SolidColorBrush x:Key="ColHeaderHoverBrush"  Color="#21223A"/>
         <!-- Separator — auto-computed by ApplyTheme: dark bg→+90 brighter, light bg→-80 darker -->
         <SolidColorBrush x:Key="ColSeparatorBrush"    Color="#7080A8"/>
+        <!-- Accent bar — auto-computed by ApplyTheme: accent color, contrast-shifted if too close to header bg -->
+        <SolidColorBrush x:Key="ColAccentBarBrush"    Color="#4A85F5"/>
         <!-- Accent color scalar — overridden by ApplyTheme(); default guards SlimSlider in feature windows
              that open before the first ApplyTheme() call completes. -->
         <Color x:Key="AccentColor">#5B6ACF</Color>
@@ -858,9 +860,10 @@
                                       Margin="4,0,10,0"/>
                             </Grid>
                             <!-- Accent bottom bar — always visible at 0.20; brightens to 1.0 on hover,
-                                 stays at 0.80 on sorted column (trigger setter reasserts via FillBehavior=Stop) -->
+                                 stays at 0.80 on sorted column (trigger setter reasserts via FillBehavior=Stop).
+                                 Fill is ColAccentBarBrush: contrast-shifted in ApplyTheme when accent ≈ header bg. -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
-                                       Fill="{DynamicResource AccentBrush}" Opacity="0.20"/>
+                                       Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.20"/>
                             <!-- Separator — 1px tick inset 5px top/bottom; brightens to 1.0 on hover.
                                  Color is auto-derived in ApplyTheme for contrast on all themes. -->
                             <Rectangle x:Name="Separator"

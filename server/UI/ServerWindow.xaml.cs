@@ -7456,21 +7456,21 @@ Read-Host 'Press Enter to close'
         }
 
         // Auto-derive ColHeaderHoverBrush from ColHeaderBgBrush.
-        // Dark headers (brightness < 128) lighten by +20 RGB; light headers darken by -18 RGB.
-        // This avoids per-theme hover definitions and works correctly across all 14+ themes.
+        // Dark headers (avg brightness < 128) lighten by +30 RGB; light headers darken by -25 RGB.
+        // Larger delta than before (+20/-18) ensures the hover is noticeable on all themes.
         if (res["ColHeaderBgBrush"] is System.Windows.Media.SolidColorBrush colHdrBg)
         {
             var hc = colHdrBg.Color;
             int hBri = (hc.R + hc.G + hc.B) / 3;
             var hoverColor = hBri < 128
                 ? System.Windows.Media.Color.FromRgb(
-                    (byte)Math.Min(hc.R + 20, 255),
-                    (byte)Math.Min(hc.G + 20, 255),
-                    (byte)Math.Min(hc.B + 20, 255))
+                    (byte)Math.Min(hc.R + 30, 255),
+                    (byte)Math.Min(hc.G + 30, 255),
+                    (byte)Math.Min(hc.B + 30, 255))
                 : System.Windows.Media.Color.FromRgb(
-                    (byte)Math.Max(hc.R - 18, 0),
-                    (byte)Math.Max(hc.G - 18, 0),
-                    (byte)Math.Max(hc.B - 18, 0));
+                    (byte)Math.Max(hc.R - 25, 0),
+                    (byte)Math.Max(hc.G - 25, 0),
+                    (byte)Math.Max(hc.B - 25, 0));
             var hoverBrush = new System.Windows.Media.SolidColorBrush(hoverColor);
             hoverBrush.Freeze();
             res["ColHeaderHoverBrush"] = hoverBrush;
@@ -7489,6 +7489,36 @@ Read-Host 'Press Enter to close'
             var sepBrush = new System.Windows.Media.SolidColorBrush(sepColor);
             sepBrush.Freeze();
             res["ColSeparatorBrush"] = sepBrush;
+
+            // Auto-derive ColAccentBarBrush: accent line at the bottom of each header.
+            // When the accent color has similar brightness to the header bg (contrast < 35 pts),
+            // shift it toward white/black so the bar is always visible.
+            if (res["AccentBrush"] is System.Windows.Media.SolidColorBrush acBr)
+            {
+                var ac = acBr.Color;
+                int acBri = (ac.R + ac.G + ac.B) / 3;
+                System.Windows.Media.Color barColor;
+                if (Math.Abs(hBri - acBri) < 35)
+                {
+                    // Too similar: shift accent strongly away from header bg brightness
+                    barColor = hBri < 128
+                        ? System.Windows.Media.Color.FromRgb(
+                            (byte)Math.Min(ac.R + 70, 255),
+                            (byte)Math.Min(ac.G + 70, 255),
+                            (byte)Math.Min(ac.B + 70, 255))
+                        : System.Windows.Media.Color.FromRgb(
+                            (byte)Math.Max(ac.R - 70, 0),
+                            (byte)Math.Max(ac.G - 70, 0),
+                            (byte)Math.Max(ac.B - 70, 0));
+                }
+                else
+                {
+                    barColor = ac; // good contrast — use accent as-is
+                }
+                var barBrush = new System.Windows.Media.SolidColorBrush(barColor);
+                barBrush.Freeze();
+                res["ColAccentBarBrush"] = barBrush;
+            }
         }
 
         // Auto-derive card/chart/progress colors from the window background brightness.
@@ -7633,7 +7663,7 @@ Read-Host 'Press Enter to close'
             "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
             "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
             "ContainerCornerRadius"
         })
@@ -7765,7 +7795,7 @@ Read-Host 'Press Enter to close'
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
             "RowHoverBgBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
             "FlagUnknownBrush",
             "ThemeFontFamily", "PrimaryGradient",
             "WindowOutlineBrush", "WindowOutlineThickness",
