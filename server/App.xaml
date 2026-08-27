@@ -816,7 +816,8 @@
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"/>
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    SnapsToDevicePixels="True"/>
                             <!-- Hover overlay — opacity toggled by IsMouseOver trigger below -->
                             <Border x:Name="HoverOverlay"
                                     Background="{DynamicResource ColHeaderHoverBrush}"

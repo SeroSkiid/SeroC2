@@ -8985,8 +8985,11 @@ Read-Host 'Press Enter to close'
         }
         finally { _suppressColumnSave = false; }
 
-        ApplyAdaptiveAllClientsWidths();
-        UpdateSettingsCheckboxStates();
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            ApplyAdaptiveAllClientsWidths();
+            UpdateSettingsCheckboxStates();
+        });
     }
 
     private void ChkFilterWebcam_Checked(object sender, RoutedEventArgs e)
@@ -9058,6 +9061,7 @@ Read-Host 'Press Enter to close'
         // the current window width so Reset is a no-op only when nothing has changed.
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
+            || _autoFitColumns
             || (TxtSearch != null && !string.IsNullOrEmpty(TxtSearch.Text));
 
         if (!hasChanges)
@@ -9106,8 +9110,13 @@ Read-Host 'Press Enter to close'
         }
         finally { _suppressColumnSave = false; }
 
-        ApplyAdaptiveOnlineWidths();
-        UpdateSettingsCheckboxStates();
+        // Defer width + checkbox sync to Background so WPF processes the visibility changes
+        // in a separate layout pass first — prevents column header separator rendering artifacts.
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            ApplyAdaptiveOnlineWidths();
+            UpdateSettingsCheckboxStates();
+        });
         RefreshClientFilters();
     }
 
