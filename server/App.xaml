@@ -932,11 +932,11 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Trigger>
-                            <!-- TAG column: right gripper inactive (star must never become pixel) -->
-                            <Trigger Property="CanUserResize" Value="False">
+                            <!-- TAG column: right gripper inactive (CanUserResize lives on DataGridColumn, not the header) -->
+                            <DataTrigger Binding="{Binding Column.CanUserResize, RelativeSource={RelativeSource Self}}" Value="False">
                                 <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
                                 <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
-                            </Trigger>
+                            </DataTrigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
