@@ -818,14 +818,17 @@
             <Setter Property="FontSize"        Value="11"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
             <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="BorderThickness" Value="0,0,1,0"/>
+            <Setter Property="BorderBrush"     Value="{DynamicResource ColHeaderBorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
                         <Grid UseLayoutRounding="True">
-                            <!-- Base background -->
+                            <!-- Base background + right-edge themed separator -->
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"
-                                    BorderThickness="0"/>
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"/>
                             <!-- Hover overlay — smooth fade via EventTrigger storyboard, never overrides base bg resource -->
                             <Border x:Name="HoverOverlay"
                                     Background="{DynamicResource ColHeaderHoverBrush}"
@@ -902,6 +905,7 @@
                                 <Setter TargetName="AccentBar"        Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="HoverOverlay"     Property="Visibility" Value="Collapsed"/>
                                 <Setter Property="Background"         Value="Transparent"/>
+                                <Setter Property="BorderThickness"    Value="0"/>
                                 <Setter Property="IsHitTestVisible"   Value="False"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>

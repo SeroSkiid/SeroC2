@@ -1667,8 +1667,7 @@ public partial class ServerWindow : ThemedWindow
         GridClients.SizeChanged += (s, e) =>
         {
             if (_autoFitColumns && e.WidthChanged)
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(ApplyAdaptiveOnlineWidths));
+                FitColumnsToContent(GridClients);
         };
     }
 
@@ -1788,8 +1787,7 @@ public partial class ServerWindow : ThemedWindow
         GridAllClients.SizeChanged += (s, e) =>
         {
             if (_autoFitColumns && e.WidthChanged)
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                    new Action(ApplyAdaptiveAllClientsWidths));
+                FitColumnsToContent(GridAllClients);
         };
     }
 
@@ -8579,6 +8577,7 @@ Read-Host 'Press Enter to close'
         if (TxtGridSettingsTitle   != null) TxtGridSettingsTitle.Text   = Lang.Get("GRID_SETTINGS");
         if (TxtGridFiltersLabel    != null) TxtGridFiltersLabel.Text    = Lang.Get("FILTERS");
         if (TxtWebcamOnly          != null) TxtWebcamOnly.Text          = Lang.Get("WEBCAM_ONLY");
+        if (TxtAutoFill            != null) TxtAutoFill.Text            = Lang.Get("AUTO_FIT_COLUMNS");
         if (TxtGridColVis          != null) TxtGridColVis.Text          = Lang.Get("COLUMN_VIS");
         if (BtnResetGridSettings   != null) BtnResetGridSettings.Content = Lang.Get("RESET_GRID");
         if (TxtAllClientsSettingsTitle != null) TxtAllClientsSettingsTitle.Text    = Lang.Get("GRID_SETTINGS");
@@ -9037,8 +9036,31 @@ Read-Host 'Press Enter to close'
         if (_suppressCheckboxUpdate) return;
         _autoFitColumns = true;
         UiPrefs.Set("AutoFitColumns", 1);
-        ApplyAdaptiveOnlineWidths();
-        ApplyAdaptiveAllClientsWidths();
+        FitColumnsToContent(GridClients);
+        FitColumnsToContent(GridAllClients);
+    }
+
+    private void FitColumnsToContent(System.Windows.Controls.DataGrid grid)
+    {
+        if (grid == null) return;
+        _suppressColumnSave = true;
+        foreach (var col in grid.Columns)
+        {
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
+        }
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+        {
+            foreach (var col in grid.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+                double w = col.ActualWidth;
+                if (w > 20) col.Width = new DataGridLength(w);
+            }
+            _suppressColumnSave = false;
+        });
     }
 
     private void ChkAutoFill_Unchecked(object sender, RoutedEventArgs e)
