@@ -1576,22 +1576,22 @@ public partial class ServerWindow : ThemedWindow
             ["IP"]       = (120, 82),   // IPv4 "192.168.1.x" content
             ["STATUS"]   = (70,  58),   // "STATUT"(fr,6ch×6.5+20=59px) → 58 min
             ["COUNTRY"]  = (90,  60),   // flag + code
-            ["USER"]     = (110, 95),   // "UTILISATEUR"(fr,11ch) / "Administrator" content
+            ["USER"]     = (110, 85),   // "UTILISATEUR"(fr,11ch) / "Administrator" content
             ["OS"]       = (85,  55),
-            ["MACHINE"]  = (105, 75),   // hostname content
+            ["MACHINE"]  = (90,  65),   // hostname content
             ["PRIV"]     = (105, 85),   // "PRIVILÈGE"(fr,9ch×6.5+20=79px) → 85 min
             ["ID"]       = (65,  46),
             ["CAM"]      = (64,  56),   // "CAMÉRA"(fr,6ch×6.5+20=59px) → 56 min; full=64
-            ["CPU"]      = (150, 68),   // long content, always truncated
+            ["CPU"]      = (120, 60),   // long content, always truncated
             ["LOAD"]     = (68,  58),   // "PAYLOAD"(7ch×6.5+20=66px) → 58 min; full=68
-            ["AV"]       = (120, 75),
+            ["AV"]       = (100, 65),
             ["RAM"]      = (75,  50),
-            ["GPU"]      = (160, 68),   // long content, always truncated
+            ["GPU"]      = (120, 60),   // long content, always truncated
             ["PING"]     = (54,  50),   // "PING"(4ch×6.5+20=46px) → 50 min; full=54
-            ["WINDOW"]   = (115, 75),   // "FENÊTRE"(fr,7ch)
-            ["1ST SEEN"] = (95,  78),   // "1ÈRE VUE"(fr,8ch×6.5+20=72px) + "2024-01-15" content
+            ["WINDOW"]   = (115, 67),   // "FENÊTRE"(fr,7ch)
+            ["1ST SEEN"] = (95,  75),   // "1ÈRE VUE"(fr,8ch×6.5+20=72px) + "2024-01-15" content
         };
-    // kFull=1651 (sum of full widths), kMin=1134 (sum of minimum widths incl. 20px ContentPresenter padding)
+    // kFull=1546 (sum of full widths), kMin=1077 (sum of minimum widths; fits 1366px laptop w/ ~220px sidebar)
 
     private void RestoreGridColumnWidths()
     {
@@ -1655,11 +1655,7 @@ public partial class ServerWindow : ThemedWindow
                 EventHandler widthH = (_, _) =>
                 {
                     if (_suppressColumnSave) return;
-                    // Resize to ~0px: collapse column and uncheck its settings checkbox.
-                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel &&
-                        c.Width.Value < 3 && c.Visibility == Visibility.Visible)
-                        CollapseColumnAndUncheck(c);
-                    else
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
                         SaveGridColumnWidths();
                 };
                 desc.AddValueChanged(c, widthH);
@@ -1670,28 +1666,6 @@ public partial class ServerWindow : ThemedWindow
 
     // Collapses a column that was resized to near-zero, persists its hidden state,
     // and syncs the settings-panel checkbox so the UI stays coherent.
-    private void CollapseColumnAndUncheck(DataGridColumn col)
-    {
-        _suppressColumnSave = true;
-        col.Visibility = Visibility.Collapsed;
-        _suppressColumnSave = false;
-        string key = GetOriginalKey(col);
-        UiPrefs.Set($"ColVis_{key}", 0);
-        SaveGridColumnWidths();
-        UpdateSettingsCheckboxStates();
-    }
-
-    private void CollapseAllClientsColumnAndUncheck(DataGridColumn col)
-    {
-        _suppressColumnSave = true;
-        col.Visibility = Visibility.Collapsed;
-        _suppressColumnSave = false;
-        string key = GetOriginalKey(col);
-        UiPrefs.Set($"AllColVis_{key}", 0);
-        SaveAllClientsColumnWidths();
-        UpdateSettingsCheckboxStates();
-    }
-
     // Returns the original English header key for a column regardless of current language translation.
     // DataGridTextColumns are tracked in _colOriginalHeader; named TemplateColumns are handled explicitly.
     private string GetOriginalKey(System.Windows.Controls.DataGridColumn col)
@@ -1795,10 +1769,7 @@ public partial class ServerWindow : ThemedWindow
                 EventHandler widthH = (_, _) =>
                 {
                     if (_suppressColumnSave) return;
-                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel &&
-                        c.Width.Value < 3 && c.Visibility == Visibility.Visible)
-                        CollapseAllClientsColumnAndUncheck(c);
-                    else
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
                         SaveAllClientsColumnWidths();
                 };
                 desc.AddValueChanged(c, widthH);
@@ -5534,7 +5505,7 @@ Read-Host 'Press Enter to close'
             _isFullscreen = false;
             if (_premaximizeOnlineGridWidth > 50)
             {
-                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth, 1651.0, 1134.0);
+                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth, 1546.0, 1077.0);
                 // If AllClients tab was never visited its ActualWidth is 0 — default to full (t=1.0).
                 double tA = _premaximizeAllClientsGridWidth > 50
                     ? ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0, 763.0)
@@ -8746,18 +8717,22 @@ Read-Host 'Press Enter to close'
         foreach (var col in GridClients.Columns)
         {
             string key = GetOriginalKey(col); // always English regardless of current language
-            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (string.IsNullOrEmpty(key)) continue;
 
             int isVisible = UiPrefs.GetInt($"ColVis_{key}", 1);
             col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
+            if (key == "TAG" && isVisible == 1)
+                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         }
         foreach (var col in GridAllClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (string.IsNullOrEmpty(key)) continue;
 
             int isVisible = UiPrefs.GetInt($"AllColVis_{key}", 1);
             col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
+            if (key == "TAG" && isVisible == 1)
+                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         }
     }
 
@@ -8770,9 +8745,8 @@ Read-Host 'Press Enter to close'
             string header = col.Header?.ToString() ?? "";
             if (string.IsNullOrEmpty(header)) continue;
 
-            // TAG is the structural fill column (star width) — hiding it leaves blank space.
             string key = GetOriginalKey(col);
-            if (key == "TAG") continue;
+            bool isTag = key == "TAG";
 
             var cb = new System.Windows.Controls.CheckBox
             {
@@ -8783,16 +8757,16 @@ Read-Host 'Press Enter to close'
                 Margin = new Thickness(0, 0, 0, 8)
             };
 
-            // Use original English key so visibility prefs survive language switches.
             string h = key;
             cb.Checked += (s, ev) =>
             {
                 if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
+                if (isTag) col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 1);
-                SaveGridColumnWidths();
+                if (!isTag) SaveGridColumnWidths();
             };
             cb.Unchecked += (s, ev) =>
             {
@@ -8801,7 +8775,7 @@ Read-Host 'Press Enter to close'
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 0);
-                SaveGridColumnWidths();
+                if (!isTag) SaveGridColumnWidths();
             };
 
             StackColumnCheckboxes.Children.Add(cb);
@@ -8815,7 +8789,8 @@ Read-Host 'Press Enter to close'
         foreach (var col in GridAllClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            if (string.IsNullOrEmpty(key)) continue;
+            bool isTag = key == "TAG";
 
             string header = col.Header?.ToString() ?? key;
             var cb = new System.Windows.Controls.CheckBox
@@ -8833,9 +8808,10 @@ Read-Host 'Press Enter to close'
                 if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
+                if (isTag) col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 _suppressColumnSave = false;
                 UiPrefs.Set($"AllColVis_{h}", 1);
-                SaveAllClientsColumnWidths();
+                if (!isTag) SaveAllClientsColumnWidths();
             };
             cb.Unchecked += (s, ev) =>
             {
@@ -8844,7 +8820,7 @@ Read-Host 'Press Enter to close'
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
                 UiPrefs.Set($"AllColVis_{h}", 0);
-                SaveAllClientsColumnWidths();
+                if (!isTag) SaveAllClientsColumnWidths();
             };
 
             StackAllClientsColumnCheckboxes.Children.Add(cb);
@@ -9012,7 +8988,7 @@ Read-Host 'Press Enter to close'
                 if (!string.IsNullOrEmpty(key))
                 {
                     col.Visibility = Visibility.Visible;
-                    if (key != "TAG") UiPrefs.Set($"AllColVis_{key}", 1);
+                    UiPrefs.Set($"AllColVis_{key}", 1);
                 }
             }
         }
@@ -9060,7 +9036,7 @@ Read-Host 'Press Enter to close'
             if (gw >= 50)
             {
                 double avail = gw - 8.0 - 60.0;
-                const double kF = 1651.0, kM = 1134.0;
+                const double kF = 1546.0, kM = 1077.0;
                 double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
                 foreach (var col in GridClients.Columns)
                 {
@@ -9102,14 +9078,14 @@ Read-Host 'Press Enter to close'
     }
 
     // Interpolates each column between its min and full width based on available grid space.
-    // kFull=1651 (sum of full widths), kMin=1134 (sum of minimum readable widths, all languages).
+    // kFull=1546 (sum of full widths), kMin=1077 (sum of minimum readable widths, all languages).
     // Below kMin: use per-column minimums (scrollbar visible). Above kFull: use full defaults.
     private void ApplyAdaptiveOnlineWidths()
     {
         double gridWidth = GridClients.ActualWidth;
         if (gridWidth < 50) return;
         double avail = gridWidth - 8.0 - 60.0; // scrollbar (8) + TAG MinWidth reserve (60)
-        const double kFull = 1651.0, kMin = 1134.0;
+        const double kFull = 1546.0, kMin = 1077.0;
         double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
 
         _suppressColumnSave = true;

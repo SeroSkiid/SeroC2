@@ -934,14 +934,12 @@
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Trigger>
-                            <!-- TAG column: both grippers inactive (CanUserResize on DataGridColumn, not header).
-                                 Left gripper disabled too: dragging it LEFT grows TAG (counter-intuitive).
-                                 User resizes TAG via the RIGHT gripper of the adjacent PREVIOUS column instead. -->
+                            <!-- CanUserResize=False: disable only the RIGHT gripper so the column's own width
+                                 cannot be changed by drag, but the LEFT gripper stays active so the user can
+                                 resize the adjacent previous column by dragging from this column's left boundary. -->
                             <DataTrigger Binding="{Binding Column.CanUserResize, RelativeSource={RelativeSource Self}}" Value="False">
                                 <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
                                 <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
-                                <Setter TargetName="PART_LeftHeaderGripper"  Property="Cursor" Value="Arrow"/>
-                                <Setter TargetName="PART_LeftHeaderGripper"  Property="IsHitTestVisible" Value="False"/>
                             </DataTrigger>
                             <!-- WPF filler header (Column == null): the blank area at the right of all columns
                                  when they don't fill the full DataGrid width. Hide it completely so it does not
