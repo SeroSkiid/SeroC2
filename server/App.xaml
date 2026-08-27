@@ -53,8 +53,6 @@
         <SolidColorBrush x:Key="RowSelTextBrush"  Color="#FFFFFF"/>
         <SolidColorBrush x:Key="RowSelBorderBrush" Color="#6A85F5"/>
         <SolidColorBrush x:Key="RowHoverBgBrush"  Color="#2A4A85F5"/>
-        <!-- DataGrid row selection accent bar — cyan that adapts per theme by ApplyTheme() -->
-        <SolidColorBrush x:Key="SelBarBrush"      Color="#00D4FF"/>
         <!-- Navigation hover/selection — shared with feature window DataGrid rows -->
         <SolidColorBrush x:Key="NavHoverBgBrush"      Color="#111830"/>
         <SolidColorBrush x:Key="NavSelBgBrush"        Color="#0E1A3A"/>
@@ -765,17 +763,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridRowHeader">
-                        <Border x:Name="Bar"
-                                Background="{DynamicResource AccentBrush}"
-                                Opacity="0"/>
-                        <ControlTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
-                                <Setter TargetName="Bar" Property="Opacity" Value="0.35"/>
-                            </DataTrigger>
-                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=DataGridRow}}" Value="True">
-                                <Setter TargetName="Bar" Property="Opacity" Value="1"/>
-                            </DataTrigger>
-                        </ControlTemplate.Triggers>
+                        <Border Background="Transparent"/>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
@@ -829,7 +817,7 @@
                                     Background="{TemplateBinding Background}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     BorderBrush="{TemplateBinding BorderBrush}"/>
-                            <!-- Hover overlay — smooth fade via EventTrigger storyboard, never overrides base bg resource -->
+                            <!-- Hover overlay — opacity toggled by IsMouseOver trigger below -->
                             <Border x:Name="HoverOverlay"
                                     Background="{DynamicResource ColHeaderHoverBrush}"
                                     Opacity="0"

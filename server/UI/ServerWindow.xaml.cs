@@ -6495,18 +6495,6 @@ Read-Host 'Press Enter to close'
             r2["RowSelBgBrush"] = selBrush;
             Resources["RowSelBgBrush"] = selBrush;
 
-            // Keep SelBarBrush per theme (used by other UI elements)
-            var barColor = _snapName switch
-            {
-                "SeroDark" or "TheBezier" => System.Windows.Media.Color.FromRgb(0x00, 0xD4, 0xFF),
-                "Seven"                   => System.Windows.Media.Color.FromRgb(0x2E, 0x8E, 0xD8),
-                _                         => System.Windows.Media.Color.FromRgb(0x00, 0xB8, 0xD4)
-            };
-            var barBrush = new System.Windows.Media.SolidColorBrush(barColor);
-            barBrush.Freeze();
-            r2["SelBarBrush"] = barBrush;
-            Resources["SelBarBrush"] = barBrush;
-
             // Hover: lighter than selection so the two states are clearly distinct
             var hoverBrush = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(0x22, hlColor.R, hlColor.G, hlColor.B));
