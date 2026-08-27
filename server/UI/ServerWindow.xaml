@@ -2071,7 +2071,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="115" MinWidth="0"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="95"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
+                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="*" MinWidth="30" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
