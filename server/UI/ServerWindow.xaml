@@ -32,10 +32,11 @@
         </Style>
 
         <Style TargetType="DataGridRow">
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Background"            Value="Transparent"/>
-            <Setter Property="BorderThickness"       Value="0"/>
-            <Setter Property="Foreground"            Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="OverridesDefaultStyle"  Value="True"/>
+            <Setter Property="Background"             Value="Transparent"/>
+            <Setter Property="BorderThickness"        Value="0"/>
+            <Setter Property="SnapsToDevicePixels"    Value="True"/>
+            <Setter Property="Foreground"             Value="{DynamicResource ContentTextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <!-- Minimal template: no border, no WPF selection chrome, no height added on select -->
