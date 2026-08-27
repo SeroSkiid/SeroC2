@@ -9090,6 +9090,10 @@ Read-Host 'Press Enter to close'
         _adminFilterOnly = false;
         if (TxtSearch != null) TxtSearch.Text = "";
 
+        // Reset auto-fit — default is off.
+        _autoFitColumns = false;
+        UiPrefs.Set("AutoFitColumns", 0);
+
         // Restore visibility before applying widths.
         _suppressColumnSave = true;
         try
@@ -9131,7 +9135,6 @@ Read-Host 'Press Enter to close'
                 col.Width = new DataGridLength(px);
                 UiPrefs.Set($"ColWidth_{key}", px);
             }
-            GridClients.UpdateLayout();
         }
         finally { _suppressColumnSave = false; }
     }
@@ -9160,7 +9163,6 @@ Read-Host 'Press Enter to close'
                 col.Width = new DataGridLength(px);
                 UiPrefs.Set($"AllColWidth_{key}", px);
             }
-            GridAllClients.UpdateLayout();
         }
         finally { _suppressColumnSave = false; }
     }
