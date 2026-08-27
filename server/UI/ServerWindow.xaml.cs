@@ -1667,7 +1667,8 @@ public partial class ServerWindow : ThemedWindow
         GridClients.SizeChanged += (s, e) =>
         {
             if (_autoFitColumns && e.WidthChanged)
-                FitColumnsToContent(GridClients);
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                    new Action(ApplyAdaptiveOnlineWidths));
         };
     }
 
@@ -1731,7 +1732,7 @@ public partial class ServerWindow : ThemedWindow
             { hasSaved = true; break; }
         }
 
-        if (hasSaved)
+        if (hasSaved && !_autoFitColumns)
         {
             foreach (var col in GridAllClients.Columns)
             {
@@ -1787,7 +1788,8 @@ public partial class ServerWindow : ThemedWindow
         GridAllClients.SizeChanged += (s, e) =>
         {
             if (_autoFitColumns && e.WidthChanged)
-                FitColumnsToContent(GridAllClients);
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                    new Action(ApplyAdaptiveAllClientsWidths));
         };
     }
 
