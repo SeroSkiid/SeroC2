@@ -35,17 +35,32 @@ internal static class UiPrefs
     public static void Set(string key, int value)
     {
         _data[key] = value.ToString();
-        Flush();
+        ScheduleFlush();
     }
 
     public static void Set(string key, string value)
     {
         _data[key] = value;
-        Flush();
+        ScheduleFlush();
     }
 
-    private static void Flush()
+    // Deferred write: many Set() calls in one resize/theme cycle collapse into one file write.
+    // ApplicationIdle is the lowest WPF priority that still runs, so FlushNow fires only after
+    // all pending Background dispatches (adaptive column widths, etc.) are fully processed.
+    private static bool _flushPending = false;
+
+    private static void ScheduleFlush()
     {
+        if (_flushPending) return;
+        _flushPending = true;
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(
+            System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+            new Action(FlushNow));
+    }
+
+    private static void FlushNow()
+    {
+        _flushPending = false;
         try
         {
             Directory.CreateDirectory(Path.GetDirectoryName(_path)!);
