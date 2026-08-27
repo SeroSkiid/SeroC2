@@ -7824,25 +7824,6 @@ Read-Host 'Press Enter to close'
             foreach (var k in capturedAllKeys)
                 if (capturedRes.Contains(k)) wr[k] = capturedRes[k];
 
-            // DataGrid.CellStyle is set to SMainDGCell via XAML on each DataGrid, so the separator
-            // template is applied at parse time. We only need to tag the last column of each DataGrid
-            // with Tag="NoSep" so the CellSep rectangle collapses (prevents the phantom 1-px strip
-            // that appears to the right of the * column during horizontal resize).
-            if (Resources[typeof(System.Windows.Controls.DataGridCell)] is System.Windows.Style cellStyle)
-            {
-                var noSepStyle = new System.Windows.Style(typeof(System.Windows.Controls.DataGridCell), cellStyle);
-                noSepStyle.Setters.Add(new System.Windows.Setter(
-                    System.Windows.FrameworkElement.TagProperty, "NoSep"));
-                noSepStyle.Seal();
-
-                foreach (var dg in new System.Windows.Controls.DataGrid?[]
-                         { GridClients, GridAllClients, GridAutoTasks, BinderGrid, GridWinNotify })
-                {
-                    if (dg == null || dg.Columns.Count == 0) continue;
-                    dg.Columns[dg.Columns.Count - 1].CellStyle = noSepStyle;
-                }
-            }
-
             this.InvalidateMeasure();
             this.UpdateLayout();
         }));
