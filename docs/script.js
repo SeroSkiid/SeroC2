@@ -611,7 +611,8 @@ function applyLang(code) {
   if (!canvas || typeof THREE === 'undefined') return;
 
   const W = window.innerWidth, H = window.innerHeight;
-  const mobile = W < 768;
+  if (W < 768) { canvas.style.display = 'none'; return; }
+  const mobile = false;
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: false });
   renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1.5 : 2));
@@ -1083,6 +1084,35 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
       menu.hidden = true;
       btn.setAttribute('aria-expanded', 'false');
       btn.focus();
+    }
+  });
+})();
+
+/* ── Hamburger mobile nav ── */
+(function () {
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobile-nav');
+  if (!hamburger || !mobileNav) return;
+
+  hamburger.addEventListener('click', () => {
+    const open = mobileNav.classList.toggle('open');
+    hamburger.classList.toggle('open', open);
+    hamburger.setAttribute('aria-expanded', String(open));
+  });
+
+  mobileNav.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      mobileNav.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
+    });
+  });
+
+  document.addEventListener('click', e => {
+    if (!mobileNav.contains(e.target) && !hamburger.contains(e.target)) {
+      mobileNav.classList.remove('open');
+      hamburger.classList.remove('open');
+      hamburger.setAttribute('aria-expanded', 'false');
     }
   });
 })();
