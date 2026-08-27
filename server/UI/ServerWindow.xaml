@@ -2058,7 +2058,7 @@
                                         <DataGridTextColumn Header="AV"       Binding="{Binding Antivirus}"                           Width="120" MinWidth="0" FontSize="11"/>
                                         <DataGridTextColumn Header="RAM"      Binding="{Binding RamDisplay}"                          Width="75"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                         <DataGridTextColumn Header="GPU"      Binding="{Binding GpuDisplay}"                          Width="160" MinWidth="0" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="PING" Width="50" MinWidth="0" SortMemberPath="PingMs">
+                                        <DataGridTemplateColumn x:Name="ColOnlinePingHdr" Header="PING" Width="50" MinWidth="0" SortMemberPath="PingMs">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="6,0">
@@ -2071,7 +2071,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="115" MinWidth="0"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="95"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
+                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2274,6 +2274,7 @@
                                         <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="40"/>
                                     </Grid.ColumnDefinitions>
                                     <!-- Left: button + count -->
                                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
@@ -2319,6 +2320,23 @@
                                             </TextBox>
                                         </Grid>
                                     </Border>
+                                    <!-- Settings button -->
+                                    <Button Grid.Column="3" x:Name="BtnAllClientsSettings" Content="☰" FontSize="16"
+                                            Foreground="{DynamicResource LabelBrush}" Cursor="Hand" Click="BtnAllClientsSettings_Click" ToolTip="Column Settings">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="bd" Background="Transparent" Padding="10,0">
+                                                    <TextBlock x:Name="tb" Text="{TemplateBinding Content}" FontSize="16" Foreground="{TemplateBinding Foreground}"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="tb" Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
                                 </Grid>
                             </Border>
                             <Grid Grid.Row="1">
@@ -2393,7 +2411,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="75"  MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="0" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn Header="TAG" Width="*" MinWidth="0" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
+                                    <DataGridTemplateColumn x:Name="ColAllClientsTagHdr" Header="TAG" Width="*" MinWidth="30" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>
@@ -2427,6 +2445,52 @@
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
                             </DataGrid>
+
+                            <!-- AllClients settings panel overlay -->
+                            <Border x:Name="AllClientsSettingsPanel"
+                                    Width="260"
+                                    HorizontalAlignment="Right"
+                                    Panel.ZIndex="10"
+                                    Background="{DynamicResource InputBgBrush}"
+                                    BorderBrush="{DynamicResource SectionBorderBrush}"
+                                    BorderThickness="1,0,0,0"
+                                    Visibility="Collapsed">
+                                <Border.RenderTransform>
+                                    <TranslateTransform X="260"/>
+                                </Border.RenderTransform>
+                                <Grid Margin="16">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" /> <!-- Header -->
+                                        <RowDefinition Height="Auto" /> <!-- Columns Title -->
+                                        <RowDefinition Height="*" />    <!-- Columns scroll -->
+                                        <RowDefinition Height="Auto" /> <!-- Reset button -->
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Header -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                                        <TextBlock x:Name="TxtAllClientsSettingsTitle" Text="COLUMN SETTINGS" Foreground="{DynamicResource ContentTextBrush}" FontSize="11" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <Button HorizontalAlignment="Right" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource LabelBrush}" Cursor="Hand" Click="CloseAllClientsSettings_Click" ToolTip="Close">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="Transparent" Padding="4">
+                                                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Close.svg'}" Width="12" Height="12"/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </Grid>
+
+                                    <!-- Column Visibility -->
+                                    <TextBlock x:Name="TxtAllClientsColVis" Grid.Row="1" Text="COLUMN VISIBILITY" Style="{StaticResource SLabel}"/>
+                                    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" Margin="0,0,0,16">
+                                        <StackPanel x:Name="StackAllClientsColumnCheckboxes"/>
+                                    </ScrollViewer>
+
+                                    <!-- Reset Button -->
+                                    <Button x:Name="BtnResetAllClientsSettings" Grid.Row="3" Content="Reset to Default" Click="ResetAllClientsSettings_Click" Height="32" Cursor="Hand"
+                                            Style="{StaticResource SBtn}" FontSize="11" FontWeight="SemiBold"/>
+                                </Grid>
+                            </Border>
                             </Grid>
 
                             <!-- Empty state overlay for All Clients -->

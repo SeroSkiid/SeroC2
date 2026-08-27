@@ -314,7 +314,6 @@ public partial class ServerWindow : ThemedWindow
             LoadColumnVisibility();
             RestoreGridColumnWidths();
             SetupGridColumnPersistence();
-            UpdateSettingsCheckboxStates();
 
             // Initialise diagnostic logger (enabled by default)
             DiagnosticLogger.Init();
@@ -927,6 +926,7 @@ public partial class ServerWindow : ThemedWindow
             UiPrefs.Set("WinHeight", (int)ActualHeight);
         }
         UiPrefs.Set("ActiveNav", MainTabControl.SelectedIndex);
+        CleanupColumnPersistence();
         SaveConfig();
         foreach (var w in _featureWindows.Values.ToList())
             try { w.Close(); } catch { }
@@ -1711,8 +1711,11 @@ public partial class ServerWindow : ThemedWindow
         if (col is System.Windows.Controls.DataGridTextColumn tc &&
             _colOriginalHeader.TryGetValue(tc, out var orig))
             return orig;
-        if (col == ColStatusHdr) return "STATUS";
-        if (col == ColCamHdr)    return "CAM";
+        if (col == ColStatusHdr)       return "STATUS";
+        if (col == ColCamHdr)          return "CAM";
+        if (col == ColOnlinePingHdr)   return "PING";
+        if (col == ColOnlineTagHdr)    return "TAG";
+        if (col == ColAllClientsTagHdr) return "TAG";
         return col.Header?.ToString() ?? "";
     }
 
@@ -8359,8 +8362,8 @@ Read-Host 'Press Enter to close'
         if (ColStatusHdr != null) ColStatusHdr.Header = Lang.Get("COL_STATUS");
         UpdateColHeader(GridClients, "LOAD", Lang.Get("COL_LOAD"));
         foreach (var c in _onlineClients) c.NotifyStatus();
-        UpdateColHeader(GridClients, "PING",     Lang.Get("COL_PING"));
-        UpdateColHeader(GridClients, "TAG",      Lang.Get("COL_TAG"));
+        if (ColOnlinePingHdr != null) ColOnlinePingHdr.Header = Lang.Get("COL_PING");
+        if (ColOnlineTagHdr != null) ColOnlineTagHdr.Header = Lang.Get("COL_TAG");
         UpdateColHeader(GridClients, "ID",       Lang.Get("COL_ID"));
 
         // ── DataGrid column headers — All Clients grid ──
@@ -8376,7 +8379,7 @@ Read-Host 'Press Enter to close'
             UpdateColHeader(GridAllClients, "FIRST SEEN", Lang.Get("COL_FIRST_SEEN"));
             UpdateColHeader(GridAllClients, "LAST SEEN",  Lang.Get("COL_LAST_SEEN"));
             UpdateColHeader(GridAllClients, "ID",         Lang.Get("COL_ID"));
-            UpdateColHeader(GridAllClients, "TAG",        Lang.Get("COL_TAG"));
+            if (ColAllClientsTagHdr != null) ColAllClientsTagHdr.Header = Lang.Get("COL_TAG");
         }
 
         // ── DataGrid column headers — Binder grid ──
@@ -8615,6 +8618,7 @@ Read-Host 'Press Enter to close'
         if (TxtGridColVis          != null) TxtGridColVis.Text          = Lang.Get("COLUMN_VIS");
         if (BtnResetGridSettings   != null) BtnResetGridSettings.Content = Lang.Get("RESET_GRID");
         PopulateColumnVisibilityMenu();
+        PopulateAllClientsColumnVisibilityMenu();
 
         // ── Server status (refresh current state text) ──
         if (TxtServerStatus != null)
@@ -8820,6 +8824,47 @@ Read-Host 'Press Enter to close'
         }
     }
 
+    private void PopulateAllClientsColumnVisibilityMenu()
+    {
+        if (StackAllClientsColumnCheckboxes == null) return;
+        StackAllClientsColumnCheckboxes.Children.Clear();
+        foreach (var col in GridAllClients.Columns)
+        {
+            string key = GetOriginalKey(col);
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+
+            string header = col.Header?.ToString() ?? key;
+            var cb = new System.Windows.Controls.CheckBox
+            {
+                Content = GetFriendlyColumnHeader(header),
+                Style = (Style)FindResource("SettingsChk"),
+                IsChecked = col.Visibility == Visibility.Visible,
+                Tag = col,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            string h = key;
+            cb.Checked += (s, ev) =>
+            {
+                _suppressColumnSave = true;
+                col.Visibility = Visibility.Visible;
+                _suppressColumnSave = false;
+                UiPrefs.Set($"AllColVis_{h}", 1);
+                SaveAllClientsColumnWidths();
+            };
+            cb.Unchecked += (s, ev) =>
+            {
+                _suppressColumnSave = true;
+                col.Visibility = Visibility.Collapsed;
+                _suppressColumnSave = false;
+                UiPrefs.Set($"AllColVis_{h}", 0);
+                SaveAllClientsColumnWidths();
+            };
+
+            StackAllClientsColumnCheckboxes.Children.Add(cb);
+        }
+    }
+
     private string GetFriendlyColumnHeader(string header)
     {
         if (header == Lang.Get("COL_USER"))    return Lang.Get("GRID_COL_USER");
@@ -8834,15 +8879,24 @@ Read-Host 'Press Enter to close'
 
     private void UpdateSettingsCheckboxStates()
     {
-        if (StackColumnCheckboxes == null) return;
-        foreach (var child in StackColumnCheckboxes.Children)
+        if (StackColumnCheckboxes != null)
         {
-            if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
+            foreach (var child in StackColumnCheckboxes.Children)
             {
-                cb.IsChecked = col.Visibility == Visibility.Visible;
+                if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
+                    cb.IsChecked = col.Visibility == Visibility.Visible;
             }
         }
-        
+
+        if (StackAllClientsColumnCheckboxes != null)
+        {
+            foreach (var child in StackAllClientsColumnCheckboxes.Children)
+            {
+                if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
+                    cb.IsChecked = col.Visibility == Visibility.Visible;
+            }
+        }
+
         if (ChkFilterWebcam != null) ChkFilterWebcam.IsChecked = _webcamFilterOnly;
         if (ChkFilterAdmin != null) ChkFilterAdmin.IsChecked = _adminFilterOnly;
     }
@@ -8886,6 +8940,68 @@ Read-Host 'Press Enter to close'
         };
         anim.Completed += (_, _) => GridSettingsPanel.Visibility = Visibility.Collapsed;
         tx.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
+    }
+
+    private void BtnAllClientsSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (AllClientsSettingsPanel == null) return;
+        if (AllClientsSettingsPanel.Visibility == Visibility.Visible)
+            SlideOutAllClientsSettings();
+        else
+        {
+            UpdateSettingsCheckboxStates();
+            SlideInAllClientsSettings();
+        }
+    }
+
+    private void CloseAllClientsSettings_Click(object sender, RoutedEventArgs e)
+    {
+        if (AllClientsSettingsPanel != null)
+            SlideOutAllClientsSettings();
+    }
+
+    private void SlideInAllClientsSettings()
+    {
+        var tx = (System.Windows.Media.TranslateTransform)AllClientsSettingsPanel.RenderTransform;
+        tx.X = 260;
+        AllClientsSettingsPanel.Visibility = Visibility.Visible;
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(0, TimeSpan.FromMilliseconds(200))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut }
+        };
+        tx.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
+    }
+
+    private void SlideOutAllClientsSettings()
+    {
+        var tx = (System.Windows.Media.TranslateTransform)AllClientsSettingsPanel.RenderTransform;
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(260, TimeSpan.FromMilliseconds(180))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseIn }
+        };
+        anim.Completed += (_, _) => AllClientsSettingsPanel.Visibility = Visibility.Collapsed;
+        tx.BeginAnimation(System.Windows.Media.TranslateTransform.XProperty, anim);
+    }
+
+    private void ResetAllClientsSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (!string.IsNullOrEmpty(key) && key != "TAG")
+                {
+                    col.Visibility = Visibility.Visible;
+                    UiPrefs.Set($"AllColVis_{key}", 1);
+                }
+            }
+        }
+        finally { _suppressColumnSave = false; }
+
+        ApplyAdaptiveAllClientsWidths();
+        UpdateSettingsCheckboxStates();
     }
 
     private void ChkFilterWebcam_Checked(object sender, RoutedEventArgs e)
