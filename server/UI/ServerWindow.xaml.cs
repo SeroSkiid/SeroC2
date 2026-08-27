@@ -7651,27 +7651,38 @@ Read-Host 'Press Enter to close'
         })
             if (res.Contains(key)) wRes[key] = res[key];
 
-        // Row selection border and hover — server-window DataGrid only, not propagated to feature windows.
-        // All themes use SystemColors.HighlightColor to match the rubber-band selection rectangle.
+        // Row selection and hover — unified across ServerWindow and all feature windows.
+        // SystemColors.HighlightColor matches the rubber-band selection rectangle on every theme.
         var hl = System.Windows.SystemColors.HighlightColor;
         {
             var selBrushSync = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(0x90, hl.R, hl.G, hl.B));
             selBrushSync.Freeze();
-            wRes["RowSelBgBrush"]     = selBrushSync;
-            wRes["RowSelBorderBrush"] = new System.Windows.Media.SolidColorBrush(hl);
+            wRes["RowSelBgBrush"]                       = selBrushSync;
+            Application.Current.Resources["RowSelBgBrush"] = selBrushSync;
+
+            var selBorderBrush = new System.Windows.Media.SolidColorBrush(hl);
+            wRes["RowSelBorderBrush"]                       = selBorderBrush;
+            Application.Current.Resources["RowSelBorderBrush"] = selBorderBrush;
+
             wRes["RowBorderThicknessKey"] = new System.Windows.Thickness(0);
+
             var hoverBrushSync = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(0x20, hl.R, hl.G, hl.B));
             hoverBrushSync.Freeze();
-            wRes["RowHoverBgBrush"] = hoverBrushSync;
+            wRes["RowHoverBgBrush"]                       = hoverBrushSync;
+            Application.Current.Resources["RowHoverBgBrush"] = hoverBrushSync;
 
-            // Always set RowSelTextBrush based on theme brightness so text is readable
-            // after any theme switch (avoids stale white text on light selection backgrounds).
-            wRes["RowSelTextBrush"] = _lightThemeKeys.Contains(name) ? B("#0A1E38") : B("#FFFFFF");
+            // RowSelTextBrush: dark on light themes, white on dark themes
+            var selText = _lightThemeKeys.Contains(name) ? B("#0A1E38") : B("#FFFFFF");
+            wRes["RowSelTextBrush"]                       = selText;
+            Application.Current.Resources["RowSelTextBrush"] = selText;
         }
         if (name == "Office2019HighContrast")
-            wRes["RowSelTextBrush"] = B("#000000");
+        {
+            wRes["RowSelTextBrush"]                       = B("#000000");
+            Application.Current.Resources["RowSelTextBrush"] = B("#000000");
+        }
 
         // Per-theme font family — cascades to all window content via WPF inheritance.
         // Consolas for dark/technical themes, Calibri for Office suites, Segoe UI elsewhere.
