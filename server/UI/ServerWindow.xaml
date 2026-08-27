@@ -1613,67 +1613,55 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!-- ONLINE -->
-                                    <Border Grid.Column="0" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0" ClipToBounds="True" Background="{DynamicResource CardBgBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <Rectangle Grid.Column="0" Fill="#22C55E"/>
-                                            <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                    <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#22C55E" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="DashLblOnline" Text="ONLINE" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <TextBlock x:Name="DashOnline" Text="0" Foreground="#22C55E" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock x:Name="DashSubOnline" Text="connected now" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                    <Border Grid.Column="0" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0"
+                                            Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#22C55E" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DashLblOnline" Text="ONLINE" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                        </Grid>
+                                            <TextBlock x:Name="DashOnline" Text="0" Foreground="#22C55E" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashSubOnline" Text="connected now" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- TOTAL SEEN -->
-                                    <Border Grid.Column="1" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0" ClipToBounds="True" Background="{DynamicResource CardBgBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <Rectangle Grid.Column="0" Fill="{DynamicResource AccentBrush}"/>
-                                            <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                    <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="DashLblTotal" Text="TOTAL SEEN" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <TextBlock x:Name="DashTotal" Text="0" Foreground="{DynamicResource AccentBrush}" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock x:Name="DashSubTotal" Text="unique clients" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                    <Border Grid.Column="1" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0"
+                                            Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE716;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DashLblTotal" Text="TOTAL SEEN" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                        </Grid>
+                                            <TextBlock x:Name="DashTotal" Text="0" Foreground="{DynamicResource AccentBrush}" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashSubTotal" Text="unique clients" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- NEW 24H -->
-                                    <Border Grid.Column="2" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0" ClipToBounds="True" Background="{DynamicResource CardBgBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <Rectangle Grid.Column="0" Fill="#F59E0B"/>
-                                            <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                    <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="DashLblNew24h" Text="NEW 24H" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <TextBlock x:Name="DashNew24h" Text="0" Foreground="#F59E0B" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock x:Name="DashSubNew24h" Text="connections today" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                    <Border Grid.Column="2" CornerRadius="{DynamicResource ContainerCornerRadius}" Margin="0,0,9,0"
+                                            Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DashLblNew24h" Text="NEW 24H" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                        </Grid>
+                                            <TextBlock x:Name="DashNew24h" Text="0" Foreground="#F59E0B" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashSubNew24h" Text="connections today" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- UPTIME -->
-                                    <Border Grid.Column="3" CornerRadius="{DynamicResource ContainerCornerRadius}" ClipToBounds="True" Background="{DynamicResource CardBgBrush}">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions><ColumnDefinition Width="4"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-                                            <Rectangle Grid.Column="0" Fill="#5B9BD5"/>
-                                            <StackPanel Grid.Column="1" Margin="14,15,12,15">
-                                                <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                    <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#5B9BD5" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="DashLblUptime" Text="UPTIME" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                                <TextBlock x:Name="DashUptime" Text="--" Foreground="#5B9BD5" FontSize="20" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
-                                                <TextBlock x:Name="DashSubUptime" Text="server running" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                    <Border Grid.Column="3" CornerRadius="{DynamicResource ContainerCornerRadius}"
+                                            Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
+                                        <StackPanel>
+                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+                                                <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#5B9BD5" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock x:Name="DashLblUptime" Text="UPTIME" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                        </Grid>
+                                            <TextBlock x:Name="DashUptime" Text="--" Foreground="#5B9BD5" FontSize="20" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashSubUptime" Text="server running" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
+                                        </StackPanel>
                                     </Border>
                                 </Grid>
 
