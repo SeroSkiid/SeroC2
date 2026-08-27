@@ -9033,10 +9033,10 @@ Read-Host 'Press Enter to close'
             foreach (var col in GridAllClients.Columns)
             {
                 string key = GetOriginalKey(col);
-                if (!string.IsNullOrEmpty(key) && key != "TAG")
+                if (!string.IsNullOrEmpty(key))
                 {
                     col.Visibility = Visibility.Visible;
-                    UiPrefs.Set($"AllColVis_{key}", 1);
+                    if (key != "TAG") UiPrefs.Set($"AllColVis_{key}", 1);
                 }
             }
         }
