@@ -8717,22 +8717,18 @@ Read-Host 'Press Enter to close'
         foreach (var col in GridClients.Columns)
         {
             string key = GetOriginalKey(col); // always English regardless of current language
-            if (string.IsNullOrEmpty(key)) continue;
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
 
             int isVisible = UiPrefs.GetInt($"ColVis_{key}", 1);
             col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
-            if (key == "TAG" && isVisible == 1)
-                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         }
         foreach (var col in GridAllClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key)) continue;
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
 
             int isVisible = UiPrefs.GetInt($"AllColVis_{key}", 1);
             col.Visibility = isVisible == 1 ? Visibility.Visible : Visibility.Collapsed;
-            if (key == "TAG" && isVisible == 1)
-                col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
         }
     }
 
@@ -8746,7 +8742,7 @@ Read-Host 'Press Enter to close'
             if (string.IsNullOrEmpty(header)) continue;
 
             string key = GetOriginalKey(col);
-            bool isTag = key == "TAG";
+            if (key == "TAG") continue; // TAG is always visible — it's the structural fill column
 
             var cb = new System.Windows.Controls.CheckBox
             {
@@ -8763,10 +8759,9 @@ Read-Host 'Press Enter to close'
                 if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
-                if (isTag) col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 1);
-                if (!isTag) SaveGridColumnWidths();
+                SaveGridColumnWidths();
             };
             cb.Unchecked += (s, ev) =>
             {
@@ -8775,7 +8770,7 @@ Read-Host 'Press Enter to close'
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
                 UiPrefs.Set($"ColVis_{h}", 0);
-                if (!isTag) SaveGridColumnWidths();
+                SaveGridColumnWidths();
             };
 
             StackColumnCheckboxes.Children.Add(cb);
@@ -8789,8 +8784,7 @@ Read-Host 'Press Enter to close'
         foreach (var col in GridAllClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key)) continue;
-            bool isTag = key == "TAG";
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue; // TAG is always visible
 
             string header = col.Header?.ToString() ?? key;
             var cb = new System.Windows.Controls.CheckBox
@@ -8808,10 +8802,9 @@ Read-Host 'Press Enter to close'
                 if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
-                if (isTag) col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                 _suppressColumnSave = false;
                 UiPrefs.Set($"AllColVis_{h}", 1);
-                if (!isTag) SaveAllClientsColumnWidths();
+                SaveAllClientsColumnWidths();
             };
             cb.Unchecked += (s, ev) =>
             {
@@ -8820,7 +8813,7 @@ Read-Host 'Press Enter to close'
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
                 UiPrefs.Set($"AllColVis_{h}", 0);
-                if (!isTag) SaveAllClientsColumnWidths();
+                SaveAllClientsColumnWidths();
             };
 
             StackAllClientsColumnCheckboxes.Children.Add(cb);
@@ -8988,7 +8981,7 @@ Read-Host 'Press Enter to close'
                 if (!string.IsNullOrEmpty(key))
                 {
                     col.Visibility = Visibility.Visible;
-                    UiPrefs.Set($"AllColVis_{key}", 1);
+                    if (key != "TAG") UiPrefs.Set($"AllColVis_{key}", 1);
                 }
             }
         }
