@@ -9030,7 +9030,7 @@ Read-Host 'Press Enter to close'
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-            col.Width = new DataGridLength(1, DataGridLengthUnitType.SizeToCells);
+            col.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
         }
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
@@ -9039,7 +9039,7 @@ Read-Host 'Press Enter to close'
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key) || key == "TAG") continue;
                 double w = col.ActualWidth;
-                if (w > 20) col.Width = new DataGridLength(w);
+                col.Width = new DataGridLength(w > 20 ? w : Math.Max(col.MinWidth, 60));
             }
             _suppressColumnSave = false;
         });
