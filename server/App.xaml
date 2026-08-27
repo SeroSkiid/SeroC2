@@ -857,9 +857,10 @@
                                       VerticalAlignment="Center"
                                       Margin="4,0,10,0"/>
                             </Grid>
-                            <!-- Accent bottom bar — hidden by default; slides in on sort/hover -->
+                            <!-- Accent bottom bar — always visible at 0.20; brightens to 1.0 on hover,
+                                 stays at 0.80 on sorted column (trigger setter reasserts via FillBehavior=Stop) -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
-                                       Fill="{DynamicResource AccentBrush}" Opacity="0"/>
+                                       Fill="{DynamicResource AccentBrush}" Opacity="0.20"/>
                             <!-- Separator — 1px tick inset 5px top/bottom; brightens to 1.0 on hover.
                                  Color is auto-derived in ApplyTheme for contrast on all themes. -->
                             <Rectangle x:Name="Separator"
@@ -925,7 +926,7 @@
                                                          To="0" Duration="0:0:0.10"/>
                                         <DoubleAnimation Storyboard.TargetName="AccentBar"
                                                          Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.10"/>
+                                                         To="0.20" Duration="0:0:0.10"/>
                                         <DoubleAnimation Storyboard.TargetName="Separator"
                                                          Storyboard.TargetProperty="Opacity"
                                                          To="0.75" Duration="0:0:0.10"/>
