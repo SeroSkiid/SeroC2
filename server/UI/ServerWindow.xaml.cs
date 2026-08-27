@@ -1595,6 +1595,7 @@ public partial class ServerWindow : ThemedWindow
 
     private void RestoreGridColumnWidths()
     {
+        _autoFitColumns = UiPrefs.GetInt("AutoFitColumns", 0) == 1;
         bool hasSaved = false;
         foreach (var col in GridClients.Columns)
         {
@@ -1603,7 +1604,7 @@ public partial class ServerWindow : ThemedWindow
             { hasSaved = true; break; }
         }
 
-        if (hasSaved)
+        if (hasSaved && !_autoFitColumns)
         {
             foreach (var col in GridClients.Columns)
             {
@@ -1662,6 +1663,13 @@ public partial class ServerWindow : ThemedWindow
                 _columnPersistenceHandlers.Add((desc, c, widthH));
             }
         }
+
+        GridClients.SizeChanged += (s, e) =>
+        {
+            if (_autoFitColumns && e.WidthChanged)
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                    new Action(ApplyAdaptiveOnlineWidths));
+        };
     }
 
     // Collapses a column that was resized to near-zero, persists its hidden state,
@@ -1776,6 +1784,13 @@ public partial class ServerWindow : ThemedWindow
                 _columnPersistenceHandlers.Add((desc, c, widthH));
             }
         }
+
+        GridAllClients.SizeChanged += (s, e) =>
+        {
+            if (_autoFitColumns && e.WidthChanged)
+                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                    new Action(ApplyAdaptiveAllClientsWidths));
+        };
     }
 
     private void SaveAllClientsColumnWidths()
@@ -8701,6 +8716,7 @@ Read-Host 'Press Enter to close'
     private bool _adminFilterOnly = false;
     private bool _suppressColumnSave = false;
     private bool _suppressCheckboxUpdate = false;
+    private bool _autoFitColumns = false;
 
     private readonly List<(System.ComponentModel.DependencyPropertyDescriptor dpd, System.Windows.DependencyObject obj, EventHandler h)>
         _columnPersistenceHandlers = new();
@@ -8857,6 +8873,7 @@ Read-Host 'Press Enter to close'
 
             if (ChkFilterWebcam != null) ChkFilterWebcam.IsChecked = _webcamFilterOnly;
             if (ChkFilterAdmin != null) ChkFilterAdmin.IsChecked = _adminFilterOnly;
+            if (ChkAutoFill != null) ChkAutoFill.IsChecked = _autoFitColumns;
         }
         finally { _suppressCheckboxUpdate = false; }
     }
@@ -9013,6 +9030,22 @@ Read-Host 'Press Enter to close'
     {
         _adminFilterOnly = false;
         RefreshClientFilters();
+    }
+
+    private void ChkAutoFill_Checked(object sender, RoutedEventArgs e)
+    {
+        if (_suppressCheckboxUpdate) return;
+        _autoFitColumns = true;
+        UiPrefs.Set("AutoFitColumns", 1);
+        ApplyAdaptiveOnlineWidths();
+        ApplyAdaptiveAllClientsWidths();
+    }
+
+    private void ChkAutoFill_Unchecked(object sender, RoutedEventArgs e)
+    {
+        if (_suppressCheckboxUpdate) return;
+        _autoFitColumns = false;
+        UiPrefs.Set("AutoFitColumns", 0);
     }
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)

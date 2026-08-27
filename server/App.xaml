@@ -757,10 +757,10 @@
             </Style.Triggers>
         </Style>
 
-        <!-- ── DataGridRowHeader: 3-px left accent bar, no layout impact ── -->
+        <!-- ── DataGridRowHeader: hidden (width=0), no left accent bar ── -->
         <Style TargetType="DataGridRowHeader">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="Width"   Value="3"/>
+            <Setter Property="Width"   Value="0"/>
             <Setter Property="Padding" Value="0"/>
             <Setter Property="Template">
                 <Setter.Value>
@@ -788,27 +788,18 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridCell">
-                        <Grid>
-                            <!-- Left accent bar — shows on selection, adapts per theme -->
-                            <Border x:Name="SelBar" Width="3" HorizontalAlignment="Left"
-                                    Background="{DynamicResource SelBarBrush}" Visibility="Collapsed"/>
-                            <!-- Main cell -->
-                            <Border x:Name="CellBd"
-                                    Background="Transparent"
-                                    BorderThickness="0"
-                                    Padding="10,4">
-                                <ContentPresenter VerticalAlignment="Center"/>
-                            </Border>
-                        </Grid>
+                        <Border x:Name="CellBd"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Padding="10,4">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
                         <ControlTemplate.Triggers>
-                            <!-- Hover: uniform across all columns via parent row's IsMouseOver -->
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
                             </DataTrigger>
-                            <!-- Selection overrides hover; bind to row since SelectionUnit=FullRow keeps cell.IsSelected False -->
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                <Setter TargetName="SelBar" Property="Visibility" Value="Visible"/>
                                 <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>
@@ -827,8 +818,6 @@
             <Setter Property="FontSize"        Value="11"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
             <Setter Property="Cursor"          Value="Hand"/>
-            <Setter Property="BorderThickness" Value="0,0,1,0"/>
-            <Setter Property="BorderBrush"     Value="{DynamicResource ColHeaderBorderBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
@@ -864,15 +853,6 @@
                                  Fill = ColAccentBarBrush: accent on dark themes, neutral separator on light themes. -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
                                        Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.40"/>
-                            <!-- Separator — 1px tick inset 5px top/bottom; brightens to 1.0 on hover.
-                                 Color is auto-derived in ApplyTheme for contrast on all themes. -->
-                            <Rectangle x:Name="Separator"
-                                       HorizontalAlignment="Right" Width="1" Margin="0,5,1,5"
-                                       Fill="{DynamicResource ColSeparatorBrush}"
-                                       Opacity="0.75"
-                                       SnapsToDevicePixels="True"
-                                       RenderOptions.EdgeMode="Aliased"
-                                       IsHitTestVisible="False"/>
                             <!-- Resize grippers — transparent hit area only -->
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Width="6"
                                    Cursor="SizeWE" Background="Transparent">
@@ -903,35 +883,8 @@
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,1 L4,5 L8,1"/>
                                 <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
-                            <!-- Hover: fade overlay bg in (120ms) + brighten separator. AccentBar is NOT
-                                 animated — it stays at its local value (0.40) or sort-trigger value (0.80). -->
-                            <EventTrigger RoutedEvent="MouseEnter">
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12"/>
-                                        <DoubleAnimation Storyboard.TargetName="Separator"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="1.0" Duration="0:0:0.12"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
-                            <!-- Leave: fade overlay out (100ms); FillBehavior=Stop releases hold so
-                                 Separator local value (0.75) and sort-trigger setters re-assert. -->
-                            <EventTrigger RoutedEvent="MouseLeave">
-                                <BeginStoryboard>
-                                    <Storyboard FillBehavior="Stop">
-                                        <DoubleAnimation Storyboard.TargetName="HoverOverlay"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.10"/>
-                                        <DoubleAnimation Storyboard.TargetName="Separator"
-                                                         Storyboard.TargetProperty="Opacity"
-                                                         To="0.75" Duration="0:0:0.10"/>
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </EventTrigger>
                             <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
                                 <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
                             </Trigger>
                             <!-- CanUserResize=False: disable only the RIGHT gripper so the column's own width
@@ -947,7 +900,6 @@
                                  caused by the filler's incomplete visual tree name scope. -->
                             <DataTrigger Binding="{Binding Column, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
                                 <Setter TargetName="AccentBar"        Property="Visibility" Value="Collapsed"/>
-                                <Setter TargetName="Separator"        Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="HoverOverlay"     Property="Visibility" Value="Collapsed"/>
                                 <Setter Property="Background"         Value="Transparent"/>
                                 <Setter Property="IsHitTestVisible"   Value="False"/>
@@ -958,9 +910,9 @@
             </Setter>
         </Style>
 
-        <!-- Global DataGrid: single-click select + rubber band + 3-px row-header accent bar -->
+        <!-- Global DataGrid: single-click select + rubber band -->
         <Style TargetType="DataGrid">
-            <Setter Property="RowHeaderWidth"    Value="3"/>
+            <Setter Property="RowHeaderWidth"    Value="0"/>
             <Setter Property="HeadersVisibility" Value="All"/>
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="DataGrid_SelectOnClick"/>
             <EventSetter Event="Loaded"                    Handler="DataGrid_EnableRubberBand"/>

@@ -1936,7 +1936,7 @@
                                           VirtualizingStackPanel.IsVirtualizing="True"
                                           VirtualizingStackPanel.VirtualizationMode="Recycling"
                                           VirtualizingPanel.ScrollUnit="Pixel"
-                                          EnableColumnVirtualization="False"
+                                          EnableColumnVirtualization="True"
                                           ScrollViewer.CanContentScroll="True"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -2220,6 +2220,13 @@
                                         <!-- Filters -->
                                         <TextBlock x:Name="TxtGridFiltersLabel" Grid.Row="1" Text="FILTERS" Style="{StaticResource SLabel}"/>
                                         <StackPanel Grid.Row="2" Margin="0,0,0,16">
+                                            <CheckBox x:Name="ChkAutoFill" Style="{StaticResource SettingsChk}" Checked="ChkAutoFill_Checked" Unchecked="ChkAutoFill_Unchecked" Margin="0,0,0,8">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Customer.svg'}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <TextBlock x:Name="TxtAutoFill" Text="Auto-fit columns" VerticalAlignment="Center"/>
+                                                </StackPanel>
+                                            </CheckBox>
+                                            <Rectangle Height="1" Fill="{DynamicResource SectionBorderBrush}" Margin="0,0,0,8"/>
                                             <CheckBox x:Name="ChkFilterWebcam" Style="{StaticResource SettingsChk}" Checked="ChkFilterWebcam_Checked" Unchecked="ChkFilterWebcam_Unchecked" Margin="0,0,0,8">
                                                 <StackPanel Orientation="Horizontal">
                                                     <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Video.svg'}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
@@ -2359,7 +2366,7 @@
                                       VirtualizingStackPanel.IsVirtualizing="True"
                                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                                       VirtualizingPanel.ScrollUnit="Pixel"
-                                      EnableColumnVirtualization="False"
+                                      EnableColumnVirtualization="True"
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
