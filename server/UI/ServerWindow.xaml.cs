@@ -1713,8 +1713,10 @@ public partial class ServerWindow : ThemedWindow
             return orig;
         if (col == ColStatusHdr)       return "STATUS";
         if (col == ColCamHdr)          return "CAM";
-        if (col == ColOnlinePingHdr)   return "PING";
-        if (col == ColOnlineTagHdr)    return "TAG";
+        if (col == ColOnlineIpHdr)      return "IP";
+        if (col == ColOnlinePingHdr)    return "PING";
+        if (col == ColOnlineTagHdr)     return "TAG";
+        if (col == ColAllClientsIpHdr)  return "IP";
         if (col == ColAllClientsTagHdr) return "TAG";
         return col.Header?.ToString() ?? "";
     }
@@ -8347,7 +8349,7 @@ Read-Host 'Press Enter to close'
 
         // ── DataGrid column headers — Online grid ──
         UpdateColHeader(GridClients, "USER",     Lang.Get("COL_USER"));
-        UpdateColHeader(GridClients, "IP",       Lang.Get("COL_IP"));
+        if (ColOnlineIpHdr != null) ColOnlineIpHdr.Header = Lang.Get("COL_IP");
         UpdateColHeader(GridClients, "PRIV",     Lang.Get("COL_PRIV"));
         UpdateColHeader(GridClients, "COUNTRY",  Lang.Get("COL_COUNTRY"));
         UpdateColHeader(GridClients, "MACHINE",  Lang.Get("COL_MACHINE"));
@@ -8370,7 +8372,7 @@ Read-Host 'Press Enter to close'
         if (GridAllClients != null)
         {
             UpdateColHeader(GridAllClients, "USER",       Lang.Get("COL_USER"));
-            UpdateColHeader(GridAllClients, "IP",         Lang.Get("COL_IP"));
+            if (ColAllClientsIpHdr != null) ColAllClientsIpHdr.Header = Lang.Get("COL_IP");
             UpdateColHeader(GridAllClients, "COUNTRY",    Lang.Get("COL_COUNTRY"));
             UpdateColHeader(GridAllClients, "MACHINE",    Lang.Get("COL_MACHINE"));
             UpdateColHeader(GridAllClients, "OS",         Lang.Get("COL_OS"));
@@ -8617,6 +8619,9 @@ Read-Host 'Press Enter to close'
         if (TxtWebcamOnly          != null) TxtWebcamOnly.Text          = Lang.Get("WEBCAM_ONLY");
         if (TxtGridColVis          != null) TxtGridColVis.Text          = Lang.Get("COLUMN_VIS");
         if (BtnResetGridSettings   != null) BtnResetGridSettings.Content = Lang.Get("RESET_GRID");
+        if (TxtAllClientsSettingsTitle != null) TxtAllClientsSettingsTitle.Text    = Lang.Get("GRID_SETTINGS");
+        if (TxtAllClientsColVis        != null) TxtAllClientsColVis.Text           = Lang.Get("COLUMN_VIS");
+        if (BtnResetAllClientsSettings != null) BtnResetAllClientsSettings.Content = Lang.Get("RESET_GRID");
         PopulateColumnVisibilityMenu();
         PopulateAllClientsColumnVisibilityMenu();
 
@@ -8748,6 +8753,7 @@ Read-Host 'Press Enter to close'
     private bool _webcamFilterOnly = false;
     private bool _adminFilterOnly = false;
     private bool _suppressColumnSave = false;
+    private bool _suppressCheckboxUpdate = false;
 
     private readonly List<(System.ComponentModel.DependencyPropertyDescriptor dpd, System.Windows.DependencyObject obj, EventHandler h)>
         _columnPersistenceHandlers = new();
@@ -8805,6 +8811,7 @@ Read-Host 'Press Enter to close'
             string h = key;
             cb.Checked += (s, ev) =>
             {
+                if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
                 _suppressColumnSave = false;
@@ -8813,6 +8820,7 @@ Read-Host 'Press Enter to close'
             };
             cb.Unchecked += (s, ev) =>
             {
+                if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
@@ -8846,6 +8854,7 @@ Read-Host 'Press Enter to close'
             string h = key;
             cb.Checked += (s, ev) =>
             {
+                if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Visible;
                 _suppressColumnSave = false;
@@ -8854,6 +8863,7 @@ Read-Host 'Press Enter to close'
             };
             cb.Unchecked += (s, ev) =>
             {
+                if (_suppressCheckboxUpdate) return;
                 _suppressColumnSave = true;
                 col.Visibility = Visibility.Collapsed;
                 _suppressColumnSave = false;
@@ -8879,26 +8889,31 @@ Read-Host 'Press Enter to close'
 
     private void UpdateSettingsCheckboxStates()
     {
-        if (StackColumnCheckboxes != null)
+        _suppressCheckboxUpdate = true;
+        try
         {
-            foreach (var child in StackColumnCheckboxes.Children)
+            if (StackColumnCheckboxes != null)
             {
-                if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
-                    cb.IsChecked = col.Visibility == Visibility.Visible;
+                foreach (var child in StackColumnCheckboxes.Children)
+                {
+                    if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
+                        cb.IsChecked = col.Visibility == Visibility.Visible;
+                }
             }
-        }
 
-        if (StackAllClientsColumnCheckboxes != null)
-        {
-            foreach (var child in StackAllClientsColumnCheckboxes.Children)
+            if (StackAllClientsColumnCheckboxes != null)
             {
-                if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
-                    cb.IsChecked = col.Visibility == Visibility.Visible;
+                foreach (var child in StackAllClientsColumnCheckboxes.Children)
+                {
+                    if (child is System.Windows.Controls.CheckBox cb && cb.Tag is System.Windows.Controls.DataGridColumn col)
+                        cb.IsChecked = col.Visibility == Visibility.Visible;
+                }
             }
-        }
 
-        if (ChkFilterWebcam != null) ChkFilterWebcam.IsChecked = _webcamFilterOnly;
-        if (ChkFilterAdmin != null) ChkFilterAdmin.IsChecked = _adminFilterOnly;
+            if (ChkFilterWebcam != null) ChkFilterWebcam.IsChecked = _webcamFilterOnly;
+            if (ChkFilterAdmin != null) ChkFilterAdmin.IsChecked = _adminFilterOnly;
+        }
+        finally { _suppressCheckboxUpdate = false; }
     }
 
     private void BtnGridSettings_Click(object sender, RoutedEventArgs e)
@@ -8985,6 +9000,33 @@ Read-Host 'Press Enter to close'
 
     private void ResetAllClientsSettings_Click(object sender, RoutedEventArgs e)
     {
+        bool hasChanges = GridAllClients.Columns.Any(c => c.Visibility != Visibility.Visible);
+        if (!hasChanges)
+        {
+            double gw = GridAllClients.ActualWidth;
+            if (gw >= 50)
+            {
+                double avail = gw - 8.0 - 60.0;
+                const double kF = 1004.0, kM = 763.0;
+                double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
+                foreach (var col in GridAllClients.Columns)
+                {
+                    if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
+                    string k = GetOriginalKey(col);
+                    if (string.IsNullOrEmpty(k) || k == "TAG") continue;
+                    if (_allClientsColSpec.TryGetValue(k, out var spec))
+                    {
+                        int ep = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
+                        if (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0)
+                        { hasChanges = true; break; }
+                    }
+                }
+            }
+            else { hasChanges = true; }
+        }
+
+        if (!hasChanges) return;
+
         _suppressColumnSave = true;
         try
         {

@@ -1947,7 +1947,7 @@
                                     </DataGrid.Resources>
                                     <DataGrid.Columns>
                                         <!-- FLAG + IP (combined first column for quick geo identification) -->
-                                        <DataGridTemplateColumn Header="IP" Width="120" MinWidth="0" SortMemberPath="IP">
+                                        <DataGridTemplateColumn x:Name="ColOnlineIpHdr" Header="IP" Width="120" MinWidth="0" SortMemberPath="IP">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -2370,7 +2370,7 @@
                                     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
                                 </DataGrid.Resources>
                                 <DataGrid.Columns>
-                                    <DataGridTemplateColumn Header="IP" Width="120" MinWidth="0" SortMemberPath="LastIP">
+                                    <DataGridTemplateColumn x:Name="ColAllClientsIpHdr" Header="IP" Width="120" MinWidth="0" SortMemberPath="LastIP">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
