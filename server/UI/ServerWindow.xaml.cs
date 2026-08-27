@@ -7490,17 +7490,22 @@ Read-Host 'Press Enter to close'
             sepBrush.Freeze();
             res["ColSeparatorBrush"] = sepBrush;
 
-            // Auto-derive ColAccentBarBrush: accent line at the bottom of each header.
-            // When the accent color has similar brightness to the header bg (contrast < 35 pts),
-            // shift it toward white/black so the bar is always visible.
-            if (res["AccentBrush"] is System.Windows.Media.SolidColorBrush acBr)
+            // ColAccentBarBrush — bottom line on every column header.
+            // Dark themes (aurora bar visible): accent color, contrast-shifted if too close to header bg.
+            // Light themes (no aurora bar): neutral separator tone — same ColSeparatorBrush color so the
+            // bar is distinguishable without looking like a coloured accent.
+            if (_lightThemeKeys.Contains(name))
+            {
+                // Reuse separator color (already computed as -80 contrast vs header bg)
+                res["ColAccentBarBrush"] = res["ColSeparatorBrush"];
+            }
+            else if (res["AccentBrush"] is System.Windows.Media.SolidColorBrush acBr)
             {
                 var ac = acBr.Color;
                 int acBri = (ac.R + ac.G + ac.B) / 3;
                 System.Windows.Media.Color barColor;
                 if (Math.Abs(hBri - acBri) < 35)
                 {
-                    // Too similar: shift accent strongly away from header bg brightness
                     barColor = hBri < 128
                         ? System.Windows.Media.Color.FromRgb(
                             (byte)Math.Min(ac.R + 70, 255),
@@ -7513,7 +7518,7 @@ Read-Host 'Press Enter to close'
                 }
                 else
                 {
-                    barColor = ac; // good contrast — use accent as-is
+                    barColor = ac;
                 }
                 var barBrush = new System.Windows.Media.SolidColorBrush(barColor);
                 barBrush.Freeze();
