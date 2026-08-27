@@ -1645,6 +1645,17 @@ public partial class ServerWindow : ThemedWindow
                         _suppressColumnSave = false;
                     }
                 });
+                // Collapse TAG when the user drags the previous column's gripper far enough right
+                // that TAG's rendered width drops below 3px (same threshold as other columns).
+                var actDesc = System.ComponentModel.DependencyPropertyDescriptor
+                    .FromProperty(System.Windows.Controls.DataGridColumn.ActualWidthProperty,
+                                  typeof(System.Windows.Controls.DataGridColumn));
+                actDesc.AddValueChanged(c, (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    if (c.ActualWidth < 3 && c.Visibility == Visibility.Visible)
+                        CollapseColumnAndUncheck(c);
+                });
             }
             else
             {
@@ -1672,6 +1683,17 @@ public partial class ServerWindow : ThemedWindow
         string key = GetOriginalKey(col);
         UiPrefs.Set($"ColVis_{key}", 0);
         SaveGridColumnWidths();
+        UpdateSettingsCheckboxStates();
+    }
+
+    private void CollapseAllClientsColumnAndUncheck(DataGridColumn col)
+    {
+        _suppressColumnSave = true;
+        col.Visibility = Visibility.Collapsed;
+        _suppressColumnSave = false;
+        string key = GetOriginalKey(col);
+        UiPrefs.Set($"AllColVis_{key}", 0);
+        SaveAllClientsColumnWidths();
         UpdateSettingsCheckboxStates();
     }
 
@@ -1751,6 +1773,9 @@ public partial class ServerWindow : ThemedWindow
         var desc = System.ComponentModel.DependencyPropertyDescriptor
             .FromProperty(System.Windows.Controls.DataGridColumn.WidthProperty,
                           typeof(System.Windows.Controls.DataGridColumn));
+        var actDesc = System.ComponentModel.DependencyPropertyDescriptor
+            .FromProperty(System.Windows.Controls.DataGridColumn.ActualWidthProperty,
+                          typeof(System.Windows.Controls.DataGridColumn));
         foreach (var col in GridAllClients.Columns)
         {
             var c = col;
@@ -1764,6 +1789,12 @@ public partial class ServerWindow : ThemedWindow
                         c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
                         _suppressColumnSave = false;
                     }
+                });
+                actDesc.AddValueChanged(c, (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    if (c.ActualWidth < 3 && c.Visibility == Visibility.Visible)
+                        CollapseAllClientsColumnAndUncheck(c);
                 });
             }
             else
@@ -7443,6 +7474,21 @@ Read-Host 'Press Enter to close'
             var hoverBrush = new System.Windows.Media.SolidColorBrush(hoverColor);
             hoverBrush.Freeze();
             res["ColHeaderHoverBrush"] = hoverBrush;
+
+            // Auto-derive ColSeparatorBrush: guaranteed contrast against the header background.
+            // Dark bg (avg < 128): lighten by +90; light bg: darken by -80. Both clamped to [0,255].
+            var sepColor = hBri < 128
+                ? System.Windows.Media.Color.FromRgb(
+                    (byte)Math.Min(hc.R + 90, 255),
+                    (byte)Math.Min(hc.G + 90, 255),
+                    (byte)Math.Min(hc.B + 90, 255))
+                : System.Windows.Media.Color.FromRgb(
+                    (byte)Math.Max(hc.R - 80, 0),
+                    (byte)Math.Max(hc.G - 80, 0),
+                    (byte)Math.Max(hc.B - 80, 0));
+            var sepBrush = new System.Windows.Media.SolidColorBrush(sepColor);
+            sepBrush.Freeze();
+            res["ColSeparatorBrush"] = sepBrush;
         }
 
         // Auto-derive card/chart/progress colors from the window background brightness.
@@ -7587,7 +7633,7 @@ Read-Host 'Press Enter to close'
             "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
             "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
             "ContainerCornerRadius"
         })
@@ -7719,7 +7765,7 @@ Read-Host 'Press Enter to close'
             "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
             "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
             "RowHoverBgBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush",
+            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush",
             "FlagUnknownBrush",
             "ThemeFontFamily", "PrimaryGradient",
             "WindowOutlineBrush", "WindowOutlineThickness",

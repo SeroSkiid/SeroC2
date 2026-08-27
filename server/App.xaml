@@ -84,6 +84,8 @@
         <SolidColorBrush x:Key="ColHeaderBorderBrush" Color="#606888"/>
         <!-- Hover bg — auto-computed by ApplyTheme: dark→+20 RGB brighter, light→-18 RGB darker -->
         <SolidColorBrush x:Key="ColHeaderHoverBrush"  Color="#21223A"/>
+        <!-- Separator — auto-computed by ApplyTheme: dark bg→+90 brighter, light bg→-80 darker -->
+        <SolidColorBrush x:Key="ColSeparatorBrush"    Color="#7080A8"/>
         <!-- Accent color scalar — overridden by ApplyTheme(); default guards SlimSlider in feature windows
              that open before the first ApplyTheme() call completes. -->
         <Color x:Key="AccentColor">#5B6ACF</Color>
@@ -858,11 +860,12 @@
                             <!-- Accent bottom bar — hidden by default; slides in on sort/hover -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
                                        Fill="{DynamicResource AccentBrush}" Opacity="0"/>
-                            <!-- Separator — 1px tick inset 5px top/bottom; brightens to 0.9 on hover -->
+                            <!-- Separator — 1px tick inset 5px top/bottom; brightens to 1.0 on hover.
+                                 Color is auto-derived in ApplyTheme for contrast on all themes. -->
                             <Rectangle x:Name="Separator"
                                        HorizontalAlignment="Right" Width="1" Margin="0,5,1,5"
-                                       Fill="{DynamicResource ColHeaderBorderBrush}"
-                                       Opacity="0.45"
+                                       Fill="{DynamicResource ColSeparatorBrush}"
+                                       Opacity="0.75"
                                        SnapsToDevicePixels="True"
                                        RenderOptions.EdgeMode="Aliased"
                                        IsHitTestVisible="False"/>
@@ -908,7 +911,7 @@
                                                          To="1" Duration="0:0:0.12"/>
                                         <DoubleAnimation Storyboard.TargetName="Separator"
                                                          Storyboard.TargetProperty="Opacity"
-                                                         To="0.9" Duration="0:0:0.12"/>
+                                                         To="1.0" Duration="0:0:0.12"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
@@ -925,7 +928,7 @@
                                                          To="0" Duration="0:0:0.10"/>
                                         <DoubleAnimation Storyboard.TargetName="Separator"
                                                          Storyboard.TargetProperty="Opacity"
-                                                         To="0.45" Duration="0:0:0.10"/>
+                                                         To="0.75" Duration="0:0:0.10"/>
                                     </Storyboard>
                                 </BeginStoryboard>
                             </EventTrigger>
