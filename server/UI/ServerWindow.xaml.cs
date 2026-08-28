@@ -1604,8 +1604,9 @@ public partial class ServerWindow : ThemedWindow
             { hasSaved = true; break; }
         }
 
-        if (hasSaved && !_autoFitColumns)
+        if (hasSaved)
         {
+            // Always restore saved pixel widths first — they become the MinWidth floor when auto-fit is on.
             foreach (var col in GridClients.Columns)
             {
                 string header = GetOriginalKey(col);
@@ -1618,10 +1619,17 @@ public partial class ServerWindow : ThemedWindow
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
                 if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
             }
+            if (_autoFitColumns)
+                FitColumnsToContent(GridClients); // pins saved widths (Width.Value) as MinWidth, then Auto
         }
         else if (_autoFitColumns)
         {
-            FitColumnsToContent(GridClients);
+            // No saved widths: apply adaptive defaults as floor, then switch to Auto.
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+            {
+                ApplyAdaptiveOnlineWidths();
+                FitColumnsToContent(GridClients);
+            });
         }
         else
         {
@@ -1731,7 +1739,7 @@ public partial class ServerWindow : ThemedWindow
             { hasSaved = true; break; }
         }
 
-        if (hasSaved && !_autoFitColumns)
+        if (hasSaved)
         {
             foreach (var col in GridAllClients.Columns)
             {
@@ -1741,10 +1749,16 @@ public partial class ServerWindow : ThemedWindow
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
+            if (_autoFitColumns)
+                FitColumnsToContent(GridAllClients);
         }
         else if (_autoFitColumns)
         {
-            FitColumnsToContent(GridAllClients);
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+            {
+                ApplyAdaptiveAllClientsWidths();
+                FitColumnsToContent(GridAllClients);
+            });
         }
         else
         {
@@ -5495,29 +5509,11 @@ Read-Host 'Press Enter to close'
 
     private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.LeftButton == MouseButtonState.Pressed && !_isFullscreen && WindowState != WindowState.Maximized)
+        if (e.LeftButton == MouseButtonState.Pressed && WindowState != WindowState.Maximized)
             DragMove();
     }
 
-    protected override void OnStateChanged(EventArgs e)
-    {
-        base.OnStateChanged(e);
-        _isFullscreen = WindowState == WindowState.Maximized;
-    }
-
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-    private bool _isFullscreen;
-
-    // Grid widths captured the moment the user maximizes (before layout updates),
-    // so we can animate columns back to the exact right sizes on restore.
-
-    // Column transition animation state
-    private System.Windows.Threading.DispatcherTimer?                          _colAnimTimer;
-    private DateTime                                                            _colAnimStart;
-    private List<(DataGridColumn col, double from, double to, bool isOnline)>? _colAnimList;
-    private const double ColAnimMs = 160;
-    private static double ColEase(double t) => 1 - (1 - t) * (1 - t); // quadratic ease-out
 
     private void Fullscreen_Click(object sender, RoutedEventArgs e)
     {
@@ -8999,10 +8995,13 @@ Read-Host 'Press Enter to close'
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-            // Lock MinWidth to current size so auto-fit can only GROW with client data,
-            // never shrink the header layout when no clients are connected.
-            if (col.ActualWidth > 0)
-                col.MinWidth = Math.Max(col.MinWidth, col.ActualWidth);
+            // Use Width.Value when in Pixel mode (reliable pre-layout at startup);
+            // fall back to ActualWidth when already in Auto/Star mode (post-layout runtime call).
+            double floor = col.Width.UnitType == DataGridLengthUnitType.Pixel && col.Width.Value > 0
+                ? col.Width.Value
+                : col.ActualWidth;
+            if (floor > 0)
+                col.MinWidth = Math.Max(col.MinWidth, floor);
             col.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
         }
         _suppressColumnSave = false;
@@ -9146,135 +9145,6 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
-    }
-
-    // Sets all online columns to their full (t=1.0) defaults without measuring ActualWidth.
-    // Used synchronously on maximize so the first rendered frame already has correct widths.
-    private void ApplyFullOnlineWidths()
-    {
-        _suppressColumnSave = true;
-        try
-        {
-            foreach (var col in GridClients.Columns)
-            {
-                string key = GetOriginalKey(col);
-                if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
-                if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
-                col.Width = new DataGridLength(spec.full);
-                UiPrefs.Set($"ColWidth_{key}", spec.full);
-            }
-        }
-        finally { _suppressColumnSave = false; }
-    }
-
-    private void ApplyFullAllClientsWidths()
-    {
-        if (GridAllClients == null) return;
-        _suppressColumnSave = true;
-        try
-        {
-            foreach (var col in GridAllClients.Columns)
-            {
-                string key = GetOriginalKey(col);
-                if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
-                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
-                col.Width = new DataGridLength(spec.full);
-                UiPrefs.Set($"AllColWidth_{key}", spec.full);
-            }
-        }
-        finally { _suppressColumnSave = false; }
-    }
-
-    private static double ComputeAdaptiveT(double gridWidth, double kFull, double kMin)
-    {
-        if (gridWidth < 50) return 0.0;
-        double avail = gridWidth - 8.0 - 60.0;
-        return avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
-    }
-
-    // Builds a list of (column, fromWidth, toWidth, isOnline) for the animation.
-    // tOnline / tAll are the target interpolation values [0,1].
-    private List<(DataGridColumn col, double from, double to, bool isOnline)> BuildTransitionTargets(
-        double tOnline, double tAll)
-    {
-        var list = new List<(DataGridColumn, double, double, bool)>();
-
-        foreach (var col in GridClients.Columns)
-        {
-            string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-            if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
-            double from = col.Width.UnitType == DataGridLengthUnitType.Pixel ? col.Width.Value : spec.min;
-            double to   = spec.min + (spec.full - spec.min) * tOnline;
-            list.Add((col, from, to, true));
-        }
-
-        if (GridAllClients != null)
-        {
-            foreach (var col in GridAllClients.Columns)
-            {
-                string key = GetOriginalKey(col);
-                if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-                if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
-                double from = col.Width.UnitType == DataGridLengthUnitType.Pixel ? col.Width.Value : spec.min;
-                double to   = spec.min + (spec.full - spec.min) * tAll;
-                list.Add((col, from, to, false));
-            }
-        }
-
-        return list;
-    }
-
-    private void BeginColumnTransition(List<(DataGridColumn col, double from, double to, bool isOnline)> targets)
-    {
-        _colAnimTimer?.Stop();
-        _colAnimList  = targets;
-        _colAnimStart = DateTime.UtcNow;
-        _colAnimTimer = new System.Windows.Threading.DispatcherTimer(
-            System.Windows.Threading.DispatcherPriority.Normal)
-        {
-            Interval = TimeSpan.FromMilliseconds(16)
-        };
-        _colAnimTimer.Tick += ColAnim_Tick;
-        _colAnimTimer.Start();
-    }
-
-    private void ColAnim_Tick(object? sender, EventArgs e)
-    {
-        double elapsed = (DateTime.UtcNow - _colAnimStart).TotalMilliseconds;
-        double raw = Math.Min(elapsed / ColAnimMs, 1.0);
-        double t   = ColEase(raw);
-
-        _suppressColumnSave = true;
-        try
-        {
-            foreach (var (col, from, to, _) in _colAnimList!)
-                col.Width = new DataGridLength((int)Math.Round(from + (to - from) * t));
-        }
-        finally { _suppressColumnSave = false; }
-
-        if (raw >= 1.0)
-        {
-            _colAnimTimer?.Stop();
-            _colAnimTimer = null;
-
-            // Persist final widths so they survive app restarts.
-            _suppressColumnSave = true;
-            try
-            {
-                foreach (var (col, _, to, isOnline) in _colAnimList!)
-                {
-                    string key = GetOriginalKey(col);
-                    if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-                    int px = (int)Math.Round(to);
-                    if (isOnline) UiPrefs.Set($"ColWidth_{key}", px);
-                    else          UiPrefs.Set($"AllColWidth_{key}", px);
-                }
-            }
-            finally { _suppressColumnSave = false; }
-        }
     }
 
     private void RefreshClientFilters()
