@@ -5502,38 +5502,7 @@ Read-Host 'Press Enter to close'
     protected override void OnStateChanged(EventArgs e)
     {
         base.OnStateChanged(e);
-        bool nowMaximized = WindowState == WindowState.Maximized;
-        bool nowNormal    = WindowState == WindowState.Normal;
-
-        if (nowMaximized && !_isFullscreen)
-        {
-            // Layout hasn't updated yet — ActualWidth is still the pre-maximize value.
-            _premaximizeOnlineGridWidth      = GridClients.ActualWidth;
-            _premaximizeAllClientsGridWidth  = GridAllClients?.ActualWidth ?? 0;
-            _isFullscreen = true;
-            BeginColumnTransition(BuildTransitionTargets(1.0, 1.0));
-        }
-        else if (nowNormal && _isFullscreen)
-        {
-            _isFullscreen = false;
-            if (_premaximizeOnlineGridWidth > 50)
-            {
-                double tO = ComputeAdaptiveT(_premaximizeOnlineGridWidth, 1546.0, 1077.0);
-                // If AllClients tab was never visited its ActualWidth is 0 — default to full (t=1.0).
-                double tA = _premaximizeAllClientsGridWidth > 50
-                    ? ComputeAdaptiveT(_premaximizeAllClientsGridWidth, 1004.0, 763.0)
-                    : 1.0;
-                BeginColumnTransition(BuildTransitionTargets(tO, tA));
-            }
-            else
-            {
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
-                {
-                    ApplyAdaptiveOnlineWidths();
-                    ApplyAdaptiveAllClientsWidths();
-                }));
-            }
-        }
+        _isFullscreen = WindowState == WindowState.Maximized;
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -5542,8 +5511,6 @@ Read-Host 'Press Enter to close'
 
     // Grid widths captured the moment the user maximizes (before layout updates),
     // so we can animate columns back to the exact right sizes on restore.
-    private double _premaximizeOnlineGridWidth;
-    private double _premaximizeAllClientsGridWidth;
 
     // Column transition animation state
     private System.Windows.Threading.DispatcherTimer?                          _colAnimTimer;
@@ -8985,6 +8952,7 @@ Read-Host 'Press Enter to close'
 
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
+            ClearAutoFitMinWidths(GridAllClients);
             ApplyAdaptiveAllClientsWidths();
             UpdateSettingsCheckboxStates();
         });
@@ -9031,9 +8999,20 @@ Read-Host 'Press Enter to close'
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
+            // Lock MinWidth to current size so auto-fit can only GROW with client data,
+            // never shrink the header layout when no clients are connected.
+            if (col.ActualWidth > 0)
+                col.MinWidth = Math.Max(col.MinWidth, col.ActualWidth);
             col.Width = new DataGridLength(1, DataGridLengthUnitType.Auto);
         }
         _suppressColumnSave = false;
+    }
+
+    private static void ClearAutoFitMinWidths(System.Windows.Controls.DataGrid grid)
+    {
+        if (grid == null) return;
+        foreach (var col in grid.Columns)
+            col.MinWidth = 0;
     }
 
     private void ChkAutoFill_Unchecked(object sender, RoutedEventArgs e)
@@ -9041,6 +9020,8 @@ Read-Host 'Press Enter to close'
         if (_suppressCheckboxUpdate) return;
         _autoFitColumns = false;
         UiPrefs.Set("AutoFitColumns", 0);
+        ClearAutoFitMinWidths(GridClients);
+        ClearAutoFitMinWidths(GridAllClients);
         ApplyAdaptiveOnlineWidths();
         ApplyAdaptiveAllClientsWidths();
     }
@@ -9104,6 +9085,7 @@ Read-Host 'Press Enter to close'
         // in a separate layout pass first — prevents column header separator rendering artifacts.
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
+            ClearAutoFitMinWidths(GridClients);
             ApplyAdaptiveOnlineWidths();
             UpdateSettingsCheckboxStates();
         });
