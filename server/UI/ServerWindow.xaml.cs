@@ -9085,7 +9085,9 @@ Read-Host 'Press Enter to close'
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
         {
             ClearAutoFitMinWidths(GridClients);
+            ClearAutoFitMinWidths(GridAllClients);
             ApplyAdaptiveOnlineWidths();
+            ApplyAdaptiveAllClientsWidths();
             UpdateSettingsCheckboxStates();
         });
         RefreshClientFilters();
