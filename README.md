@@ -27,22 +27,62 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 
 ---
 
-## ⚡ Quick Start
+## 🛠️ How to Compile
+
+**Prerequisites:**
+- .NET 10 SDK
+- Visual Studio 2022 with **Desktop development with C++** workload
+- Windows SDK 10.0.22621+
+- **DevExpress 25.2** WPF components — **required** for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Install from [devexpress.com](https://www.devexpress.com/). The project references DLLs at `C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\`. Without DevExpress installed the project will not compile.
+
+### Step 1 — Install prerequisites
 
 ```bat
-git clone https://github.com/SeroSkiid/SeroC2
-cd SeroC2
-setup.bat          :: installs .NET SDK + VS Build Tools (run as Admin)
-build.bat          :: release (dist folder) ( need devexpress license or patcher to compile for the GUI )
+setup.bat
 ```
 
-You can also open `Sero.sln` in **Visual Studio 2026**, build (`F6`), and launch `SeroServer.exe`. 
+Run as Administrator — installs everything via winget (.NET SDK, VS Build Tools 2022 with MSVC + Windows SDK).
 
-Configure and build the client stub from the **Builder** tab.
+### Step 2 — Build server
 
-> **Miner module:** Download [xmrig](https://github.com/xmrig/xmrig/releases) and place `xmrig.exe` inside `xmrig-release/`. The miner builder will embed and encrypt it automatically.
+```bat
+build.bat
+```
+
+Produces `dist\SeroServer.exe` (self-contained, no .NET runtime required on target).
+
+Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
+
+### Step 3 — Build the client stub
+
+1. Launch `SeroServer.exe`
+2. Go to the **Builder** tab
+3. Configure hosts, auth key, persistence, hollow target
+4. Click **Build** — the stub is compiled with NativeAOT and optionally crypted
+
+### Step 4 — Build the XMR miner (optional)
+
+1. Place `xmrig.exe` (with OpenSSL support) in `xmrig-release/`
+2. In the server, go to **Builder → XMR** tab
+3. Fill wallet, pool, CPU limits
+4. Click **Build Miner**
+
+**Optional — UPX compression (~8.4 MB → ~2.4 MB):**
+
+Download [upx.exe](https://github.com/upx/upx/releases) (Windows x64) and place it either:
+- in your `PATH`, **or**
+- in a `tools/` folder next to `SeroServer.exe`
+
+Then tick **UPX compression** in the Builder before clicking Build. The `tools/` folder is gitignored — the binary stays local.
+
+**Troubleshooting:**
+- `cl.exe` (MSVC) missing → run `setup.bat`
+- `vswhere.exe` not found → add `C:\Program Files (x86)\Microsoft Visual Studio\Installer` to PATH
+- NativeAOT requires `win-x64` RID — do not mix in wasm workloads
+- UPX not found → see above
 
 ---
+
 
 ## ✨ Features
 
@@ -388,63 +428,6 @@ Standalone Monero mining module, fully separate from the main RAT stub.
 **Setup:** place `xmrig.exe` (with OpenSSL) in `xmrig-release/` before building.
 
 ---
-
-## 🛠️ How to Compile
-
-**Prerequisites:**
-- .NET 10 SDK
-- Visual Studio 2022 with **Desktop development with C++** workload
-- Windows SDK 10.0.22621+
-- **DevExpress 25.2** WPF components — **required** for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Install from [devexpress.com](https://www.devexpress.com/). The project references DLLs at `C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\`. Without DevExpress installed the project will not compile.
-
-### Step 1 — Install prerequisites
-
-```bat
-setup.bat
-```
-
-Run as Administrator — installs everything via winget (.NET SDK, VS Build Tools 2022 with MSVC + Windows SDK).
-
-### Step 2 — Build server
-
-```bat
-build.bat
-```
-
-Produces `dist\SeroServer.exe` (self-contained, no .NET runtime required on target).
-
-Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
-
-### Step 3 — Build the client stub
-
-1. Launch `SeroServer.exe`
-2. Go to the **Builder** tab
-3. Configure hosts, auth key, persistence, hollow target
-4. Click **Build** — the stub is compiled with NativeAOT and optionally crypted
-
-### Step 4 — Build the XMR miner (optional)
-
-1. Place `xmrig.exe` (with OpenSSL support) in `xmrig-release/`
-2. In the server, go to **Builder → XMR** tab
-3. Fill wallet, pool, CPU limits
-4. Click **Build Miner**
-
-**Optional — UPX compression (~8.4 MB → ~2.4 MB):**
-
-Download [upx.exe](https://github.com/upx/upx/releases) (Windows x64) and place it either:
-- in your `PATH`, **or**
-- in a `tools/` folder next to `SeroServer.exe`
-
-Then tick **UPX compression** in the Builder before clicking Build. The `tools/` folder is gitignored — the binary stays local.
-
-**Troubleshooting:**
-- `cl.exe` (MSVC) missing → run `setup.bat`
-- `vswhere.exe` not found → add `C:\Program Files (x86)\Microsoft Visual Studio\Installer` to PATH
-- NativeAOT requires `win-x64` RID — do not mix in wasm workloads
-- UPX not found → see above
-
----
-
 ## 📁 Project Structure
 
 ```
@@ -560,45 +543,6 @@ SeroC2/
 > - Native C++ loader / crypter
 > - UAC bypass implementation
 > - `xmrig-release/xmrig.exe` — download separately from [xmrig/xmrig](https://github.com/xmrig/xmrig/releases)
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Done
-- [x] Remote Desktop — DXGI + GDI, 64×64 block diff + H264 full-frame stream, multi-monitor
-- [x] Remote Webcam — DirectShow ISampleGrabber (RGB24/YUY2 → JPEG) + VFW avicap32 fallback, `[UnmanagedCallersOnly]` frame cb
-- [x] HVNC — hidden virtual desktop, browser launchers (Chrome, Edge, Firefox, Brave, Opera…), H264 stream
-- [x] Remote Shell — interactive cmd / PowerShell
-- [x] File Manager — browse, download, upload, exec, hash, wallpaper, 7-zip
-- [x] TCP Manager — list connections, force-close via SetTcpEntry
-- [x] Startup Manager — Registry Run / RunOnce, Startup folder, Scheduled Tasks, WMI Event Subscriptions, Authenticode signature + publisher (red highlight for unsigned entries)
-- [x] Microphone — WaveIn capture, live server playback, save WAV
-- [x] Fun panel — CD-ROM, taskbar, screen, TTS, crazy mouse, screen rotation…
-- [x] XMR Miner — NativeAOT, process hollowing, idle throttle, OpenSSL TLS
-- [x] Telegram notification — first-exec, HWID dedup, global victim counter
-- [x] AutoTask plugins — native C++ DLL compiled on-demand, cached by hash
-- [x] Multi-host + auto-reconnect — round-robin, configurable delay
-- [x] Keylogger — WH_KEYBOARD_LL, window-title headers, **offline disk logging by date**, file browser UI, download/delete log files
-- [x] Crypto Clipper — BTC / ETH / BNB / LTC / TRX / SOL / XMR / XRP / DASH / BCH, global server tab, auto-push on connect
-- [x] Process Manager — real-time list, CPU/RAM heat-map (blue→orange→red), suspend/resume/kill via right-click, native icons, search filter; Live button removed (on-demand refresh)
-- [x] Service Manager — list all services via sc.exe query, start/stop/restart/disable/delete via right-click *(admin required for write operations)*
-- [x] Window Manager — EnumWindows P/Invoke, show/hide/focus/restore/minimize/maximize/close/kill per HWND, right-click actions
-- [x] Registry Editor — browse sub-keys, read/write/delete values and keys, admin warning popup when client not elevated *(admin required for HKLM writes)*
-- [x] Installed Programs — HKLM+HKCU Uninstall registry enumeration, trigger UninstallString silently, right-click actions
-- [x] Device Manager — SetupAPI enumeration (no WMI), uninstall device by instance ID, right-click actions
-- [x] TCP Connections — toolbar Block IP / Block Port buttons (netsh advfirewall), force-close via SetTcpEntry, right-click close/kill
-- [x] Fun panel toggle feedback — Show/Hide button pairs highlight the active state (white + blue left accent = active, heavily dimmed = inactive partner); screen rotation shows current angle
-- [x] Offline clients RAM column — LastRamDisplay shown in the offline clients grid
-- [x] All feature windows — fullscreen (maximize/restore) button; drag blocked when maximized
-- [x] CPU/RAM telemetry — GetSystemTimes + GlobalMemoryStatusEx sampling every ~15 s, displayed as columns in client list with color-coded brush
-- [x] Reverse SOCKS5 proxy — tunnel traffic through the remote machine, local SOCKS5 listener
-- [x] TikTok Bot — multi-client panel: CDP session detection (navigates to tiktok.com and reads Chrome cookies via `Network.getCookies` — skips signup if session exists), CDP auto-signup via Google OAuth (Chrome hidden, no HVNC), account inventory, comment broadcast with rotation across all accounts; cookie auto-flows from signup to comment panel, post comments on videos and livestreams using an existing session
-- [x] Stub size — **8.37 MB** NativeAOT / **~2.4 MB** with UPX `--best --lzma` (all features incl. Keylogger, Crypto Clipper, Telegram notify)
-- [x] Multi-theme UI — 15+ DevExpress themes (Sero Dark, DevExpress Style/Dark, Office 2019 series, VS2010/2017, Seven Classic, WXI, WindowsXP, TheBezier…); live theme picker with per-theme colour preview badges; dashboard cards, chart backgrounds, and progress bars adapt dynamically to the active theme; all icons use `dx:DXImage` SVG adapting to every theme
-- [x] Polymorphic Crypter — AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)*
-- [x] UAC Bypass chain — computerdefaults → fodhelper → sdclt → mmc *(closed-source)*
-- [x] Rootkit — reflective DLL, NtQuerySystemInformation / NtQueryDirectoryFile hooks
 
 ---
 
