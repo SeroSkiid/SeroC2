@@ -63,10 +63,104 @@
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
-  <!-- DevExpress WPF 25.2 — restored via NuGet, no local install required.
-       Register your license at %AppData%\DevExpress\DevExpress_License.txt
-       or set the DevExpress_License environment variable. -->
-  <ItemGroup>
+  <!-- DevExpress WPF 25.2
+       Fast path: if DevExpress 25.2 is installed at the default path, use local DLLs directly.
+       Fallback: NuGet packages (slower first build, works without a local install). -->
+  <ItemGroup Condition="Exists('C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Core.v25.2.dll')">
+    <Reference Include="DevExpress.Data.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Data.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Images.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Images.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Core.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Core.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Seven.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Seven.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.VS2010.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2010.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.VS2017Blue.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Blue.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.VS2017Dark.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Dark.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.VS2017Light.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Light.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2010Blue.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Blue.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2010Black.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Black.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2010Silver.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Silver.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2013.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2013.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2013DarkGray.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2013DarkGray.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2016Colorful.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016Colorful.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2016DarkGraySE.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016DarkGraySE.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2016Black.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016Black.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2019Colorful.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019Colorful.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2019Black.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019Black.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2019White.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019White.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2019DarkGray.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019DarkGray.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.Office2019HighContrast.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019HighContrast.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.DXStyle.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.DXStyle.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpf.Themes.MetropolisDark.v25.2">
+      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.MetropolisDark.v25.2.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="!Exists('C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Core.v25.2.dll')">
     <PackageReference Include="DevExpress.Wpf.Core" Version="25.2.8" />
     <PackageReference Include="DevExpress.Images" Version="25.2.8" />
     <PackageReference Include="DevExpress.Wpf.Themes.Seven" Version="25.2.8" />
