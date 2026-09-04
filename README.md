@@ -8,7 +8,7 @@
 ![Arch](https://img.shields.io/badge/arch-x64-green.svg)
 
 **A Command & Control framework for authorized red team engagements and security research**
-
+> ***FIX*** -: Fixed DevExpress requirements. Now restored with nuget instead of referenced DLL path. Updated SeroServer.csproj so it should compile correctly with no changes needed.
 SeroRAT is a modular C2 framework written in C# featuring a WPF server and a hardened NativeAOT client stub. It combines multi-vector persistence, advanced anti-analysis protections, a polymorphic crypter (closed-source), and encrypted TLS communication. Features **DevExpress themes & Icons** (Sero Dark mode, Seven Classic, VS2010, VS2017, Office2010/2013/2016/2019, MetropolisDark, DXStyle, HighContrast etc.), **live language system** (10 languages)
 
 > ⚠️ **For authorized use only.** See [Legal Notice](#legal-notice).
