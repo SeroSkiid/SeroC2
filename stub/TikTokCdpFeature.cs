@@ -603,7 +603,7 @@ internal static class TikTokCdpFeature
             {
                 if (!c.TryGetProperty("name", out var n) || !c.TryGetProperty("value", out var v)) continue;
                 var name = n.GetString() ?? "";
-                if (name is "sessionid" or "sid_guard" or "uid_tt" or "uid_tt_ss" or "sid_tt" or "msToken")
+                if (name is "sessionid" or "sid_guard" or "uid_tt" or "uid_tt_ss" or "sid_tt" or "msToken" or "tt_csrf_token")
                     sb.Append($"{name}={v.GetString()}; ");
             }
             return sb.ToString().TrimEnd();
