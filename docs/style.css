@@ -654,10 +654,12 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .lang-menu {
     position: fixed;
     top: 62px;
-    left: 16px;
-    right: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    right: auto;
+    width: calc(100vw - 32px);
+    max-width: 420px;
     min-width: 0;
-    width: auto;
     max-height: 65vh;
     grid-template-columns: 1fr 1fr;
     border-radius: 10px;
@@ -737,7 +739,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .contrib-avatar { width: 44px; height: 44px; }
   .contrib-name { font-size: 0.78rem; }
   .contrib-role .tag-blue { font-size: 0.58rem; padding: 1px 5px; }
-  .lang-menu { grid-template-columns: 1fr; min-width: 0; right: 16px; }
+  .lang-menu { grid-template-columns: 1fr; }
 }
 
 /* ── Language switcher ─────────────────────────────────────────────────── */
@@ -878,3 +880,6 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 [dir=rtl] .hero-lead { }
 [dir=rtl] .nav-right { margin-left: 0; margin-right: auto; }
 [dir=rtl] .lang-menu { right: auto; left: 0; }
+@media (max-width: 640px) {
+  [dir=rtl] .lang-menu { left: 50%; transform: translateX(-50%); right: auto; }
+}
