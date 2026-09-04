@@ -97,3 +97,4 @@ ehthumbs.db
 .cache/
 temp/
 xmrig_test*.log
+hook/Detours/

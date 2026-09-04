@@ -1,3 +1,5 @@
+<img src="docs/assets/serofondtransparent.png" height="80" align="right"/>
+
 # SeroRAT
 
 ![Version](https://img.shields.io/badge/version-1.7.9-orange.svg)
