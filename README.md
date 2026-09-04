@@ -33,10 +33,10 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 ## 🛠️ How to Compile
 
 **Prerequisites:**
-- <img src="docs/assets/dotnet.svg" height="18" valign="middle"> **.NET 10 SDK**
-- <img src="docs/assets/devexpress.png" height="18" valign="middle"> **DevExpress 25.2 WPF** NuGet packages — required for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Packages (`DevExpress.Wpf.Core`, `DevExpress.Images`, and theme packages) are restored from nuget.org automatically on build. Register your trial or licensed key at `%AppData%\DevExpress\DevExpress_License.txt` (or set the `DevExpress_License` environment variable) — see [DevExpress license key setup](https://docs.devexpress.com/GeneralInformation/116698).
 - ![VS2022](https://img.shields.io/badge/Visual%20Studio-2022-purple?logo=visualstudio) **Visual Studio 2022** with **Desktop development with C++** workload
 - ![Windows](https://img.shields.io/badge/Windows%20SDK-10.0.22621+-blue?logo=windows) **Windows SDK 10.0.22621+**
+- <img src="docs/assets/dotnet.svg" height="18" valign="middle"> **.NET 10 SDK**
+- <img src="docs/assets/devexpress.png" height="18" valign="middle"> **DevExpress 25.2 WPF** NuGet packages — required for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Packages (`DevExpress.Wpf.Core`, `DevExpress.Images`, and theme packages) are restored from nuget.org automatically on build. Register your trial or licensed key at `%AppData%\DevExpress\DevExpress_License.txt` (or set the `DevExpress_License` environment variable) — see [DevExpress license key setup](https://docs.devexpress.com/GeneralInformation/116698).
 
 ### Step 1 — Install prerequisites
 
