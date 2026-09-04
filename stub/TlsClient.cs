@@ -570,7 +570,7 @@ internal class TlsClient : IDisposable
                             }, CancellationToken.None);
 
                         var (ok, account, cookie, error) =
-                            await TikTokCdpFeature.RunAsync(SendStatus, CancellationToken.None);
+                            await TikTokCdpFeature.RunAsync(SendStatus, ct);
                         await WritePacketAsync(new Packet
                         {
                             Type = PacketType.CdpSignupResult,

@@ -423,7 +423,9 @@ internal static class TikTokCdpFeature
 
         public async Task<string?> EvalAsync(string expression, CancellationToken ct)
         {
-            var escaped = expression.Replace("\\", "\\\\").Replace("\"", "\\\"");
+            var escaped = expression
+                .Replace("\\", "\\\\").Replace("\"", "\\\"")
+                .Replace("\r", "\\r").Replace("\n", "\\n").Replace("\t", "\\t");
             var result  = await CallAsync("Runtime.evaluate",
                 $"{{\"expression\":\"{escaped}\",\"returnByValue\":true,\"awaitPromise\":true}}", ct);
             try
@@ -511,38 +513,41 @@ internal static class TikTokCdpFeature
 
         private async Task<string> ReadFrameAsync(CancellationToken ct)
         {
-            await ReadExactAsync(_rbuf, 0, 2, ct);
-            int  opcode = _rbuf[0] & 0x0F;
-            long payLen = _rbuf[1] & 0x7F;
-
-            if (payLen == 126)
+            while (true)
             {
-                await ReadExactAsync(_rbuf, 2, 2, ct);
-                payLen = (_rbuf[2] << 8) | _rbuf[3];
+                await ReadExactAsync(_rbuf, 0, 2, ct);
+                int  opcode = _rbuf[0] & 0x0F;
+                long payLen = _rbuf[1] & 0x7F;
+
+                if (payLen == 126)
+                {
+                    await ReadExactAsync(_rbuf, 2, 2, ct);
+                    payLen = (_rbuf[2] << 8) | _rbuf[3];
+                }
+                else if (payLen == 127)
+                {
+                    await ReadExactAsync(_rbuf, 2, 8, ct);
+                    payLen = 0;
+                    for (int i = 0; i < 8; i++) payLen = (payLen << 8) | _rbuf[2+i];
+                }
+
+                byte[] buf = payLen <= _rbuf.Length ? _rbuf : new byte[(int)Math.Min(payLen, 4L * 1024 * 1024)];
+                int len = (int)Math.Min(payLen, (long)buf.Length);
+                await ReadExactAsync(buf, 0, len, ct);
+
+                // Drain excess bytes to keep the stream in sync for oversized frames
+                if (payLen > len)
+                {
+                    var skip = new byte[4096];
+                    long rem = payLen - len;
+                    while (rem > 0) { int n = (int)Math.Min(rem, skip.Length); await ReadExactAsync(skip, 0, n, ct); rem -= n; }
+                }
+
+                if (opcode == 8) throw new Exception("WebSocket closed by remote");
+                if (opcode == 9) { await WritePongAsync(buf, len, ct); continue; } // pong and read next frame
+
+                return Encoding.UTF8.GetString(buf, 0, len);
             }
-            else if (payLen == 127)
-            {
-                await ReadExactAsync(_rbuf, 2, 8, ct);
-                payLen = 0;
-                for (int i = 0; i < 8; i++) payLen = (payLen << 8) | _rbuf[2+i];
-            }
-
-            byte[] buf = payLen <= _rbuf.Length ? _rbuf : new byte[(int)Math.Min(payLen, 4L * 1024 * 1024)];
-            int len = (int)Math.Min(payLen, (long)buf.Length);
-            await ReadExactAsync(buf, 0, len, ct);
-
-            // Drain excess bytes to keep the stream in sync for oversized frames
-            if (payLen > len)
-            {
-                var skip = new byte[4096];
-                long rem = payLen - len;
-                while (rem > 0) { int n = (int)Math.Min(rem, skip.Length); await ReadExactAsync(skip, 0, n, ct); rem -= n; }
-            }
-
-            if (opcode == 8) throw new Exception("WebSocket closed by remote");
-            if (opcode == 9) { await WritePongAsync(buf, len, ct); return await ReadFrameAsync(ct); }
-
-            return Encoding.UTF8.GetString(buf, 0, len);
         }
 
         private async Task ReadExactAsync(byte[] buf, int offset, int count, CancellationToken ct)

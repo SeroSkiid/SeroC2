@@ -93,7 +93,7 @@ internal static class TikTokFeature
                 if (File.Exists(txt))
                 {
                     var c = File.ReadAllText(txt).Trim();
-                    if (c.Length > 20) return c;
+                    if (c.Contains("sessionid=")) return c;
                 }
             }
             catch { }
@@ -112,7 +112,7 @@ internal static class TikTokFeature
         var req = new HttpRequestMessage(HttpMethod.Post, url) { Content = content };
         req.Headers.UserAgent.ParseAdd(
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
-            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 TikTok/26.2.0");
+            "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36");
         req.Headers.Add("Cookie", cookie);
         req.Headers.Add("Referer", referer);
         req.Headers.Add("Origin",  BaseUrl);
@@ -136,6 +136,8 @@ internal static class TikTokFeature
     private static string CleanId(string input)
     {
         var s = input.Split('?')[0].TrimEnd('/');
+        // bare numeric ID — no URL path to parse
+        if (s.All(char.IsDigit)) return s;
         var idx = s.LastIndexOf('/');
         if (idx >= 0 && idx < s.Length - 1)
         {
