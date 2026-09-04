@@ -472,9 +472,27 @@ SeroC2/
 │   │   ├── ShellIcon.cs           # Shell icon extraction helper
 │   │   └── WindowResizer.cs       # Borderless window resize helper
 │   ├── Builder/                   # Build pipeline (config gen, NativeAOT, crypter bridge)
+│   │   ├── PluginSources.cs       # C++ plugin source templates + on-demand MSVC compilation
+│   │   └── Crypter.cs             # Crypter bridge — invokes closed-source native loader
 │   ├── Net/                       # TLS server · H264Decoder · Discord RPC · miner stats host
+│   │   ├── TlsServer.cs           # Multi-client TLS accept loop + per-client ReadLoop dispatch
+│   │   ├── H264Decoder.cs         # H264 hardware decoder (Media Foundation) for RDP/HVNC streams
+│   │   ├── SeroDiscordRPC.cs      # Discord Rich Presence status integration
+│   │   ├── MinerStatsHost.cs      # Lightweight HTTP server for live XMR miner stats
+│   │   └── CertificateHelper.cs   # Self-signed TLS cert generation + SHA-256 pinning
 │   ├── Data/                      # JSON datastore, client records, autotask queue
+│   │   ├── DataStore.cs           # JSON-backed persistent store (all-clients, session log)
+│   │   ├── ClientRecord.cs        # Per-HWID record (first seen, country, tags, activity log)
+│   │   ├── ConnectedClient.cs     # Live session (stream, metadata, send queue)
+│   │   └── AutoTask.cs            # Autotask queue + scheduling model
 │   ├── Protocol/                  # Packet protocol + all data classes
+│   │   └── Packet.cs              # Packet type enum + all DTOs (entire protocol in one file)
+│   ├── Stubs/                     # Native C++ sources compiled + deployed at runtime
+│   │   ├── loader.cpp             # Native loader template (NtCreateSection, PPID spoof)
+│   │   ├── plugin_excludedefender.cpp # AutoTask: add C:\ to Defender exclusions via WMI + SYSTEM token
+│   │   ├── plugin_blockavdns.cpp  # AutoTask: redirect AV domains to 127.0.0.1, block DoT
+│   │   ├── plugin_blockreset.cpp  # AutoTask: disable WRE, block USB imaging tools
+│   │   └── plugin_botkiller.cpp   # AutoTask: kill competing processes, clean temp malware
 │   └── SeroServer.csproj
 │
 ├── stub/                          # Client stub (.NET 10 · NativeAOT)

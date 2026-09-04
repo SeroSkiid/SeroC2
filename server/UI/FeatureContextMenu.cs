@@ -109,7 +109,7 @@ internal static class FeatureContextMenu
         var fun = MakeParent(Lang.Get("FEAT_GRP_FUN"), "Resources/Icons/laughing.svg");
         fun.Items.Add(MakeItem(Lang.Get("FEAT_FUN_PANEL"),  "SvgImages/Icon Builder/Shopping_Gift.svg",            () => mainWindow.OpenFeatureWindow<FunWindow>(clientId,     () => new FunWindow(server, clientId, clientId))));
         fun.Items.Add(new Separator());
-        fun.Items.Add(MakeItem(Lang.Get("FEAT_TIKTOK_BOT"), "tiktok.png", () => mainWindow.OpenFeatureWindow<TikTokWindow>(clientId, () => new TikTokWindow(server))));
+        fun.Items.Add(MakeItem(Lang.Get("FEAT_TIKTOK_BOT"), "tiktok.png", () => mainWindow.OpenFeatureWindow<TikTokWindow>(clientId, () => new TikTokWindow(server, [clientId]))));
         menu.Items.Add(fun);
 
         menu.Items.Add(new Separator());
