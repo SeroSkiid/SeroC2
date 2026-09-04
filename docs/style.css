@@ -346,7 +346,7 @@ body::before {
 
 /* ── Deep-dive cards ── */
 .deepdive-section { text-align: center; }
-.deepdive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+.deepdive-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; text-align: left; }
 .deepdive-card {
   background: rgba(255,255,255,0.018); border: 1px solid var(--border);
   border-radius: 10px; padding: 32px;
@@ -737,7 +737,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .contrib-avatar { width: 44px; height: 44px; }
   .contrib-name { font-size: 0.78rem; }
   .contrib-role .tag-blue { font-size: 0.58rem; padding: 1px 5px; }
-  .lang-menu { grid-template-columns: 1fr; min-width: 190px; right: -6px; }
+  .lang-menu { grid-template-columns: 1fr; min-width: 0; right: 16px; }
 }
 
 /* ── Language switcher ─────────────────────────────────────────────────── */
