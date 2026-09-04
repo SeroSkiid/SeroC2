@@ -560,6 +560,9 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   to   { transform: translateY(100vh); opacity: 0; }
 }
 
+/* ── Pricing rows: override JS-injected stagger so rows appear together ── */
+.price-table tr.reveal { transition-delay: 0ms !important; transition-duration: 0.3s; }
+
 /* ── Entrance animations ── */
 @keyframes enterBlur {
   from { opacity: 0; transform: translateY(18px); filter: blur(8px); }
@@ -582,7 +585,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 .hero .hero-meta    { animation: enterSlide 0.35s ease 1.28s both; }
 
 /* ── Scroll reveal ── */
-.reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.45s ease, transform 0.45s ease; }
+.reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.38s ease, transform 0.38s ease; will-change: opacity, transform; }
 .reveal.visible { opacity: 1; transform: none; }
 
 /* ── Responsive ── */
@@ -647,6 +650,18 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 }
 
 @media (max-width: 640px) {
+  /* ── Lang menu: fixed so it can't be clipped by overflow-x: hidden ── */
+  .lang-menu {
+    position: fixed;
+    top: 62px;
+    left: 16px;
+    right: 16px;
+    min-width: 0;
+    width: auto;
+    max-height: 65vh;
+    grid-template-columns: 1fr 1fr;
+    border-radius: 10px;
+  }
   .container { padding: 0 16px; }
   .nav-inner { justify-content: space-between; }
   .btn-gh { font-size: 0.78rem; padding: 6px 10px; }

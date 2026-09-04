@@ -957,9 +957,9 @@ const revealIO = new IntersectionObserver(entries => {
   entries.forEach(({ isIntersecting, target }) => {
     if (isIntersecting) { target.classList.add('visible'); revealIO.unobserve(target); }
   });
-}, { threshold: 0.07 });
+}, { threshold: 0, rootMargin: '0px 0px -40px 0px' });
 document.querySelectorAll('.reveal').forEach((el, i) => {
-  el.style.transitionDelay = (i % 4) * 60 + 'ms';
+  el.style.transitionDelay = (i % 3) * 45 + 'ms';
   revealIO.observe(el);
 });
 
