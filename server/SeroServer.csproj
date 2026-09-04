@@ -63,100 +63,32 @@
     <PackageReference Include="SkiaSharp" Version="3.119.4" />
   </ItemGroup>
 
-  <!-- DevExpress WPF — requires DevExpress 25.2 installed at default path -->
-  <ItemGroup Condition="Exists('C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Core.v25.2.dll')">
-    <Reference Include="DevExpress.Data.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Data.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Images.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Images.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Core.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Core.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Seven.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Seven.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.VS2010.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2010.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.VS2017Blue.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Blue.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.VS2017Dark.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Dark.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.VS2017Light.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.VS2017Light.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2010Blue.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Blue.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2010Black.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Black.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2010Silver.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2010Silver.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2013.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2013.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2013DarkGray.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2013DarkGray.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2016Colorful.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016Colorful.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2016DarkGraySE.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016DarkGraySE.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2016Black.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2016Black.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2019Colorful.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019Colorful.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2019Black.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019Black.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2019White.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019White.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2019DarkGray.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019DarkGray.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.Office2019HighContrast.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.Office2019HighContrast.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.DXStyle.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.DXStyle.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="DevExpress.Xpf.Themes.MetropolisDark.v25.2">
-      <HintPath>C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\DevExpress.Xpf.Themes.MetropolisDark.v25.2.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
+  <!-- DevExpress WPF 25.2 — restored via NuGet, no local install required.
+       Register your license at %AppData%\DevExpress\DevExpress_License.txt
+       or set the DevExpress_License environment variable. -->
+  <ItemGroup>
+    <PackageReference Include="DevExpress.Wpf.Core" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Images" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Seven" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.VS2010" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.VS2017Blue" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.VS2017Dark" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.VS2017Light" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2010Blue" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2010Black" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2010Silver" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2013" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2013DarkGray" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2016Colorful" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2016DarkGraySE" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2016Black" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2019Colorful" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2019Black" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2019White" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2019DarkGray" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.Office2019HighContrast" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.DXStyle" Version="25.2.8" />
+    <PackageReference Include="DevExpress.Wpf.Themes.MetropolisDark" Version="25.2.8" />
   </ItemGroup>
 
   <!-- Ensure xmrig-release/ exists at repo root — gitignored (except .gitkeep),

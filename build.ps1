@@ -68,35 +68,54 @@ if (Test-Path $stubsSrc) {
 # without needing the user to have a compiler installed on the target server.
 
 function Find-ClExe {
-    # Try cl.exe on PATH first (already inside a VS Developer Command Prompt)
-    try {
-        $cl = (Get-Command cl.exe -ErrorAction Stop).Source
-        return @{ Cl = $cl; VcVars = $null }
-    } catch { }
-    # Search common VS install roots
+    # Prefer the newest MSVC toolset under VS installs (avoids picking stale side-by-side
+    # toolsets like 14.16 when a newer one such as 14.51.36231 is present).
+    # Fall back to cl.exe on PATH only if no VS install match is found.
     $vsRoots = @(
         "${env:ProgramFiles}\Microsoft Visual Studio",
         "${env:ProgramFiles(x86)}\Microsoft Visual Studio"
     )
+    $candidates = @()
     foreach ($vsRoot in $vsRoots) {
         if (-not (Test-Path $vsRoot)) { continue }
-        $found = Get-ChildItem $vsRoot -Recurse -Filter "cl.exe" -ErrorAction SilentlyContinue |
-                 Where-Object { $_.FullName -match "Hostx64\\x64|Hostx86\\x64" } |
-                 Select-Object -First 1
-        if ($found) {
-            # Extract <VS>\VC root from the path using regex — more reliable than counting .Parent
-            # Path pattern: ...\VC\Tools\MSVC\<ver>\bin\Hostx64\x64\cl.exe
-            $vcVars = $null
-            if ($found.FullName -match '^(.+?\\VC)\\Tools\\MSVC\\') {
-                $vcRoot = $Matches[1]
-                foreach ($bat in @("Auxiliary\Build\vcvars64.bat", "Auxiliary\Build\vcvarsall.bat")) {
-                    $candidate = Join-Path $vcRoot $bat
-                    if (Test-Path $candidate) { $vcVars = $candidate; break }
-                }
-            }
-            return @{ Cl = $found.FullName; VcVars = $vcVars }
-        }
+        $candidates += Get-ChildItem $vsRoot -Recurse -Filter "cl.exe" -ErrorAction SilentlyContinue |
+            Where-Object { $_.FullName -match '\\Hostx64\\x64\\cl\.exe$' }
     }
+    $best = $candidates |
+        ForEach-Object {
+            $ver = $null
+            if ($_.FullName -match '\\MSVC\\(\d+\.\d+\.\d+)\\') {
+                try { $ver = [version]$Matches[1] } catch { }
+            }
+            if ($ver) {
+                [PSCustomObject]@{ Path = $_.FullName; Version = $ver }
+            }
+        } |
+        Sort-Object Version -Descending |
+        Select-Object -First 1
+
+    if ($best) {
+        $foundPath = $best.Path
+        $toolVer   = $best.Version.ToString()
+        # Extract <VS>\VC root from the path using regex — more reliable than counting .Parent
+        # Path pattern: ...\VC\Tools\MSVC\<ver>\bin\Hostx64\x64\cl.exe
+        $vcVars = $null
+        if ($foundPath -match '^(.+?\\VC)\\Tools\\MSVC\\') {
+            $vcRoot = $Matches[1]
+            # Prefer vcvarsall so we can pin -vcvars_ver to the same toolset as cl.exe
+            foreach ($bat in @("Auxiliary\Build\vcvarsall.bat", "Auxiliary\Build\vcvars64.bat")) {
+                $candidate = Join-Path $vcRoot $bat
+                if (Test-Path $candidate) { $vcVars = $candidate; break }
+            }
+        }
+        return @{ Cl = $foundPath; VcVars = $vcVars; Version = $toolVer }
+    }
+
+    # Already in a VS Developer Command Prompt with cl.exe on PATH
+    try {
+        $cl = (Get-Command cl.exe -ErrorAction Stop).Source
+        return @{ Cl = $cl; VcVars = $null; Version = $null }
+    } catch { }
     return $null
 }
 
@@ -107,6 +126,7 @@ if ($pluginCpps -and $pluginCpps.Count -gt 0) {
     if ($clInfo) {
         $clExe  = $clInfo.Cl
         $vcVars = $clInfo.VcVars
+        $toolVer = $clInfo.Version
         Write-Host "  cl.exe: $clExe" -ForegroundColor DarkGray
         if ($vcVars) { Write-Host "  vcvars: $vcVars" -ForegroundColor DarkGray }
 
@@ -114,12 +134,12 @@ if ($pluginCpps -and $pluginCpps.Count -gt 0) {
             $baseName = [System.IO.Path]::GetFileNameWithoutExtension($cpp.Name)
             $dllOut   = Join-Path $stubsDst "$baseName.dll"
             $objOut   = Join-Path $stubsDst "$baseName.obj"
-            $clArgs   = "`"$($cpp.FullName)`" /LD /O2 /GS- /MT /W0 /nologo /Fe`"$dllOut`" /Fo`"$objOut`" kernel32.lib user32.lib advapi32.lib ole32.lib oleaut32.lib shell32.lib /link /INCREMENTAL:NO /OPT:REF /OPT:ICF"
+            $clArgs   = "`"$($cpp.FullName)`" /LD /O2 /GS- /MT /W0 /std:c++17 /nologo /Fe`"$dllOut`" /Fo`"$objOut`" kernel32.lib user32.lib advapi32.lib ole32.lib oleaut32.lib shell32.lib /link /INCREMENTAL:NO /OPT:REF /OPT:ICF"
 
             if ($vcVars) {
                 # Normal PowerShell (no VS env): use a temp .bat to call vcvars then cl.exe.
                 # Use the full path to cl.exe so it works even if vcvars fails to update PATH.
-                $vcVarsCall = if ($vcVars -match 'vcvarsall') { "`"$vcVars`" x64" } else { "`"$vcVars`"" }
+                $vcVarsCall = if ($toolVer) { "`"$vcVars`" x64 -vcvars_ver=$toolVer" } else { "`"$vcVars`"" }
                 $tmpBat = [System.IO.Path]::ChangeExtension([System.IO.Path]::GetTempFileName(), '.bat')
                 [System.IO.File]::WriteAllText($tmpBat, "@echo off`r`ncall $vcVarsCall >nul 2>&1`r`n`"$clExe`" $clArgs`r`n")
                 $psi = New-Object System.Diagnostics.ProcessStartInfo

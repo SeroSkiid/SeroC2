@@ -33,7 +33,7 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 - .NET 10 SDK
 - Visual Studio 2022 with **Desktop development with C++** workload
 - Windows SDK 10.0.22621+
-- **DevExpress 25.2** WPF components — **required** for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. The project references DLLs at `C:\Program Files\DevExpress 25.2\Components\Bin\NetCore\`. Without DevExpress installed the project will not compile. Install the free trial, or get your license💲on [devexpress.com](https://www.devexpress.com/).
+- **DevExpress 25.2 WPF** NuGet packages — required for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Packages (`DevExpress.Wpf.Core`, `DevExpress.Images`, and theme packages) are restored from nuget.org automatically on build. Register your trial or licensed key at `%AppData%\DevExpress\DevExpress_License.txt` (or set the `DevExpress_License` environment variable) — see [DevExpress license key setup](https://docs.devexpress.com/GeneralInformation/116698).
 
 ### Step 1 — Install prerequisites
 
