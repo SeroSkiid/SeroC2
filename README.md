@@ -1,4 +1,4 @@
-<img src="docs/assets/serofondtransparent.png" height="80" />
+<img src="docs/assets/serofondtransparent.png" height="80" align="left"/>
 
 # SeroRAT
 
