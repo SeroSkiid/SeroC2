@@ -6704,6 +6704,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#E8E8E8");
                 res["ColHeaderFgBrush"]        = B("#555555");
                 res["ColHeaderBorderBrush"]    = B("#C8C8C8");
+                res["AlternatingRowBgBrush"]   = B("#EAEAEA");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -6742,6 +6743,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#C0D4E8");
                 res["ColHeaderFgBrush"]        = B("#1B5B99");
                 res["ColHeaderBorderBrush"]    = B("#8AAED8");
+                res["AlternatingRowBgBrush"]   = B("#D0E4F4");
                 break;
 
             case "Office2010Black":
@@ -6855,6 +6857,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#D0D8EA");
                 res["ColHeaderFgBrush"]        = B("#2B579A");
                 res["ColHeaderBorderBrush"]    = B("#B0C0D8");
+                res["AlternatingRowBgBrush"]   = B("#E4E8F0");
                 break;
 
             case "Office2019Black":
@@ -6925,6 +6928,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#E8EBF0");
                 res["ColHeaderFgBrush"]        = B("#2B579A");
                 res["ColHeaderBorderBrush"]    = B("#C0C4C8");
+                res["AlternatingRowBgBrush"]   = B("#F4F5F8");
                 break;
 
             case "Office2019DarkGray":
@@ -6998,6 +7002,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#D0DCEE");
                 res["ColHeaderFgBrush"]        = B("#2B6CB0");
                 res["ColHeaderBorderBrush"]    = B("#A8B8D8");
+                res["AlternatingRowBgBrush"]   = B("#DBE4F0");
                 break;
 
             case "Office2016DarkGraySE":
@@ -7106,6 +7111,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#E8EFF8");
                 res["ColHeaderFgBrush"]        = B("#2972BF");
                 res["ColHeaderBorderBrush"]    = B("#C0D0E0");
+                res["AlternatingRowBgBrush"]   = B("#EEF4FC");
                 break;
 
             case "Office2013DarkGray":
@@ -7430,6 +7436,25 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBorderBrush"]    = B("#606888");
                 break;
 
+        }
+
+        // ── Dashboard token overrides (light vs dark) ─────────────────────────────
+        // CardBgBrush/ChartBgBrush/ProgressTrackBrush default to near-black in App.xaml
+        // and in the ServerWindow.xaml inline Resources block — must write to both.
+        if (_lightThemeKeys.Contains(name) && name != "Office2019HighContrast")
+        {
+            if (res["SectionBgBrush"] is System.Windows.Media.SolidColorBrush sBg2)
+            { var cb = new System.Windows.Media.SolidColorBrush(sBg2.Color); cb.Freeze(); res["CardBgBrush"] = cb; Resources["CardBgBrush"] = cb; }
+            if (res["ActivityBgBrush"] is System.Windows.Media.SolidColorBrush aBg2)
+            { var ch = new System.Windows.Media.SolidColorBrush(aBg2.Color); ch.Freeze(); res["ChartBgBrush"] = ch; Resources["ChartBgBrush"] = ch; }
+            if (res["SectionBorderBrush"] is System.Windows.Media.SolidColorBrush sbBr2)
+            { var pt = new System.Windows.Media.SolidColorBrush(sbBr2.Color); pt.Freeze(); res["ProgressTrackBrush"] = pt; Resources["ProgressTrackBrush"] = pt; }
+        }
+        else
+        {
+            var dCard  = B("#0A0D1A"); res["CardBgBrush"]        = dCard;  Resources["CardBgBrush"]        = dCard;
+            var dChart = B("#07080F"); res["ChartBgBrush"]       = dChart; Resources["ChartBgBrush"]       = dChart;
+            var dTrack = B("#13172A"); res["ProgressTrackBrush"] = dTrack; Resources["ProgressTrackBrush"] = dTrack;
         }
 
         // Auto-derive ColHeaderHoverBrush from ColHeaderBgBrush.
