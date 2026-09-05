@@ -1,6 +1,6 @@
 <img src="docs/assets/serofondtransparent.png" height="80" align="left"/>
 
-# SeroRAT
+# SeroRAT 🇫🇷
 
 ![Version](https://img.shields.io/badge/version-1.8.1-orange.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
