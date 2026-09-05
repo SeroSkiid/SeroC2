@@ -8981,26 +8981,15 @@ Read-Host 'Press Enter to close'
         bool hasChanges = GridAllClients.Columns.Any(c => c.Visibility != Visibility.Visible);
         if (!hasChanges)
         {
-            double gw = GridAllClients.ActualWidth;
-            if (gw >= 50)
+            foreach (var col in GridAllClients.Columns)
             {
-                double avail = gw - 8.0 - 60.0;
-                const double kF = 1004.0, kM = 763.0;
-                double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
-                foreach (var col in GridAllClients.Columns)
-                {
-                    if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
-                    string k = GetOriginalKey(col);
-                    if (string.IsNullOrEmpty(k) || k == "TAG") continue;
-                    if (_allClientsColSpec.TryGetValue(k, out var spec))
-                    {
-                        int ep = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
-                        if (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0)
-                        { hasChanges = true; break; }
-                    }
-                }
+                string k = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(k) || k == "TAG") continue;
+                if (_allClientsColSpec.TryGetValue(k, out var spec)
+                    && (col.Width.UnitType != DataGridLengthUnitType.Pixel
+                        || Math.Abs(col.Width.Value - spec.full) > 2.0))
+                { hasChanges = true; break; }
             }
-            else { hasChanges = true; }
         }
 
         if (!hasChanges) return;
@@ -9123,8 +9112,6 @@ Read-Host 'Press Enter to close'
 
     private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
     {
-        // Change detection: compare current widths against the scale-adjusted defaults for
-        // the current window width so Reset is a no-op only when nothing has changed.
         bool hasChanges = _webcamFilterOnly
             || _adminFilterOnly
             || _autoFitColumns
@@ -9132,26 +9119,16 @@ Read-Host 'Press Enter to close'
 
         if (!hasChanges)
         {
-            double gw = GridClients.ActualWidth;
-            if (gw >= 50)
+            foreach (var col in GridClients.Columns)
             {
-                double avail = gw - 8.0 - 60.0;
-                const double kF = 1546.0, kM = 1077.0;
-                double t = avail >= kF ? 1.0 : avail >= kM ? (avail - kM) / (kF - kM) : 0.0;
-                foreach (var col in GridClients.Columns)
-                {
-                    if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
-                    string h = GetOriginalKey(col);
-                    if (string.IsNullOrEmpty(h) || h == "TAG") continue;
-                    if (_onlineColSpec.TryGetValue(h, out var spec))
-                    {
-                        int ep = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
-                        if (col.Width.UnitType != DataGridLengthUnitType.Pixel || Math.Abs(col.Width.Value - ep) > 2.0)
-                        { hasChanges = true; break; }
-                    }
-                }
+                if (col.Visibility != Visibility.Visible) { hasChanges = true; break; }
+                string h = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(h) || h == "TAG") continue;
+                if (_onlineColSpec.TryGetValue(h, out var spec)
+                    && (col.Width.UnitType != DataGridLengthUnitType.Pixel
+                        || Math.Abs(col.Width.Value - spec.full) > 2.0))
+                { hasChanges = true; break; }
             }
-            else { hasChanges = true; }
         }
 
         if (!hasChanges) return;
@@ -9194,17 +9171,8 @@ Read-Host 'Press Enter to close'
         RefreshClientFilters();
     }
 
-    // Interpolates each column between its min and full width based on available grid space.
-    // kFull=1546 (sum of full widths), kMin=1077 (sum of minimum readable widths, all languages).
-    // Below kMin: use per-column minimums (scrollbar visible). Above kFull: use full defaults.
     private void ApplyAdaptiveOnlineWidths()
     {
-        double gridWidth = GridClients.ActualWidth;
-        if (gridWidth < 50) return;
-        double avail = gridWidth - 8.0 - 60.0; // scrollbar (8) + TAG MinWidth reserve (60)
-        const double kFull = 1546.0, kMin = 1077.0;
-        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
-
         _suppressColumnSave = true;
         try
         {
@@ -9214,25 +9182,16 @@ Read-Host 'Press Enter to close'
                 if (string.IsNullOrEmpty(key)) continue;
                 if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
-                int px = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
-                col.Width = new DataGridLength(px);
-                UiPrefs.Set($"ColWidth_{key}", px);
+                col.Width = new DataGridLength(spec.full);
+                UiPrefs.Set($"ColWidth_{key}", spec.full);
             }
         }
         finally { _suppressColumnSave = false; }
     }
 
-    // Same adaptive interpolation for All Clients DataGrid.
-    // kFull=1004, kMin=763 → fits without scrollbar from ~831 px grid width.
     private void ApplyAdaptiveAllClientsWidths()
     {
         if (GridAllClients == null) return;
-        double gridWidth = GridAllClients.ActualWidth;
-        if (gridWidth < 50) return;
-        double avail = gridWidth - 8.0 - 60.0;
-        const double kFull = 1004.0, kMin = 763.0;
-        double t = avail >= kFull ? 1.0 : avail >= kMin ? (avail - kMin) / (kFull - kMin) : 0.0;
-
         _suppressColumnSave = true;
         try
         {
@@ -9242,9 +9201,8 @@ Read-Host 'Press Enter to close'
                 if (string.IsNullOrEmpty(key)) continue;
                 if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
-                int px = (int)Math.Round(spec.min + (spec.full - spec.min) * t);
-                col.Width = new DataGridLength(px);
-                UiPrefs.Set($"AllColWidth_{key}", px);
+                col.Width = new DataGridLength(spec.full);
+                UiPrefs.Set($"AllColWidth_{key}", spec.full);
             }
         }
         finally { _suppressColumnSave = false; }
