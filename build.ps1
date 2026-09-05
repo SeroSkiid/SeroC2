@@ -39,6 +39,19 @@ if (Test-Path $serverOut) { Remove-Item $serverOut -Recurse -Force }
 Copy-Item $tmpOut $serverOut -Recurse
 Write-OK "Server -> dist\server\SeroServer.exe"
 
+# Shortcut at dist root so SeroServer.exe is one click away without hunting in server\
+$lnkPath = Join-Path $Out "SeroServer.lnk"
+try {
+    $wsh      = New-Object -ComObject WScript.Shell
+    $shortcut = $wsh.CreateShortcut($lnkPath)
+    $shortcut.TargetPath       = Join-Path $serverOut "SeroServer.exe"
+    $shortcut.WorkingDirectory = $serverOut
+    $shortcut.Save()
+    Write-OK "Shortcut -> dist\SeroServer.lnk"
+} catch {
+    Write-Host "[!] Could not create shortcut: $_" -ForegroundColor Yellow
+}
+
 # ── Crypter.cs stub check ──────────────────────────────────────────────────
 $crypterCs = Join-Path $Server "Builder\Crypter.cs"
 if (Test-Path $crypterCs) {
