@@ -30,8 +30,8 @@
             <Border DockPanel.Dock="Top" Height="36" Background="{DynamicResource TitleBgBrush}"
                     MouseLeftButtonDown="TitleBar_Drag">
                 <Grid Margin="14,0">
-                    <TextBlock Text="&#x1F4F7;� Webcam Layout" FontSize="12" FontWeight="SemiBold"
-                               Foreground="#89dceb" VerticalAlignment="Center"/>
+                    <TextBlock Text="📷 Webcam Layout" FontSize="12" FontWeight="SemiBold"
+                               Foreground="{DynamicResource TitleTextBrush}" VerticalAlignment="Center"/>
                     <Button Content="&#x2715;" HorizontalAlignment="Right" Width="28" Height="24"
                             Style="{StaticResource SRedBtn}" Cursor="Hand"
                             Click="Cancel_Click" FontSize="10" Padding="0"/>

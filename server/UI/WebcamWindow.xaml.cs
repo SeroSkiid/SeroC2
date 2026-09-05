@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls.Primitives;
@@ -44,7 +45,8 @@ public partial class WebcamWindow : ThemedWindow
         _clientId = clientId;
         _hwid     = server.ConnectedClients.TryGetValue(clientId, out var cc) ? cc.Hwid : string.Empty;
         _dotActive   = MakeBrush(0x22, 0xC5, 0x5E);
-        _dotInactive = MakeBrush(0x25, 0x28, 0x40);
+        _dotInactive = Application.Current?.Resources["SectionBorderBrush"] is SolidColorBrush sb
+            ? sb : MakeBrush(0x25, 0x28, 0x40);
         _sigGreen    = MakeBrush(0x22, 0xC5, 0x5E);
         _sigOrange   = MakeBrush(0xF5, 0x9E, 0x0B);
         _sigRed      = MakeBrush(0xEF, 0x44, 0x44);
@@ -195,7 +197,7 @@ public partial class WebcamWindow : ThemedWindow
 
     private async void TxtClientId_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        Clipboard.SetText(_clientId);
+        try { Clipboard.SetText(_clientId); } catch { return; }
         TxtClientId.Text = Lang.Get("COPIED");
         TxtClientId.Foreground = new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E));
         await Task.Delay(1500);
@@ -299,8 +301,8 @@ public partial class WebcamWindow : ThemedWindow
             string j64 = jEl.GetString() ?? "";
             if (string.IsNullOrEmpty(j64)) return;
 
-            _bytesReceived += json.Length;
             var jpegBytes = Convert.FromBase64String(j64);
+            Interlocked.Add(ref _bytesReceived, jpegBytes.Length);
             Task.Run(() =>
             {
                 try
@@ -374,13 +376,13 @@ public partial class WebcamWindow : ThemedWindow
         if (!_closed) SendAck();
     }
     
-    private volatile int _bytesReceived;
-    
+    private int _bytesReceived;
+
     private void UpdateMetrics()
     {
-        double mbps = (_bytesReceived * 8.0) / 1000000.0;
+        int bytes = Interlocked.Exchange(ref _bytesReceived, 0);
+        double mbps = (bytes * 8.0) / 1000000.0;
         TxtBandwidth.Text = $"{mbps:F1} Mbps";
-        _bytesReceived = 0;
         
         if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
         {

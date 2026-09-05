@@ -30,6 +30,8 @@ internal static class WebcamFeature
     private static readonly Guid MEDIATYPE_Video_DS         = new("73646976-0000-0010-8000-00AA00389B71");
     private static readonly Guid MEDIASUBTYPE_RGB24         = new("E436EB7D-524F-11CE-9F53-0020AF0BA770");
     private static readonly Guid MEDIASUBTYPE_YUY2          = new("32595559-0000-0010-8000-00AA00389B71");
+    private static readonly Guid FORMAT_VideoInfo           = new("05589F80-C356-11CE-BF01-00AA0055595A");
+    private static readonly Guid FORMAT_VideoInfo2          = new("F72A76A0-EB0A-11D0-ACE4-0000C0CC16BA");
 
     private const int    S_OK       = 0;
     private const uint   CLSCTX_INPROC = 1;
@@ -221,8 +223,16 @@ internal static class WebcamFeature
 
             if (dsDevs.Length == 0) { SendError("No webcam device found."); return; }
 
-            int di = Math.Clamp(_cfg.DeviceIndex, 0, dsDevs.Length - 1);
-            TryDShowSampleGrabberCapture(di, dsDevs[di].symlink);
+            if (_cfg.DeviceIndex >= dsDevs.Length)
+            { SendError($"Device index {_cfg.DeviceIndex} not found ({dsDevs.Length} device(s) available)."); return; }
+
+            int di = _cfg.DeviceIndex;
+            bool dsOk = TryDShowSampleGrabberCapture(di, dsDevs[di].symlink);
+            if (!dsOk && _running)
+            {
+                WebcamDShow.Start(dsDevs[di].symlink, di, _cfg.Quality, _cfg.Fps,
+                    _send!, _ => { }, msg => SendError(msg));
+            }
         }
         catch { }
     }
@@ -394,10 +404,14 @@ internal static class WebcamFeature
     private static unsafe int SgCb_BufferCB(IntPtr p, double t, IntPtr pBuffer, int len)
     {
         if (pBuffer == IntPtr.Zero || len <= 0) return 0;
-        var b = new byte[len];
-        Marshal.Copy(pBuffer, b, 0, len);
-        System.Threading.Interlocked.Exchange(ref _sgCbFrame, b);
-        System.Threading.Interlocked.Increment(ref _cbFrameTotal);
+        try
+        {
+            var b = new byte[len];
+            Marshal.Copy(pBuffer, b, 0, len);
+            System.Threading.Interlocked.Exchange(ref _sgCbFrame, b);
+            System.Threading.Interlocked.Increment(ref _cbFrameTotal);
+        }
+        catch { }
         return 0;
     }
 
@@ -416,7 +430,7 @@ internal static class WebcamFeature
 
     // ── DirectShow SampleGrabber graph ────────────────────────────────────────
 
-    private static void TryDShowSampleGrabberCapture(int devIdx, string symlink)
+    private static bool TryDShowSampleGrabberCapture(int devIdx, string symlink)
     {
         IntPtr pGraph = IntPtr.Zero, pBuilder = IntPtr.Zero;
         IntPtr pCapFilt = IntPtr.Zero, pGrabFilt = IntPtr.Zero;
@@ -427,31 +441,31 @@ internal static class WebcamFeature
             var clsid = CLSID_FilterGraph;
             var iid   = IID_IGraphBuilder;
             int hr = CoCreateInstance(ref clsid, IntPtr.Zero, CLSCTX_INPROC, ref iid, out pGraph);
-            if (hr != S_OK || pGraph == IntPtr.Zero) { SendError("FilterGraph failed."); return; }
+            if (hr != S_OK || pGraph == IntPtr.Zero) return false;
 
             clsid = CLSID_CaptureGraphBuilder2;
             iid   = IID_ICaptureGraphBuilder2;
             hr = CoCreateInstance(ref clsid, IntPtr.Zero, CLSCTX_INPROC, ref iid, out pBuilder);
-            if (hr != S_OK || pBuilder == IntPtr.Zero) { SendError("CaptureGraphBuilder2 failed."); return; }
+            if (hr != S_OK || pBuilder == IntPtr.Zero) return false;
 
             var setFgFn = Marshal.GetDelegateForFunctionPointer<SetFiltergraph_Del>(
                 Marshal.ReadIntPtr(Marshal.ReadIntPtr(pBuilder), 3 * IntPtr.Size));
-            if (setFgFn(pBuilder, pGraph) != S_OK) { SendError("SetFiltergraph failed."); return; }
+            if (setFgFn(pBuilder, pGraph) != S_OK) return false;
 
             var addFn = Marshal.GetDelegateForFunctionPointer<AddFilter_Del>(
                 Marshal.ReadIntPtr(Marshal.ReadIntPtr(pGraph), 3 * IntPtr.Size));
 
             pCapFilt = DSGetBaseFilter(devIdx);
-            if (pCapFilt == IntPtr.Zero) { SendError("Could not open webcam device."); return; }
+            if (pCapFilt == IntPtr.Zero) return false;
             addFn(pGraph, pCapFilt, "Capture");
 
             clsid = CLSID_SampleGrabber;
             iid   = IID_IBaseFilter;
             hr = CoCreateInstance(ref clsid, IntPtr.Zero, CLSCTX_INPROC, ref iid, out pGrabFilt);
-            if (hr != S_OK || pGrabFilt == IntPtr.Zero) { SendError("SampleGrabber failed."); return; }
+            if (hr != S_OK || pGrabFilt == IntPtr.Zero) return false;
 
             pGrabIF = ComQI(pGrabFilt, IID_ISampleGrabber);
-            if (pGrabIF == IntPtr.Zero) { SendError("QI ISampleGrabber failed."); return; }
+            if (pGrabIF == IntPtr.Zero) return false;
 
             var setMtFn = Marshal.GetDelegateForFunctionPointer<SetMT_Del>(
                 Marshal.ReadIntPtr(Marshal.ReadIntPtr(pGrabIF), 4 * IntPtr.Size));
@@ -463,7 +477,7 @@ internal static class WebcamFeature
             clsid = CLSID_NullRenderer;
             iid   = IID_IBaseFilter;
             hr = CoCreateInstance(ref clsid, IntPtr.Zero, CLSCTX_INPROC, ref iid, out pNullRend);
-            if (hr != S_OK || pNullRend == IntPtr.Zero) { SendError("NullRenderer failed."); return; }
+            if (hr != S_OK || pNullRend == IntPtr.Zero) return false;
             addFn(pGraph, pNullRend, "NR");
 
             var cat   = PIN_CATEGORY_CAPTURE;
@@ -485,27 +499,37 @@ internal static class WebcamFeature
                     var mtAny = new AM_MEDIA_TYPE { majortype = MEDIATYPE_Video_DS };
                     setMtFn(pGrabIF, ref mtAny);
                     hr = rsFn(pBuilder, ref cat, ref mtype, pCapFilt, pGrabFilt, pNullRend);
-                    if (hr != S_OK) { SendError($"RenderStream failed (0x{hr:X8})."); return; }
+                    if (hr != S_OK) return false;
                 }
             }
 
             // Read connected media type for frame dimensions + format
             int vidW = 640, vidH = 480, bpp = 3;
-            bool sgIsMjpg = false, sgIsYuy2 = false;
+            bool sgIsMjpg = false, sgIsYuy2 = false, vidBottomUp = false;
             var getConnFn = Marshal.GetDelegateForFunctionPointer<GetConnectedMediaType_Del>(
                 Marshal.ReadIntPtr(Marshal.ReadIntPtr(pGrabIF), 5 * IntPtr.Size));
             if (getConnFn(pGrabIF, out AM_MEDIA_TYPE connMt) == S_OK
-                && connMt.pbFormat != IntPtr.Zero && connMt.cbFormat >= 64)
+                && connMt.pbFormat != IntPtr.Zero)
             {
-                vidW = Marshal.ReadInt32(connMt.pbFormat, 52);
-                vidH = Math.Abs(Marshal.ReadInt32(connMt.pbFormat, 56));
-                short biBitCount = Marshal.ReadInt16(connMt.pbFormat, 62);
-                bpp = biBitCount >= 32 ? 4 : 3;
-                if (connMt.cbFormat >= 68)
+                // VIH2 adds 24 bytes before BITMAPINFOHEADER; VIH1 has BITMAPINFOHEADER at offset 48.
+                int bihOff = connMt.formattype == FORMAT_VideoInfo2 ? 72 : 48;
+                if (connMt.cbFormat >= (uint)(bihOff + 20))
                 {
-                    uint biComp = (uint)Marshal.ReadInt32(connMt.pbFormat, 64);
+                    vidW = Marshal.ReadInt32(connMt.pbFormat, bihOff + 4);
+                    int biHeight = Marshal.ReadInt32(connMt.pbFormat, bihOff + 8);
+                    vidBottomUp = biHeight > 0;
+                    vidH = Math.Abs(biHeight);
+                    short biBitCount = Marshal.ReadInt16(connMt.pbFormat, bihOff + 14);
+                    bpp = biBitCount >= 32 ? 4 : 3;
+                    uint biComp = (uint)Marshal.ReadInt32(connMt.pbFormat, bihOff + 16);
                     sgIsMjpg = biComp == 0x47504A4D;
                     sgIsYuy2 = biComp == 0x32595559;
+                    if (!sgIsMjpg && !sgIsYuy2 && biBitCount == 16)
+                    {
+                        if (connMt.pUnk != IntPtr.Zero) IUnknown_Release(connMt.pUnk);
+                        Marshal.FreeCoTaskMem(connMt.pbFormat);
+                        return false;
+                    }
                 }
                 if (connMt.pUnk != IntPtr.Zero) IUnknown_Release(connMt.pUnk);
                 Marshal.FreeCoTaskMem(connMt.pbFormat);
@@ -523,7 +547,7 @@ internal static class WebcamFeature
 
             // Run graph
             pMediaCtrl = ComQI(pGraph, IID_IMediaControl);
-            if (pMediaCtrl == IntPtr.Zero) { SendError("QI IMediaControl failed."); return; }
+            if (pMediaCtrl == IntPtr.Zero) return false;
             var runFn = Marshal.GetDelegateForFunctionPointer<IMediaControl_Run_Del>(
                 Marshal.ReadIntPtr(Marshal.ReadIntPtr(pMediaCtrl), 7 * IntPtr.Size));
             runFn(pMediaCtrl);
@@ -544,8 +568,10 @@ internal static class WebcamFeature
                 
                 try
                 {
-                    Thread.Sleep(Math.Max(intervalMs / 2, 10));
                     long now = Environment.TickCount64;
+                    long sleepMs = intervalMs - (now - lastSendMs);
+                    if (sleepMs > 5) Thread.Sleep((int)Math.Clamp(sleepMs, 5, intervalMs));
+                    now = Environment.TickCount64;
                     if (now - lastSendMs < intervalMs) continue;
 
                     byte[]? raw = System.Threading.Interlocked.Exchange(ref _sgCbFrame, null);
@@ -569,14 +595,14 @@ internal static class WebcamFeature
                         if (outW != vidW || outH != vidH)
                         {
                             if (sgIsMjpg) jpeg = ScaleMjpeg(raw, outW, outH, encQ);
-                            else if (sgIsYuy2) { bgraBuffer = Yuy2ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
+                            else if (sgIsYuy2) { bgraBuffer = Yuy2ToBgra(raw, vidW, vidH, vidBottomUp); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
                             else if (bpp == 4) { bgraBuffer = Bgrx32ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
                             else { bgraBuffer = Rgb24ToBgra(raw, vidW, vidH); jpeg = ScaleAndEncode(bgraBuffer, vidW, vidH, outW, outH, encQ); }
                         }
                         else
                         {
                             if (sgIsMjpg) jpeg = raw;
-                            else if (sgIsYuy2) jpeg = Yuy2ToJpeg(raw, vidW, vidH, encQ);
+                            else if (sgIsYuy2) jpeg = Yuy2ToJpeg(raw, vidW, vidH, encQ, vidBottomUp);
                             else if (bpp == 4) jpeg = Bgrx32ToJpeg(raw, vidW, vidH, encQ);
                             else jpeg = Rgb24ToJpeg(raw, vidW, vidH, encQ);
                         }
@@ -599,8 +625,9 @@ internal static class WebcamFeature
                 }
                 catch { Thread.Sleep(intervalMs); }
             }
+            return true;
         }
-        catch { }
+        catch { return false; }
         finally
         {
             // Unregister callback BEFORE stopping graph — gives DirectShow worker threads
@@ -638,17 +665,18 @@ internal static class WebcamFeature
 
     // ── Raw frame → JPEG ──────────────────────────────────────────────────────
 
-    private static byte[]? Yuy2ToJpeg(byte[] raw, int w, int h, int quality)
+    private static byte[]? Yuy2ToJpeg(byte[] raw, int w, int h, int quality, bool bottomUp = false)
     {
         int bgraStride = w * 4;
         var bgra = new byte[bgraStride * h];
         int yuyStride = w * 2;
         for (int row = 0; row < h; row++)
         {
+            int srcRow = bottomUp ? h - 1 - row : row;
             for (int col = 0; col < w; col++)
             {
-                int yuyBase = row * yuyStride + (col & ~1) * 2;
-                byte Y = raw[row * yuyStride + col * 2];
+                int yuyBase = srcRow * yuyStride + (col & ~1) * 2;
+                byte Y = raw[srcRow * yuyStride + col * 2];
                 byte U = yuyBase + 1 < raw.Length ? raw[yuyBase + 1] : (byte)128;
                 byte V = yuyBase + 3 < raw.Length ? raw[yuyBase + 3] : (byte)128;
                 int C = Y - 16, D = U - 128, E = V - 128;
@@ -783,17 +811,18 @@ internal static class WebcamFeature
     [DllImport("gdiplus.dll")]
     private static extern int GdipSetInterpolationMode(IntPtr graphics, int mode);
 
-    private static byte[] Yuy2ToBgra(byte[] raw, int w, int h)
+    private static byte[] Yuy2ToBgra(byte[] raw, int w, int h, bool bottomUp = false)
     {
         int stride = w * 4;
         var bgra = System.Buffers.ArrayPool<byte>.Shared.Rent(stride * h);
         int yuyStride = w * 2;
         for (int row = 0; row < h; row++)
         {
+            int srcRow = bottomUp ? h - 1 - row : row;
             for (int col = 0; col < w; col++)
             {
-                int yuyBase = row * yuyStride + (col & ~1) * 2;
-                byte Y = raw[row * yuyStride + col * 2];
+                int yuyBase = srcRow * yuyStride + (col & ~1) * 2;
+                byte Y = raw[srcRow * yuyStride + col * 2];
                 byte U = yuyBase + 1 < raw.Length ? raw[yuyBase + 1] : (byte)128;
                 byte V = yuyBase + 3 < raw.Length ? raw[yuyBase + 3] : (byte)128;
                 int C = Y - 16, D = U - 128, E = V - 128;
@@ -840,17 +869,16 @@ internal static class WebcamFeature
         return bgra;
     }
 
-    private static unsafe byte[]? ScaleAndEncode(byte[] bgra, int srcW, int srcH, int dstW, int dstH, int quality)
+    private static byte[]? ScaleAndEncode(byte[] bgra, int srcW, int srcH, int dstW, int dstH, int quality)
     {
         RemoteDesktopFeature.EnsureGdiplusPublic();
+        // Pin for full pipeline lifetime — GDI+ reads scan0 during GdipDrawImageRectI, not just at creation.
+        var pin = GCHandle.Alloc(bgra, GCHandleType.Pinned);
         IntPtr srcBmp = IntPtr.Zero, dstBmp = IntPtr.Zero, gfx = IntPtr.Zero;
         try
         {
-            fixed (byte* p = bgra)
-            {
-                if (GdipCreateBitmapFromScan0(srcW, srcH, srcW * 4, 0x26200A, (IntPtr)p, out srcBmp) != 0 || srcBmp == IntPtr.Zero)
-                    return null;
-            }
+            if (GdipCreateBitmapFromScan0(srcW, srcH, srcW * 4, 0x26200A, pin.AddrOfPinnedObject(), out srcBmp) != 0 || srcBmp == IntPtr.Zero)
+                return null;
             if (GdipCreateBitmapFromScan0(dstW, dstH, 0, 0x26200A, IntPtr.Zero, out dstBmp) != 0 || dstBmp == IntPtr.Zero)
                 return null;
             if (GdipGetImageGraphicsContext(dstBmp, out gfx) != 0 || gfx == IntPtr.Zero)
@@ -866,31 +894,24 @@ internal static class WebcamFeature
             if (gfx    != IntPtr.Zero) GdipDeleteGraphics(gfx);
             if (dstBmp  != IntPtr.Zero) GdipDisposeImage(dstBmp);
             if (srcBmp  != IntPtr.Zero) GdipDisposeImage(srcBmp);
+            pin.Free();
         }
     }
 
     private static byte[]? ScaleMjpeg(byte[] jpegData, int dstW, int dstH, int quality)
     {
-        // For MJPEG, decode the JPEG first, scale, then re-encode
-        // Use GDI+ to load from memory
         RemoteDesktopFeature.EnsureGdiplusPublic();
-        IntPtr srcBmp = IntPtr.Zero;
+        // pStream must outlive srcBmp — GdipCreateBitmapFromStream may lazy-decode.
+        IntPtr srcBmp = IntPtr.Zero, pStream = IntPtr.Zero;
         try
         {
-            // Create GDI+ image from JPEG bytes via IStream
-            unsafe
-            {
-                fixed (byte* p = jpegData)
-                {
-                    var hGlobal = Marshal.AllocHGlobal(jpegData.Length);
-                    Marshal.Copy(jpegData, 0, hGlobal, jpegData.Length);
-                    CreateStreamOnHGlobal(hGlobal, true, out IntPtr pStream);
-                    if (pStream == IntPtr.Zero) { Marshal.FreeHGlobal(hGlobal); return jpegData; }
-                    GdipCreateBitmapFromStream(pStream, out srcBmp);
-                    Marshal.Release(pStream);
-                    if (srcBmp == IntPtr.Zero) return jpegData;
-                }
-            }
+            var hGlobal = Marshal.AllocHGlobal(jpegData.Length);
+            Marshal.Copy(jpegData, 0, hGlobal, jpegData.Length);
+            CreateStreamOnHGlobal(hGlobal, true, out pStream);
+            if (pStream == IntPtr.Zero) { Marshal.FreeHGlobal(hGlobal); return jpegData; }
+            GdipCreateBitmapFromStream(pStream, out srcBmp);
+            if (srcBmp == IntPtr.Zero) return jpegData;
+
             IntPtr dstBmp = IntPtr.Zero, gfx = IntPtr.Zero;
             try
             {
@@ -912,7 +933,8 @@ internal static class WebcamFeature
         catch { return jpegData; }
         finally
         {
-            if (srcBmp != IntPtr.Zero) GdipDisposeImage(srcBmp);
+            if (srcBmp  != IntPtr.Zero) GdipDisposeImage(srcBmp);
+            if (pStream != IntPtr.Zero) Marshal.Release(pStream);
         }
     }
 
