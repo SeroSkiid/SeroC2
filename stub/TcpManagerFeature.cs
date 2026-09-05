@@ -68,8 +68,9 @@ internal static class TcpManagerFeature
                     try
                     {
                         foreach (var p in System.Diagnostics.Process.GetProcesses())
-                            if (pidSet.Contains(p.Id))
-                                procNames[p.Id] = p.ProcessName;
+                            using (p)
+                                if (pidSet.Contains(p.Id))
+                                    procNames[p.Id] = p.ProcessName;
                     }
                     catch { }
 

