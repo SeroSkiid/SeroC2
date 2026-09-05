@@ -8912,6 +8912,29 @@ Read-Host 'Press Enter to close'
             SlideOutGridSettings();
     }
 
+    private void ResetGridSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                UiPrefs.Set($"ColWidth_{key}", 0);
+                UiPrefs.Set($"ColVis_{key}", 1);
+                col.Visibility = Visibility.Visible;
+                if (key == "TAG")
+                    col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+            }
+        }
+        finally { _suppressColumnSave = false; }
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            new Action(ApplyAdaptiveOnlineWidths));
+        UpdateSettingsCheckboxStates();
+    }
+
     private void SlideInGridSettings()
     {
         var tx = (System.Windows.Media.TranslateTransform)GridSettingsPanel.RenderTransform;
@@ -8951,6 +8974,29 @@ Read-Host 'Press Enter to close'
     {
         if (AllClientsSettingsPanel != null)
             SlideOutAllClientsSettings();
+    }
+
+    private void ResetAllClientsSettings_Click(object sender, RoutedEventArgs e)
+    {
+        _suppressColumnSave = true;
+        try
+        {
+            foreach (var col in GridAllClients.Columns)
+            {
+                string key = GetOriginalKey(col);
+                if (string.IsNullOrEmpty(key)) continue;
+                UiPrefs.Set($"AllColWidth_{key}", 0);
+                UiPrefs.Set($"AllColVis_{key}", 1);
+                col.Visibility = Visibility.Visible;
+                if (key == "TAG")
+                    col.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+            }
+        }
+        finally { _suppressColumnSave = false; }
+
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            new Action(ApplyAdaptiveAllClientsWidths));
+        UpdateSettingsCheckboxStates();
     }
 
     private void SlideInAllClientsSettings()
