@@ -841,11 +841,12 @@
                                       VerticalAlignment="Center"
                                       Margin="4,0,10,0"/>
                             </Grid>
-                            <!-- Accent bottom bar — always visible at base opacity 0.40 (no hover animation).
-                                 Sorted column: trigger setter overrides to 0.80 for more prominence.
+                            <!-- Accent bottom bar — always visible at base opacity 0.40.
+                                 Margin right=1 keeps it clear of the RightSep so it doesn't tint the separator corner.
                                  Fill = ColAccentBarBrush: accent on dark themes, neutral separator on light themes. -->
                             <Rectangle x:Name="AccentBar" VerticalAlignment="Bottom" Height="2"
-                                       Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.40"/>
+                                       Fill="{DynamicResource ColAccentBarBrush}" Opacity="0.40"
+                                       Margin="0,0,1,0"/>
                             <!-- Resize grippers — transparent hit area only -->
                             <Thumb x:Name="PART_LeftHeaderGripper" HorizontalAlignment="Left" Width="6"
                                    Cursor="SizeWE" Background="Transparent">
