@@ -31,7 +31,7 @@
             </Setter>
         </Style>
 
-        <Style TargetType="DataGridRow">
+        <Style x:Key="SMainDGRow" TargetType="DataGridRow">
             <Setter Property="OverridesDefaultStyle"  Value="True"/>
             <Setter Property="Background"             Value="Transparent"/>
             <Setter Property="BorderThickness"        Value="0"/>
@@ -1943,6 +1943,7 @@
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       CellStyle="{StaticResource SMainDGCell}"
+                                      RowStyle="{StaticResource SMainDGRow}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                     <DataGrid.Resources>
                                         <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>
@@ -2377,6 +2378,7 @@
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
                                       VerticalAlignment="Stretch"
                                       CellStyle="{StaticResource SMainDGCell}"
+                                      RowStyle="{StaticResource SMainDGRow}"
                                       ColumnHeaderStyle="{StaticResource SColHeader}">
                                 <DataGrid.Resources>
                                     <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource ModernScrollBarStyle}"/>

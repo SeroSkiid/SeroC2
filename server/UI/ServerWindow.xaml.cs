@@ -1743,8 +1743,8 @@ public partial class ServerWindow : ThemedWindow
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-            if (col.Width.UnitType == DataGridLengthUnitType.Star) continue; // star = default, not persisted
-            double w = col.ActualWidth;
+            if (col.Width.UnitType != DataGridLengthUnitType.Pixel) continue;
+            double w = col.Width.Value;
             if (w > 0) UiPrefs.Set($"ColWidth_{key}", (int)w);
         }
     }
@@ -1850,8 +1850,8 @@ public partial class ServerWindow : ThemedWindow
         {
             string key = GetOriginalKey(col);
             if (string.IsNullOrEmpty(key) || key == "TAG") continue;
-            if (col.Width.UnitType == DataGridLengthUnitType.Star) continue; // star = default, not persisted
-            double w = col.ActualWidth;
+            if (col.Width.UnitType != DataGridLengthUnitType.Pixel) continue;
+            double w = col.Width.Value;
             if (w > 0) UiPrefs.Set($"AllColWidth_{key}", (int)w);
         }
     }
