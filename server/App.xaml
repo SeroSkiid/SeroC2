@@ -809,7 +809,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
-                        <Grid UseLayoutRounding="True" SnapsToDevicePixels="True" ClipToBounds="True">
+                        <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
                             <!-- Base background -->
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"/>
@@ -869,12 +869,10 @@
                             <Trigger Property="SortDirection" Value="Ascending">
                                 <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,5 L4,1 L8,5"/>
-                                <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
                             <Trigger Property="SortDirection" Value="Descending">
                                 <Setter TargetName="SortArrow" Property="Visibility" Value="Visible"/>
                                 <Setter TargetName="SortArrow" Property="Data"       Value="M0,1 L4,5 L8,1"/>
-                                <Setter TargetName="AccentBar" Property="Opacity"    Value="0.80"/>
                             </Trigger>
                             <Trigger Property="IsMouseOver" Value="True">
                                 <Setter TargetName="HoverOverlay" Property="Opacity" Value="1"/>
