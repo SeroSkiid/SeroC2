@@ -42,7 +42,7 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{DynamicResource HoverBrush}"/>
+                    <Setter Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
@@ -70,7 +70,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="#F59E0B" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center"/>
                     <Ellipse x:Name="StatusDot" Width="7" Height="7" Margin="0,0,6,0" VerticalAlignment="Center"
-                             Fill="#6B7280"/>
+                             Fill="{DynamicResource FieldLabelBrush}"/>
                     <TextBlock x:Name="LblStatus" Text="Stopped" Foreground="{DynamicResource LabelBrush}"
                                FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
                     <TextBlock x:Name="LblEndpoint" Text="" Foreground="{DynamicResource LabelBrush}"

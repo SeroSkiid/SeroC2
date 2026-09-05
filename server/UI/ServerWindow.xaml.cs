@@ -1986,13 +1986,12 @@ public partial class ServerWindow : ThemedWindow
             busyClient = client;
         }
         string friendly = GetFriendlyWindowName(win);
-        win.Title = string.IsNullOrEmpty(tag) ? $"{friendly} — {clientId}" : $"{friendly} — {tag} ({clientId})";
+        // Title: feature name only (+ tag when set) — client ID shows once in the inner title bar
+        win.Title = string.IsNullOrEmpty(tag) ? friendly : $"{friendly} — {tag}";
 
-        if (win.FindName("TxtTitle") is TextBlock tbTitle)
-        {
-            tbTitle.Text = string.IsNullOrEmpty(tag) ? clientId : $"{tag} ({clientId})";
-        }
-        else if (win.FindName("TxtClientId") is TextBlock tbClient)
+        // Inner bar: TxtClientId shows clientId for click-to-copy; TxtTitle is set by the
+        // constructor to the human-readable client label and is intentionally NOT overwritten here.
+        if (win.FindName("TxtClientId") is TextBlock tbClient)
         {
             tbClient.Text = string.IsNullOrEmpty(tag) ? $"[ {clientId} ]" : $"[ {tag} ({clientId}) ]";
         }
@@ -7456,6 +7455,11 @@ Read-Host 'Press Enter to close'
             var dChart = B("#07080F"); res["ChartBgBrush"]       = dChart; Resources["ChartBgBrush"]       = dChart;
             var dTrack = B("#13172A"); res["ProgressTrackBrush"] = dTrack; Resources["ProgressTrackBrush"] = dTrack;
         }
+
+        // Sync AccentColor (Color resource) into Application resources so child windows can
+        // reference it in GradientStop.Color bindings (PerformanceMonitorWindow, WebcamLayoutDialog, etc.)
+        if (res["AccentBrush"] is System.Windows.Media.SolidColorBrush acColorSync)
+            res["AccentColor"] = acColorSync.Color;
 
         // Auto-derive ColHeaderHoverBrush from ColHeaderBgBrush.
         // Dark headers (avg brightness < 128) lighten by +30 RGB; light headers darken by -25 RGB.

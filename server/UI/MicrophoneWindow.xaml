@@ -70,15 +70,13 @@
             <Grid>
                 <!-- Recording indicator -->
                 <Border x:Name="RecordingIndicator" HorizontalAlignment="Left" VerticalAlignment="Top"
-                        Margin="14,10" CornerRadius="10" Padding="8,3" Visibility="Collapsed">
-                    <Border.Background>
-                        <SolidColorBrush Color="#3A1018"/>
-                    </Border.Background>
+                        Margin="14,10" CornerRadius="10" Padding="8,3" Visibility="Collapsed"
+                        Background="{DynamicResource SectionBgBrush}" BorderBrush="#EF4444" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
                         <Ellipse x:Name="RecDot" Width="8" Height="8" VerticalAlignment="Center">
                             <Ellipse.Fill><SolidColorBrush Color="#EF4444"/></Ellipse.Fill>
                         </Ellipse>
-                        <TextBlock x:Name="TxtRecTime" Text="0:00" Foreground="#f38ba8"
+                        <TextBlock x:Name="TxtRecTime" Text="0:00" Foreground="#EF4444"
                                    FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>

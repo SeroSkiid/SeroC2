@@ -15,7 +15,7 @@
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"
-                                Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                Background="{DynamicResource SectionBgBrush}" BorderBrush="#22C55E" BorderThickness="1"
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">

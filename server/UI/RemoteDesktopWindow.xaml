@@ -149,16 +149,16 @@
                                Foreground="{DynamicResource FieldLabelBrush}" FontSize="14" FontWeight="SemiBold"
                                FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
                     <TextBlock Text="Select a monitor and click START"
-                               Foreground="{DynamicResource SectionBorderBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
                                HorizontalAlignment="Center" Margin="0,4,0,0"/>
                 </StackPanel>
 
                 <!-- Same-machine warning (server and client on same host) -->
                 <Border x:Name="LocalhostWarning" Visibility="Collapsed" IsHitTestVisible="False"
                         VerticalAlignment="Top" HorizontalAlignment="Stretch"
-                        Background="#CC7C3AED" Padding="10,6">
+                        Background="{DynamicResource AccentBrush}" Padding="10,6">
                     <TextBlock Text="⚠  Running server and client on the same machine — screen will mirror recursively. This is normal during local testing."
-                               Foreground="#FFFFFF" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource TitleTextBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
                                TextWrapping="Wrap" HorizontalAlignment="Center"/>
                 </Border>
 
@@ -166,7 +166,7 @@
                 <Grid x:Name="ReconnectOverlay" Visibility="Collapsed" IsHitTestVisible="False">
                     <Rectangle Fill="#CC000000"/>
                     <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <TextBlock x:Name="TxtReconnectIcon" Text="⟳" FontSize="36" Foreground="#60A5FA"
+                        <TextBlock x:Name="TxtReconnectIcon" Text="⟳" FontSize="36" Foreground="{DynamicResource AccentBrush}"
                                    HorizontalAlignment="Center" Margin="0,0,0,12">
                             <TextBlock.Triggers>
                                 <EventTrigger RoutedEvent="Loaded">
@@ -183,7 +183,7 @@
                         <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
                                    FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
                         <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
-                                   Foreground="#94A3B8" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   Foreground="{DynamicResource FieldLabelBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>

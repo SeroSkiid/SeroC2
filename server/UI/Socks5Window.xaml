@@ -17,7 +17,7 @@
                         <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Business_World.svg'}" Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TxtTitle" Text="" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas"/>
                         <Border x:Name="BadgeActive" Margin="10,0,0,0" CornerRadius="3"
-                                Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                Background="{DynamicResource SectionBgBrush}" BorderBrush="#22C55E" BorderThickness="1"
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">

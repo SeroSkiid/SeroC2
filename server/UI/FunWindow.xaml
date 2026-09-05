@@ -57,19 +57,10 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="FBtnGreen"  TargetType="Button" BasedOn="{StaticResource FBtn}">
-            <Setter Property="BorderBrush" Value="#2A4A28"/>
-        </Style>
-        <Style x:Key="FBtnRed"   TargetType="Button" BasedOn="{StaticResource FBtn}">
-            <Setter Property="BorderBrush" Value="#4A2028"/>
-        </Style>
-        <Style x:Key="FBtnOrange" TargetType="Button" BasedOn="{StaticResource FBtn}">
-            <Setter Property="BorderBrush" Value="#4A3A18"/>
-        </Style>
-        <Style x:Key="FBtnPurple" TargetType="Button" BasedOn="{StaticResource FBtn}">
-            <Setter Property="Foreground" Value="#cba6f7"/>
-            <Setter Property="BorderBrush" Value="#3A2858"/>
-        </Style>
+        <Style x:Key="FBtnGreen"  TargetType="Button" BasedOn="{StaticResource FBtn}"/>
+        <Style x:Key="FBtnRed"    TargetType="Button" BasedOn="{StaticResource FBtn}"/>
+        <Style x:Key="FBtnOrange" TargetType="Button" BasedOn="{StaticResource FBtn}"/>
+        <Style x:Key="FBtnPurple" TargetType="Button" BasedOn="{StaticResource FBtn}"/>
         <!-- Override DX scrollbar theme within this window -->
         <Style TargetType="ScrollBar">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -118,7 +109,7 @@
             <Setter Property="FontSize"     Value="10"/>
             <Setter Property="FontWeight"   Value="SemiBold"/>
             <Setter Property="Margin"       Value="0,0,0,6"/>
-            <Setter Property="FontFamily"   Value="Segoe UI"/>
+            <Setter Property="FontFamily"   Value="Segoe UI Variable Text, Segoe UI"/>
         </Style>
     </Window.Resources>
 

@@ -56,7 +56,7 @@
                              BorderThickness="0"
                              Padding="10,8"
                              Text="Type a command and press Enter..."
-                             SelectionBrush="#3A85F540"
+                             SelectionBrush="{DynamicResource RowSelBgBrush}"
                              CaretBrush="Transparent"
                              IsTabStop="False"
                              FocusVisualStyle="{x:Null}">

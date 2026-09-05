@@ -59,7 +59,6 @@ public partial class RemoteDesktopWindow : ThemedWindow
         WindowResizer.Enable(this);
         _uiReady = true;
 
-        Title = $"Remote Desktop — {clientId}";
         SldQuality.Value = UiPrefs.GetInt("RdpQuality", 75);
         TxtQuality.Text  = $"{(int)SldQuality.Value}";
         SldScale.Value   = UiPrefs.GetInt("RdpScale", 100);
@@ -470,7 +469,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
             ReconnectOverlay.Visibility = Visibility.Collapsed;
 
             // Update UI
-            Title = $"{Lang.Get("FEAT_REMOTE_DESKTOP")} — {_clientId}";
+            Title = Lang.Get("FEAT_REMOTE_DESKTOP");
             TxtClientId.Text = $"[ {_clientId} ]";
             TxtStatus.Text = Lang.Get("RECONNECTED");
             ServerWindow.ReportGlobalActivity("✓ Reconnected (RDP)", _clientId, "complete");
