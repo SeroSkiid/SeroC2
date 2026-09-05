@@ -809,7 +809,7 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
-                        <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
+                        <Grid UseLayoutRounding="True" SnapsToDevicePixels="True" ClipToBounds="True">
                             <!-- Base background -->
                             <Border x:Name="bd"
                                     Background="{TemplateBinding Background}"/>

@@ -1194,7 +1194,8 @@
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
                                 <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
-                                                                Grid.Row="0"/>
+                                                                Grid.Row="0"
+                                                                SnapsToDevicePixels="True"/>
                                 <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
                                                         Grid.Row="1"
                                                         CanContentScroll="{TemplateBinding CanContentScroll}"/>
@@ -1910,6 +1911,7 @@
                                           RowHeight="30" RowHeaderWidth="0"
                                           HorizontalAlignment="Stretch"
                                           UseLayoutRounding="True"
+                                          SnapsToDevicePixels="True"
                                           Template="{StaticResource DataGridFullHeightScrollbar}"
                                           PreviewKeyDown="GridClients_PreviewKeyDown"
                                           PreviewMouseLeftButtonDown="GridClients_PreviewMouseLeftButtonDown"
@@ -1925,7 +1927,7 @@
                                           VirtualizingStackPanel.IsVirtualizing="True"
                                           VirtualizingStackPanel.VirtualizationMode="Recycling"
                                           VirtualizingPanel.ScrollUnit="Pixel"
-                                          EnableColumnVirtualization="True"
+                                          EnableColumnVirtualization="False"
                                           ScrollViewer.CanContentScroll="True"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
@@ -2341,6 +2343,7 @@
                                       RowHeight="30" RowHeaderWidth="0"
                                       HorizontalAlignment="Stretch"
                                       UseLayoutRounding="True"
+                                      SnapsToDevicePixels="True"
                                       Template="{StaticResource DataGridFullHeightScrollbar}"
                                       SelectionChanged="GridAllClients_SelectionChanged"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
@@ -2355,7 +2358,7 @@
                                       VirtualizingStackPanel.IsVirtualizing="True"
                                       VirtualizingStackPanel.VirtualizationMode="Recycling"
                                       VirtualizingPanel.ScrollUnit="Pixel"
-                                      EnableColumnVirtualization="True"
+                                      EnableColumnVirtualization="False"
                                       ScrollViewer.CanContentScroll="True"
                                       ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                       ScrollViewer.VerticalScrollBarVisibility="Auto"
