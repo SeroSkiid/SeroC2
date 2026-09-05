@@ -164,8 +164,8 @@
                              VerticalScrollBarVisibility="Auto"
                              HorizontalScrollBarVisibility="Disabled"
                              AcceptsReturn="True"
-                             CaretBrush="{DynamicResource AccentBrush}"
-                             SelectionBrush="{DynamicResource AccentBrush}">
+                             CaretBrush="Transparent"
+                             SelectionBrush="{DynamicResource RowSelBgBrush}">
                         <TextBox.Style>
                             <Style TargetType="TextBox">
                                 <Setter Property="Template">

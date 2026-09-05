@@ -1303,7 +1303,7 @@
                         MouseLeftButtonDown="ScreenPopupOverlay_StopBubble">
                     <StackPanel>
                         <Grid Margin="0,0,0,10">
-                            <TextBlock x:Name="ScreenPopupTitle" Foreground="#CCD8FF" FontSize="12"
+                            <TextBlock x:Name="ScreenPopupTitle" Foreground="{DynamicResource ContentTextBrush}" FontSize="12"
                                        FontFamily="Consolas" VerticalAlignment="Center"/>
                             <Button HorizontalAlignment="Right" Content="?" Width="22" Height="22"
                                     Foreground="{DynamicResource LabelBrush}" Background="Transparent" BorderThickness="0"
@@ -2292,7 +2292,7 @@
                                             <TextBox x:Name="TxtAllClientsSearch"
                                                      Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
                                                      BorderThickness="0" Padding="24,0,6,0"
-                                                     FontSize="11" CaretBrush="{DynamicResource AccentBrush}"
+                                                     FontSize="11" CaretBrush="{DynamicResource AccentBrush}" SelectionBrush="{DynamicResource AccentBrush}"
                                                      VerticalContentAlignment="Center"
                                                      TextChanged="TxtAllClientsSearch_TextChanged">
                                                 <TextBox.Template>
@@ -3283,7 +3283,7 @@
                                         <ScrollViewer x:Name="ClipperLogScroll" VerticalScrollBarVisibility="Auto"
                                                       Height="100" DockPanel.Dock="Top" Margin="0,0,0,8">
                                             <TextBox x:Name="ClipperLog"
-                                                     Background="Transparent" Foreground="#4AE870"
+                                                     Background="Transparent" Foreground="{DynamicResource ContentTextBrush}"
                                                      FontFamily="Consolas" FontSize="11"
                                                      BorderThickness="0" Padding="12,4"
                                                      IsReadOnly="True" TextWrapping="Wrap"
@@ -3726,7 +3726,7 @@
                                          HorizontalScrollBarVisibility="Disabled"
                                          ScrollViewer.ScrollChanged="TxtLogs_ScrollChanged"
                                          Padding="8,6"
-                                         SelectionBrush="{DynamicResource AccentBrush}" CaretBrush="Transparent">
+                                         SelectionBrush="{DynamicResource RowSelBgBrush}" CaretBrush="Transparent">
                                 <RichTextBox.Resources>
                                     <!-- Remove the default 4px paragraph spacing -->
                                     <Style TargetType="Paragraph">
@@ -4094,7 +4094,7 @@
                                                                      Background="Transparent"
                                                                      BorderThickness="0"
                                                                      Foreground="{DynamicResource ContentTextBrush}"
-                                                                     CaretBrush="{DynamicResource AccentBrush}"
+                                                                     CaretBrush="{DynamicResource AccentBrush}" SelectionBrush="{DynamicResource AccentBrush}"
                                                                      FontSize="12" Height="22"
                                                                      VerticalContentAlignment="Center"
                                                                      TextChanged="ThemeSearchBox_TextChanged"/>

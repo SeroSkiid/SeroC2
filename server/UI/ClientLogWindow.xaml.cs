@@ -8,12 +8,10 @@ namespace SeroServer.UI;
 
 public partial class ClientLogWindow : ThemedWindow
 {
-    private static readonly Brush _brError   = Frozen(0xEF, 0x44, 0x44);
-    private static readonly Brush _brConnect = Frozen(0x4A, 0xDE, 0x80);
-    private static readonly Brush _brDisconn = Frozen(0xF9, 0xA8, 0x25);
-    private static readonly Brush _brHeader  = Frozen(0x60, 0xA5, 0xFA);
-    private static readonly Brush _brDefault = Frozen(0xB8, 0xC0, 0xD8);
-    private static readonly Brush _brDim     = Frozen(0x60, 0x68, 0x80);
+    // Mid-tone semantic colors — legible on both dark and light backgrounds.
+    private static readonly Brush _brError   = Frozen(0xDC, 0x26, 0x26); // red-600
+    private static readonly Brush _brConnect = Frozen(0x16, 0xA3, 0x4A); // green-600
+    private static readonly Brush _brDisconn = Frozen(0xD9, 0x77, 0x06); // amber-600
 
     private static Brush Frozen(byte r, byte g, byte b)
     {
@@ -22,10 +20,21 @@ public partial class ClientLogWindow : ThemedWindow
         return b2;
     }
 
+    private static Brush ResOrFrozen(string key, byte r, byte g, byte b)
+    {
+        if (Application.Current?.Resources[key] is Brush resolved) return resolved;
+        return Frozen(r, g, b);
+    }
+
     public ClientLogWindow(ClientRecord record)
     {
         InitializeComponent();
         TxtTitle.Text = $"— {record.LastUsername}@{record.LastIP} ({record.Hwid[..8]}...)";
+
+        // Resolve body text colors from the current theme — adapts to light/dark.
+        var brDefault = ResOrFrozen("ContentTextBrush", 0xB8, 0xC0, 0xD8);
+        var brDim     = ResOrFrozen("FieldLabelBrush",  0x60, 0x68, 0x80);
+        var brHeader  = ResOrFrozen("AccentBrush",      0x3B, 0x82, 0xF6);
 
         var para = new Paragraph { Margin = new Thickness(0) };
         TxtLog.Document.Blocks.Clear();
@@ -34,12 +43,12 @@ public partial class ClientLogWindow : ThemedWindow
         void Add(string text, Brush brush) =>
             para.Inlines.Add(new Run(text) { Foreground = brush });
 
-        Add($"HWID:       {record.Hwid}\n",       _brHeader);
-        Add($"Tag:        {(string.IsNullOrEmpty(record.Tag) ? "(none)" : record.Tag)}\n", _brDim);
+        Add($"HWID:       {record.Hwid}\n",       brHeader);
+        Add($"Tag:        {(string.IsNullOrEmpty(record.Tag) ? "(none)" : record.Tag)}\n", brDim);
         string timeFmt = (UiPrefs.GetInt("ShowSeconds", 0) == 1) ? "yyyy-MM-dd h:mm:ss tt" : "yyyy-MM-dd h:mm tt";
-        Add($"First Seen: {record.FirstSeen.ToString(timeFmt)}\n", _brDim);
-        Add($"Last Seen:  {record.LastSeen.ToString(timeFmt)}\n",  _brDim);
-        Add(new string('─', 50) + "\n\n", _brDim);
+        Add($"First Seen: {record.FirstSeen.ToString(timeFmt)}\n", brDim);
+        Add($"Last Seen:  {record.LastSeen.ToString(timeFmt)}\n",  brDim);
+        Add(new string('─', 50) + "\n\n", brDim);
 
         foreach (var entry in record.ActivityLog.AsEnumerable().Reverse().Take(200))
         {
@@ -50,7 +59,7 @@ public partial class ClientLogWindow : ThemedWindow
                 : entry.Action.Contains("disconnect", StringComparison.OrdinalIgnoreCase) ? _brDisconn
                 : entry.Action.Contains("error",  StringComparison.OrdinalIgnoreCase)
                   || entry.Action.Contains("fail", StringComparison.OrdinalIgnoreCase) ? _brError
-                : _brDefault;
+                : brDefault;
             Add(line, brush);
         }
 

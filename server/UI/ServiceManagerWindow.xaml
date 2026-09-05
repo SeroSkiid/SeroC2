@@ -74,7 +74,7 @@
                         </TextBlock>
                         <TextBox x:Name="TxtSearch" Background="Transparent" BorderThickness="0"
                                  Foreground="{DynamicResource ContentTextBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
-                                 VerticalAlignment="Center" Padding="8,0" CaretBrush="{DynamicResource AccentBrush}">
+                                 VerticalAlignment="Center" Padding="8,0" CaretBrush="{DynamicResource AccentBrush}" SelectionBrush="{DynamicResource AccentBrush}">
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
                                     <Setter Property="Template">
