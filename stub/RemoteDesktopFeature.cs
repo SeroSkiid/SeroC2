@@ -150,6 +150,7 @@ internal static class RemoteDesktopFeature
 
     // Previous frame for block-level diff
     private static byte[]? _prevPixels;
+    private static bool   _prevFromPool; // true iff _prevPixels was rented from ArrayPool
     private static int _prevW, _prevH;
     // Scheduled tick to force a full-frame refresh (clears _prevPixels so next capture is a complete frame)
     private static long _forceRefreshAt;
@@ -174,7 +175,7 @@ internal static class RemoteDesktopFeature
         Stop();
         _cfg  = cfg;
         _send = send;
-        _prevPixels = null; // reset diff buffer on new session
+        _prevPixels = null; _prevFromPool = false; // reset diff buffer on new session
         Interlocked.Exchange(ref _forceRefreshAt, Environment.TickCount64 + 200);
 
         _adaptiveQuality = cfg.Quality;
@@ -200,10 +201,16 @@ internal static class RemoteDesktopFeature
     {
         _running = false;
         _frameReqWake.Release();
-        _thread?.Join(2000);
+        bool exited = _thread?.Join(2000) ?? true;
         _thread = null;
         Interlocked.Exchange(ref _pendingRequests, 0);
-        if (_prevPixels != null) { System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels); _prevPixels = null; }
+        // Only return _prevPixels to the pool if the thread exited cleanly and the buffer came from ArrayPool.
+        // If Join timed out the thread may still be reading _prevPixels → skip to avoid use-after-free.
+        // If the buffer was from DXGI (not pool-rented) → returning it would corrupt ArrayPool.
+        if (exited && _prevPixels != null && _prevFromPool)
+            System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels);
+        _prevPixels = null;
+        _prevFromPool = false;
         _h264Enc?.Dispose(); _h264Enc = null;
         _h264W = 0; _h264H = 0;
     }
@@ -505,6 +512,7 @@ internal static class RemoteDesktopFeature
             // else: DXGI released itself (ACCESS_LOST / mode change) — fall through to GDI
         }
 
+        bool pixelsFromPool = false;
         if (pixels == null)
         {
             // GDI BitBlt fallback (always works: RDP sessions, headless, non-BGRA formats)
@@ -515,6 +523,7 @@ internal static class RemoteDesktopFeature
             // Reusing _prevPixels as the capture target overwrites the diff baseline,
             // so BlockChanged would compare new pixels against themselves → zero diff every frame.
             pixels = System.Buffers.ArrayPool<byte>.Shared.Rent(requiredLen);
+            pixelsFromPool = true;
             if (!CaptureGdi(srcX, srcY, srcW, srcH, dstW, dstH, pixels))
             {
                 System.Buffers.ArrayPool<byte>.Shared.Return(pixels);
@@ -556,11 +565,12 @@ internal static class RemoteDesktopFeature
         int totalBlocks  = bCols * bRows;
         int changedCount = changedBlocks.Count;
 
-        if (_prevPixels != null && _prevPixels != pixels)
+        if (_prevPixels != null && _prevFromPool && _prevPixels != pixels)
         {
             System.Buffers.ArrayPool<byte>.Shared.Return(_prevPixels);
         }
-        _prevPixels = pixels;
+        _prevPixels   = pixels;
+        _prevFromPool = pixelsFromPool;
         _prevW = dstW; _prevH = dstH;
 
         // ── Adaptive encode strategy ──────────────────────────────────────────
@@ -922,8 +932,9 @@ internal static class RemoteDesktopFeature
         if (s >= json.Length) return "";
         if (json[s] == '"')
         {
-            int e = json.IndexOf('"', s + 1);
-            return e < 0 ? "" : json.Substring(s + 1, e - s - 1);
+            int e = s + 1;
+            while (e < json.Length && !(json[e] == '"' && json[e - 1] != '\\')) e++;
+            return e >= json.Length ? "" : json.Substring(s + 1, e - s - 1);
         }
         int end = s;
         while (end < json.Length && json[end] != ',' && json[end] != '}') end++;

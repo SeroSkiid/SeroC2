@@ -39,7 +39,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private int _frameCount;
     private DateTime _fpsTime = DateTime.UtcNow;
     private int _quality = 75;
-    private volatile bool _renderBusy;
+    private int _renderBusy; // 0=free, 1=busy — use Interlocked for atomic check-and-set
     private volatile bool _streaming;
     private volatile bool _closed;
     private volatile bool _updatingMonitors;
@@ -277,9 +277,8 @@ public partial class RemoteDesktopWindow : ThemedWindow
         if (!_streaming) return;
         // If busy rendering the previous frame, return the credit so the stub keeps
         // its pipeline full — without this the 8 in-flight credits drain and the stream freezes.
-        if (_renderBusy) { if (!_closed) SendAck(); return; }
-        _renderBusy = true;
-        _bytesReceived += json.Length;
+        if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { if (!_closed) SendAck(); return; }
+        Interlocked.Add(ref _bytesReceived, json.Length);
 
         Task.Run(async () =>
         {
@@ -309,11 +308,11 @@ public partial class RemoteDesktopWindow : ThemedWindow
                         }
                         else
                         {
-                            _renderBusy = false;
+                            Interlocked.Exchange(ref _renderBusy, 0);
                             if (!_closed) SendAck();
                         }
                     }
-                    else { _renderBusy = false; }
+                    else { Interlocked.Exchange(ref _renderBusy, 0); }
                     return;
                 }
 
@@ -339,14 +338,14 @@ public partial class RemoteDesktopWindow : ThemedWindow
                     });
                 var decodedList = decoded.ToList();
 
-                if (_closed) { _renderBusy = false; return; }
+                if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
                 // ACK early — stub can start capturing the next frame while we blit the current one.
                 // Reduces stub idle time from (decode+blit+RTT) to (decode+RTT), cutting effective
                 // latency nearly in half and allowing the pipeline to stay full at high framerates.
                 if (!_closed) SendAck();
                 _ = Dispatcher.BeginInvoke(() => BlitBlocks(w, h, decodedList, ackAlreadySent: true));
             }
-            catch { _renderBusy = false; if (!_closed) SendAck(); }
+            catch { Interlocked.Exchange(ref _renderBusy, 0); if (!_closed) SendAck(); }
             finally { _decodeSlots.Release(); }
         });
     }
@@ -378,23 +377,23 @@ public partial class RemoteDesktopWindow : ThemedWindow
     {
         try
         {
-            if (_closed) { _renderBusy = false; return; }
+            if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
             EnsureFrame(w, h);
             _frame!.Lock();
             try { _frame.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0); }
             finally { _frame.Unlock(); }
             UpdateFps();
-            _renderBusy = false;
+            Interlocked.Exchange(ref _renderBusy, 0);
         }
-        catch { _renderBusy = false; }
+        catch { Interlocked.Exchange(ref _renderBusy, 0); }
     }
 
     private void BlitBlocks(int w, int h, List<(int X, int Y, int W, int H, byte[] Pixels, int Stride)> blocks, bool ackAlreadySent = false)
     {
         try
         {
-            if (blocks.Count == 0) { _renderBusy = false; if (!_closed && !ackAlreadySent) SendAck(); return; }
-            if (_closed) { _renderBusy = false; return; }
+            if (blocks.Count == 0) { Interlocked.Exchange(ref _renderBusy, 0); if (!_closed && !ackAlreadySent) SendAck(); return; }
+            if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
             EnsureFrame(w, h);
             _frame!.Lock();
             foreach (var (bx, by, bw, bh, pix, stride) in blocks)
@@ -404,10 +403,10 @@ public partial class RemoteDesktopWindow : ThemedWindow
             }
             _frame.Unlock();
             UpdateFps();
-            _renderBusy = false;
+            Interlocked.Exchange(ref _renderBusy, 0);
             if (!_closed && !ackAlreadySent) SendAck();
         }
-        catch { _renderBusy = false; }
+        catch { Interlocked.Exchange(ref _renderBusy, 0); }
     }
 
     // ── Connection resilience — reconnect overlay + auto-resume ───────────────
@@ -508,13 +507,13 @@ public partial class RemoteDesktopWindow : ThemedWindow
         }
     }
     
-    private volatile int _bytesReceived;
+    private int _bytesReceived;
     
     private void UpdateMetrics()
     {
-        double mbps = (_bytesReceived * 8.0) / 1000000.0;
+        int b = Interlocked.Exchange(ref _bytesReceived, 0);
+        double mbps = b * 8.0 / 1_000_000.0;
         TxtBandwidth.Text = $"{mbps:F1} Mbps";
-        _bytesReceived = 0;
         
         if (_server.ConnectedClients.TryGetValue(_clientId, out var client))
         {
@@ -532,14 +531,13 @@ public partial class RemoteDesktopWindow : ThemedWindow
     {
         if (_closed || clientId != _clientId) return;
         if (!_streaming) { SendAck(); return; }
-        if (_renderBusy) { SendAck(); return; }
-        _renderBusy = true;
-        _bytesReceived += json.Length;
+        if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
+        Interlocked.Add(ref _bytesReceived, json.Length);
 
         try
         {
             var frame = Newtonsoft.Json.JsonConvert.DeserializeObject<H264FrameData>(json);
-            if (frame == null || string.IsNullOrEmpty(frame.D)) { _renderBusy = false; SendAck(); return; }
+            if (frame == null || string.IsNullOrEmpty(frame.D)) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
             var h264Bytes = Convert.FromBase64String(frame.D);
             int fw = frame.W, fh = frame.H;
             Task.Run(() =>
@@ -552,14 +550,14 @@ public partial class RemoteDesktopWindow : ThemedWindow
                         if (_h264Dec == null) _h264Dec = H264Decoder.Create();
                         pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
                     }
-                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    if (pixels == null || _closed) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
                     SendAck();
                     _ = Dispatcher.BeginInvoke(() => BlitFullFrame(fw, fh, pixels, fw * 4));
                 }
-                catch { _renderBusy = false; SendAck(); }
+                catch { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
         }
-        catch { _renderBusy = false; SendAck(); }
+        catch { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
     }
 
     // ── Monitor list ──────────────────────────────────────────────────────────
