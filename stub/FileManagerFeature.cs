@@ -90,17 +90,16 @@ internal static class FileManagerFeature
     {
         try
         {
-            const int chunkSize = 512 * 1024;
             const long maxBytes = 256L * 1024 * 1024;
             using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             if (fs.Length > maxBytes)
                 return Serialize(new FmFileDataResultStub { Path = path, Error = $"File too large ({fs.Length / 1024 / 1024} MB). Max 256 MB." });
-            using var ms = new MemoryStream((int)fs.Length);
-            var buf = new byte[chunkSize];
-            int read;
-            while ((read = fs.Read(buf, 0, buf.Length)) > 0)
-                ms.Write(buf, 0, read);
-            return Serialize(new FmFileDataResultStub { Path = path, Data = Convert.ToBase64String(ms.ToArray()) });
+            // Single allocation — read directly into the byte[] that Convert.ToBase64String will consume.
+            var bytes = new byte[fs.Length];
+            int offset = 0, read;
+            while (offset < bytes.Length && (read = fs.Read(bytes, offset, bytes.Length - offset)) > 0)
+                offset += read;
+            return Serialize(new FmFileDataResultStub { Path = path, Data = Convert.ToBase64String(bytes, 0, offset) });
         }
         catch (Exception ex)
         {

