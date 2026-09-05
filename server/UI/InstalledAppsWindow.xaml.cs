@@ -69,19 +69,23 @@ public partial class InstalledAppsWindow : ThemedWindow
 
     private void OnList(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<InstalledListResultData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            _all.Clear();
-            _iconPending.Clear();
-            foreach (var a in d.Apps)
-                _all.Add(new InstalledAppVM { Name = a.Name, Version = a.Version, Publisher = a.Publisher, InstallDate = a.InstallDate, UninstallString = a.UninstallString, Verified = a.Verified });
-            ApplyFilter(TxtSearch.Text);
-            TxtCount.Text = $"({d.Apps.Count})";
-            TxtStatus.Text = string.Format(Lang.Get("INS_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Apps.Count);
-            _ = RequestIconsAsync(d.Apps);
-        });
+            var d = JsonConvert.DeserializeObject<InstalledListResultData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _all.Clear();
+                lock (_iconPending) _iconPending.Clear();
+                foreach (var a in d.Apps)
+                    _all.Add(new InstalledAppVM { Name = a.Name, Version = a.Version, Publisher = a.Publisher, InstallDate = a.InstallDate, UninstallString = a.UninstallString, Verified = a.Verified });
+                ApplyFilter(TxtSearch.Text);
+                TxtCount.Text = $"({d.Apps.Count})";
+                TxtStatus.Text = string.Format(Lang.Get("INS_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Apps.Count);
+                _ = RequestIconsAsync(d.Apps);
+            });
+        }
+        catch { }
     }
 
     private async Task RequestIconsAsync(List<InstalledApp> apps)
@@ -100,30 +104,34 @@ public partial class InstalledAppsWindow : ThemedWindow
 
     private void OnIcon(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<InstalledIconResultData>(pkt.Data);
-        if (d == null || string.IsNullOrEmpty(d.Name)) return;
-        var icon = DecodeIcon(d.IconB64);
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            for (int i = 0; i < _all.Count; i++)
+            var d = JsonConvert.DeserializeObject<InstalledIconResultData>(pkt.Data);
+            if (d == null || string.IsNullOrEmpty(d.Name)) return;
+            var icon = DecodeIcon(d.IconB64);
+            Dispatcher.BeginInvoke(() =>
             {
-                if (string.Equals(_all[i].Name, d.Name, StringComparison.OrdinalIgnoreCase))
+                for (int i = 0; i < _all.Count; i++)
                 {
-                    var updated = new InstalledAppVM { Icon = icon, Name = _all[i].Name, Version = _all[i].Version, Publisher = _all[i].Publisher, InstallDate = _all[i].InstallDate, UninstallString = _all[i].UninstallString, Verified = _all[i].Verified };
-                    _all[i] = updated;
-                    // _view is a separate snapshot when a filter is active — update it too
-                    if (!ReferenceEquals(_view, _all))
+                    if (string.Equals(_all[i].Name, d.Name, StringComparison.OrdinalIgnoreCase))
                     {
-                        for (int j = 0; j < _view.Count; j++)
+                        var updated = new InstalledAppVM { Icon = icon, Name = _all[i].Name, Version = _all[i].Version, Publisher = _all[i].Publisher, InstallDate = _all[i].InstallDate, UninstallString = _all[i].UninstallString, Verified = _all[i].Verified };
+                        _all[i] = updated;
+                        // _view is a separate snapshot when a filter is active — update it too
+                        if (!ReferenceEquals(_view, _all))
                         {
-                            if (string.Equals(_view[j].Name, d.Name, StringComparison.OrdinalIgnoreCase))
-                            { _view[j] = updated; break; }
+                            for (int j = 0; j < _view.Count; j++)
+                            {
+                                if (string.Equals(_view[j].Name, d.Name, StringComparison.OrdinalIgnoreCase))
+                                { _view[j] = updated; break; }
+                            }
                         }
+                        break;
                     }
-                    break;
                 }
-            }
-        });
+            });
+        }
+        catch { }
     }
 
     private void ApplyFilter(string f)

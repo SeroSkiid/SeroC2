@@ -154,29 +154,33 @@ public partial class RegistryEditorWindow : ThemedWindow
 
     private void OnChildren(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<RegChildrenResultData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            if (!string.IsNullOrEmpty(d.Error))
+            var d = JsonConvert.DeserializeObject<RegChildrenResultData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
             {
-                TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), d.Error);
-                return;
-            }
+                if (!string.IsNullOrEmpty(d.Error))
+                {
+                    TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), d.Error);
+                    return;
+                }
 
-            _currentPath = d.KeyPath;
-            TxtPath.Text  = _currentPath;
+                _currentPath = d.KeyPath;
+                TxtPath.Text  = _currentPath;
 
-            // Update values grid
-            _values.Clear();
-            foreach (var v in d.Values)
-                _values.Add(new RegValueVM { Name = string.IsNullOrEmpty(v.Name) ? "(Default)" : v.Name, ValueType = v.ValueType, Data = v.Data });
+                // Update values grid
+                _values.Clear();
+                foreach (var v in d.Values)
+                    _values.Add(new RegValueVM { Name = string.IsNullOrEmpty(v.Name) ? "(Default)" : v.Name, ValueType = v.ValueType, Data = v.Data });
 
-            TxtStatus.Text = string.Format(Lang.Get("REG_LOADED"), d.SubKeys.Count, d.Values.Count, _currentPath);
+                TxtStatus.Text = string.Format(Lang.Get("REG_LOADED"), d.SubKeys.Count, d.Values.Count, _currentPath);
 
-            // Populate tree: find the item that requested this
-            PopulateTreeItem(d.KeyPath, d.SubKeys);
-        });
+                // Populate tree: find the item that requested this
+                PopulateTreeItem(d.KeyPath, d.SubKeys);
+            });
+        }
+        catch { }
     }
 
     private void PopulateTreeItem(string keyPath, List<string> subKeys)
@@ -211,35 +215,39 @@ public partial class RegistryEditorWindow : ThemedWindow
 
     private void OnAck(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<RegAckData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            if (d.Success)
+            var d = JsonConvert.DeserializeObject<RegAckData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
             {
-                TxtStatus.Text = Lang.Get("REG_SUCCESS");
-                // Reload current path
-                if (_pendingExpand?.Tag is RegKeyNode n) n.IsLoaded = false;
-                RequestChildren(_currentPath);
-            }
-            else
-            {
-                var msg = d.Error;
-                // Hint for access denied
-                if (msg.Contains("Access", StringComparison.OrdinalIgnoreCase) ||
-                    msg.Contains("denied", StringComparison.OrdinalIgnoreCase) ||
-                    msg.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+                if (d.Success)
                 {
-                    MessageBox.Show(
-                        $"Access denied.\n\nThis key requires admin privileges.\nRequest elevation on the client first.\n\nError: {msg}",
-                        Lang.Get("REG_ADMIN_REQUIRED"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    TxtStatus.Text = Lang.Get("REG_SUCCESS");
+                    // Reload current path
+                    if (_pendingExpand?.Tag is RegKeyNode n) n.IsLoaded = false;
+                    RequestChildren(_currentPath);
                 }
                 else
                 {
-                    TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), msg);
+                    var msg = d.Error;
+                    // Hint for access denied
+                    if (msg.Contains("Access", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Contains("denied", StringComparison.OrdinalIgnoreCase) ||
+                        msg.Contains("Unauthorized", StringComparison.OrdinalIgnoreCase))
+                    {
+                        MessageBox.Show(
+                            $"Access denied.\n\nThis key requires admin privileges.\nRequest elevation on the client first.\n\nError: {msg}",
+                            Lang.Get("REG_ADMIN_REQUIRED"), MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), msg);
+                    }
                 }
-            }
-        });
+            });
+        }
+        catch { }
     }
 
     // ── Actions ───────────────────────────────────────────────────────────────

