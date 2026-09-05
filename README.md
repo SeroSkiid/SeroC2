@@ -1,6 +1,6 @@
 <img src="docs/assets/serofondtransparent.png" height="80" align="left"/>
 
-# SeroRAT  <img src="https://flagcdn.com/30x20/fr.png" alt="🇫🇷">
+# SeroRAT  <img src="https://flagcdn.com/40x30/fr.png" alt="🇫🇷">
 
 
 ![Version](https://img.shields.io/badge/version-1.8.1-orange.svg)
