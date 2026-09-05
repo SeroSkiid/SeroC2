@@ -166,10 +166,13 @@ internal static class ProcessManagerFeature
 
         // Remove stale samples for dead processes
         var livePids = new HashSet<int>(list.Select(x => x.Pid));
-        foreach (var k in _cpuSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
-            _cpuSamples.Remove(k);
-        foreach (var k in _netSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
-            _netSamples.Remove(k);
+        lock (_samplesLock)
+        {
+            foreach (var k in _cpuSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
+                _cpuSamples.Remove(k);
+            foreach (var k in _netSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
+                _netSamples.Remove(k);
+        }
 
         list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         return JsonSerializer.Serialize(

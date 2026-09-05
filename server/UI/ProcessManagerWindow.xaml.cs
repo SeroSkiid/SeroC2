@@ -35,8 +35,8 @@ public class ProcEntryVM : INotifyPropertyChanged
     public int Pid { get => _pid; set { if (_pid != value) { _pid = value; N(); } } }
     public int ParentPid { get => _parentPid; set { if (_parentPid != value) { _parentPid = value; N(); } } }
     public string Name { get => _name; set { if (_name != value) { _name = value; N(); } } }
-    public long Memory { get => _memory; set { if (_memory != value) { _memory = value; N(); N(nameof(MemDisplay)); N(nameof(MemHeatBrush)); N(nameof(MemTextBrush)); } } }
-    public float CpuUsage { get => _cpuUsage; set { if (_cpuUsage != value) { _cpuUsage = value; N(); N(nameof(CpuDisplay)); N(nameof(CpuHeatBrush)); N(nameof(CpuTextBrush)); } } }
+    public long Memory { get => _memory; set { if (_memory != value) { _memory = value; N(); N(nameof(MemDisplay)); } } }
+    public float CpuUsage { get => _cpuUsage; set { if (_cpuUsage != value) { _cpuUsage = value; N(); N(nameof(CpuDisplay)); } } }
     public int TcpConns { get => _tcpConns; set { if (_tcpConns != value) { _tcpConns = value; N(); N(nameof(NetDisplay)); } } }
     public List<string>? RemoteIps { get => _remoteIps; set { if (_remoteIps != value) { _remoteIps = value; N(); N(nameof(NetDisplay)); } } }
     public string Title { get => _title; set { if (_title != value) { _title = value; N(); } } }
@@ -84,63 +84,6 @@ public class ProcEntryVM : INotifyPropertyChanged
     }
 
     public string CpuDisplay => CpuUsage > 0.05f ? $"{CpuUsage:F1}%" : "—";
-
-    // Dark-theme heat palette
-    private static readonly Color _cold  = Color.FromRgb(0x0C, 0x0D, 0x18);
-    private static readonly Color _warm1 = Color.FromRgb(0x10, 0x25, 0x4A);
-    private static readonly Color _warm2 = Color.FromRgb(0x1A, 0x3A, 0x28);
-    private static readonly Color _hot1  = Color.FromRgb(0x40, 0x28, 0x10);
-    private static readonly Color _hot2  = Color.FromRgb(0x60, 0x14, 0x14);
-    // Light-theme heat palette
-    private static readonly Color _lCold  = Color.FromRgb(0xEE, 0xF0, 0xF8);
-    private static readonly Color _lWarm1 = Color.FromRgb(0xCC, 0xE0, 0xFF);
-    private static readonly Color _lWarm2 = Color.FromRgb(0xC8, 0xEE, 0xD8);
-    private static readonly Color _lHot1  = Color.FromRgb(0xFF, 0xD8, 0xB0);
-    private static readonly Color _lHot2  = Color.FromRgb(0xFF, 0xB8, 0xB8);
-
-    private static bool IsLightTheme()
-    {
-        var t = DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName ?? "";
-        return t.Contains("Light", StringComparison.OrdinalIgnoreCase)
-            || t.Contains("White", StringComparison.OrdinalIgnoreCase)
-            || t.Contains("Silver", StringComparison.OrdinalIgnoreCase)
-            || (t.Contains("Office", StringComparison.OrdinalIgnoreCase)
-                && !t.Contains("HighContrast", StringComparison.OrdinalIgnoreCase)
-                && !t.Contains("Dark", StringComparison.OrdinalIgnoreCase))
-            || t is "VS2010" or "MetropolisLight" or "DeepBlue"
-                 or "Seven" or "WXI" or "Basic" or "WindowsXP";
-    }
-
-    public Brush CpuHeatBrush => HeatBrush(CpuUsage);
-    public Brush MemHeatBrush => HeatBrush(Memory > 0 ? Math.Min(100f, Memory / 10240f * 100f) : 0f);
-    public Brush CpuTextBrush => IsLightTheme()
-        ? (CpuUsage > 60 ? Brushes.Black : new SolidColorBrush(Color.FromRgb(0x1E, 0x40, 0x8A)))
-        : (CpuUsage > 60 ? Brushes.White : new SolidColorBrush(Color.FromRgb(0xC0, 0xD0, 0xE8)));
-    public Brush MemTextBrush => IsLightTheme()
-        ? (Memory > 512 * 1024 ? Brushes.Black : new SolidColorBrush(Color.FromRgb(0x1E, 0x40, 0x8A)))
-        : (Memory > 512 * 1024 ? Brushes.White : new SolidColorBrush(Color.FromRgb(0xC0, 0xD0, 0xE8)));
-
-    private static Brush HeatBrush(float pct)
-    {
-        pct = Math.Max(0f, Math.Min(100f, pct));
-        bool light = IsLightTheme();
-        var (cold, warm1, warm2, hot1, hot2) = light
-            ? (_lCold, _lWarm1, _lWarm2, _lHot1, _lHot2)
-            : (_cold,  _warm1,  _warm2,  _hot1,  _hot2);
-        Color c;
-        if (pct < 5f)        c = cold;
-        else if (pct < 25f)  c = Lerp(cold, warm1, (pct - 5f) / 20f);
-        else if (pct < 50f)  c = Lerp(warm1, warm2, (pct - 25f) / 25f);
-        else if (pct < 75f)  c = Lerp(warm2, hot1, (pct - 50f) / 25f);
-        else                  c = Lerp(hot1, hot2, (pct - 75f) / 25f);
-        return new SolidColorBrush(c);
-    }
-
-    private static Color Lerp(Color a, Color b, float t) =>
-        Color.FromRgb(
-            (byte)(a.R + (b.R - a.R) * t),
-            (byte)(a.G + (b.G - a.G) * t),
-            (byte)(a.B + (b.B - a.B) * t));
 
     public BitmapSource? IconImage { get => _icon; set { if (_icon != value) { _icon = value; N(); } } }
 }
@@ -316,10 +259,8 @@ public partial class ProcessManagerWindow : ThemedWindow
                                   || p.Pid.ToString().Contains(_filter));
 
         var list = _treeMode ? BuildTree(source.ToList()) : source.ToList();
-        var newPids = new System.Collections.Generic.HashSet<int>(list.Select(x => x.Pid));
-
         // Only replace ItemsSource if the filtered list changed
-        if (_view.Count != list.Count || !_view.Select(x => x.Pid).SequenceEqual(newPids))
+        if (_view.Count != list.Count || !_view.Select(x => x.Pid).SequenceEqual(list.Select(x => x.Pid)))
         {
             var savedSorts  = GridProcs.Items.SortDescriptions
                 .Select(sd => new SortDescription(sd.PropertyName, sd.Direction)).ToList();
@@ -468,10 +409,13 @@ public partial class ProcessManagerWindow : ThemedWindow
                     (uint)System.Runtime.InteropServices.Marshal.SizeOf<SHFILEINFO>(),
                     SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBS) != 0 && sfi.hIcon != 0)
                 {
-                    result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
-                        sfi.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-                    result?.Freeze();
-                    DestroyIcon(sfi.hIcon);
+                    try
+                    {
+                        result = System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(
+                            sfi.hIcon, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                        result?.Freeze();
+                    }
+                    finally { DestroyIcon(sfi.hIcon); }
                 }
             }
         }
