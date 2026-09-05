@@ -5662,11 +5662,11 @@ Read-Host 'Press Enter to close'
             if (!_screenHandlers.Contains(client.Id))
             {
                 var id = client.Id;
-                _server.RegisterHandler(id, PacketType.ScreenshotResult,
+                _server!.RegisterHandler(id, PacketType.ScreenshotResult,
                     pkt => OnScreenshotResult(id, pkt.Data));
                 _screenHandlers.Add(id);
             }
-            _ = _server.SendToClient(client.Id, new Packet { Type = PacketType.Screenshot });
+            _ = _server!.SendToClient(client.Id, new Packet { Type = PacketType.Screenshot });
         }
         _screenRoundRobinOffset = (_screenRoundRobinOffset + count) % total;
     }
