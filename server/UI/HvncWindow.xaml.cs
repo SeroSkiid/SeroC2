@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -27,7 +28,7 @@ public partial class HvncWindow : ThemedWindow
     private DateTime _fpsTime = DateTime.UtcNow;
     private long _lastMoveMs;
     private bool _ctrlDown;
-    private volatile bool _renderBusy;
+    private int _renderBusy;
     private WriteableBitmap? _wb;
     private H264Decoder? _h264Dec;
     private readonly object _decodeLock = new object();
@@ -256,8 +257,7 @@ public partial class HvncWindow : ThemedWindow
             _remoteW = frame.W > 0 ? frame.W : _remoteW;
             _remoteH = frame.H > 0 ? frame.H : _remoteH;
 
-            if (_renderBusy) { SendAck(); return; }
-            _renderBusy = true;
+            if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
             var jpegBytes = Convert.FromBase64String(frame.J);
             Task.Run(() =>
             {
@@ -286,11 +286,11 @@ public partial class HvncWindow : ThemedWindow
                     }
                     finally { jpHandle.Free(); }
 
-                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    if (pixels == null || _closed) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
                     int cw = w, ch = h, cs = stride;
                     Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs));
                 }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); _renderBusy = false; SendAck(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); SendAck(); }
@@ -307,8 +307,7 @@ public partial class HvncWindow : ThemedWindow
             _remoteW = frame.W > 0 ? frame.W : _remoteW;
             _remoteH = frame.H > 0 ? frame.H : _remoteH;
 
-            if (_renderBusy) { SendAck(); return; }
-            _renderBusy = true;
+            if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
 
             var h264Bytes = Convert.FromBase64String(frame.D);
             int fw = frame.W, fh = frame.H;
@@ -323,13 +322,13 @@ public partial class HvncWindow : ThemedWindow
                         if (_h264Dec == null) _h264Dec = H264Decoder.Create();
                         pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
                     }
-                    if (pixels == null || _closed) { _renderBusy = false; SendAck(); return; }
+                    if (pixels == null || _closed) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
                     Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4));
                 }
-                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); _renderBusy = false; SendAck(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
         }
-        catch { _renderBusy = false; SendAck(); }
+        catch { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
     }
 
     private void OnHvncProgress(string json)
@@ -360,7 +359,7 @@ public partial class HvncWindow : ThemedWindow
 
     private void ShowFrame(byte[] pixels, int w, int h, int stride)
     {
-        if (_closed) { _renderBusy = false; return; }
+        if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
         try
         {
             if (_wb == null || _wb.PixelWidth != w || _wb.PixelHeight != h)
@@ -373,7 +372,7 @@ public partial class HvncWindow : ThemedWindow
             _wb.Unlock();
             TxtPlaceholder.Visibility = Visibility.Collapsed;
         }
-        finally { _renderBusy = false; }
+        finally { Interlocked.Exchange(ref _renderBusy, 0); }
 
         _frameCount++;
         var now = DateTime.UtcNow;

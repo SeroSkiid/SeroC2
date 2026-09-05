@@ -175,11 +175,9 @@ internal sealed class H264Decoder : IDisposable
         {
             var lockBuf   = Fn<Lock_Del>(pBuf, 3);
             var unlockBuf = Fn<Unlock_Del>(pBuf, 4);
-            if (lockBuf(pBuf, out nint pDst, out _, out _) == S_OK)
-            {
-                Marshal.Copy(h264Data, 0, pDst, h264Data.Length);
-                unlockBuf(pBuf);
-            }
+            if (lockBuf(pBuf, out nint pDst, out _, out _) != S_OK) return null;
+            Marshal.Copy(h264Data, 0, pDst, h264Data.Length);
+            unlockBuf(pBuf);
             Fn<SetCurrentLength_Del>(pBuf, 6)(pBuf, (uint)h264Data.Length);
 
             if (MFCreateSample(out nint pSample) != S_OK) return null;
@@ -203,7 +201,7 @@ internal sealed class H264Decoder : IDisposable
         nint preallocSample = 0;
         if (!_mftProvidesOutputSamples)
         {
-            MFCreateSample(out preallocSample);
+            if (MFCreateSample(out preallocSample) != S_OK || preallocSample == 0) return null;
             outBuf.pSample = preallocSample;
         }
 

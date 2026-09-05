@@ -202,7 +202,9 @@ internal sealed class H264Encoder : IDisposable
         if (_pTransform == 0) return null;
         int w = _width, h = _height;
         int nv12Size = w * h * 3 / 2;
-        byte[] nv12 = new byte[nv12Size];
+        byte[] nv12 = System.Buffers.ArrayPool<byte>.Shared.Rent(nv12Size);
+        try
+        {
 
         fixed (byte* pNv12 = nv12)
             BgraToNv12((byte*)bgraBits, w, h, bgraStride, pNv12);
@@ -244,7 +246,7 @@ internal sealed class H264Encoder : IDisposable
         nint preallocSample = 0;
         if (!_mftProvidesOutputSamples)
         {
-            MFCreateSample(out preallocSample);
+            if (MFCreateSample(out preallocSample) != S_OK || preallocSample == 0) return null;
             outBuf.pSample = preallocSample;
         }
 
@@ -279,6 +281,8 @@ internal sealed class H264Encoder : IDisposable
             else if (!_mftProvidesOutputSamples && preallocSample != 0) Rel(preallocSample);
             if (outBuf.pEvents != 0) Rel(outBuf.pEvents);
         }
+        }
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(nv12); }
     }
 
     // ── BGRA → NV12 conversion (BT.601 limited range) ────────────────────────
