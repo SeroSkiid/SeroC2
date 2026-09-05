@@ -67,16 +67,20 @@ public partial class DeviceManagerWindow : ThemedWindow
 
     private void OnList(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<DevListResultData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            _devices.Clear();
-            foreach (var dev in d.Devices)
-                _devices.Add(new DeviceEntryVM { DeviceId = dev.DeviceId, Name = dev.Name, Class = dev.Class, Status = dev.Status, Manufacturer = dev.Manufacturer });
-            TxtCount.Text = $"({d.Devices.Count})";
-            TxtStatus.Text = string.Format(Lang.Get("DEV_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Devices.Count);
-        });
+            var d = JsonConvert.DeserializeObject<DevListResultData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _devices.Clear();
+                foreach (var dev in d.Devices)
+                    _devices.Add(new DeviceEntryVM { DeviceId = dev.DeviceId, Name = dev.Name, Class = dev.Class, Status = dev.Status, Manufacturer = dev.Manufacturer });
+                TxtCount.Text = $"({d.Devices.Count})";
+                TxtStatus.Text = string.Format(Lang.Get("DEV_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Devices.Count);
+            });
+        }
+        catch { }
     }
 
     private void BtnUninstall_Click(object s, RoutedEventArgs e)

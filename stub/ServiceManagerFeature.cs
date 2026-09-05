@@ -94,15 +94,23 @@ internal static class ServiceManagerFeature
     {
         try
         {
-            var result = action switch
+            string result;
+            if (action == "restart")
             {
-                "start"   => RunSc($"start \"{serviceName}\""),
-                "stop"    => RunSc($"stop \"{serviceName}\""),
-                "restart" => RunSc($"stop \"{serviceName}\"") + RunSc($"start \"{serviceName}\""),
-                "disable" => RunSc($"config \"{serviceName}\" start= disabled"),
-                "delete"  => RunSc($"delete \"{serviceName}\""),
-                _          => ""
-            };
+                RunSc($"stop \"{serviceName}\""); // stop failure is expected if service is already stopped
+                result = RunSc($"start \"{serviceName}\"");
+            }
+            else
+            {
+                result = action switch
+                {
+                    "start"   => RunSc($"start \"{serviceName}\""),
+                    "stop"    => RunSc($"stop \"{serviceName}\""),
+                    "disable" => RunSc($"config \"{serviceName}\" start= disabled"),
+                    "delete"  => RunSc($"delete \"{serviceName}\""),
+                    _          => ""
+                };
+            }
             var ok = !result.Contains("FAILED") && !result.Contains("error", StringComparison.OrdinalIgnoreCase);
             return JsonSerializer.Serialize(new SvcAckStub { Success = ok, Error = ok ? "" : result.Trim() }, SeroJson.Default.SvcAckStub);
         }
@@ -125,7 +133,7 @@ internal static class ServiceManagerFeature
             if (p == null) return "";
             var outTask = p.StandardOutput.ReadToEndAsync();
             if (!p.WaitForExit(10000)) { try { p.Kill(); } catch { } }
-            return outTask.IsCompleted ? outTask.Result : "";
+            return outTask.GetAwaiter().GetResult();
         }
         catch { return ""; }
     }

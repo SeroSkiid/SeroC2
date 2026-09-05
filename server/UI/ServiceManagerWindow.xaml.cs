@@ -172,54 +172,62 @@ public partial class ServiceManagerWindow : ThemedWindow
 
     private void OnList(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SvcListResultData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            // Diff update: remove absent, update existing, add new
-            var incoming = d.Services.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
-            for (int i = _services.Count - 1; i >= 0; i--)
+            var d = JsonConvert.DeserializeObject<SvcListResultData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
             {
-                if (!incoming.ContainsKey(_services[i].Name))
-                    _services.RemoveAt(i);
-            }
-            foreach (var s in d.Services)
-            {
-                var existing = _services.FirstOrDefault(v => string.Equals(v.Name, s.Name, StringComparison.OrdinalIgnoreCase));
-                if (existing != null)
+                // Diff update: remove absent, update existing, add new
+                var incoming = d.Services.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
+                for (int i = _services.Count - 1; i >= 0; i--)
                 {
-                    existing.Status      = s.Status;
-                    existing.StartType   = s.StartType;
-                    existing.Description = s.Description;
-                    existing.LogOnAs     = s.LogOnAs;
+                    if (!incoming.ContainsKey(_services[i].Name))
+                        _services.RemoveAt(i);
                 }
-                else
+                foreach (var s in d.Services)
                 {
-                    _services.Add(new ServiceEntryVM
+                    var existing = _services.FirstOrDefault(v => string.Equals(v.Name, s.Name, StringComparison.OrdinalIgnoreCase));
+                    if (existing != null)
                     {
-                        Name        = s.Name,
-                        DisplayName = s.DisplayName.Length > 0 ? s.DisplayName : s.Name,
-                        Status      = s.Status,
-                        StartType   = s.StartType,
-                        Description = s.Description,
-                        LogOnAs     = s.LogOnAs,
-                    });
+                        existing.Status      = s.Status;
+                        existing.StartType   = s.StartType;
+                        existing.Description = s.Description;
+                        existing.LogOnAs     = s.LogOnAs;
+                    }
+                    else
+                    {
+                        _services.Add(new ServiceEntryVM
+                        {
+                            Name        = s.Name,
+                            DisplayName = s.DisplayName.Length > 0 ? s.DisplayName : s.Name,
+                            Status      = s.Status,
+                            StartType   = s.StartType,
+                            Description = s.Description,
+                            LogOnAs     = s.LogOnAs,
+                        });
+                    }
                 }
-            }
-            TxtCount.Text  = $"({d.Services.Count})";
-            TxtStatus.Text = string.Format(Lang.Get("SVC_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Services.Count);
-        });
+                TxtCount.Text  = $"({d.Services.Count})";
+                TxtStatus.Text = string.Format(Lang.Get("SVC_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Services.Count);
+            });
+        }
+        catch { }
     }
 
     private void OnAck(Packet pkt)
     {
-        var d = JsonConvert.DeserializeObject<SvcAckData>(pkt.Data);
-        if (d == null) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            TxtStatus.Text = d.Success ? Lang.Get("SVC_ACK_OK") : string.Format(Lang.Get("ERR_GENERIC"), d.Error);
-            if (d.Success) Refresh();
-        });
+            var d = JsonConvert.DeserializeObject<SvcAckData>(pkt.Data);
+            if (d == null) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                TxtStatus.Text = d.Success ? Lang.Get("SVC_ACK_OK") : string.Format(Lang.Get("ERR_GENERIC"), d.Error);
+                if (d.Success) Refresh();
+            });
+        }
+        catch { }
     }
 
     private void SendAction(PacketType type)
