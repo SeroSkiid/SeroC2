@@ -28,12 +28,16 @@ public partial class FunWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.FunResult, pkt =>
         {
-            var r = JsonConvert.DeserializeObject<FunResultData>(pkt.Data);
-            Dispatcher.BeginInvoke(() =>
+            try
             {
-                if (r == null) { TxtStatus.Text = "No response from client."; return; }
-                TxtStatus.Text = $"{r.Action}: {r.Result}";
-            });
+                var r = JsonConvert.DeserializeObject<FunResultData>(pkt.Data);
+                Dispatcher.BeginInvoke(() =>
+                {
+                    if (r == null) { TxtStatus.Text = "No response from client."; return; }
+                    TxtStatus.Text = $"{r.Action}: {r.Result}";
+                });
+            }
+            catch { }
         });
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
@@ -88,12 +92,16 @@ public partial class FunWindow : ThemedWindow
 
     private async Task Send(string action, string param = "")
     {
-        TxtStatus.Text = string.Format(Lang.Get("FUN_SENDING"), action);
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.FunCmd,
-            Data = JsonConvert.SerializeObject(new FunCmdData { Action = action, Param = param })
-        });
+            TxtStatus.Text = string.Format(Lang.Get("FUN_SENDING"), action);
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FunCmd,
+                Data = JsonConvert.SerializeObject(new FunCmdData { Action = action, Param = param })
+            });
+        }
+        catch { }
     }
 
     private async void CdOpen_Click(object s, RoutedEventArgs e)           => await Send("cd_open");

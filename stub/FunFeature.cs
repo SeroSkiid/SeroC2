@@ -55,9 +55,7 @@ internal static class FunFeature
                 // ── Explorer ────────────────────────────────────────────
                 case "explorer_kill":
                     foreach (var p in System.Diagnostics.Process.GetProcessesByName("explorer"))
-                    {
-                        try { p.Kill(); p.Dispose(); } catch { }
-                    }
+                        using (p) try { p.Kill(); } catch { }
                     break;
                 case "explorer_start":
                     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("explorer.exe")
