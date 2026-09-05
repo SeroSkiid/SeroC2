@@ -1193,9 +1193,10 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
-                                                                Grid.Row="0"
-                                                                SnapsToDevicePixels="True"/>
+                                <Border Grid.Row="0" Background="{DynamicResource ColHeaderBgBrush}" SnapsToDevicePixels="True">
+                                    <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
+                                                                    SnapsToDevicePixels="True"/>
+                                </Border>
                                 <ScrollContentPresenter x:Name="PART_ScrollContentPresenter"
                                                         Grid.Row="1"
                                                         CanContentScroll="{TemplateBinding CanContentScroll}"/>

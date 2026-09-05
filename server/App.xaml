@@ -887,6 +887,13 @@
                                 <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
                                 <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
                             </DataTrigger>
+                            <!-- Star column (e.g. TAG Width="*"): WPF computes the width — dragging the right
+                                 gripper does nothing but the SizeWE cursor still shows, which looks like a bug.
+                                 Disable the right gripper on star columns so the cursor gives honest feedback. -->
+                            <DataTrigger Binding="{Binding Column.Width.IsStar, RelativeSource={RelativeSource Self}}" Value="True">
+                                <Setter TargetName="PART_RightHeaderGripper" Property="Cursor" Value="Arrow"/>
+                                <Setter TargetName="PART_RightHeaderGripper" Property="IsHitTestVisible" Value="False"/>
+                            </DataTrigger>
                             <!-- WPF filler header (Column == null): the blank area at the right of all columns
                                  when they don't fill the full DataGrid width. Hide it completely so it does not
                                  look like an empty column, and disable hit-testing to prevent storyboard crashes
