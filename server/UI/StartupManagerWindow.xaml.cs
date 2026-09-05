@@ -32,6 +32,7 @@ public partial class StartupManagerWindow : ThemedWindow
         {
             _server.UnregisterHandler(clientId, PacketType.StartupListResult);
             Lang.LanguageChanged -= ApplyLanguage;
+            _refreshCts?.Cancel(); _refreshCts?.Dispose(); _refreshCts = null;
         };
         Loaded += async (_, _) => { await Task.Delay(Random.Shared.Next(0, 250)); await Refresh(); };
     }
@@ -53,6 +54,7 @@ public partial class StartupManagerWindow : ThemedWindow
     private async Task Refresh()
     {
         _refreshCts?.Cancel();
+        _refreshCts?.Dispose();
         _refreshCts = new CancellationTokenSource();
         var cts = _refreshCts;
         _awaitingResponse = true;

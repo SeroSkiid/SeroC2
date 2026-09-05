@@ -145,20 +145,25 @@ internal static class DxgiCapture
 
             // Copy rows — row pitch may include GPU alignment padding
             int rowPitch = (int)msr.RowPitch, rowBytes = _w * 4;
-            var px = System.Buffers.ArrayPool<byte>.Shared.Rent(rowBytes * _h);
-            unsafe
+            byte[]? px = System.Buffers.ArrayPool<byte>.Shared.Rent(rowBytes * _h);
+            try
             {
-                byte* src = (byte*)msr.pData;
-                fixed (byte* dst = px)
-                    for (int y = 0; y < _h; y++)
-                        Buffer.MemoryCopy(src + (long)y * rowPitch, dst + (long)y * rowBytes, rowBytes, rowBytes);
+                unsafe
+                {
+                    byte* src = (byte*)msr.pData;
+                    fixed (byte* dst = px)
+                        for (int y = 0; y < _h; y++)
+                            Buffer.MemoryCopy(src + (long)y * rowPitch, dst + (long)y * rowBytes, rowBytes, rowBytes);
+                }
+
+                // ID3D11DeviceContext::Unmap (slot 15)
+                unsafe { ((delegate* unmanaged[Stdcall]<nint, nint, uint, void>)VtPtr(_ctx, 15))(_ctx, _stg, 0u); }
+
+                w = _w; h = _h;
+                var result = px; px = null; // transfer ownership to caller
+                return result;
             }
-
-            // ID3D11DeviceContext::Unmap (slot 15)
-            unsafe { ((delegate* unmanaged[Stdcall]<nint, nint, uint, void>)VtPtr(_ctx, 15))(_ctx, _stg, 0u); }
-
-            w = _w; h = _h;
-            return px;
+            finally { if (px != null) System.Buffers.ArrayPool<byte>.Shared.Return(px); }
         }
         catch { return null; }
         finally { ReleaseFrame(); _frameHeld = false; }
