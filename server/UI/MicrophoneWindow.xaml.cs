@@ -153,11 +153,7 @@ internal sealed class WaveOutPlayer : IDisposable
             for (int i = 0; i < SLOTS; i++)
             {
                 if (submitted[i])
-                {
-                    var h = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[i]);
-                    if ((h.dwFlags & WHDR_DONE) != 0)
-                        waveOutUnprepareHeader(_hwo, hdrPtrs[i], hdrSz);
-                }
+                    waveOutUnprepareHeader(_hwo, hdrPtrs[i], hdrSz);
                 Marshal.FreeHGlobal(hdrPtrs[i]);
                 Marshal.FreeHGlobal(dataPtrs[i]);
             }
@@ -181,7 +177,7 @@ internal sealed class WaveOutPlayer : IDisposable
         _running = false;
         _queue.CompleteAdding();
         if (disposing) _thread.Join(2000);
-        if (_open) { waveOutReset(_hwo); waveOutClose(_hwo); }
+        if (_open) { waveOutClose(_hwo); }
         if (_hEvent != IntPtr.Zero) CloseHandle(_hEvent);
     }
 }
@@ -191,7 +187,7 @@ public partial class MicrophoneWindow : ThemedWindow
     private readonly TlsServer _server;
     private readonly string    _clientId;
 
-    private bool _recording;
+    private volatile bool _recording;
     private volatile WaveOutPlayer? _player;
     private readonly List<byte[]> _chunks = [];
     private const int SampleRate = 16000;
@@ -202,7 +198,7 @@ public partial class MicrophoneWindow : ThemedWindow
     private readonly DispatcherTimer _waveTimer = new() { Interval = TimeSpan.FromMilliseconds(50) };
     private int     _recSeconds;
     private float[] _waveform = new float[100];
-    private int     _wavePos;
+    private volatile int _wavePos;
     private long    _lastStatusMs;
 
     private static readonly SolidColorBrush _waveAccent = MakeWaveBrush();
@@ -299,7 +295,7 @@ public partial class MicrophoneWindow : ThemedWindow
         if (CmbDevice.SelectedItem is not MicDeviceItem dev) { TxtStatus.Text = Lang.Get("NO_DEVICE_SELECTED"); return; }
 
         _recording = true;
-        _chunks.Clear();
+        lock (_chunks) _chunks.Clear();
         _recSeconds = 0;
         _wavePos = 0;
         Array.Clear(_waveform);
@@ -322,7 +318,7 @@ public partial class MicrophoneWindow : ThemedWindow
         });
     }
 
-    private async void Stop_Click(object s, RoutedEventArgs e)
+    private void Stop_Click(object s, RoutedEventArgs e)
     {
         if (!_recording) return;
         _recording = false;
@@ -335,7 +331,6 @@ public partial class MicrophoneWindow : ThemedWindow
         BtnStop.IsEnabled   = false;
         int total = 0; lock (_chunks) total = _chunks.Sum(c => c.Length);
         TxtStatus.Text = string.Format(Lang.Get("MIC_STOPPED"), (total / (SampleRate * Channels * 2.0)).ToString("F1"), _chunks.Count);
-        await Task.CompletedTask;
     }
 
     private async void SendStop()
@@ -362,7 +357,7 @@ public partial class MicrophoneWindow : ThemedWindow
 
         await Task.Run(() =>
         {
-            using var fs = File.OpenWrite(fileName);
+            using var fs = File.Create(fileName);
             using var bw = new BinaryWriter(fs);
             // WAV header
             bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));

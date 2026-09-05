@@ -144,9 +144,7 @@ internal static class MicrophoneFeature
                 var hdr = Marshal.PtrToStructure<WAVEHDR>(hdrPtrs[idx]);
                 if ((hdr.dwFlags & WHDR_DONE) != 0)
                 {
-                    int bytes = hdr.dwBytesRecorded > 0 ? hdr.dwBytesRecorded : bufferBytes;
-                    var data  = new byte[bytes];
-                    Marshal.Copy(hdr.lpData, data, 0, bytes);
+                    int bytes = hdr.dwBytesRecorded;
 
                     hdr.dwFlags &= ~WHDR_DONE;
                     hdr.dwBytesRecorded = 0;
@@ -155,10 +153,15 @@ internal static class MicrophoneFeature
                     waveInPrepareHeader(hwi, hdrPtrs[idx], hdrSize);
                     waveInAddBuffer(hwi, hdrPtrs[idx], hdrSize);
 
-                    var payload = JsonSerializer.Serialize(
-                        new MicDataStub { Data = Convert.ToBase64String(data) },
-                        SeroJson.Default.MicDataStub);
-                    _send?.Invoke(payload);
+                    if (bytes > 0)
+                    {
+                        var data = new byte[bytes];
+                        Marshal.Copy(hdr.lpData, data, 0, bytes);
+                        var payload = JsonSerializer.Serialize(
+                            new MicDataStub { Data = Convert.ToBase64String(data) },
+                            SeroJson.Default.MicDataStub);
+                        _send?.Invoke(payload);
+                    }
 
                     idx = (idx + 1) % numBuffers;
                 }
