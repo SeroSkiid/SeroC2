@@ -897,11 +897,16 @@
                                  when they don't fill the full DataGrid width. Hide it completely so it does not
                                  look like an empty column, and disable hit-testing to prevent storyboard crashes
                                  caused by the filler's incomplete visual tree name scope. -->
+                            <!-- WPF filler header (Column == null): blank area right of columns when they don't fill
+                                 the full DataGrid width. AccentBar/HoverOverlay/RightSep collapsed so it shows
+                                 a plain ColHeaderBgBrush background (inherited from the style setter) matching
+                                 the real headers — no blank gap. Background NOT set to Transparent here:
+                                 wrapping DataGridColumnHeadersPresenter in a Border to supply the bg caused
+                                 a layout loop (Measure NaN crash); letting the filler keep its default bg is safe. -->
                             <DataTrigger Binding="{Binding Column, RelativeSource={RelativeSource Self}}" Value="{x:Null}">
                                 <Setter TargetName="AccentBar"    Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="HoverOverlay" Property="Visibility" Value="Collapsed"/>
                                 <Setter TargetName="RightSep"     Property="Visibility" Value="Collapsed"/>
-                                <Setter Property="Background"     Value="Transparent"/>
                                 <Setter Property="IsHitTestVisible" Value="False"/>
                             </DataTrigger>
                         </ControlTemplate.Triggers>
