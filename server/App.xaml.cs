@@ -25,75 +25,65 @@ public partial class App : Application
 
     private static void OnDispatcherException(object s, DispatcherUnhandledExceptionEventArgs e)
     {
+        // Check all known non-fatal exceptions first — suppress silently, no log spam.
+        if (IsSuppressibleException(e.Exception))
+        {
+            e.Handled = true;
+            return;
+        }
+        // Unknown crash — write to disk, surface live, show dialog, then let WPF terminate.
+        // Do NOT set e.Handled = true: swallowing unknown exceptions lets the app continue
+        // in a corrupted state.
         WriteCrashLog(e.Exception);
-        // Suppress DirectComposition rendering errors (UCEERR_MISSINGENDCOMMAND 0x88980411)
-        if (e.Exception is System.Runtime.InteropServices.COMException com
-            && (uint)com.HResult == 0x88980411)
-        {
-            e.Handled = true;
-            return;
-        }
-        // Suppress DevExpress/WPF layout rendering crash (ArgumentException from ChromeSlave/ReleaseOnChannel)
-        if (e.Exception is ArgumentException
-            && e.Exception.Message.StartsWith("Value does not fall within the expected range")
-            && e.Exception.StackTrace is { } st
-            && (st.Contains("ChromeSlave") || st.Contains("ReleaseOnChannel") || st.Contains("DevExpress.Xpf")))
-        {
-            e.Handled = true;
-            return;
-        }
-        // Suppress DevExpress Seven Classic internal LinearGradientBrush color validation error
-        if (e.Exception is InvalidOperationException
-            && e.Exception.Message.Contains("is not a valid value for property 'Color'")
-            && e.Exception.StackTrace is { } st2
-            && (st2.Contains("LinearGradientBrush") || st2.Contains("GradientStop") || st2.Contains("ManualUpdateResource")))
-        {
-            e.Handled = true;
-            return;
-        }
-        // Suppress WPF HwndWrapper dispatcher-suspended error from feature windows closing during rendering
-        if (e.Exception is InvalidOperationException
-            && e.Exception.Message.Contains("Dispatcher processing has been suspended")
-            && e.Exception.StackTrace is { } st3
-            && st3.Contains("HwndWrapper"))
-        {
-            e.Handled = true;
-            return;
-        }
-        // Suppress WPF Storyboard name-scope resolution failure on column-header drag phantom.
-        // When the user drags a column header, WPF creates a floating copy that uses SColHeader's
-        // ControlTemplate but does not fully register named elements (HoverOverlay, etc.) in its
-        // name scope. The mouse-enter EventTrigger fires on the phantom and cannot resolve the names.
-        if (e.Exception is InvalidOperationException
-            && e.Exception.Message.Contains("cannot be found in the name scope")
-            && e.Exception.StackTrace is { } st4
-            && (st4.Contains("Storyboard") || st4.Contains("DataGridColumnHeader")))
-        {
-            e.Handled = true;
-            return;
-        }
-        // Suppress WPF DataGrid star-column infinity crash during column resize drag.
-        // When a DataGrid with a star column (TAG Width="*") is inside a ScrollViewer with
-        // HorizontalScrollBarVisibility=Auto, the star column can have displayWidth=Infinity
-        // from the initial measure pass. When the user drags another column smaller, WPF calls
-        // UpdateWidthForStarColumn with that infinity value and throws. The resize operation
-        // simply stops (no data loss, no corruption) — safe to suppress.
-        if (e.Exception is ArgumentException
-            && e.Exception.Message.Contains("Value should not be infinity")
-            && e.Exception.StackTrace is { } stStar
-            && (stStar.Contains("UpdateWidthForStarColumn") || stStar.Contains("ReallocateStarValues")))
-        {
-            e.Handled = true;
-            return;
-        }
-        // Unknown crash — log full details live, show dialog, then let the process terminate.
-        // Do NOT set e.Handled = true here: swallowing unknown exceptions lets the app continue
-        // in a corrupted state. WPF will terminate after the handler returns.
         var shortMsg = $"{e.Exception?.GetType().Name}: {e.Exception?.Message?.Split('\n')[0]}";
         LiveLog?.Invoke($"[CRASH] {shortMsg}");
         LiveLog?.Invoke($"[CRASH] Stack: {e.Exception?.StackTrace?.Split('\n').FirstOrDefault()?.Trim()}");
         MessageBox.Show(e.Exception?.ToString() ?? "Unknown error",
                         "Crash — voir crash.log", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private static bool IsSuppressibleException(Exception? ex)
+    {
+        if (ex == null) return false;
+        // DirectComposition rendering error (UCEERR_MISSINGENDCOMMAND 0x88980411)
+        if (ex is System.Runtime.InteropServices.COMException com
+            && (uint)com.HResult == 0x88980411)
+            return true;
+        // DevExpress/WPF layout rendering crash (ChromeSlave / ReleaseOnChannel)
+        if (ex is ArgumentException
+            && ex.Message.StartsWith("Value does not fall within the expected range")
+            && ex.StackTrace is { } st
+            && (st.Contains("ChromeSlave") || st.Contains("ReleaseOnChannel") || st.Contains("DevExpress.Xpf")))
+            return true;
+        // DevExpress Seven Classic LinearGradientBrush color validation error
+        if (ex is InvalidOperationException
+            && ex.Message.Contains("is not a valid value for property 'Color'")
+            && ex.StackTrace is { } st2
+            && (st2.Contains("LinearGradientBrush") || st2.Contains("GradientStop") || st2.Contains("ManualUpdateResource")))
+            return true;
+        // WPF HwndWrapper dispatcher-suspended during feature-window close
+        if (ex is InvalidOperationException
+            && ex.Message.Contains("Dispatcher processing has been suspended")
+            && ex.StackTrace is { } st3
+            && st3.Contains("HwndWrapper"))
+            return true;
+        // WPF Storyboard name-scope failure on column-header drag phantom
+        if (ex is InvalidOperationException
+            && ex.Message.Contains("cannot be found in the name scope")
+            && ex.StackTrace is { } st4
+            && (st4.Contains("Storyboard") || st4.Contains("DataGridColumnHeader")))
+            return true;
+        // WPF DataGrid star-column infinity crash during column resize drag.
+        // Star column (TAG Width="*") inside HorizontalScrollBarVisibility=Auto ScrollViewer
+        // gets displayWidth=Infinity on the first measure pass; dragging any other column
+        // smaller triggers UpdateWidthForStarColumn(Infinity) → ArgumentException.
+        // The drag simply stops — no data loss, no corruption.
+        if (ex is ArgumentException
+            && ex.Message.Contains("Value should not be infinity")
+            && ex.StackTrace is { } stStar
+            && (stStar.Contains("UpdateWidthForStarColumn") || stStar.Contains("ReallocateStarValues")))
+            return true;
+        return false;
     }
 
     private static void OnDomainException(object s, UnhandledExceptionEventArgs e)
