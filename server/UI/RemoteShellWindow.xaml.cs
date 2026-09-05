@@ -49,9 +49,9 @@ public partial class RemoteShellWindow : ThemedWindow
     private void OnClientDisconnected(ConnectedClient c)
     {
         if (!_clients.Any(x => x.Id == c.Id)) return;
-        _clients.RemoveAll(x => x.Id == c.Id);
         Dispatcher.BeginInvoke(() =>
         {
+            _clients.RemoveAll(x => x.Id == c.Id);
             if (_clients.Count > 0) return; // still have other clients connected
 
             _reconnectCountdown = 60;
@@ -112,13 +112,13 @@ public partial class RemoteShellWindow : ThemedWindow
 
     private async void Send_Click(object sender, RoutedEventArgs e)
     {
-        await SendCommand();
+        try { await SendCommand(); } catch { }
     }
 
     private async void TxtCommand_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.Enter)
-            await SendCommand();
+            try { await SendCommand(); } catch { }
     }
 
     private async Task SendCommand()

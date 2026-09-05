@@ -2517,6 +2517,12 @@ public partial class ServerWindow : ThemedWindow
 
         try
         {
+            var fi = new FileInfo(dialog.FileName);
+            if (fi.Length > 256L * 1024 * 1024)
+            {
+                Log($"[!] Remote file exec: file too large ({fi.Length / 1024 / 1024} MB, max 256 MB).");
+                return;
+            }
             var fileBytes = await File.ReadAllBytesAsync(dialog.FileName);
             var fileName = Path.GetFileName(dialog.FileName);
 
