@@ -810,19 +810,22 @@
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
                         <Grid UseLayoutRounding="True" SnapsToDevicePixels="True">
-                            <!-- Base background -->
+                            <!-- Base background — stops 1px before right edge so RightSep is never
+                                 covered by the next column's background at fractional DPI offsets. -->
                             <Border x:Name="bd"
-                                    Background="{TemplateBinding Background}"/>
-                            <!-- Right-edge separator: explicit Rectangle avoids sub-pixel Border artifact -->
+                                    Background="{TemplateBinding Background}"
+                                    Margin="0,0,1,0"/>
+                            <!-- Right-edge separator — occupies the 1px gap left by bd's Margin. -->
                             <Rectangle x:Name="RightSep"
                                        Width="1" HorizontalAlignment="Right"
                                        Fill="{DynamicResource ColHeaderBorderBrush}"
                                        IsHitTestVisible="False"
                                        SnapsToDevicePixels="True"/>
-                            <!-- Hover overlay — opacity toggled by IsMouseOver trigger below -->
+                            <!-- Hover overlay — same right margin as bd so hover doesn't bleed over separator. -->
                             <Border x:Name="HoverOverlay"
                                     Background="{DynamicResource ColHeaderHoverBrush}"
                                     Opacity="0"
+                                    Margin="0,0,1,0"
                                     IsHitTestVisible="False"/>
                             <!-- Content row: label + sort chevron -->
                             <Grid>
