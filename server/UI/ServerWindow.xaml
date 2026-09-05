@@ -39,11 +39,15 @@
             <Setter Property="Foreground"             Value="{DynamicResource ContentTextBrush}"/>
             <Setter Property="Template">
                 <Setter.Value>
-                    <!-- Minimal template: no border, no WPF selection chrome, no height added on select -->
+                    <!-- Minimal template: solid background covers any sub-pixel gaps between cells
+                         that would otherwise show the DataGrid's native background (a different brush
+                         in some DX themes) as 1px separator lines at column boundaries. -->
                     <ControlTemplate TargetType="DataGridRow">
-                        <DataGridCellsPresenter
-                            ItemsPanel="{TemplateBinding ItemsPanel}"
-                            SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        <Border Background="{DynamicResource InputBgBrush}">
+                            <DataGridCellsPresenter
+                                ItemsPanel="{TemplateBinding ItemsPanel}"
+                                SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"/>
+                        </Border>
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
