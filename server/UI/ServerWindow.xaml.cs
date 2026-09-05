@@ -9025,6 +9025,8 @@ Read-Host 'Press Enter to close'
             ClearAutoFitMinWidths(GridAllClients);
             ApplyAdaptiveAllClientsWidths();
             UpdateSettingsCheckboxStates();
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render,
+                () => ForceColumnHeadersRedraw(GridAllClients));
         });
     }
 
@@ -9086,6 +9088,26 @@ Read-Host 'Press Enter to close'
         if (grid == null) return;
         foreach (var col in grid.Columns)
             col.MinWidth = 0;
+    }
+
+    // Forces every DataGridColumnHeader in the grid to repaint.
+    // Called after programmatic width/visibility changes that WPF doesn't always
+    // propagate to the header render pass (separators can go invisible otherwise).
+    private static void ForceColumnHeadersRedraw(System.Windows.Controls.DataGrid grid)
+    {
+        if (grid == null) return;
+        InvalidateVisualChildren<System.Windows.Controls.Primitives.DataGridColumnHeader>(grid);
+    }
+
+    private static void InvalidateVisualChildren<T>(DependencyObject parent) where T : UIElement
+    {
+        int n = VisualTreeHelper.GetChildrenCount(parent);
+        for (int i = 0; i < n; i++)
+        {
+            var child = VisualTreeHelper.GetChild(parent, i);
+            if (child is T el) el.InvalidateVisual();
+            if (child is DependencyObject dep) InvalidateVisualChildren<T>(dep);
+        }
     }
 
     private void ChkAutoFill_Unchecked(object sender, RoutedEventArgs e)
@@ -9163,6 +9185,11 @@ Read-Host 'Press Enter to close'
             ApplyAdaptiveOnlineWidths();
             ApplyAdaptiveAllClientsWidths();
             UpdateSettingsCheckboxStates();
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, () =>
+            {
+                ForceColumnHeadersRedraw(GridClients);
+                ForceColumnHeadersRedraw(GridAllClients);
+            });
         });
         RefreshClientFilters();
     }
