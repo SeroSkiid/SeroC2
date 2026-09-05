@@ -72,6 +72,20 @@ public partial class App : Application
             e.Handled = true;
             return;
         }
+        // Suppress WPF DataGrid star-column infinity crash during column resize drag.
+        // When a DataGrid with a star column (TAG Width="*") is inside a ScrollViewer with
+        // HorizontalScrollBarVisibility=Auto, the star column can have displayWidth=Infinity
+        // from the initial measure pass. When the user drags another column smaller, WPF calls
+        // UpdateWidthForStarColumn with that infinity value and throws. The resize operation
+        // simply stops (no data loss, no corruption) — safe to suppress.
+        if (e.Exception is ArgumentException
+            && e.Exception.Message.Contains("Value should not be infinity")
+            && e.Exception.StackTrace is { } stStar
+            && (stStar.Contains("UpdateWidthForStarColumn") || stStar.Contains("ReallocateStarValues")))
+        {
+            e.Handled = true;
+            return;
+        }
         // Unknown crash — log full details live, show dialog, then let the process terminate.
         // Do NOT set e.Handled = true here: swallowing unknown exceptions lets the app continue
         // in a corrupted state. WPF will terminate after the handler returns.

@@ -1193,6 +1193,11 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
+                                <!-- Sibling Border fills the header row background including the WPF filler area
+                                     (blank space right of columns when they don't fill the full DataGrid width).
+                                     Must be a SIBLING of DataGridColumnHeadersPresenter, NOT a parent wrapper —
+                                     wrapping it causes a Measure(NaN) layout loop crash. -->
+                                <Border Grid.Row="0" Background="{DynamicResource ColHeaderBgBrush}"/>
                                 <DataGridColumnHeadersPresenter x:Name="PART_ColumnHeadersPresenter"
                                                                 Grid.Row="0"
                                                                 SnapsToDevicePixels="True"/>
@@ -1927,7 +1932,7 @@
                                           VirtualizingStackPanel.IsVirtualizing="True"
                                           VirtualizingStackPanel.VirtualizationMode="Recycling"
                                           VirtualizingPanel.ScrollUnit="Pixel"
-                                          EnableColumnVirtualization="False"
+                                          EnableColumnVirtualization="True"
                                           ScrollViewer.CanContentScroll="True"
                                           ScrollViewer.HorizontalScrollBarVisibility="Auto"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto"
