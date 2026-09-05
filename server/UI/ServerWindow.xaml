@@ -2074,7 +2074,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="115" MinWidth="30"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="95"  MinWidth="30" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True" CanUserReorder="False">
+                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="100" MinWidth="60" SortMemberPath="Tag" CanUserResize="True" CanUserReorder="False">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2425,7 +2425,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="75"  MinWidth="30" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="30" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="30" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn x:Name="ColAllClientsTagHdr" Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="True" CanUserReorder="False">
+                                    <DataGridTemplateColumn x:Name="ColAllClientsTagHdr" Header="TAG" Width="100" MinWidth="60" SortMemberPath="Tag" CanUserResize="True" CanUserReorder="False">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>
