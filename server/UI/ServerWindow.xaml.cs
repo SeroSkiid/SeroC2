@@ -1234,6 +1234,9 @@ public partial class ServerWindow : ThemedWindow
                 ScreenPanel.Children.Remove(tb);
                 _screenBorders.Remove(id);
                 _screenTiles.Remove(id);
+                _tileWb.Remove(id);
+                if (_screenHandlers.Remove(id))
+                    _server?.UnregisterHandler(id, PacketType.ScreenshotResult);
                 // Also close popup if it was showing this client's screenshot
                 if (ScreenPopupOverlay.Visibility == Visibility.Visible
                     && ScreenPopupSub.Text == id)
@@ -5637,14 +5640,13 @@ Read-Host 'Press Enter to close'
         foreach (var key in _screenTiles.Keys.Where(k => !ids.Contains(k)).ToList())
         {
             if (key == _focusedScreenId) ClearScreenFocus();
-            if (_screenTiles[key].Parent is System.Windows.FrameworkElement fe)
-            {
-                var panel = VisualTreeHelperGetParent(fe);
-                if (panel is System.Windows.Controls.Primitives.UniformGrid ug) ug.Children.Remove(fe);
-            }
+            if (_screenBorders.TryGetValue(key, out var ghostBorder))
+                ScreenPanel.Children.Remove(ghostBorder);
             _screenTiles.Remove(key);
             _screenBorders.Remove(key);
             _tileWb.Remove(key);
+            if (_screenHandlers.Remove(key))
+                _server?.UnregisterHandler(key, PacketType.ScreenshotResult);
         }
 
         int total = clients.Count;
@@ -5755,8 +5757,9 @@ Read-Host 'Press Enter to close'
             System.Windows.Controls.Panel.SetZIndex(border, 10);
             scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, TileScaleAnim(1.04));
             scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, TileScaleAnim(1.04));
-            _screenFocusCancelCts?.Cancel();
+            var oldCts = _screenFocusCancelCts;
             _screenFocusCancelCts = null;
+            oldCts?.Cancel(); oldCts?.Dispose();
             SetScreenFocus(capturedId);
         };
         border.MouseLeave += (_, _) =>
@@ -5765,7 +5768,8 @@ Read-Host 'Press Enter to close'
             System.Windows.Controls.Panel.SetZIndex(border, 0);
             scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleXProperty, TileScaleAnim(1.0));
             scaleT.BeginAnimation(System.Windows.Media.ScaleTransform.ScaleYProperty, TileScaleAnim(1.0));
-            _screenFocusCancelCts?.Cancel();
+            var oldCts2 = _screenFocusCancelCts;
+            oldCts2?.Cancel(); oldCts2?.Dispose();
             var cts = new System.Threading.CancellationTokenSource();
             _screenFocusCancelCts = cts;
             System.Threading.Tasks.Task.Delay(300, cts.Token).ContinueWith(t =>

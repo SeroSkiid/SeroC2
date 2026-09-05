@@ -75,7 +75,8 @@ internal static class ScreenshotFeature
             if (hbm == 0 || bits == 0) { DeleteDC(hdcMem); return ""; }
 
             nint hbmOld = SelectObject(hdcMem, hbm);
-            BitBlt(hdcMem, 0, 0, sw, sh, hdcScreen, 0, 0, 0x00CC0020u); // SRCCOPY
+            if (!BitBlt(hdcMem, 0, 0, sw, sh, hdcScreen, 0, 0, 0x00CC0020u)) // SRCCOPY
+                { if (hbmOld != 0) SelectObject(hdcMem, hbmOld); DeleteObject(hbm); DeleteDC(hdcMem); return ""; }
 
             if (GdipCreateBitmapFromScan0(sw, sh, sw * 4, 0x26200A, bits, out nint bmp) != 0 || bmp == 0)
                 { DeleteObject(hbm); DeleteDC(hdcMem); return ""; }
