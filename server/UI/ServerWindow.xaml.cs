@@ -1649,14 +1649,11 @@ public partial class ServerWindow : ThemedWindow
             {
                 string header = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(header)) continue;
-                if (header == "TAG")
-                {
-                    col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
-                    continue;
-                }
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
-                if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
+                if (w > 20 && header != "TAG") col.Width = new System.Windows.Controls.DataGridLength(w);
             }
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridClients); // pins saved widths (Width.Value) as MinWidth, then Auto
         }
@@ -1684,32 +1681,14 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             var c = col;
-            if (GetOriginalKey(c) == "TAG")
+            EventHandler widthH = (_, _) =>
             {
-                // TAG must always stay Star — right-gripper drag converts it to Pixel; snap it back.
-                EventHandler tagWidthH = (_, _) =>
-                {
-                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                    {
-                        _suppressColumnSave = true;
-                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                        _suppressColumnSave = false;
-                    }
-                };
-                desc.AddValueChanged(c, tagWidthH);
-                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
-            }
-            else
-            {
-                EventHandler widthH = (_, _) =>
-                {
-                    if (_suppressColumnSave) return;
-                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                        SaveGridColumnWidths();
-                };
-                desc.AddValueChanged(c, widthH);
-                _columnPersistenceHandlers.Add((desc, c, widthH));
-            }
+                if (_suppressColumnSave) return;
+                if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    SaveGridColumnWidths();
+            };
+            desc.AddValueChanged(c, widthH);
+            _columnPersistenceHandlers.Add((desc, c, widthH));
         }
     }
 
@@ -1779,10 +1758,12 @@ public partial class ServerWindow : ThemedWindow
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (key == "TAG") continue;
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridAllClients);
         }
@@ -1809,31 +1790,14 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridAllClients.Columns)
         {
             var c = col;
-            if (GetOriginalKey(c) == "TAG")
+            EventHandler widthH = (_, _) =>
             {
-                EventHandler tagWidthH = (_, _) =>
-                {
-                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                    {
-                        _suppressColumnSave = true;
-                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
-                        _suppressColumnSave = false;
-                    }
-                };
-                desc.AddValueChanged(c, tagWidthH);
-                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
-            }
-            else
-            {
-                EventHandler widthH = (_, _) =>
-                {
-                    if (_suppressColumnSave) return;
-                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                        SaveAllClientsColumnWidths();
-                };
-                desc.AddValueChanged(c, widthH);
-                _columnPersistenceHandlers.Add((desc, c, widthH));
-            }
+                if (_suppressColumnSave) return;
+                if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    SaveAllClientsColumnWidths();
+            };
+            desc.AddValueChanged(c, widthH);
+            _columnPersistenceHandlers.Add((desc, c, widthH));
         }
     }
 
@@ -9073,6 +9037,33 @@ Read-Host 'Press Enter to close'
             col.MinWidth = 0;
     }
 
+    // Resizes the TAG column to fill whatever horizontal space remains after all pixel columns.
+    // TAG is a pixel column managed here instead of a star column so WPF's star-reallocation
+    // engine never touches adjacent pixel columns during layout passes.
+    private void FitTagColumnToFill(System.Windows.Controls.DataGrid grid,
+                                    System.Windows.Controls.DataGridColumn tagCol)
+    {
+        if (grid == null || tagCol == null || !grid.IsLoaded) return;
+        double used = 0;
+        foreach (var col in grid.Columns)
+        {
+            if (col == tagCol || col.Visibility != Visibility.Visible) continue;
+            used += col.Width.UnitType == DataGridLengthUnitType.Pixel
+                        ? col.Width.Value
+                        : col.ActualWidth;
+        }
+        double fill = Math.Max(tagCol.MinWidth, grid.ActualWidth - used);
+        _suppressColumnSave = true;
+        tagCol.Width = new DataGridLength(fill);
+        _suppressColumnSave = false;
+    }
+
+    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
+        => FitTagColumnToFill(GridClients, ColOnlineTagHdr);
+
+    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
+        => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
+
     // Forces every DataGridColumnHeader in the grid to repaint.
     // Called after programmatic width/visibility changes that WPF doesn't always
     // propagate to the header render pass (separators can go invisible otherwise).
@@ -9174,13 +9165,14 @@ Read-Host 'Press Enter to close'
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (key == "TAG") continue;
                 if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
                 col.Width = new DataGridLength(spec.full);
                 UiPrefs.Set($"ColWidth_{key}", spec.full);
             }
         }
         finally { _suppressColumnSave = false; }
+        FitTagColumnToFill(GridClients, ColOnlineTagHdr);
     }
 
     private void ApplyAdaptiveAllClientsWidths()
@@ -9193,13 +9185,14 @@ Read-Host 'Press Enter to close'
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
+                if (key == "TAG") continue;
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
                 col.Width = new DataGridLength(spec.full);
                 UiPrefs.Set($"AllColWidth_{key}", spec.full);
             }
         }
         finally { _suppressColumnSave = false; }
+        FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
     }
 
     private void RefreshClientFilters()
