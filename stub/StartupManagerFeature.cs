@@ -80,22 +80,27 @@ internal static class StartupManagerFeature
     // ── Main entry point ───────────────────────────────────────────────────
     internal static string GetList()
     {
-        var entries = new List<StartupEntryStub>();
+        // Fast: registry + startup folder (sync, negligible time)
+        var fast = new List<StartupEntryStub>();
+        AddRegEntries(fast, Registry.CurrentUser,  @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",     "Reg", "HKCU\\Run");
+        AddRegEntries(fast, Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",     "Reg", "HKLM\\Run");
+        AddRegEntries(fast, Registry.CurrentUser,  @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "Reg", "HKCU\\RunOnce");
+        AddRegEntries(fast, Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "Reg", "HKLM\\RunOnce");
+        AddStartupFolder(fast, Environment.GetFolderPath(Environment.SpecialFolder.Startup),       "File", "User Startup");
+        AddStartupFolder(fast, Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "File", "Common Startup");
 
-        AddRegEntries(entries, Registry.CurrentUser,  @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",     "Reg", "HKCU\\Run");
-        AddRegEntries(entries, Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run",     "Reg", "HKLM\\Run");
-        AddRegEntries(entries, Registry.CurrentUser,  @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "Reg", "HKCU\\RunOnce");
-        AddRegEntries(entries, Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "Reg", "HKLM\\RunOnce");
+        // Slow: schtasks + 2× wmic — run all three concurrently instead of sequentially
+        var tSched = Task.Run(() => { var l = new List<StartupEntryStub>(); AddScheduledTasks(l); return l; });
+        var tWmi   = Task.Run(() => { var l = new List<StartupEntryStub>(); AddWmiSubscriptions(l); return l; });
+        Task.WaitAll(tSched, tWmi);
 
-        AddStartupFolder(entries, Environment.GetFolderPath(Environment.SpecialFolder.Startup),       "File", "User Startup");
-        AddStartupFolder(entries, Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "File", "Common Startup");
+        var entries = new List<StartupEntryStub>(fast);
+        entries.AddRange(tSched.Result);
+        entries.AddRange(tWmi.Result);
 
-        AddScheduledTasks(entries);
-        AddWmiSubscriptions(entries);
-
-        // Enrich every entry with Authenticode info
-        foreach (var e in entries)
-            (e.Verified, e.Publisher) = SignatureInfo(e.Path);
+        // Parallelize Authenticode checks — WinVerifyTrust is I/O-bound per file
+        Parallel.ForEach(entries, new ParallelOptions { MaxDegreeOfParallelism = 4 },
+            e => (e.Verified, e.Publisher) = SignatureInfo(e.Path));
 
         return JsonSerializer.Serialize(new StartupListResultStub { Entries = entries }, SeroJson.Default.StartupListResultStub);
     }
@@ -145,10 +150,12 @@ internal static class StartupManagerFeature
     // ── WMI event subscriptions ────────────────────────────────────────────
     private static void AddWmiSubscriptions(List<StartupEntryStub> entries)
     {
-        // CommandLineEventConsumer — executes a command on trigger
-        QueryWmiClass("CommandLineEventConsumer", "Name", "CommandLineTemplate", entries, "WMI\\CMD");
-        // ActiveScriptEventConsumer — runs a VBScript/JScript on trigger
-        QueryWmiClass("ActiveScriptEventConsumer", "Name", "ScriptFileName", entries, "WMI\\Script");
+        // Run both wmic queries concurrently — each spawns its own subprocess
+        var t1 = Task.Run(() => { var l = new List<StartupEntryStub>(); QueryWmiClass("CommandLineEventConsumer", "Name", "CommandLineTemplate", l, "WMI\\CMD"); return l; });
+        var t2 = Task.Run(() => { var l = new List<StartupEntryStub>(); QueryWmiClass("ActiveScriptEventConsumer", "Name", "ScriptFileName",     l, "WMI\\Script"); return l; });
+        Task.WaitAll(t1, t2);
+        entries.AddRange(t1.Result);
+        entries.AddRange(t2.Result);
     }
 
     private static void QueryWmiClass(string cls, string nameProp, string pathProp,
