@@ -1927,6 +1927,7 @@
                                           MouseRightButtonDown="GridClients_MouseRightButtonDown"
                                           Sorting="GridClients_Sorting"
                                           SelectionChanged="GridClients_SelectionChanged"
+                                          SizeChanged="GridClients_SizeChanged"
                                           Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                           BorderThickness="0" RowBackground="{DynamicResource InputBgBrush}"
                                           GridLinesVisibility="None"
@@ -2074,7 +2075,7 @@
                                         </DataGridTemplateColumn>
                                         <DataGridTextColumn Header="WINDOW"   Binding="{Binding ActiveWindow}"                        Width="115" MinWidth="30"/>
                                         <DataGridTextColumn Header="1ST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd}"  Width="95"  MinWidth="30" FontFamily="Consolas" FontSize="11"/>
-                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
+                                        <DataGridTemplateColumn x:Name="ColOnlineTagHdr" Header="TAG" Width="100" MinWidth="60" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
                                             <DataGridTemplateColumn.CellTemplate>
                                                 <DataTemplate>
                                                     <Grid>
@@ -2358,6 +2359,7 @@
                                       SnapsToDevicePixels="True"
                                       Template="{StaticResource DataGridFullHeightScrollbar}"
                                       SelectionChanged="GridAllClients_SelectionChanged"
+                                      SizeChanged="GridAllClients_SizeChanged"
                                       MouseRightButtonDown="GridAllClients_MouseRightButtonDown"
                                       ContextMenuOpening="GridAllClients_ContextMenuOpening"
                                       Sorting="GridAllClients_Sorting"
@@ -2425,7 +2427,7 @@
                                     <DataGridTextColumn Header="RAM"       Binding="{Binding LastRamDisplay}"                               Width="75"  MinWidth="30" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="FIRST SEEN" Binding="{Binding FirstSeen, StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="30" FontFamily="Consolas" FontSize="11"/>
                                     <DataGridTextColumn Header="LAST SEEN"  Binding="{Binding LastSeen,  StringFormat=yyyy-MM-dd HH:mm}"   Width="132" MinWidth="30" FontFamily="Consolas" FontSize="11"/>
-                                    <DataGridTemplateColumn x:Name="ColAllClientsTagHdr" Header="TAG" Width="*" MinWidth="60" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
+                                    <DataGridTemplateColumn x:Name="ColAllClientsTagHdr" Header="TAG" Width="100" MinWidth="60" SortMemberPath="Tag" CanUserResize="False" CanUserReorder="False">
                                         <DataGridTemplateColumn.CellTemplate>
                                             <DataTemplate>
                                                 <Grid>

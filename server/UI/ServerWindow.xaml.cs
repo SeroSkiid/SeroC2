@@ -1652,6 +1652,8 @@ public partial class ServerWindow : ThemedWindow
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
                 if (w > 20 && header != "TAG") col.Width = new System.Windows.Controls.DataGridLength(w);
             }
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridClients); // pins saved widths (Width.Value) as MinWidth, then Auto
         }
@@ -1760,6 +1762,8 @@ public partial class ServerWindow : ThemedWindow
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+                () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridAllClients);
         }
@@ -9141,6 +9145,7 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
+        FitTagColumnToFill(GridClients, ColOnlineTagHdr);
     }
 
     private void ApplyAdaptiveAllClientsWidths()
@@ -9160,6 +9165,43 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
+        FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
+    }
+
+    // Resizes TAG to fill the horizontal space remaining after all other visible pixel columns.
+    // TAG is kept as a fixed pixel column so WPF's star-reallocation engine never touches
+    // adjacent pixel columns. FitTagColumnToFill is called both immediately (current frame)
+    // and deferred at Background priority (after any secondary layout pass settles).
+    private void FitTagColumnToFill(System.Windows.Controls.DataGrid grid,
+                                    System.Windows.Controls.DataGridColumn tagCol)
+    {
+        if (grid == null || tagCol == null || !grid.IsLoaded) return;
+        double used = 0;
+        foreach (var col in grid.Columns)
+        {
+            if (col == tagCol || col.Visibility != Visibility.Visible) continue;
+            used += col.Width.UnitType == DataGridLengthUnitType.Pixel
+                        ? col.Width.Value
+                        : col.ActualWidth;
+        }
+        double fill = Math.Max(tagCol.MinWidth, grid.ActualWidth - used);
+        _suppressColumnSave = true;
+        tagCol.Width = new DataGridLength(fill);
+        _suppressColumnSave = false;
+    }
+
+    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        FitTagColumnToFill(GridClients, ColOnlineTagHdr);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
+    }
+
+    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
+        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
+            () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
     }
 
     private void RefreshClientFilters()
