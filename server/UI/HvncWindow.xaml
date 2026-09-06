@@ -92,7 +92,7 @@
                         <Rectangle Width="1" Height="16" Margin="12,0" Fill="{DynamicResource SectionBorderBrush}"/>
                         <TextBlock Text="FPS" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
                                    FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider x:Name="SldFps" Minimum="5" Maximum="30" Value="20" Width="58"
+                        <Slider x:Name="SldFps" Minimum="5" Maximum="120" Value="20" Width="58"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                             <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource LabelBrush}"

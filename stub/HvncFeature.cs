@@ -337,7 +337,7 @@ internal static class HvncFeature
         Stop();
         _send         = send;
         _quality      = Math.Clamp(cfg.Quality, 10, 95);
-        _fpsDelay     = Math.Max(16, 1000 / Math.Max(1, cfg.Fps));
+        _fpsDelay     = Math.Max(1, 1000 / Math.Max(1, cfg.Fps));
 
 
         // Use actual screen resolution — ignore server's requested dimensions

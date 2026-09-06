@@ -554,7 +554,7 @@ internal static class WebcamFeature
             Thread.Sleep(400);
 
             RemoteDesktopFeature.EnsureGdiplusPublic();
-            int intervalMs  = Math.Max(1000 / Math.Max(_cfg.Fps, 1), 33);
+            int intervalMs  = Math.Max(1, 1000 / Math.Max(1, _cfg.Fps));
             long lastSendMs = 0;
 
             while (_running)
