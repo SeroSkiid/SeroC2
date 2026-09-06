@@ -1652,8 +1652,6 @@ public partial class ServerWindow : ThemedWindow
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
                 if (w > 20 && header != "TAG") col.Width = new System.Windows.Controls.DataGridLength(w);
             }
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridClients); // pins saved widths (Width.Value) as MinWidth, then Auto
         }
@@ -1690,6 +1688,7 @@ public partial class ServerWindow : ThemedWindow
             desc.AddValueChanged(c, widthH);
             _columnPersistenceHandlers.Add((desc, c, widthH));
         }
+        GridClients.LayoutUpdated += (_, _) => FitTagColumnToFill(GridClients, ColOnlineTagHdr);
     }
 
     // Collapses a column that was resized to near-zero, persists its hidden state,
@@ -1762,8 +1761,6 @@ public partial class ServerWindow : ThemedWindow
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridAllClients);
         }
@@ -1799,6 +1796,7 @@ public partial class ServerWindow : ThemedWindow
             desc.AddValueChanged(c, widthH);
             _columnPersistenceHandlers.Add((desc, c, widthH));
         }
+        GridAllClients.LayoutUpdated += (_, _) => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
     }
 
     private void SaveAllClientsColumnWidths()
@@ -9169,13 +9167,12 @@ Read-Host 'Press Enter to close'
     }
 
     // Resizes TAG to fill the horizontal space remaining after all other visible pixel columns.
-    // TAG is kept as a fixed pixel column so WPF's star-reallocation engine never touches
-    // adjacent pixel columns. FitTagColumnToFill is called both immediately (current frame)
-    // and deferred at Background priority (after any secondary layout pass settles).
+    // Called from LayoutUpdated (fires after every layout pass) with a 1px threshold guard
+    // to break any layout loop. ActualWidth guard prevents calls before the grid is measured.
     private void FitTagColumnToFill(System.Windows.Controls.DataGrid grid,
                                     System.Windows.Controls.DataGridColumn tagCol)
     {
-        if (grid == null || tagCol == null || !grid.IsLoaded) return;
+        if (grid == null || tagCol == null || !grid.IsLoaded || grid.ActualWidth < 1) return;
         double used = 0;
         foreach (var col in grid.Columns)
         {
@@ -9185,23 +9182,11 @@ Read-Host 'Press Enter to close'
                         : col.ActualWidth;
         }
         double fill = Math.Max(tagCol.MinWidth, grid.ActualWidth - used);
+        if (tagCol.Width.UnitType == DataGridLengthUnitType.Pixel &&
+            Math.Abs(fill - tagCol.Width.Value) < 1.0) return;
         _suppressColumnSave = true;
         tagCol.Width = new DataGridLength(fill);
         _suppressColumnSave = false;
-    }
-
-    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        FitTagColumnToFill(GridClients, ColOnlineTagHdr);
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-            () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
-    }
-
-    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
-        Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-            () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
     }
 
     private void RefreshClientFilters()
