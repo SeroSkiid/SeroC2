@@ -1652,8 +1652,6 @@ public partial class ServerWindow : ThemedWindow
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
                 if (w > 20 && header != "TAG") col.Width = new System.Windows.Controls.DataGridLength(w);
             }
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                () => FitTagColumnToFill(GridClients, ColOnlineTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridClients); // pins saved widths (Width.Value) as MinWidth, then Auto
         }
@@ -1762,8 +1760,6 @@ public partial class ServerWindow : ThemedWindow
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
-            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-                () => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr));
             if (_autoFitColumns)
                 FitColumnsToContent(GridAllClients);
         }
@@ -9037,33 +9033,6 @@ Read-Host 'Press Enter to close'
             col.MinWidth = 0;
     }
 
-    // Resizes the TAG column to fill whatever horizontal space remains after all pixel columns.
-    // TAG is a pixel column managed here instead of a star column so WPF's star-reallocation
-    // engine never touches adjacent pixel columns during layout passes.
-    private void FitTagColumnToFill(System.Windows.Controls.DataGrid grid,
-                                    System.Windows.Controls.DataGridColumn tagCol)
-    {
-        if (grid == null || tagCol == null || !grid.IsLoaded) return;
-        double used = 0;
-        foreach (var col in grid.Columns)
-        {
-            if (col == tagCol || col.Visibility != Visibility.Visible) continue;
-            used += col.Width.UnitType == DataGridLengthUnitType.Pixel
-                        ? col.Width.Value
-                        : col.ActualWidth;
-        }
-        double fill = Math.Max(tagCol.MinWidth, grid.ActualWidth - used);
-        _suppressColumnSave = true;
-        tagCol.Width = new DataGridLength(fill);
-        _suppressColumnSave = false;
-    }
-
-    private void GridClients_SizeChanged(object sender, SizeChangedEventArgs e)
-        => FitTagColumnToFill(GridClients, ColOnlineTagHdr);
-
-    private void GridAllClients_SizeChanged(object sender, SizeChangedEventArgs e)
-        => FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
-
     // Forces every DataGridColumnHeader in the grid to repaint.
     // Called after programmatic width/visibility changes that WPF doesn't always
     // propagate to the header render pass (separators can go invisible otherwise).
@@ -9172,7 +9141,6 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
-        FitTagColumnToFill(GridClients, ColOnlineTagHdr);
     }
 
     private void ApplyAdaptiveAllClientsWidths()
@@ -9192,7 +9160,6 @@ Read-Host 'Press Enter to close'
             }
         }
         finally { _suppressColumnSave = false; }
-        FitTagColumnToFill(GridAllClients, ColAllClientsTagHdr);
     }
 
     private void RefreshClientFilters()
