@@ -1649,6 +1649,11 @@ public partial class ServerWindow : ThemedWindow
             {
                 string header = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(header)) continue;
+                if (header == "TAG")
+                {
+                    col.Width = new System.Windows.Controls.DataGridLength(1, System.Windows.Controls.DataGridLengthUnitType.Star);
+                    continue;
+                }
                 int w = UiPrefs.GetInt($"ColWidth_{header}", 0);
                 if (w > 20) col.Width = new System.Windows.Controls.DataGridLength(w);
             }
@@ -1679,14 +1684,32 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             var c = col;
-            EventHandler widthH = (_, _) =>
+            if (GetOriginalKey(c) == "TAG")
             {
-                if (_suppressColumnSave) return;
-                if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                    SaveGridColumnWidths();
-            };
-            desc.AddValueChanged(c, widthH);
-            _columnPersistenceHandlers.Add((desc, c, widthH));
+                // TAG must always stay Star — right-gripper drag converts it to Pixel; snap it back.
+                EventHandler tagWidthH = (_, _) =>
+                {
+                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    {
+                        _suppressColumnSave = true;
+                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                        _suppressColumnSave = false;
+                    }
+                };
+                desc.AddValueChanged(c, tagWidthH);
+                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
+            }
+            else
+            {
+                EventHandler widthH = (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                        SaveGridColumnWidths();
+                };
+                desc.AddValueChanged(c, widthH);
+                _columnPersistenceHandlers.Add((desc, c, widthH));
+            }
         }
     }
 
@@ -1715,7 +1738,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key)) continue;
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
             if (col.Width.UnitType != DataGridLengthUnitType.Pixel) continue;
             double w = col.Width.Value;
             if (w > 0) UiPrefs.Set($"ColWidth_{key}", (int)w);
@@ -1756,6 +1779,7 @@ public partial class ServerWindow : ThemedWindow
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 int saved = UiPrefs.GetInt($"AllColWidth_{key}", 0);
                 if (saved > 20) col.Width = new DataGridLength(saved);
             }
@@ -1785,14 +1809,31 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridAllClients.Columns)
         {
             var c = col;
-            EventHandler widthH = (_, _) =>
+            if (GetOriginalKey(c) == "TAG")
             {
-                if (_suppressColumnSave) return;
-                if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
-                    SaveAllClientsColumnWidths();
-            };
-            desc.AddValueChanged(c, widthH);
-            _columnPersistenceHandlers.Add((desc, c, widthH));
+                EventHandler tagWidthH = (_, _) =>
+                {
+                    if (!_suppressColumnSave && c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                    {
+                        _suppressColumnSave = true;
+                        c.Width = new DataGridLength(1, DataGridLengthUnitType.Star);
+                        _suppressColumnSave = false;
+                    }
+                };
+                desc.AddValueChanged(c, tagWidthH);
+                _columnPersistenceHandlers.Add((desc, c, tagWidthH));
+            }
+            else
+            {
+                EventHandler widthH = (_, _) =>
+                {
+                    if (_suppressColumnSave) return;
+                    if (c.Width.UnitType == DataGridLengthUnitType.Pixel)
+                        SaveAllClientsColumnWidths();
+                };
+                desc.AddValueChanged(c, widthH);
+                _columnPersistenceHandlers.Add((desc, c, widthH));
+            }
         }
     }
 
@@ -1802,7 +1843,7 @@ public partial class ServerWindow : ThemedWindow
         foreach (var col in GridAllClients.Columns)
         {
             string key = GetOriginalKey(col);
-            if (string.IsNullOrEmpty(key)) continue;
+            if (string.IsNullOrEmpty(key) || key == "TAG") continue;
             if (col.Width.UnitType != DataGridLengthUnitType.Pixel) continue;
             double w = col.Width.Value;
             if (w > 0) UiPrefs.Set($"AllColWidth_{key}", (int)w);
@@ -9133,7 +9174,7 @@ Read-Host 'Press Enter to close'
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(100); UiPrefs.Set("ColWidth_TAG", 100); continue; }
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_onlineColSpec.TryGetValue(key, out var spec)) continue;
                 col.Width = new DataGridLength(spec.full);
                 UiPrefs.Set($"ColWidth_{key}", spec.full);
@@ -9152,7 +9193,7 @@ Read-Host 'Press Enter to close'
             {
                 string key = GetOriginalKey(col);
                 if (string.IsNullOrEmpty(key)) continue;
-                if (key == "TAG") { col.Width = new DataGridLength(100); UiPrefs.Set("AllColWidth_TAG", 100); continue; }
+                if (key == "TAG") { col.Width = new DataGridLength(1, DataGridLengthUnitType.Star); continue; }
                 if (!_allClientsColSpec.TryGetValue(key, out var spec)) continue;
                 col.Width = new DataGridLength(spec.full);
                 UiPrefs.Set($"AllColWidth_{key}", spec.full);
