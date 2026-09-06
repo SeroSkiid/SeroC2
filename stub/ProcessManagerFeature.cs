@@ -20,21 +20,7 @@ internal static class ProcessManagerFeature
     [DllImport("ntdll.dll")]
     private static extern int NtQueryInformationProcess(IntPtr h, int cls, out PROCESS_BASIC_INFORMATION info, int sz, out int ret);
 
-    private static int GetParentPid(int pid)
-    {
-        var h = OpenProcess(0x0400, false, pid); // PROCESS_QUERY_INFORMATION
-        if (h == IntPtr.Zero) return 0;
-        try
-        {
-            return NtQueryInformationProcess(h, 0, out var pbi,
-                Marshal.SizeOf<PROCESS_BASIC_INFORMATION>(), out _) == 0
-                ? (int)pbi.ParentPid : 0;
-        }
-        catch { return 0; }
-        finally { CloseHandle(h); }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
+[StructLayout(LayoutKind.Sequential)]
     private struct MEMORYSTATUSEX { public uint dwLength, dwMemoryLoad; public ulong ullTotalPhys, ullAvailPhys, ullTotalPageFile, ullAvailPageFile, ullTotalVirtual, ullAvailVirtual, ullAvailExtVirtual; }
     [DllImport("kernel32.dll")] private static extern bool GlobalMemoryStatusEx(ref MEMORYSTATUSEX lpBuffer);
 
@@ -92,27 +78,37 @@ internal static class ProcessManagerFeature
     private static readonly object _samplesLock = new();
     private const uint PROCESS_QUERY_INFORMATION = 0x0400;
 
-    private static float GetNetKbps(int pid, DateTime now)
+    // Opens ONE handle per process to get both ParentPid and I/O counters,
+    // halving the OpenProcess/CloseHandle kernel calls vs. calling each separately.
+    private static (int parentPid, float netKbps) GetProcessInfoNative(int pid, DateTime now)
     {
         var h = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
-        if (h == IntPtr.Zero) return 0f;
+        if (h == IntPtr.Zero) return (0, 0f);
         try
         {
-            if (!GetProcessIoCounters(h, out var io)) return 0f;
-            var totalIo = io.ReadBytes + io.WriteBytes;
-            lock (_samplesLock)
+            int parentPid = NtQueryInformationProcess(h, 0, out var pbi,
+                Marshal.SizeOf<PROCESS_BASIC_INFORMATION>(), out _) == 0
+                ? (int)pbi.ParentPid : 0;
+
+            float netKbps = 0f;
+            if (GetProcessIoCounters(h, out var io))
             {
-                if (_netSamples.TryGetValue(pid, out var prev))
+                var totalIo = io.ReadBytes + io.WriteBytes;
+                lock (_samplesLock)
                 {
-                    var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
-                    var ms    = (now - prev.ts).TotalMilliseconds;
-                    _netSamples[pid] = (totalIo, now);
-                    return ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                    if (_netSamples.TryGetValue(pid, out var prev))
+                    {
+                        var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
+                        var ms    = (now - prev.ts).TotalMilliseconds;
+                        _netSamples[pid] = (totalIo, now);
+                        netKbps = ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                    }
+                    else _netSamples[pid] = (totalIo, now);
                 }
-                _netSamples[pid] = (totalIo, now);
-                return 0f;
             }
+            return (parentPid, netKbps);
         }
+        catch { return (0, 0f); }
         finally { CloseHandle(h); }
     }
 
@@ -146,17 +142,18 @@ internal static class ProcessManagerFeature
                 catch { }
 
                 tcpCounts.TryGetValue(p.Id, out var remIps);
+                var (parentPid, netKbps) = GetProcessInfoNative(p.Id, now);
                 list.Add(new ProcEntryStub
                 {
                     Pid       = p.Id,
-                    ParentPid = GetParentPid(p.Id),
+                    ParentPid = parentPid,
                     Name      = p.ProcessName,
                     Memory    = p.WorkingSet64 / 1024,
                     CpuUsage  = cpuPct,
                     TcpConns  = remIps?.Count ?? 0,
                     RemoteIps = remIps,
-                    NetKbps   = GetNetKbps(p.Id, now),
-                    Title     = p.MainWindowTitle,
+                    NetKbps   = netKbps,
+                    Title     = p.MainWindowHandle != IntPtr.Zero ? p.MainWindowTitle : "",
                     ExePath   = GetExePath(p)
                 });
             }

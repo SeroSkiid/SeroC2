@@ -172,10 +172,11 @@ public partial class ProcessManagerWindow : ThemedWindow
 
                 // Update existing or add new
                 var seenPids = new System.Collections.Generic.HashSet<int>();
+                var allByPid = _all.ToDictionary(x => x.Pid);
                 foreach (var p in d.Processes)
                 {
                     seenPids.Add(p.Pid);
-                    var existing = _all.FirstOrDefault(x => x.Pid == p.Pid);
+                    allByPid.TryGetValue(p.Pid, out var existing);
                     if (existing != null)
                     {
                         // Update in-place instead of replacing
