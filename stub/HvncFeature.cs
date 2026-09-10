@@ -2138,10 +2138,15 @@ internal static class HvncFeature
                        " --disable-background-mode --disable-background-networking" +
                        " --noerrdialogs --disable-session-crashed-bubble" +
                        " --disable-restore-session-state --disable-crash-reporter" +
-                       " --no-recovery-component";
+                       " --no-recovery-component" +
+                       // Prevent Google's account validation endpoint from revoking the cloned session.
+                       // AccountConsistency/DiceIntegration sync browser sign-in state with Google cookies —
+                       // disabling them stops the "signed in → immediately signed out" behavior on clone.
+                       " --disable-sync" +
+                       " --disable-features=AccountConsistency,DiceIntegration";
                 if (exeBase == "msedge.exe")
                     cmd += " --disable-features=msEdgeRecovery,msSmartScreenProtection" +
-                           " --disable-sync --hide-crash-restore-bubble";
+                           " --hide-crash-restore-bubble";
                 if (exeBase == "opera.exe")
                     cmd += " --disable-features=OperaCrashRestoreSession";
             }
