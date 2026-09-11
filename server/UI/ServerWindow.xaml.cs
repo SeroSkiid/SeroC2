@@ -153,7 +153,7 @@ public partial class ServerWindow : ThemedWindow
         "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
         "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
         "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
-        "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
+        "AlternatingRowBgBrush", "RowHoverBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
         "ContainerCornerRadius"
     };
 
@@ -6388,7 +6388,7 @@ Read-Host 'Press Enter to close'
         ["VS2017Dark"]           = System.Windows.Media.Color.FromRgb(0x00, 0x7A, 0xCC),
         ["VS2017Light"]          = System.Windows.Media.Color.FromRgb(0x00, 0x7A, 0xCC),
         // ── Previous Office ─────────────────────────────────────────────────────
-        ["Office2010Blue"]       = System.Windows.Media.Color.FromRgb(0x1B, 0x5B, 0x99),
+        ["Office2010Blue"]       = System.Windows.Media.Color.FromRgb(0x1E, 0x39, 0x5B),
         ["Office2010Black"]      = System.Windows.Media.Color.FromRgb(0x4A, 0x7F, 0xFF),
         ["Office2010Silver"]     = System.Windows.Media.Color.FromRgb(0x40, 0x70, 0xB0),
         // ── Office 2019 ──────────────────────────────────────────────────────────
@@ -6405,7 +6405,7 @@ Read-Host 'Press Enter to close'
         ["Office2013DarkGray"]   = System.Windows.Media.Color.FromRgb(0x2B, 0x57, 0x9A),
         // ── Default (DevExpress) ─────────────────────────────────────────────────
         ["DXStyle"]              = System.Windows.Media.Color.FromRgb(0x3E, 0x6F, 0xA8),
-        ["MetropolisDark"]       = System.Windows.Media.Color.FromRgb(0x55, 0x88, 0xD8),
+        ["MetropolisDark"]       = System.Windows.Media.Color.FromRgb(0xF7, 0x8A, 0x09),
         ["Office2019HighContrast"] = System.Windows.Media.Color.FromRgb(0xFF, 0xFF, 0x00),
         // ── Thematic ─────────────────────────────────────────────────────────────
         ["Seven"]                = System.Windows.Media.Color.FromRgb(0x22, 0x68, 0xB8),
@@ -6420,7 +6420,7 @@ Read-Host 'Press Enter to close'
         ["VS2017Blue"]           = "#1A2348",
         ["VS2017Dark"]           = "#252526",
         ["VS2017Light"]          = "#E7E8EC",
-        ["Office2010Blue"]       = "#1B5B99",
+        ["Office2010Blue"]       = "#1E395B",
         ["Office2010Black"]      = "#242424",
         ["Office2010Silver"]     = "#B8BFCC",
         ["Office2019Colorful"]   = "#0173C7",
@@ -6430,7 +6430,7 @@ Read-Host 'Press Enter to close'
         ["Office2016Colorful"]   = "#0173C7",
         ["Office2016DarkGraySE"] = "#262626",
         ["Office2016Black"]      = "#111111",
-        ["Office2013"]           = "#2972BF",
+        ["Office2013"]           = "#0072C6",
         ["Office2013DarkGray"]   = "#353535",
         ["DXStyle"]              = "#3E6FA8",
         ["MetropolisDark"]       = "#161B28",
@@ -6672,9 +6672,9 @@ Read-Host 'Press Enter to close'
                 res["NavHoverBgBrush"]         = B("#263268");
                 res["NavHoverIconBrush"]       = B("#99C8F8");
                 res["NavHoverTextBrush"]       = B("#C0D8FF");
-                res["NavSelBgBrush"]           = B("#007ACC");
+                res["NavSelBgBrush"]           = B("#3E5480");  // DX navy bg — gold icon stands out
                 res["NavSelTextBrush"]         = B("#FFFFFF");
-                res["NavSelIconBrush"]         = B("#FFFFFF");
+                res["NavSelIconBrush"]         = B("#E5C365");  // DX VS2017Blue active accent (gold)
                 res["NavSectionBrush"]         = B("#5070B8");
                 res["SidebarCtrlBgBrush"]      = B("#141B3A");
                 res["SidebarCtrlBorderBrush"]  = B("#1E2850");
@@ -6789,7 +6789,7 @@ Read-Host 'Press Enter to close'
                 res["SidebarCtrlBorderBrush"]  = B("#0A3870");
                 res["SidebarCtrlTextBrush"]    = B("#8AB8D8");
                 res["WindowBgBrush"]           = B("#D6E4F0");
-                res["TitleBgBrush"]            = B("#1B5B99");
+                res["TitleBgBrush"]            = B("#1E395B");  // DX dominant dark navy (#1E395B, 432 occ)
                 res["TitleBorderBrush"]        = B("#0A3870");
                 res["SectionBgBrush"]          = B("#EDF4FC");
                 res["SectionBorderBrush"]      = B("#B0CEE4");
@@ -6806,7 +6806,7 @@ Read-Host 'Press Enter to close'
                 res["BtnPressedBgBrush"]       = B("#B0CCDF");
                 res["BtnFgBrush"]              = B("#1A2B40");
                 res["ColHeaderBgBrush"]        = B("#C0D4E8");
-                res["ColHeaderFgBrush"]        = B("#1B5B99");
+                res["ColHeaderFgBrush"]        = B("#1E395B");  // match TitleBgBrush
                 res["ColHeaderBorderBrush"]    = B("#8AAED8");
                 res["AlternatingRowBgBrush"]   = B("#D0E4F4");
                 break;
@@ -7072,7 +7072,7 @@ Read-Host 'Press Enter to close'
                 res["NavHoverBgBrush"]         = B("#202840");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
                 res["NavHoverTextBrush"]       = B("#C0D0E8");
-                res["NavSelBgBrush"]           = B("#3060A8");
+                res["NavSelBgBrush"]           = B("#3A78B0");  // DX #65A4D9 darkened for white-text contrast
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#686868");
@@ -7257,7 +7257,7 @@ Read-Host 'Press Enter to close'
                 res["NavHoverTextBrush"]       = B("#A0B0D0");
                 res["NavSelBgBrush"]           = B("#2A4070");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
-                res["NavSelIconBrush"]         = B("#5588D8");
+                res["NavSelIconBrush"]         = B("#F78A09");  // DX MetropolisDark orange accent (447 occ)
                 res["NavSectionBrush"]         = B("#3A4870");
                 res["SidebarCtrlBgBrush"]      = B("#101520");
                 res["SidebarCtrlBorderBrush"]  = B("#1A2038");
