@@ -6392,17 +6392,17 @@ Read-Host 'Press Enter to close'
         ["Office2010Black"]      = System.Windows.Media.Color.FromRgb(0x4A, 0x7F, 0xFF),
         ["Office2010Silver"]     = System.Windows.Media.Color.FromRgb(0x40, 0x70, 0xB0),
         // ── Office 2019 ──────────────────────────────────────────────────────────
-        ["Office2019Colorful"]   = System.Windows.Media.Color.FromRgb(0x2B, 0x57, 0x9A),
+        ["Office2019Colorful"]   = System.Windows.Media.Color.FromRgb(0x01, 0x73, 0xC7),
         ["Office2019Black"]      = System.Windows.Media.Color.FromRgb(0x30, 0x60, 0xA0),
-        ["Office2019White"]      = System.Windows.Media.Color.FromRgb(0x2B, 0x57, 0x9A),
-        ["Office2019DarkGray"]   = System.Windows.Media.Color.FromRgb(0x2B, 0x57, 0x9A),
+        ["Office2019White"]      = System.Windows.Media.Color.FromRgb(0x10, 0x6E, 0xBE),
+        ["Office2019DarkGray"]   = System.Windows.Media.Color.FromRgb(0x00, 0x72, 0xC6),
         // ── Office 2016 ──────────────────────────────────────────────────────────
-        ["Office2016Colorful"]   = System.Windows.Media.Color.FromRgb(0x2B, 0x6C, 0xB0),
+        ["Office2016Colorful"]   = System.Windows.Media.Color.FromRgb(0x01, 0x73, 0xC7),
         ["Office2016DarkGraySE"] = System.Windows.Media.Color.FromRgb(0x50, 0x90, 0xC8),
         ["Office2016Black"]      = System.Windows.Media.Color.FromRgb(0x4A, 0x80, 0xC8),
         // ── Office 2013 ──────────────────────────────────────────────────────────
-        ["Office2013"]           = System.Windows.Media.Color.FromRgb(0x29, 0x72, 0xBF),
-        ["Office2013DarkGray"]   = System.Windows.Media.Color.FromRgb(0x1B, 0xBB, 0xF0),
+        ["Office2013"]           = System.Windows.Media.Color.FromRgb(0x00, 0x72, 0xC6),
+        ["Office2013DarkGray"]   = System.Windows.Media.Color.FromRgb(0x2B, 0x57, 0x9A),
         // ── Default (DevExpress) ─────────────────────────────────────────────────
         ["DXStyle"]              = System.Windows.Media.Color.FromRgb(0x3E, 0x6F, 0xA8),
         ["MetropolisDark"]       = System.Windows.Media.Color.FromRgb(0x55, 0x88, 0xD8),
@@ -6423,11 +6423,11 @@ Read-Host 'Press Enter to close'
         ["Office2010Blue"]       = "#1B5B99",
         ["Office2010Black"]      = "#242424",
         ["Office2010Silver"]     = "#B8BFCC",
-        ["Office2019Colorful"]   = "#2B579A",
+        ["Office2019Colorful"]   = "#0173C7",
         ["Office2019Black"]      = "#161616",
-        ["Office2019White"]      = "#2B579A",
+        ["Office2019White"]      = "#106EBE",
         ["Office2019DarkGray"]   = "#252525",
-        ["Office2016Colorful"]   = "#2B6CB0",
+        ["Office2016Colorful"]   = "#0173C7",
         ["Office2016DarkGraySE"] = "#262626",
         ["Office2016Black"]      = "#111111",
         ["Office2013"]           = "#2972BF",
@@ -6877,10 +6877,6 @@ Read-Host 'Press Enter to close'
                 res["BtnPressedBgBrush"]       = B("#C4C8D4");
                 res["BtnFgBrush"]              = B("#1A1C2E");
                 res["AlternatingRowBgBrush"]   = B("#E8E9ED");
-                res["RowHoverBgBrush"]         = B("#D8E2F0");
-                res["RowSelBgBrush"]           = B("#B0C4E0");
-                res["RowSelTextBrush"]         = B("#0E1A30");
-                res["RowSelBorderBrush"]       = B("#4070B0");
                 res["ColHeaderBgBrush"]        = B("#C8CAD4");
                 res["ColHeaderFgBrush"]        = B("#1A1C2E");
                 res["ColHeaderBorderBrush"]    = B("#A0A4B0");
@@ -6892,19 +6888,19 @@ Read-Host 'Press Enter to close'
             case "Office2019Colorful":
                 res["NavIconBrush"]            = B("#BDD0F0");
                 res["NavTextBrush"]            = B("#D0E0FF");
-                res["NavHoverBgBrush"]         = B("#244A88");
-                res["NavHoverIconBrush"]       = B("#E8F0FF");
+                res["NavHoverBgBrush"]         = B("#0E5FA8");
+                res["NavHoverIconBrush"]       = B("#E8F4FF");
                 res["NavHoverTextBrush"]       = B("#FFFFFF");
-                res["NavSelBgBrush"]           = B("#1A3A70");
+                res["NavSelBgBrush"]           = B("#0173C7");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#8090B8");
-                res["SidebarCtrlBgBrush"]      = B("#2050A0");
-                res["SidebarCtrlBorderBrush"]  = B("#1A3A80");
-                res["SidebarCtrlTextBrush"]    = B("#8AB0E0");
+                res["SidebarCtrlBgBrush"]      = B("#0E60B0");
+                res["SidebarCtrlBorderBrush"]  = B("#015C9F");
+                res["SidebarCtrlTextBrush"]    = B("#B0D8F8");
                 res["WindowBgBrush"]           = B("#EDEEF0");
-                res["TitleBgBrush"]            = B("#2B579A");
-                res["TitleBorderBrush"]        = B("#1E4080");
+                res["TitleBgBrush"]            = B("#0173C7");
+                res["TitleBorderBrush"]        = B("#015C9F");
                 res["SectionBgBrush"]          = B("#FFFFFF");
                 res["SectionBorderBrush"]      = B("#D8DCEA");
                 res["ActivityBgBrush"]         = B("#EDEEF0");
@@ -6915,12 +6911,12 @@ Read-Host 'Press Enter to close'
                 res["FieldLabelBrush"]         = B("#666060");
                 res["BtnBgBrush"]              = B("#EDEDED");
                 res["BtnBorderBrush"]          = B("#C0C4CC");
-                res["BtnHoverBgBrush"]         = B("#DBE8FB");
-                res["BtnHoverBorderBrush"]     = B("#2B579A");
-                res["BtnPressedBgBrush"]       = B("#C8DAF8");
+                res["BtnHoverBgBrush"]         = B("#CDE6F7");
+                res["BtnHoverBorderBrush"]     = B("#0173C7");
+                res["BtnPressedBgBrush"]       = B("#B0D8F4");
                 res["BtnFgBrush"]              = B("#262626");
                 res["ColHeaderBgBrush"]        = B("#D0D8EA");
-                res["ColHeaderFgBrush"]        = B("#2B579A");
+                res["ColHeaderFgBrush"]        = B("#0173C7");
                 res["ColHeaderBorderBrush"]    = B("#B0C0D8");
                 res["AlternatingRowBgBrush"]   = B("#E4E8F0");
                 break;
@@ -6963,19 +6959,19 @@ Read-Host 'Press Enter to close'
             case "Office2019White":
                 res["NavIconBrush"]            = B("#BDD0F0");
                 res["NavTextBrush"]            = B("#D0E0FF");
-                res["NavHoverBgBrush"]         = B("#244A88");
-                res["NavHoverIconBrush"]       = B("#E8F0FF");
+                res["NavHoverBgBrush"]         = B("#0960A8");
+                res["NavHoverIconBrush"]       = B("#E8F4FF");
                 res["NavHoverTextBrush"]       = B("#FFFFFF");
-                res["NavSelBgBrush"]           = B("#1A3A70");
+                res["NavSelBgBrush"]           = B("#106EBE");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#7090B8");
-                res["SidebarCtrlBgBrush"]      = B("#2050A0");
-                res["SidebarCtrlBorderBrush"]  = B("#1A3A80");
-                res["SidebarCtrlTextBrush"]    = B("#8AB0E0");
+                res["SidebarCtrlBgBrush"]      = B("#0A6AB0");
+                res["SidebarCtrlBorderBrush"]  = B("#005A9E");
+                res["SidebarCtrlTextBrush"]    = B("#B0D8F8");
                 res["WindowBgBrush"]           = B("#FFFFFF");
-                res["TitleBgBrush"]            = B("#2B579A");
-                res["TitleBorderBrush"]        = B("#1E4080");
+                res["TitleBgBrush"]            = B("#106EBE");
+                res["TitleBorderBrush"]        = B("#005A9E");
                 res["SectionBgBrush"]          = B("#F8F8F8");
                 res["SectionBorderBrush"]      = B("#E0E4E8");
                 res["ActivityBgBrush"]         = B("#F0F0F0");
@@ -6986,12 +6982,12 @@ Read-Host 'Press Enter to close'
                 res["FieldLabelBrush"]         = B("#606060");
                 res["BtnBgBrush"]              = B("#F3F3F3");
                 res["BtnBorderBrush"]          = B("#C0C4C8");
-                res["BtnHoverBgBrush"]         = B("#DBE8FB");
-                res["BtnHoverBorderBrush"]     = B("#2B579A");
+                res["BtnHoverBgBrush"]         = B("#DEECF9");
+                res["BtnHoverBorderBrush"]     = B("#106EBE");
                 res["BtnPressedBgBrush"]       = B("#C8DAF8");
                 res["BtnFgBrush"]              = B("#262626");
                 res["ColHeaderBgBrush"]        = B("#E8EBF0");
-                res["ColHeaderFgBrush"]        = B("#2B579A");
+                res["ColHeaderFgBrush"]        = B("#106EBE");
                 res["ColHeaderBorderBrush"]    = B("#C0C4C8");
                 res["AlternatingRowBgBrush"]   = B("#F4F5F8");
                 break;
@@ -7002,7 +6998,7 @@ Read-Host 'Press Enter to close'
                 res["NavHoverBgBrush"]         = B("#1E2850");
                 res["NavHoverIconBrush"]       = B("#A0B8D8");
                 res["NavHoverTextBrush"]       = B("#C0D0E8");
-                res["NavSelBgBrush"]           = B("#2B579A");
+                res["NavSelBgBrush"]           = B("#0072C6");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#686868");
@@ -7037,19 +7033,19 @@ Read-Host 'Press Enter to close'
             case "Office2016Colorful":
                 res["NavIconBrush"]            = B("#C0D4F8");
                 res["NavTextBrush"]            = B("#D8E8FF");
-                res["NavHoverBgBrush"]         = B("#1F549A");
-                res["NavHoverIconBrush"]       = B("#E8F2FF");
+                res["NavHoverBgBrush"]         = B("#0A60A8");
+                res["NavHoverIconBrush"]       = B("#E8F4FF");
                 res["NavHoverTextBrush"]       = B("#FFFFFF");
-                res["NavSelBgBrush"]           = B("#144888");
+                res["NavSelBgBrush"]           = B("#0173C7");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#8098C0");
-                res["SidebarCtrlBgBrush"]      = B("#1A509A");
-                res["SidebarCtrlBorderBrush"]  = B("#113C78");
-                res["SidebarCtrlTextBrush"]    = B("#80B0E0");
+                res["SidebarCtrlBgBrush"]      = B("#0A68B8");
+                res["SidebarCtrlBorderBrush"]  = B("#015C9F");
+                res["SidebarCtrlTextBrush"]    = B("#B0D8F8");
                 res["WindowBgBrush"]           = B("#E8EEF8");
-                res["TitleBgBrush"]            = B("#2B6CB0");
-                res["TitleBorderBrush"]        = B("#1A509A");
+                res["TitleBgBrush"]            = B("#0173C7");
+                res["TitleBorderBrush"]        = B("#015C9F");
                 res["SectionBgBrush"]          = B("#FFFFFF");
                 res["SectionBorderBrush"]      = B("#D4DCF0");
                 res["ActivityBgBrush"]         = B("#E8EEF8");
@@ -7060,12 +7056,12 @@ Read-Host 'Press Enter to close'
                 res["FieldLabelBrush"]         = B("#585E70");
                 res["BtnBgBrush"]              = B("#E4ECF8");
                 res["BtnBorderBrush"]          = B("#A8B8D8");
-                res["BtnHoverBgBrush"]         = B("#D0DEF8");
-                res["BtnHoverBorderBrush"]     = B("#2B6CB0");
-                res["BtnPressedBgBrush"]       = B("#C0D0F0");
+                res["BtnHoverBgBrush"]         = B("#CDE6F7");
+                res["BtnHoverBorderBrush"]     = B("#0173C7");
+                res["BtnPressedBgBrush"]       = B("#B0D8F4");
                 res["BtnFgBrush"]              = B("#262626");
                 res["ColHeaderBgBrush"]        = B("#D0DCEE");
-                res["ColHeaderFgBrush"]        = B("#2B6CB0");
+                res["ColHeaderFgBrush"]        = B("#0173C7");
                 res["ColHeaderBorderBrush"]    = B("#A8B8D8");
                 res["AlternatingRowBgBrush"]   = B("#DBE4F0");
                 break;
@@ -7146,19 +7142,19 @@ Read-Host 'Press Enter to close'
             case "Office2013":
                 res["NavIconBrush"]            = B("#BDD4F8");
                 res["NavTextBrush"]            = B("#D4E8FF");
-                res["NavHoverBgBrush"]         = B("#1D60A8");
+                res["NavHoverBgBrush"]         = B("#0060A8");
                 res["NavHoverIconBrush"]       = B("#E8F4FF");
                 res["NavHoverTextBrush"]       = B("#FFFFFF");
-                res["NavSelBgBrush"]           = B("#0E4A90");
+                res["NavSelBgBrush"]           = B("#0072C6");
                 res["NavSelTextBrush"]         = B("#FFFFFF");
                 res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#7098C0");
-                res["SidebarCtrlBgBrush"]      = B("#1860A8");
-                res["SidebarCtrlBorderBrush"]  = B("#0E4A90");
-                res["SidebarCtrlTextBrush"]    = B("#80B8E0");
+                res["SidebarCtrlBgBrush"]      = B("#0068B8");
+                res["SidebarCtrlBorderBrush"]  = B("#005EA8");
+                res["SidebarCtrlTextBrush"]    = B("#B0D8F8");
                 res["WindowBgBrush"]           = B("#FFFFFF");
-                res["TitleBgBrush"]            = B("#2972BF");
-                res["TitleBorderBrush"]        = B("#1A5AA0");
+                res["TitleBgBrush"]            = B("#0072C6");
+                res["TitleBorderBrush"]        = B("#005EA8");
                 res["SectionBgBrush"]          = B("#F6F6F6");
                 res["SectionBorderBrush"]      = B("#E0E4EA");
                 res["ActivityBgBrush"]         = B("#F0F4FA");
@@ -7169,12 +7165,12 @@ Read-Host 'Press Enter to close'
                 res["FieldLabelBrush"]         = B("#606070");
                 res["BtnBgBrush"]              = B("#F0F4FC");
                 res["BtnBorderBrush"]          = B("#B8C8E0");
-                res["BtnHoverBgBrush"]         = B("#DCE8FC");
-                res["BtnHoverBorderBrush"]     = B("#2972BF");
-                res["BtnPressedBgBrush"]       = B("#C8D8F4");
+                res["BtnHoverBgBrush"]         = B("#CDE6F7");
+                res["BtnHoverBorderBrush"]     = B("#0072C6");
+                res["BtnPressedBgBrush"]       = B("#B0D8F4");
                 res["BtnFgBrush"]              = B("#262626");
                 res["ColHeaderBgBrush"]        = B("#E8EFF8");
-                res["ColHeaderFgBrush"]        = B("#2972BF");
+                res["ColHeaderFgBrush"]        = B("#0072C6");
                 res["ColHeaderBorderBrush"]    = B("#C0D0E0");
                 res["AlternatingRowBgBrush"]   = B("#EEF4FC");
                 break;
@@ -7185,9 +7181,9 @@ Read-Host 'Press Enter to close'
                 res["NavHoverBgBrush"]         = B("#202840");
                 res["NavHoverIconBrush"]       = B("#C0D0E8");
                 res["NavHoverTextBrush"]       = B("#E0E8F8");
-                res["NavSelBgBrush"]           = B("#1BBBF0");
-                res["NavSelTextBrush"]         = B("#0A1520");
-                res["NavSelIconBrush"]         = B("#0A1520");
+                res["NavSelBgBrush"]           = B("#2B579A");
+                res["NavSelTextBrush"]         = B("#FFFFFF");
+                res["NavSelIconBrush"]         = B("#FFFFFF");
                 res["NavSectionBrush"]         = B("#686878");
                 res["SidebarCtrlBgBrush"]      = B("#282828");
                 res["SidebarCtrlBorderBrush"]  = B("#404040");
@@ -7248,10 +7244,6 @@ Read-Host 'Press Enter to close'
                 res["BtnPressedBgBrush"]       = B("#B8D0F0");
                 res["BtnFgBrush"]              = B("#1A1A2E");
                 res["AlternatingRowBgBrush"]   = B("#E8EFF8");
-                res["RowHoverBgBrush"]         = B("#D4E4F4");
-                res["RowSelBgBrush"]           = B("#ACCCE8");
-                res["RowSelTextBrush"]         = B("#0E1A30");
-                res["RowSelBorderBrush"]       = B("#3E6FA8");
                 res["ColHeaderBgBrush"]        = B("#C8DCF0");
                 res["ColHeaderFgBrush"]        = B("#1A1A2E");
                 res["ColHeaderBorderBrush"]    = B("#8AAED4");
@@ -7409,10 +7401,6 @@ Read-Host 'Press Enter to close'
                 res["BtnHoverBorderBrush"]     = B("#4A8CC8");
                 res["BtnFgBrush"]              = B("#1A2840");
                 res["AlternatingRowBgBrush"]   = B("#EBF2FA");
-                res["RowHoverBgBrush"]         = B("#D0E8FA");
-                res["RowSelBgBrush"]           = B("#A8D4F8");
-                res["RowSelTextBrush"]         = B("#0A1E38");
-                res["RowSelBorderBrush"]       = B("#4090D0");
                 res["ColHeaderBgBrush"]        = B("#C4D8F0");
                 res["ColHeaderFgBrush"]        = B("#0E2848");
                 res["ColHeaderBorderBrush"]    = B("#8ABCDC");
@@ -7631,22 +7619,6 @@ Read-Host 'Press Enter to close'
                 altBrushL.Freeze();
                 res["AlternatingRowBgBrush"] = altBrushL;
 
-                // Light theme row hover: subtle single-layer tint (cell only, no row duplication)
-                var hoverBrushL = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(0x26, color.R, color.G, color.B));
-                hoverBrushL.Freeze();
-                res["RowHoverBgBrush"] = hoverBrushL;
-                // Light theme row selection: much more opaque so selected > hover clearly
-                var selGradL = new System.Windows.Media.LinearGradientBrush(
-                    System.Windows.Media.Color.FromArgb(0x90, color.R, color.G, color.B),
-                    System.Windows.Media.Color.FromArgb(0xC0, color.R, color.G, color.B),
-                    new System.Windows.Point(0.5, 0), new System.Windows.Point(0.5, 1));
-                selGradL.Freeze();
-                res["RowSelBgBrush"]     = selGradL;
-                // Selection text: always dark
-                res["RowSelTextBrush"]   = B("#0A1428");
-                res["RowSelBorderBrush"] = accentBrush;
-
                 // Light theme flag unknown: light gray so it shows against light backgrounds
                 res["FlagUnknownBrush"] = B("#A0A8B8");
             }
@@ -7679,25 +7651,6 @@ Read-Host 'Press Enter to close'
                     System.Windows.Media.Color.FromArgb(0x18, color.R, color.G, color.B));
                 altBrushD.Freeze();
                 res["AlternatingRowBgBrush"] = altBrushD;
-
-                // Dark theme row hover: single-layer tint, kept subtle so selection stands out more
-                var hoverBrushD = new System.Windows.Media.SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(0x30, color.R, color.G, color.B));
-                hoverBrushD.Freeze();
-                res["RowHoverBgBrush"] = hoverBrushD;
-                // Dark theme row selection: strong opaque gradient — clearly more prominent than hover
-                var selGradD = new System.Windows.Media.LinearGradientBrush(
-                    System.Windows.Media.Color.FromArgb(0xE8, color.R, color.G, color.B),
-                    System.Windows.Media.Color.FromArgb(0xC0, color.R, color.G, color.B),
-                    new System.Windows.Point(0.5, 0), new System.Windows.Point(0.5, 1));
-                selGradD.Freeze();
-                res["RowSelBgBrush"] = selGradD;
-                {
-                    bool hasHue = Math.Max(color.R, Math.Max(color.G, color.B)) - Math.Min(color.R, Math.Min(color.G, color.B)) > 30
-                                  && (color.R + color.G + color.B) > 100;
-                    res["RowSelTextBrush"]   = hasHue ? B("#FFFFFF") : B("#C8D8EC");
-                    res["RowSelBorderBrush"] = accentBrush;
-                }
 
                 // Dark theme flag unknown: medium gray that shows on dark backgrounds
                 res["FlagUnknownBrush"] = B("#8A92A4");
@@ -7733,11 +7686,12 @@ Read-Host 'Press Enter to close'
             if (res.Contains(key)) wRes[key] = res[key];
 
         // Row selection and hover — unified across ServerWindow and all feature windows.
-        // SystemColors.HighlightColor matches the rubber-band selection rectangle on every theme.
+        // Alphas match the ContextIdle re-apply (0x45/0x22) so there is no visible flash
+        // between the synchronous pass and the deferred ContextIdle override.
         var hl = System.Windows.SystemColors.HighlightColor;
         {
             var selBrushSync = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromArgb(0x90, hl.R, hl.G, hl.B));
+                System.Windows.Media.Color.FromArgb(0x45, hl.R, hl.G, hl.B));
             selBrushSync.Freeze();
             wRes["RowSelBgBrush"]                       = selBrushSync;
             Application.Current.Resources["RowSelBgBrush"] = selBrushSync;
@@ -7749,7 +7703,7 @@ Read-Host 'Press Enter to close'
             wRes["RowBorderThicknessKey"] = new System.Windows.Thickness(0);
 
             var hoverBrushSync = new System.Windows.Media.SolidColorBrush(
-                System.Windows.Media.Color.FromArgb(0x20, hl.R, hl.G, hl.B));
+                System.Windows.Media.Color.FromArgb(0x22, hl.R, hl.G, hl.B));
             hoverBrushSync.Freeze();
             wRes["RowHoverBgBrush"]                       = hoverBrushSync;
             Application.Current.Resources["RowHoverBgBrush"] = hoverBrushSync;
@@ -7877,12 +7831,11 @@ Read-Host 'Press Enter to close'
             foreach (var k in _allThemeKeys)
                 if (res.Contains(k)) wr[k] = res[k];
         }));
-        var capturedRes = res;
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
         {
             var wr = Resources;
             foreach (var k in _allThemeKeys)
-                if (capturedRes.Contains(k)) wr[k] = capturedRes[k];
+                if (res.Contains(k)) wr[k] = res[k];
 
             this.InvalidateMeasure();
             this.UpdateLayout();
