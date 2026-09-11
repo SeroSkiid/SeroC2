@@ -1086,6 +1086,8 @@ internal class TlsClient : IDisposable
     private long _lastNetSent, _lastNetRecv;
     private DateTime _lastNetTs = DateTime.UtcNow;
     private bool _netPrimed;
+    private System.Net.NetworkInformation.NetworkInterface[]? _netIfCache;
+    private DateTime _netIfRefreshAt = DateTime.MinValue;
     private long _lastDiskRead, _lastDiskWrite;
     private DateTime _lastDiskTs = DateTime.UtcNow;
     private bool _diskPrimed;
@@ -1102,7 +1104,13 @@ internal class TlsClient : IDisposable
         try
         {
             long sent = 0, recv = 0;
-            foreach (var ni in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+            var now = DateTime.UtcNow;
+            if (_netIfCache == null || now >= _netIfRefreshAt)
+            {
+                _netIfCache      = System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces();
+                _netIfRefreshAt  = now.AddSeconds(30);
+            }
+            foreach (var ni in _netIfCache)
             {
                 if (ni.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up) continue;
                 var t = ni.NetworkInterfaceType;
@@ -1115,7 +1123,6 @@ internal class TlsClient : IDisposable
                 sent += stats.BytesSent;
                 recv += stats.BytesReceived;
             }
-            var now = DateTime.UtcNow;
             // Prime on first call: record baseline so the first rate sample is not
             // (cumulative-bytes-since-boot / time-since-stub-start) which would spike.
             if (!_netPrimed)
@@ -1198,6 +1205,8 @@ internal class TlsClient : IDisposable
     // Returns 0-100 (sum of all 3D engine instances, clamped), or -1 if unavailable.
     private IntPtr _gpuQuery  = IntPtr.Zero;
     private IntPtr _gpuCtr    = IntPtr.Zero;
+    private IntPtr _gpuBuf    = IntPtr.Zero;
+    private int    _gpuBufSz  = 0;
 
     private float SampleGpuPct()
     {
@@ -1216,21 +1225,24 @@ internal class TlsClient : IDisposable
             const uint PDH_FMT_DOUBLE = 0x200;
             PdhGetFormattedCounterArrayW(_gpuCtr, PDH_FMT_DOUBLE, ref sz, out _, IntPtr.Zero);
             if (sz <= 0) return 0f;
-            var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(sz);
-            try
+            if (sz > _gpuBufSz)
             {
-                if (PdhGetFormattedCounterArrayW(_gpuCtr, PDH_FMT_DOUBLE, ref sz, out cnt, buf) != 0) return 0f;
+                if (_gpuBuf != IntPtr.Zero) System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf);
+                _gpuBuf   = System.Runtime.InteropServices.Marshal.AllocHGlobal(sz);
+                _gpuBufSz = sz;
+            }
+            {
+                if (PdhGetFormattedCounterArrayW(_gpuCtr, PDH_FMT_DOUBLE, ref sz, out cnt, _gpuBuf) != 0) return 0f;
                 // PDH_FMT_COUNTERVALUE_ITEM_W layout (64-bit): szName ptr (8) + CStatus (4) + pad (4) + doubleValue (8) = 24 bytes
                 double total = 0;
                 for (int i = 0; i < cnt; i++)
                 {
-                    int status = System.Runtime.InteropServices.Marshal.ReadInt32(buf, i * 24 + 8);
+                    int status = System.Runtime.InteropServices.Marshal.ReadInt32(_gpuBuf, i * 24 + 8);
                     if (status == 0)
-                        total += BitConverter.Int64BitsToDouble(System.Runtime.InteropServices.Marshal.ReadInt64(buf, i * 24 + 16));
+                        total += BitConverter.Int64BitsToDouble(System.Runtime.InteropServices.Marshal.ReadInt64(_gpuBuf, i * 24 + 16));
                 }
                 return (float)Math.Min(100.0, total);
             }
-            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buf); }
         }
         catch { return -1f; }
     }
@@ -1976,7 +1988,7 @@ internal class TlsClient : IDisposable
                 if (n == 0) return null;
                 read += n;
             }
-            return JsonSerializer.Deserialize(Encoding.UTF8.GetString(dataBuf, 0, length), SeroJson.Default.Packet);
+            return JsonSerializer.Deserialize(dataBuf.AsSpan(0, length), SeroJson.Default.Packet);
         }
         finally
         {
@@ -2115,6 +2127,10 @@ internal class TlsClient : IDisposable
         _frameCh.Writer.TryComplete();
         _ctrlOutCh.Writer.TryComplete();
         _frameOutCh.Writer.TryComplete();
+        if (_diskHandlesCache != null)
+            foreach (var h in _diskHandlesCache)
+                if (h != 0) CloseHandle((IntPtr)h);
+        if (_gpuBuf != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
     }
 }
 

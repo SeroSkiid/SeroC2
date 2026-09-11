@@ -25,7 +25,13 @@ public class TlsServer
     private System.Timers.Timer? _watchdogTimer;
     public int MaxConnectedClients { get; set; } = 100_000;
 
-    public string AuthKey { get; set; } = string.Empty;
+    private string _authKey = string.Empty;
+    private byte[] _expectedAuthBytes = [];
+    public string AuthKey
+    {
+        get => _authKey;
+        set { _authKey = value ?? string.Empty; _expectedAuthBytes = System.Text.Encoding.UTF8.GetBytes(_authKey); }
+    }
     public Func<string>? GetClientIdPrefix { get; set; }
     public ConcurrentDictionary<string, ConnectedClient> ConnectedClients { get; } = new();
     public event Action<ConnectedClient>? ClientConnected;
@@ -310,10 +316,9 @@ public class TlsServer
             }
 
             // Auth key verification — constant-time to prevent timing oracle
-            var expectedBytes = System.Text.Encoding.UTF8.GetBytes(AuthKey ?? "");
             var receivedBytes = System.Text.Encoding.UTF8.GetBytes(info.AuthKey ?? "");
-            bool authOk = expectedBytes.Length == receivedBytes.Length
-                          && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(expectedBytes, receivedBytes);
+            bool authOk = _expectedAuthBytes.Length == receivedBytes.Length
+                          && System.Security.Cryptography.CryptographicOperations.FixedTimeEquals(_expectedAuthBytes, receivedBytes);
             if (!authOk)
             {
                 RecordAuthFailure(ip);

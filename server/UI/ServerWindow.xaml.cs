@@ -64,6 +64,10 @@ public partial class ServerWindow : ThemedWindow
     private readonly Dictionary<string, ConnectedClient> _onlineById = new();
     // Pending connect/disconnect ops, flushed every 150ms on the UI thread
     private readonly System.Collections.Concurrent.ConcurrentQueue<(bool add, ConnectedClient client)> _clientQueue = new();
+    // Reusable scratch collections for FlushClientQueue — avoids per-tick heap allocation
+    private readonly Dictionary<string, ConnectedClient> _flushToAdd    = new();
+    private readonly Dictionary<string, ConnectedClient> _flushToRemove = new();
+    private readonly HashSet<string>                     _flushToClose  = new();
     private DispatcherTimer? _batchTimer;
 
     // Limit concurrent new-client side-effect tasks (Telegram, AutoTask, Clipper push, WinNotify).
@@ -1171,9 +1175,12 @@ public partial class ServerWindow : ThemedWindow
         if (_clientQueue.IsEmpty) return;
 
         // Use Dictionary for O(1) dedup instead of List.RemoveAll / List.Any → O(N²) at 10k clients
-        var toAdd    = new Dictionary<string, ConnectedClient>();
-        var toRemove = new Dictionary<string, ConnectedClient>();
-        var toClose  = new HashSet<string>();
+        _flushToAdd.Clear();
+        _flushToRemove.Clear();
+        _flushToClose.Clear();
+        var toAdd    = _flushToAdd;
+        var toRemove = _flushToRemove;
+        var toClose  = _flushToClose;
 
         while (_clientQueue.TryDequeue(out var op))
         {
