@@ -37,18 +37,19 @@ internal class TlsClient : IDisposable
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest, SingleReader = true });
 
     // ── Output channels (two-level write pipeline) ────────────────────────────
-    // The WriteLoop serialises packets into byte[] and enqueues them to these
+    // The WriteLoop serialises packets into (byte[], int) and enqueues them to these
     // output channels.  A background SslWriterLoop drains them onto the SSL
     // stream.  This decouples the WriteLoop from network I/O so congestion on
     // frame writes can never block control packets (heartbeats, pongs, acks).
-    private readonly System.Threading.Channels.Channel<byte[]> _ctrlOutCh =
-        System.Threading.Channels.Channel.CreateBounded<byte[]>(
+    private readonly System.Threading.Channels.Channel<(byte[] data, int len)> _ctrlOutCh =
+        System.Threading.Channels.Channel.CreateBounded<(byte[], int)>(
             new System.Threading.Channels.BoundedChannelOptions(64)
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true, SingleWriter = true });
-    private readonly System.Threading.Channels.Channel<byte[]> _frameOutCh =
-        System.Threading.Channels.Channel.CreateBounded<byte[]>(
+    private readonly System.Threading.Channels.Channel<(byte[] data, int len)> _frameOutCh =
+        System.Threading.Channels.Channel.CreateBounded<(byte[], int)>(
             new System.Threading.Channels.BoundedChannelOptions(2)
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest, SingleReader = true, SingleWriter = true });
+    private readonly byte[] _writeLenBuf = new byte[4];
 
     private CancellationTokenSource? _sessionCts;
 
@@ -1164,25 +1165,21 @@ internal class TlsClient : IDisposable
                 _diskHandlesCacheReady = true;
             }
 
+            if (_diskBuf == IntPtr.Zero) _diskBuf = System.Runtime.InteropServices.Marshal.AllocHGlobal(96);
             long totalRead = 0, totalWrite = 0;
             bool gotAny = false;
-            var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(96);
-            try
+            if (_diskHandlesCache != null)
             {
-                if (_diskHandlesCache != null)
+                foreach (var h in _diskHandlesCache)
                 {
-                    foreach (var h in _diskHandlesCache)
+                    if (DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, IntPtr.Zero, 0, _diskBuf, 96, out _, IntPtr.Zero))
                     {
-                        if (DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, IntPtr.Zero, 0, buf, 96, out _, IntPtr.Zero))
-                        {
-                            totalRead  += System.Runtime.InteropServices.Marshal.ReadInt64(buf, 0);
-                            totalWrite += System.Runtime.InteropServices.Marshal.ReadInt64(buf, 8);
-                            gotAny = true;
-                        }
+                        totalRead  += System.Runtime.InteropServices.Marshal.ReadInt64(_diskBuf, 0);
+                        totalWrite += System.Runtime.InteropServices.Marshal.ReadInt64(_diskBuf, 8);
+                        gotAny = true;
                     }
                 }
             }
-            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buf); }
 
             if (!gotAny) return (0, 0);
             var now = DateTime.UtcNow;
@@ -1207,6 +1204,7 @@ internal class TlsClient : IDisposable
     private IntPtr _gpuCtr    = IntPtr.Zero;
     private IntPtr _gpuBuf    = IntPtr.Zero;
     private int    _gpuBufSz  = 0;
+    private IntPtr _diskBuf   = IntPtr.Zero;
 
     private float SampleGpuPct()
     {
@@ -1877,13 +1875,12 @@ internal class TlsClient : IDisposable
         return Task.FromResult(queued);
     }
 
-    private byte[] SerializePacket(Packet packet)
+    // Returns (jsonBytes, length) without the 4-byte length-prefix merge alloc.
+    // SslWriterLoop writes the 4-byte header and body as two separate WriteAsync calls.
+    private (byte[] data, int len) SerializePacket(Packet packet)
     {
         var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(packet, SeroJson.Default.Packet);
-        var result = new byte[4 + jsonBytes.Length];
-        BitConverter.GetBytes(jsonBytes.Length).CopyTo(result, 0);
-        jsonBytes.CopyTo(result, 4);
-        return result;
+        return (jsonBytes, jsonBytes.Length);
     }
 
     // ── WriteLoop: serialises packets into output channels (never blocks on I/O) ──
@@ -1932,14 +1929,20 @@ internal class TlsClient : IDisposable
         {
             while (!ct.IsCancellationRequested)
             {
-                // Priority: drain all pending ctrl bytes first
-                while (_ctrlOutCh.Reader.TryRead(out var bytes))
-                    await ssl.WriteAsync(bytes, ct);
+                // Priority: drain all pending ctrl packets first
+                while (_ctrlOutCh.Reader.TryRead(out var item))
+                {
+                    BitConverter.TryWriteBytes(_writeLenBuf, item.len);
+                    await ssl.WriteAsync(_writeLenBuf, ct);
+                    await ssl.WriteAsync(item.data.AsMemory(0, item.len), ct);
+                }
 
                 // Then write one frame
-                if (_frameOutCh.Reader.TryRead(out var frameBytes))
+                if (_frameOutCh.Reader.TryRead(out var fi))
                 {
-                    await ssl.WriteAsync(frameBytes, ct);
+                    BitConverter.TryWriteBytes(_writeLenBuf, fi.len);
+                    await ssl.WriteAsync(_writeLenBuf, ct);
+                    await ssl.WriteAsync(fi.data.AsMemory(0, fi.len), ct);
                     await ssl.FlushAsync(ct);
                     continue;
                 }
@@ -2130,7 +2133,8 @@ internal class TlsClient : IDisposable
         if (_diskHandlesCache != null)
             foreach (var h in _diskHandlesCache)
                 if (h != 0) CloseHandle((IntPtr)h);
-        if (_gpuBuf != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
+        if (_diskBuf != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_diskBuf); _diskBuf = IntPtr.Zero; }
+        if (_gpuBuf  != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf);  _gpuBuf  = IntPtr.Zero; }
     }
 }
 

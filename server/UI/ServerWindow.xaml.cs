@@ -114,6 +114,12 @@ public partial class ServerWindow : ThemedWindow
     // Frozen brushes for activity chart — allocated once, not on every 5s dashboard tick
     private static readonly SolidColorBrush _chartGridBrush  = MakeArgbBrush(0x18, 0x4A, 0x85, 0xF5);
     private static readonly SolidColorBrush _chartLabelBrush = MakeArgbBrush(0x60, 0x80, 0x90, 0xB4);
+    // Cached chart scratch — avoids per-tick allocations in DrawActivityChart / RefreshDashboard
+    private readonly int[]   _chartCounts        = new int[24];
+    private static readonly int[] _chartLabelIdxs = { 0, 6, 12, 18, 23 };
+    private System.Windows.Shapes.Line[]? _chartGridLines;
+    private TextBlock[]? _chartLabels;
+    private readonly Dictionary<string, int> _dashCountryCounts = new();
     private static SolidColorBrush MakeArgbBrush(byte a, byte r, byte g, byte b)
     { var br = new SolidColorBrush(Color.FromArgb(a, r, g, b)); br.Freeze(); return br; }
 
@@ -1396,41 +1402,48 @@ public partial class ServerWindow : ThemedWindow
         double h = DashChart.ActualHeight;
         if (w <= 0 || h <= 0) return;
 
-        // Build 24 hourly buckets from rolling connect history (O(k) where k = connects in 24h)
-        var now    = DateTime.UtcNow;
-        var counts = new int[24];
+        // Build 24 hourly buckets — reuse cached array to avoid per-tick alloc
+        Array.Clear(_chartCounts, 0, 24);
+        var now = DateTime.UtcNow;
         foreach (var ts in _store.GetConnectHistory())
         {
             var age = (now - ts).TotalHours;
             if (age < 0 || age >= 24) continue;
-            counts[23 - (int)age]++;
+            _chartCounts[23 - (int)age]++;
         }
 
-        int rawMax = counts.Max();
+        int rawMax = 0;
+        for (int i = 0; i < 24; i++) if (_chartCounts[i] > rawMax) rawMax = _chartCounts[i];
         int peak = Math.Max(1, rawMax);
         DashPeak.Text = rawMax == 0 ? "—" : rawMax.ToString();
 
-        // Remove previous dynamic children (keep Polyline and Polygon which are declared in XAML)
-        for (int i = DashChart.Children.Count - 1; i >= 0; i--)
+        // One-time canvas setup: create grid lines and labels, add permanently
+        if (_chartGridLines == null)
         {
-            var child = DashChart.Children[i];
-            if (child is System.Windows.Shapes.Line || child is TextBlock) DashChart.Children.RemoveAt(i);
-        }
-
-        // Horizontal grid lines
-        var gridBrush = _chartGridBrush;
-        for (int g = 1; g <= 3; g++)
-        {
-            double y = h * g / 4.0;
-            var gl = new System.Windows.Shapes.Line
+            _chartGridLines = new System.Windows.Shapes.Line[3];
+            for (int g = 0; g < 3; g++)
             {
-                X1 = 0, X2 = w, Y1 = y, Y2 = y,
-                Stroke = gridBrush, StrokeThickness = 1,
-            };
-            DashChart.Children.Add(gl);
+                _chartGridLines[g] = new System.Windows.Shapes.Line
+                    { Stroke = _chartGridBrush, StrokeThickness = 1 };
+                DashChart.Children.Add(_chartGridLines[g]);
+            }
+            _chartLabels = new TextBlock[5];
+            for (int i = 0; i < 5; i++)
+            {
+                _chartLabels[i] = new TextBlock { Foreground = _chartLabelBrush, FontSize = 8 };
+                DashChart.Children.Add(_chartLabels[i]);
+            }
         }
 
-        // Build point collection
+        // Update grid line positions
+        for (int g = 0; g < 3; g++)
+        {
+            double y = h * (g + 1) / 4.0;
+            _chartGridLines![g].X1 = 0; _chartGridLines[g].X2 = w;
+            _chartGridLines[g].Y1 = y;  _chartGridLines[g].Y2 = y;
+        }
+
+        // Build point collections
         double padL = 4, padR = 4, padT = 8, padB = 20;
         double chartW = w - padL - padR;
         double chartH = h - padT - padB;
@@ -1442,31 +1455,24 @@ public partial class ServerWindow : ThemedWindow
         for (int i = 0; i < 24; i++)
         {
             double x = padL + i * step;
-            double y = padT + chartH - (counts[i] / (double)peak) * chartH;
+            double y = padT + chartH - (_chartCounts[i] / (double)peak) * chartH;
             linePoints.Add(new System.Windows.Point(x, y));
             fillPoints.Add(new System.Windows.Point(x, y));
         }
-        // Close fill polygon at bottom corners
         fillPoints.Add(new System.Windows.Point(padL + 23 * step, padT + chartH));
         fillPoints.Add(new System.Windows.Point(padL, padT + chartH));
 
         DashChartLine.Points = linePoints;
         DashChartFill.Points = fillPoints;
 
-        // Hour labels every 6h: -18h, -12h, -6h, now
-        var labelBrush = _chartLabelBrush;
-        foreach (int idx in new[] { 0, 6, 12, 18, 23 })
+        // Update label positions — static text, only position varies with canvas size
+        for (int i = 0; i < 5; i++)
         {
+            int idx = _chartLabelIdxs[i];
             double x = padL + idx * step;
-            var label = new TextBlock
-            {
-                Text       = idx == 23 ? "now" : $"-{23 - idx}h",
-                Foreground = labelBrush,
-                FontSize   = 8,
-            };
-            Canvas.SetLeft(label, x - 8);
-            Canvas.SetTop(label,  h - padB + 3);
-            DashChart.Children.Add(label);
+            _chartLabels![i].Text = idx == 23 ? "now" : $"-{23 - idx}h";
+            Canvas.SetLeft(_chartLabels[i], x - 8);
+            Canvas.SetTop(_chartLabels[i], h - padB + 3);
         }
     }
 
@@ -1521,7 +1527,8 @@ public partial class ServerWindow : ThemedWindow
         _ = Task.Run(() =>
         {
             int win11 = 0, win10 = 0, cam = 0, admin = 0, n = 0;
-            var countryCounts = new Dictionary<string, int>();
+            _dashCountryCounts.Clear();
+            var countryCounts = _dashCountryCounts;
             if (connDict != null)
             {
                 foreach (var c in connDict.Values)
