@@ -51,6 +51,12 @@ internal class TlsClient : IDisposable
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropOldest, SingleReader = true, SingleWriter = true });
     private readonly byte[] _writeLenBuf = new byte[4];
 
+    // Cached packets for hot heartbeat path — no mutable Data, safe to share across ticks.
+    private static readonly Packet _heartbeatPacket = new() { Type = PacketType.Heartbeat };
+    // Reused hardware-stats stub — fields are mutated then serialized synchronously in a
+    // single-task context (HeartbeatSender), so there is no concurrent-access risk.
+    private readonly HardwareStatsStub _hwStatsStub = new();
+
     private CancellationTokenSource? _sessionCts;
 
     /// <summary>False after Disconnect/Uninstall — caller should NOT reconnect.</summary>
@@ -1022,7 +1028,7 @@ internal class TlsClient : IDisposable
         catch { return 0f; }
     }
 
-    private static HardwareStatsStub SampleHardware(float cpu)
+    private HardwareStatsStub SampleHardware(float cpu)
     {
         long ramUsed = 0, ramTotal = 0;
         try
@@ -1043,9 +1049,13 @@ internal class TlsClient : IDisposable
                 idleSec = Math.Max(0, (int)((uint)Environment.TickCount - lii.dwTime) / 1000);
         }
         catch { }
-        var cpuName = _cpuName ??= GetCpuName();
-        var gpuName = _gpuName ??= GetGpuName();
-        return new HardwareStatsStub { CpuUsage = cpu, RamUsed = ramUsed, RamTotal = ramTotal, CpuName = cpuName, GpuName = gpuName, IdleSeconds = idleSec };
+        _hwStatsStub.CpuUsage    = cpu;
+        _hwStatsStub.RamUsed     = ramUsed;
+        _hwStatsStub.RamTotal    = ramTotal;
+        _hwStatsStub.CpuName     = _cpuName ??= GetCpuName();
+        _hwStatsStub.GpuName     = _gpuName ??= GetGpuName();
+        _hwStatsStub.IdleSeconds = idleSec;
+        return _hwStatsStub;
     }
 
     private static string? _cpuName;
@@ -1296,7 +1306,7 @@ internal class TlsClient : IDisposable
             try
             {
                 await Task.Delay(Config.HeartbeatIntervalMs, ct);
-                await WritePacketAsync(new Packet { Type = PacketType.Heartbeat }, ct);
+                await WritePacketAsync(_heartbeatPacket, ct);
 
                 // Send active window every heartbeat (3 s)
                 var title = GetActiveWindowTitle();
