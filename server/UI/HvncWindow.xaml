@@ -30,13 +30,9 @@
                         </StackPanel>
                     </Border>
                 </StackPanel>
-                <!-- Right: FPS + window controls -->
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource FieldLabelBrush}"
-                                   FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
-                    </Border>
-                    <Button x:Name="BtnHide" Height="26" Padding="8,0" Margin="0,0,4,0"
+                <!-- Center: Hide button -->
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Button x:Name="BtnHide" Height="26" Padding="8,0"
                             Style="{StaticResource SBtn}" FontSize="11"
                             ToolTip="Hide all UI chrome — press F12 to restore" Click="BtnHide_Click">
                         <StackPanel Orientation="Horizontal">
@@ -44,6 +40,13 @@
                             <TextBlock x:Name="TxtBtnHide" Text="HIDE" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
+                </StackPanel>
+                <!-- Right: FPS + window controls -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                        <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource FieldLabelBrush}"
+                                   FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
+                    </Border>
                     <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
                             Style="{StaticResource SBtn}" FontSize="11"
                             ToolTip="Actions" Click="BtnMenu_Click">
