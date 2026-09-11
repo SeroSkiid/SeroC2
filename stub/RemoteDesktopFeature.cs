@@ -157,6 +157,7 @@ internal static class RemoteDesktopFeature
     // Reusable scratch for CaptureAndDiff — avoids per-frame heap allocation
     private static readonly System.Collections.Generic.List<(int bx, int by, int bw, int bh)> _diffChangedBlocks = new(128);
     private static byte[]?[]? _diffEncoded;
+    private static int[]?     _diffEncodedLen;
     private static readonly System.Text.StringBuilder _diffSb = new(4096);
     // Scheduled tick to force a full-frame refresh (clears _prevPixels so next capture is a complete frame)
     private static long _forceRefreshAt;
@@ -595,24 +596,32 @@ internal static class RemoteDesktopFeature
 
         if (useFullFrame)
         {
-            byte[]? fullJpeg = EncodeBlock(pixels, dstW, dstH, 0, 0, dstW, dstH, _adaptiveQuality);
-            if (fullJpeg == null || fullJpeg.Length == 0) return null;
+            byte[]? fullJpeg = EncodeBlock(pixels, dstW, dstH, 0, 0, dstW, dstH, _adaptiveQuality, out int fullLen);
+            if (fullJpeg == null || fullLen == 0) return null;
             string swsh = scale < 100 ? $",\"sw\":{srcW},\"sh\":{srcH}" : "";
-            return "{\"w\":" + dstW + ",\"h\":" + dstH + swsh +
-                   ",\"j\":\"" + Convert.ToBase64String(fullJpeg) + "\"}";
+            string fullResult = "{\"w\":" + dstW + ",\"h\":" + dstH + swsh +
+                                ",\"j\":\"" + Convert.ToBase64String(fullJpeg, 0, fullLen) + "\"}";
+            System.Buffers.ArrayPool<byte>.Shared.Return(fullJpeg);
+            return fullResult;
         }
 
         int effectiveQ = changedCount < totalBlocks * 15 / 100 ? 95 : _adaptiveQuality;
 
         if (_diffEncoded == null || _diffEncoded.Length < changedBlocks.Count)
-            _diffEncoded = new byte[]?[Math.Max(changedBlocks.Count, 64)];
-        var encoded = _diffEncoded;
+        {
+            int sz = Math.Max(changedBlocks.Count, 64);
+            _diffEncoded    = new byte[]?[sz];
+            _diffEncodedLen = new int[sz];
+        }
+        var encoded    = _diffEncoded;
+        var encodedLen = _diffEncodedLen!;
         System.Threading.Tasks.Parallel.For(0, changedBlocks.Count,
             new System.Threading.Tasks.ParallelOptions { MaxDegreeOfParallelism = Math.Max(1, Environment.ProcessorCount / 2) },
             i =>
             {
                 var (bx, by, bw, bh) = changedBlocks[i];
-                encoded[i] = EncodeBlock(pixels, dstW, dstH, bx, by, bw, bh, effectiveQ);
+                encoded[i] = EncodeBlock(pixels, dstW, dstH, bx, by, bw, bh, effectiveQ, out int len);
+                encodedLen[i] = len;
             });
 
         _diffSb.Clear();
@@ -625,7 +634,7 @@ internal static class RemoteDesktopFeature
         for (int i = 0; i < changedBlocks.Count; i++)
         {
             byte[]? jpeg = encoded[i];
-            if (jpeg == null || jpeg.Length == 0) continue;
+            if (jpeg == null || encodedLen[i] == 0) { if (jpeg != null) { System.Buffers.ArrayPool<byte>.Shared.Return(jpeg); encoded[i] = null; } continue; }
             var (bx, by, bw, bh) = changedBlocks[i];
             if (!first) sb.Append(',');
             first = false;
@@ -633,7 +642,9 @@ internal static class RemoteDesktopFeature
               .Append(",\"y\":").Append(by)
               .Append(",\"w\":").Append(bw)
               .Append(",\"h\":").Append(bh)
-              .Append(",\"j\":\"").Append(Convert.ToBase64String(jpeg)).Append("\"}");
+              .Append(",\"j\":\"").Append(Convert.ToBase64String(jpeg, 0, encodedLen[i])).Append("\"}");
+            System.Buffers.ArrayPool<byte>.Shared.Return(jpeg);
+            encoded[i] = null;
         }
         sb.Append("]}");
         return first ? null : sb.ToString();
@@ -657,9 +668,11 @@ internal static class RemoteDesktopFeature
     // Encode a block region of the frame to JPEG.
     // Passes the frame stride directly to GDI+ — no per-block copy needed.
     // GDI+ reads bh rows of bw pixels, skipping (frameW-bw)*4 bytes at each row end.
+    // Returns a pool-rented buffer; caller must use `length` for ToBase64 and return the array to ArrayPool.
     private static byte[]? EncodeBlock(byte[] pixels, int frameW, int frameH,
-                                        int bx, int by, int bw, int bh, int quality)
+                                        int bx, int by, int bw, int bh, int quality, out int length)
     {
+        length = 0;
         int srcStride = frameW * 4;
         nint gdipBmp = 0;
         unsafe
@@ -668,7 +681,7 @@ internal static class RemoteDesktopFeature
             {
                 if (GdipCreateBitmapFromScan0(bw, bh, srcStride, 0x26200A, (nint)p, out gdipBmp) != 0
                     || gdipBmp == 0) return null;
-                try   { return GdipBitmapToJpeg(gdipBmp, quality); }
+                try   { return GdipBitmapToJpeg(gdipBmp, quality, out length); }
                 finally { GdipDisposeImage(gdipBmp); }
             }
         }
@@ -725,6 +738,57 @@ internal static class RemoteDesktopFeature
             if (qPtr   != 0) Marshal.FreeHGlobal(qPtr);
             if (epsPtr != 0) Marshal.FreeHGlobal(epsPtr);
             // Release the IStream COM object
+            nint vtbl   = Marshal.ReadIntPtr(pStream);
+            var releaseFn = Marshal.GetDelegateForFunctionPointer<VtRelease>(
+                Marshal.ReadIntPtr(vtbl, 2 * nint.Size));
+            releaseFn(pStream);
+        }
+    }
+
+    // Pool-rented variant: caller must use `length` with Convert.ToBase64String(data, 0, length)
+    // and return the array to ArrayPool<byte>.Shared after use.
+    internal static byte[]? GdipBitmapToJpeg(nint bmp, int quality, out int length)
+    {
+        length = 0;
+        nint pStream = SHCreateMemStream(0, 0);
+        if (pStream == 0) return null;
+        nint qPtr = 0, epsPtr = 0;
+        try
+        {
+            long q = Math.Clamp(quality, 1, 100);
+            qPtr = Marshal.AllocHGlobal(sizeof(long));
+            Marshal.WriteInt64(qPtr, q);
+            var ep  = new EncoderParam  { Guid = EncQuality, Count = 1, Type = 4, Value = qPtr };
+            var eps = new EncoderParams { Count = 1, Param = ep };
+            epsPtr = Marshal.AllocHGlobal(Marshal.SizeOf<EncoderParams>());
+            Marshal.StructureToPtr(eps, epsPtr, false);
+
+            var clsid = JpegClsid;
+            if (GdipSaveImageToStream(bmp, pStream, ref clsid, epsPtr) != 0) return null;
+
+            nint vtbl  = Marshal.ReadIntPtr(pStream);
+            var seekFn = Marshal.GetDelegateForFunctionPointer<VtSeek>(
+                Marshal.ReadIntPtr(vtbl, 5 * nint.Size));
+            var readFn = Marshal.GetDelegateForFunctionPointer<VtRead>(
+                Marshal.ReadIntPtr(vtbl, 3 * nint.Size));
+
+            long streamLen = 0;
+            seekFn(pStream, 0, 2, ref streamLen);
+            long dummy = 0;
+            seekFn(pStream, 0, 0, ref dummy);
+
+            if (streamLen <= 0) return null;
+
+            var data = System.Buffers.ArrayPool<byte>.Shared.Rent((int)streamLen);
+            unsafe { fixed (byte* p = data) readFn(pStream, (nint)p, (uint)streamLen, out _); }
+            length = (int)streamLen;
+            return data;
+        }
+        catch { return null; }
+        finally
+        {
+            if (qPtr   != 0) Marshal.FreeHGlobal(qPtr);
+            if (epsPtr != 0) Marshal.FreeHGlobal(epsPtr);
             nint vtbl   = Marshal.ReadIntPtr(pStream);
             var releaseFn = Marshal.GetDelegateForFunctionPointer<VtRelease>(
                 Marshal.ReadIntPtr(vtbl, 2 * nint.Size));
