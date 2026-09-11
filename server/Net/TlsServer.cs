@@ -643,8 +643,13 @@ public class TlsServer
     // Whitelist-sanitize stub-supplied IdPrefix: allow only alphanumeric, hyphen, underscore.
     // Prevents path traversal when clientId is used in server file paths (e.g. webcam auto-save).
     // Normal prefixes ("USA", "EUROPE", "TEST-1") pass through unchanged.
-    private static string SanitizeIdPrefix(string p) =>
-        new string(p.Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_').ToArray());
+    private static string SanitizeIdPrefix(string p)
+    {
+        var sb = new System.Text.StringBuilder(p.Length);
+        foreach (char c in p)
+            if (char.IsLetterOrDigit(c) || c == '-' || c == '_') sb.Append(c);
+        return sb.ToString();
+    }
 
     private void Log(string msg)
     {

