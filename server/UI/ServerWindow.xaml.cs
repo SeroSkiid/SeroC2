@@ -139,6 +139,45 @@ public partial class ServerWindow : ThemedWindow
         "DXStyle"
     };
 
+    // Resource keys synced to ServerWindow.Resources on every theme/palette change.
+    // Static to avoid allocating a new string[] on every ApplyTheme() call.
+    private static readonly string[] _wResKeys =
+    {
+        "AccentBrush", "AccentColor",
+        "SidebarBgBrush", "SidebarBorderBrush",
+        "NavIconBrush", "NavTextBrush", "NavHoverBgBrush", "NavHoverIconBrush",
+        "NavHoverTextBrush", "NavSelBgBrush", "NavSelTextBrush", "NavSelIconBrush",
+        "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
+        "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
+        "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
+        "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
+        "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
+        "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
+        "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
+        "ContainerCornerRadius"
+    };
+
+    // Resource keys propagated to every open feature window on every theme/palette change.
+    private static readonly string[] _allThemeKeys =
+    {
+        "AccentBrush", "AccentColor",
+        "SidebarBgBrush", "SidebarBorderBrush",
+        "NavIconBrush", "NavTextBrush", "NavHoverBgBrush", "NavHoverIconBrush",
+        "NavHoverTextBrush", "NavSelBgBrush", "NavSelTextBrush", "NavSelIconBrush",
+        "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
+        "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
+        "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
+        "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
+        "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
+        "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
+        "RowHoverBgBrush",
+        "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
+        "FlagUnknownBrush",
+        "ThemeFontFamily", "PrimaryGradient",
+        "WindowOutlineBrush", "WindowOutlineThickness",
+        "ContainerCornerRadius"
+    };
+
     private void UpdateLogBrushes(string themeKey)
     {
         bool light = _lightThemeKeys.Contains(themeKey);
@@ -6443,13 +6482,32 @@ Read-Host 'Press Enter to close'
             _           => name
         };
 
-        try { DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName = dxName; }
+        // Guard: skip DX theme setters if the theme name hasn't changed.
+        // An accent-only palette change reuses the same dxName — calling the setter
+        // unconditionally can trigger a full DX re-style pass across all open windows
+        // (~100-200ms on the UI thread) even though nothing structural has changed,
+        // causing a visible stutter in active RDP/HVNC/webcam streams.
+        bool dxThemeChanged = false;
+        try
+        {
+            if (DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName != dxName)
+            {
+                DevExpress.Xpf.Core.ApplicationThemeHelper.ApplicationThemeName = dxName;
+                dxThemeChanged = true;
+            }
+        }
         catch { /* DevExpress not loaded — colour palette still applies */ }
-        try { DevExpress.Xpf.Core.ThemeManager.SetThemeName(this, dxName); }
+        try
+        {
+            if (dxThemeChanged)
+                DevExpress.Xpf.Core.ThemeManager.SetThemeName(this, dxName);
+        }
         catch { }
-        // Force window chrome redraw to prevent border bleed when switching DX themes
-        Dispatcher.BeginInvoke(() => { InvalidateVisual(); UpdateLayout(); },
-            System.Windows.Threading.DispatcherPriority.Render);
+        // Force window chrome redraw to prevent border bleed when switching DX themes.
+        // Skip for palette-only changes — DX didn't mutate anything, no redraw needed.
+        if (dxThemeChanged)
+            Dispatcher.BeginInvoke(() => { InvalidateVisual(); UpdateLayout(); },
+                System.Windows.Threading.DispatcherPriority.Render);
         // Re-apply custom brushes after DX theme async updates (which run at Render priority)
         var _snapColor = color;
         var _snapName  = name;
@@ -7671,21 +7729,7 @@ Read-Host 'Press Enter to close'
         // Window.Resources shadows Application.Current.Resources in DynamicResource lookup,
         // so updates to App.Resources alone are not visible to DynamicResource bindings inside this window.
         var wRes = Resources;
-        foreach (var key in new[]
-        {
-            "AccentBrush", "AccentColor",
-            "SidebarBgBrush", "SidebarBorderBrush",
-            "NavIconBrush", "NavTextBrush", "NavHoverBgBrush", "NavHoverIconBrush",
-            "NavHoverTextBrush", "NavSelBgBrush", "NavSelTextBrush", "NavSelIconBrush",
-            "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
-            "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
-            "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
-            "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
-            "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
-            "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
-            "ContainerCornerRadius"
-        })
+        foreach (var key in _wResKeys)
             if (res.Contains(key)) wRes[key] = res[key];
 
         // Row selection and hover — unified across ServerWindow and all feature windows.
@@ -7812,30 +7856,11 @@ Read-Host 'Press Enter to close'
 
         // Propagate all tokens to every open window so DynamicResource consumers
         // in feature windows (RemoteShell, FileManager, etc.) also update immediately.
-        var allKeys = new[]
-        {
-            "AccentBrush", "AccentColor",
-            "SidebarBgBrush", "SidebarBorderBrush",
-            "NavIconBrush", "NavTextBrush", "NavHoverBgBrush", "NavHoverIconBrush",
-            "NavHoverTextBrush", "NavSelBgBrush", "NavSelTextBrush", "NavSelIconBrush",
-            "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
-            "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
-            "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
-            "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
-            "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
-            "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
-            "RowHoverBgBrush",
-            "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
-            "FlagUnknownBrush",
-            "ThemeFontFamily", "PrimaryGradient",
-            "WindowOutlineBrush", "WindowOutlineThickness",
-            "ContainerCornerRadius"
-        };
         foreach (Window w in Application.Current.Windows)
         {
             if (w == this) continue;
             var wr = w.Resources;
-            foreach (var key in allKeys)
+            foreach (var key in _allThemeKeys)
                 if (res.Contains(key)) wr[key] = res[key];
             if (w is not ThemedWindow) w.FontFamily = themeFontFamily;
         }
@@ -7849,15 +7874,14 @@ Read-Host 'Press Enter to close'
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Render, new Action(() =>
         {
             var wr = Resources;
-            foreach (var k in allKeys)
+            foreach (var k in _allThemeKeys)
                 if (res.Contains(k)) wr[k] = res[k];
         }));
-        var capturedAllKeys = allKeys;
         var capturedRes = res;
         Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
         {
             var wr = Resources;
-            foreach (var k in capturedAllKeys)
+            foreach (var k in _allThemeKeys)
                 if (capturedRes.Contains(k)) wr[k] = capturedRes[k];
 
             this.InvalidateMeasure();
