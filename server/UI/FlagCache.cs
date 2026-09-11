@@ -54,7 +54,6 @@ internal static class FlagCache
         var task = _inflight.GetOrAdd(key, k => Task.Run(() => DownloadAsync(k)));
         _ = task.ContinueWith(t =>
         {
-            _inflight.TryRemove(key, out _);
             var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
             if (img != null) _mem[key] = img;
             else if (!_mem.TryGetValue("?", out img))
@@ -62,6 +61,7 @@ internal static class FlagCache
                 img = GenerateBadge("?", System.Windows.Media.Color.FromRgb(0x58, 0x60, 0x78));
                 if (img != null) _mem["?"] = img;
             }
+            _inflight.TryRemove(key, out _);
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => record.FlagImage = img);
         }, TaskScheduler.Default);
     }
@@ -71,8 +71,9 @@ internal static class FlagCache
     {
         if (string.IsNullOrEmpty(code))
         {
-            // Unknown country — show a "?" badge so the flag column is never empty.
-            SetUnknownBadge(client);
+            // Badge must be created on the UI thread (DrawingVisual/RenderTargetBitmap require STA).
+            Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind,
+                () => SetUnknownBadge(client));
             return;
         }
         var key = code.ToLowerInvariant();
@@ -121,17 +122,18 @@ internal static class FlagCache
         var task = _inflight.GetOrAdd(key, k => Task.Run(() => DownloadAsync(k)));
         _ = task.ContinueWith(t =>
         {
-            _inflight.TryRemove(key, out _);
             var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
             if (img == null)
             {
                 LiveLog?.Invoke($"[FLAG] Download échoué pour '{key}', badge inconnu");
+                _inflight.TryRemove(key, out _);
                 Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind,
                     () => SetUnknownBadge(client));
                 return;
             }
             LiveLog?.Invoke($"[FLAG] Drapeau '{key}' téléchargé OK, assignation...");
             _mem[key] = img;
+            _inflight.TryRemove(key, out _);
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => client.FlagImage = img);
         }, TaskScheduler.Default);
     }

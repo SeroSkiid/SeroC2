@@ -205,17 +205,6 @@ public class Packet
     public string Data { get; set; } = string.Empty;
     public long Timestamp { get; set; } = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
 
-    public byte[] Serialize()
-    {
-        var json = JsonConvert.SerializeObject(this);
-        var jsonBytes = System.Text.Encoding.UTF8.GetBytes(json);
-        var lengthBytes = BitConverter.GetBytes(jsonBytes.Length);
-        var buffer = new byte[4 + jsonBytes.Length];
-        Buffer.BlockCopy(lengthBytes, 0, buffer, 0, 4);
-        Buffer.BlockCopy(jsonBytes, 0, buffer, 4, jsonBytes.Length);
-        return buffer;
-    }
-
     // Default: 32 MB covers large file downloads / HD screenshots.
     // Callers that handle only small control packets should pass a lower limit.
     public static async Task<Packet?> ReadFromStreamAsync(
@@ -228,23 +217,29 @@ public class Packet
         timeoutCts.CancelAfter(TimeSpan.FromSeconds(60));
         var token = timeoutCts.Token;
 
-        var lengthBuf = new byte[4];
-        int read = 0;
-        while (read < 4)
+        // Pool-rent the 4-byte length prefix buffer — eliminated new byte[4] per read
+        var lengthBuf = System.Buffers.ArrayPool<byte>.Shared.Rent(4);
+        int length;
+        try
         {
-            int n = await stream.ReadAsync(lengthBuf.AsMemory(read, 4 - read), token);
-            if (n == 0) return null;
-            read += n;
+            int lenRead = 0;
+            while (lenRead < 4)
+            {
+                int n = await stream.ReadAsync(lengthBuf.AsMemory(lenRead, 4 - lenRead), token);
+                if (n == 0) return null;
+                lenRead += n;
+            }
+            length = BitConverter.ToInt32(lengthBuf, 0);
         }
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(lengthBuf); }
 
-        int length = BitConverter.ToInt32(lengthBuf, 0);
         if (length <= 0 || length > maxPacketSize) return null;
 
         // Rent from ArrayPool to avoid Large-Object-Heap pressure at high client counts
         var dataBuf = System.Buffers.ArrayPool<byte>.Shared.Rent(length);
         try
         {
-            read = 0;
+            int read = 0;
             while (read < length)
             {
                 int n = await stream.ReadAsync(dataBuf.AsMemory(read, length - read), token);
@@ -263,12 +258,19 @@ public class Packet
     public static async Task WriteToStreamAsync(Stream stream, Packet packet, CancellationToken ct = default)
     {
         var json = JsonConvert.SerializeObject(packet);
-        var body = System.Text.Encoding.UTF8.GetBytes(json);
-        var lenBuf = new byte[4];
-        BitConverter.TryWriteBytes(lenBuf, body.Length);
-        await stream.WriteAsync(lenBuf, ct);
-        await stream.WriteAsync(body, ct);
-        await stream.FlushAsync(ct);
+        // Encode JSON directly into a rented buffer (offset 4), write length header at offset 0.
+        // Eliminates the intermediate body byte[] and the separate 4-byte lenBuf allocation.
+        // GetMaxByteCount over-estimates (×3+1) but the rented buffer is returned immediately.
+        int maxBodyBytes = System.Text.Encoding.UTF8.GetMaxByteCount(json.Length);
+        var buf = System.Buffers.ArrayPool<byte>.Shared.Rent(4 + maxBodyBytes);
+        try
+        {
+            int bodyLen = System.Text.Encoding.UTF8.GetBytes(json.AsSpan(), buf.AsSpan(4));
+            System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(buf, bodyLen);
+            await stream.WriteAsync(buf.AsMemory(0, 4 + bodyLen), ct);
+            await stream.FlushAsync(ct);
+        }
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(buf); }
     }
 }
 
