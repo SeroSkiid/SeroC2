@@ -11,7 +11,7 @@
     <DockPanel LastChildFill="True">
 
         <!-- Title bar -->
-        <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
+        <Border x:Name="TitleBarBorder" DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
             <Grid Margin="14,0">
                 <!-- Left: client ID + LIVE badge -->
@@ -36,6 +36,14 @@
                         <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource FieldLabelBrush}"
                                    FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
                     </Border>
+                    <Button x:Name="BtnHide" Height="26" Padding="8,0" Margin="0,0,4,0"
+                            Style="{StaticResource SBtn}" FontSize="11"
+                            ToolTip="Hide all UI chrome — press F12 to restore" Click="BtnHide_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_VisibilityOff.svg'}" Width="12" Height="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="TxtBtnHide" Text="HIDE" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
                     <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
                             Style="{StaticResource SBtn}" FontSize="11"
                             ToolTip="Actions" Click="BtnMenu_Click">
@@ -49,7 +57,7 @@
         </Border>
 
         <!-- Toolbar — two rows so all controls are always visible regardless of window width -->
-        <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}"
+        <Border x:Name="ToolbarBorder" DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1">
             <StackPanel Orientation="Vertical">
 
@@ -135,7 +143,7 @@
         </Border>
 
         <!-- Status bar -->
-        <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
+        <Border x:Name="StatusBarBorder" DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
             <Grid Margin="14,0">
                 <!-- Left: status text -->

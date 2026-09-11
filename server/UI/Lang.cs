@@ -719,6 +719,7 @@ namespace SeroServer.UI
 
             // ── HVNC ─────────────────────────────────────────────────────────
             ["HVNC_CLONING"]        = new() { ["en"]="Cloning profile...", ["fr"]="Clonage du profil...", ["es"]="Clonando perfil...", ["de"]="Profil klonen...", ["pt"]="Clonando perfil...", ["it"]="Clonazione profilo...", ["ru"]="Клонирование профиля...", ["zh"]="正在克隆配置文件...", ["ar"]="جارٍ استنساخ الملف الشخصي...", ["tr"]="Profil klonlanıyor..." },
+            ["HVNC_HIDE"]           = new() { ["en"]="HIDE", ["fr"]="MASQUER", ["es"]="OCULTAR", ["de"]="AUSBLENDEN", ["pt"]="OCULTAR", ["it"]="NASCONDI", ["ru"]="СКРЫТЬ", ["zh"]="隐藏", ["ar"]="إخفاء", ["tr"]="GİZLE" },
 
             // ── Registry Editor ───────────────────────────────────────────────
             ["REG_SUCCESS"]         = new() { ["en"]="Operation successful.", ["fr"]="Opération réussie.", ["es"]="Operación exitosa.", ["de"]="Vorgang erfolgreich.", ["pt"]="Operação bem-sucedida.", ["it"]="Operazione riuscita.", ["ru"]="Операция выполнена.", ["zh"]="操作成功。", ["ar"]="تمت العملية بنجاح.", ["tr"]="İşlem başarılı." },

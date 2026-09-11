@@ -32,6 +32,7 @@ public partial class HvncWindow : ThemedWindow
     private WriteableBitmap? _wb;
     private H264Decoder? _h264Dec;
     private readonly object _decodeLock = new object();
+    private bool _uiHidden;
 
     // Canvas dimensions reported by last frame
     private int _remoteW = 1280;
@@ -79,6 +80,7 @@ public partial class HvncWindow : ThemedWindow
         _server.ClientConnected += OnClientConnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
+        PreviewKeyDown += (_, e) => { if (e.Key == Key.F12) { ToggleHideMode(); e.Handled = true; } };
         Closed += (_, _) =>
         {
             _closed = true;
@@ -112,8 +114,21 @@ public partial class HvncWindow : ThemedWindow
         if (BtnStart      != null) BtnStart.Content      = Lang.Get("ACT_START");
         if (BtnStop       != null) BtnStop.Content       = Lang.Get("ACT_STOP");
         if (TxtBtnActions != null) TxtBtnActions.Text     = Lang.Get("ACT_ACTIONS");
+        if (TxtBtnHide    != null) TxtBtnHide.Text        = Lang.Get("HVNC_HIDE");
         if (TxtStatus != null && !_streaming) TxtStatus.Text = Lang.Get("STOPPED");
     }
+
+    private void ToggleHideMode()
+    {
+        _uiHidden = !_uiHidden;
+        TitleBarBorder.Visibility  = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        ToolbarBorder.Visibility   = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        StatusBarBorder.Visibility = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        WindowStyle = _uiHidden ? WindowStyle.None : WindowStyle.SingleBorderWindow;
+        ResizeMode  = _uiHidden ? ResizeMode.NoResize : ResizeMode.CanResize;
+    }
+
+    private void BtnHide_Click(object s, RoutedEventArgs e) => ToggleHideMode();
 
     // ── Streaming state ───────────────────────────────────────────────────────
 
