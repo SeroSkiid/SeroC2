@@ -1581,7 +1581,7 @@
                 <!-- Tab content (no tab strip) -->
                 <TabControl x:Name="MainTabControl" Grid.Column="1"
                             Background="Transparent" BorderThickness="0"
-                            Foreground="{DynamicResource TextBrush}"
+                            Foreground="{DynamicResource ContentTextBrush}"
                             SelectionChanged="MainTabControl_SelectionChanged">
                     <TabControl.Template>
                         <ControlTemplate TargetType="TabControl">
