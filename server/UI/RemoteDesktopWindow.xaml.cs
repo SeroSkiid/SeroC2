@@ -49,6 +49,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private readonly List<(int Index, string Name, int X, int Y, int W, int H)> _monitors = [];
     private bool _uiReady;
     private bool _autoStarted;
+    private bool _uiHidden;
 
     public RemoteDesktopWindow(TlsServer server, string clientId)
     {
@@ -127,6 +128,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
         TxtClientId.Text = $"[ {clientId} ]";
         TxtStatus.Text = Lang.Get("RDP_CONNECTING");
         Lang.LanguageChanged += ApplyLanguage;
+        PreviewKeyDown += (_, e) => { if (e.Key == Key.F12) { ToggleHideMode(); e.Handled = true; } };
 
         // Warn when server and client share the same machine (loopback/localhost)
         if (_server.ConnectedClients.TryGetValue(clientId, out var selfCheck))
@@ -159,7 +161,20 @@ public partial class RemoteDesktopWindow : ThemedWindow
         if (TxtBtnActions != null) TxtBtnActions.Text = Lang.Get("ACT_ACTIONS");
         if (BtnStart      != null) BtnStart.Content   = Lang.Get("ACT_START");
         if (BtnStop       != null) BtnStop.Content    = Lang.Get("ACT_STOP");
+        if (TxtBtnHide    != null) TxtBtnHide.Text    = Lang.Get("HVNC_HIDE");
     }
+
+    private void ToggleHideMode()
+    {
+        _uiHidden = !_uiHidden;
+        TitleBarBorder.Visibility = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        CtrlBorder.Visibility     = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        StatusBarBorder.Visibility = _uiHidden ? Visibility.Collapsed : Visibility.Visible;
+        WindowStyle = _uiHidden ? WindowStyle.None : WindowStyle.SingleBorderWindow;
+        ResizeMode  = _uiHidden ? ResizeMode.NoResize : ResizeMode.CanResize;
+    }
+
+    private void BtnHide_Click(object s, RoutedEventArgs e) => ToggleHideMode();
 
     private async void TxtClientId_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
