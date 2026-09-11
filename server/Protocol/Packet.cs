@@ -246,8 +246,10 @@ public class Packet
                 if (n == 0) return null;
                 read += n;
             }
-            var json = System.Text.Encoding.UTF8.GetString(dataBuf, 0, length);
-            return JsonConvert.DeserializeObject<Packet>(json);
+            // Deserialize directly from the pooled span — avoids a string allocation per packet.
+            // For large frame packets (RDP/webcam/HVNC JPEG), this keeps data off the LOH.
+            // Packet has plain properties (int enum, string, long) so default STJ options suffice.
+            return System.Text.Json.JsonSerializer.Deserialize<Packet>(dataBuf.AsSpan(0, length));
         }
         finally
         {
