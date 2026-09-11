@@ -262,8 +262,12 @@ public class Packet
 
     public static async Task WriteToStreamAsync(Stream stream, Packet packet, CancellationToken ct = default)
     {
-        var data = packet.Serialize();
-        await stream.WriteAsync(data, ct);
+        var json = JsonConvert.SerializeObject(packet);
+        var body = System.Text.Encoding.UTF8.GetBytes(json);
+        var lenBuf = new byte[4];
+        BitConverter.TryWriteBytes(lenBuf, body.Length);
+        await stream.WriteAsync(lenBuf, ct);
+        await stream.WriteAsync(body, ct);
         await stream.FlushAsync(ct);
     }
 }

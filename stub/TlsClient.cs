@@ -1248,6 +1248,8 @@ internal class TlsClient : IDisposable
     // ── PerfMon streaming ────────────────────────────────────────────────────
     private volatile int _perfMonRunning;
     private int _perfMonIntervalMs = 1000;
+    private readonly PerfMonDataStub _perfMonStub   = new();
+    private readonly Packet          _perfMonPacket = new() { Type = PacketType.PerfMonData };
 
     private async Task PerfMonLoop(CancellationToken ct)
     {
@@ -1262,20 +1264,18 @@ internal class TlsClient : IDisposable
                 var (sent, recv)   = SampleNetwork();
                 var (diskR, diskW) = SampleDisk();
                 var gpuPct = SampleGpuPct();
-                var data = JsonSerializer.Serialize(new PerfMonDataStub
-                {
-                    CpuUsage      = hw.CpuUsage,
-                    RamUsed       = hw.RamUsed,
-                    RamTotal      = hw.RamTotal,
-                    NetworkSentKB = sent,
-                    NetworkRecvKB = recv,
-                    DiskReadKBps  = diskR,
-                    DiskWriteKBps = diskW,
-                    CpuName       = hw.CpuName,
-                    GpuName       = hw.GpuName,
-                    GpuUsage      = gpuPct,
-                }, SeroJson.Default.PerfMonDataStub);
-                await WritePacketAsync(new Packet { Type = PacketType.PerfMonData, Data = data }, CancellationToken.None);
+                _perfMonStub.CpuUsage      = hw.CpuUsage;
+                _perfMonStub.RamUsed       = hw.RamUsed;
+                _perfMonStub.RamTotal      = hw.RamTotal;
+                _perfMonStub.NetworkSentKB = sent;
+                _perfMonStub.NetworkRecvKB = recv;
+                _perfMonStub.DiskReadKBps  = diskR;
+                _perfMonStub.DiskWriteKBps = diskW;
+                _perfMonStub.CpuName       = hw.CpuName;
+                _perfMonStub.GpuName       = hw.GpuName;
+                _perfMonStub.GpuUsage      = gpuPct;
+                _perfMonPacket.Data = JsonSerializer.Serialize(_perfMonStub, SeroJson.Default.PerfMonDataStub);
+                await WritePacketAsync(_perfMonPacket, CancellationToken.None);
             }
             catch (OperationCanceledException) { break; }
             catch { await Task.Delay(2000, CancellationToken.None); }
