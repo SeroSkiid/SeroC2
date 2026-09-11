@@ -406,9 +406,10 @@ internal static class WebcamFeature
         if (pBuffer == IntPtr.Zero || len <= 0) return 0;
         try
         {
-            var b = new byte[len];
+            var b = System.Buffers.ArrayPool<byte>.Shared.Rent(len);
             Marshal.Copy(pBuffer, b, 0, len);
-            System.Threading.Interlocked.Exchange(ref _sgCbFrame, b);
+            var old = System.Threading.Interlocked.Exchange(ref _sgCbFrame, b);
+            if (old != null) System.Buffers.ArrayPool<byte>.Shared.Return(old);
             System.Threading.Interlocked.Increment(ref _cbFrameTotal);
         }
         catch { }
@@ -575,22 +576,22 @@ internal static class WebcamFeature
                     if (now - lastSendMs < intervalMs) continue;
 
                     byte[]? raw = System.Threading.Interlocked.Exchange(ref _sgCbFrame, null);
-                    if (raw == null || raw.Length == 0) continue;
-
-                    // Determine effective dimensions for this frame
-                    int outW = vidW, outH = vidH;
-                    int maxH = _cfg.MaxHeight;
-                    if (maxH > 0 && vidH > maxH)
-                    {
-                        outH = maxH;
-                        outW = (int)((double)vidW / vidH * maxH);
-                        if (outW < 1) outW = 1;
-                    }
+                    if (raw == null) continue;
 
                     byte[]? bgraBuffer = null;
                     byte[]? jpeg = null;
                     try
                     {
+                        // Determine effective dimensions for this frame
+                        int outW = vidW, outH = vidH;
+                        int maxH = _cfg.MaxHeight;
+                        if (maxH > 0 && vidH > maxH)
+                        {
+                            outH = maxH;
+                            outW = (int)((double)vidW / vidH * maxH);
+                            if (outW < 1) outW = 1;
+                        }
+
                         int encQ = _adaptiveQuality;
                         if (outW != vidW || outH != vidH)
                         {
@@ -606,22 +607,23 @@ internal static class WebcamFeature
                             else if (bpp == 4) jpeg = Bgrx32ToJpeg(raw, vidW, vidH, encQ);
                             else jpeg = Rgb24ToJpeg(raw, vidW, vidH, encQ);
                         }
+
+                        if (jpeg == null || jpeg.Length == 0) continue;
+
+                        lastSendMs = now;
+                        Interlocked.Exchange(ref _lastFrameSendMs, now);
+                        var b64  = RemoteDesktopFeature.ToBase64(jpeg);
+                        var json = "{\"w\":" + outW + ",\"h\":" + outH + ",\"j\":\"" + b64 + "\"}";
+
+                        Interlocked.Decrement(ref _pendingRequests);
+                        _send?.Invoke((int)PacketType.WcamFrame, json)
+                             .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
                     }
                     finally
                     {
                         if (bgraBuffer != null) System.Buffers.ArrayPool<byte>.Shared.Return(bgraBuffer);
+                        System.Buffers.ArrayPool<byte>.Shared.Return(raw);
                     }
-
-                    if (jpeg == null || jpeg.Length == 0) continue;
-
-                    lastSendMs = now;
-                    Interlocked.Exchange(ref _lastFrameSendMs, now);
-                    var b64  = RemoteDesktopFeature.ToBase64(jpeg);
-                    var json = "{\"w\":" + outW + ",\"h\":" + outH + ",\"j\":\"" + b64 + "\"}";
-
-                    Interlocked.Decrement(ref _pendingRequests);
-                    _send?.Invoke((int)PacketType.WcamFrame, json)
-                         .ContinueWith(_ => { }, System.Threading.Tasks.TaskContinuationOptions.None);
                 }
                 catch { Thread.Sleep(intervalMs); }
             }
@@ -668,59 +670,71 @@ internal static class WebcamFeature
     private static byte[]? Yuy2ToJpeg(byte[] raw, int w, int h, int quality, bool bottomUp = false)
     {
         int bgraStride = w * 4;
-        var bgra = new byte[bgraStride * h];
-        int yuyStride = w * 2;
-        for (int row = 0; row < h; row++)
+        var bgra = System.Buffers.ArrayPool<byte>.Shared.Rent(bgraStride * h);
+        try
         {
-            int srcRow = bottomUp ? h - 1 - row : row;
-            for (int col = 0; col < w; col++)
+            int yuyStride = w * 2;
+            for (int row = 0; row < h; row++)
             {
-                int yuyBase = srcRow * yuyStride + (col & ~1) * 2;
-                byte Y = raw[srcRow * yuyStride + col * 2];
-                byte U = yuyBase + 1 < raw.Length ? raw[yuyBase + 1] : (byte)128;
-                byte V = yuyBase + 3 < raw.Length ? raw[yuyBase + 3] : (byte)128;
-                int C = Y - 16, D = U - 128, E = V - 128;
-                int dst = row * bgraStride + col * 4;
-                bgra[dst]     = (byte)Clamp255((298 * C + 516 * D           + 128) >> 8);
-                bgra[dst + 1] = (byte)Clamp255((298 * C - 100 * D - 208 * E + 128) >> 8);
-                bgra[dst + 2] = (byte)Clamp255((298 * C           + 409 * E + 128) >> 8);
-                bgra[dst + 3] = 255;
+                int srcRow = bottomUp ? h - 1 - row : row;
+                for (int col = 0; col < w; col++)
+                {
+                    int yuyBase = srcRow * yuyStride + (col & ~1) * 2;
+                    byte Y = raw[srcRow * yuyStride + col * 2];
+                    byte U = yuyBase + 1 < raw.Length ? raw[yuyBase + 1] : (byte)128;
+                    byte V = yuyBase + 3 < raw.Length ? raw[yuyBase + 3] : (byte)128;
+                    int C = Y - 16, D = U - 128, E = V - 128;
+                    int dst = row * bgraStride + col * 4;
+                    bgra[dst]     = (byte)Clamp255((298 * C + 516 * D           + 128) >> 8);
+                    bgra[dst + 1] = (byte)Clamp255((298 * C - 100 * D - 208 * E + 128) >> 8);
+                    bgra[dst + 2] = (byte)Clamp255((298 * C           + 409 * E + 128) >> 8);
+                    bgra[dst + 3] = 255;
+                }
             }
+            return BgraToJpeg(bgra, w, h, bgraStride, quality);
         }
-        return BgraToJpeg(bgra, w, h, bgraStride, quality);
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(bgra); }
     }
 
     private static byte[]? Bgrx32ToJpeg(byte[] bgrx, int w, int h, int quality)
     {
         int stride = w * 4;
-        var bgra = new byte[stride * h];
-        for (int row = 0; row < h; row++)
+        var bgra = System.Buffers.ArrayPool<byte>.Shared.Rent(stride * h);
+        try
         {
-            int src = (h - 1 - row) * stride;
-            int dst = row * stride;
-            Buffer.BlockCopy(bgrx, src, bgra, dst, stride);
-            for (int col = 0; col < w; col++) bgra[dst + col * 4 + 3] = 255;
+            for (int row = 0; row < h; row++)
+            {
+                int src = (h - 1 - row) * stride;
+                int dst = row * stride;
+                Buffer.BlockCopy(bgrx, src, bgra, dst, stride);
+                for (int col = 0; col < w; col++) bgra[dst + col * 4 + 3] = 255;
+            }
+            return BgraToJpeg(bgra, w, h, stride, quality);
         }
-        return BgraToJpeg(bgra, w, h, stride, quality);
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(bgra); }
     }
 
     private static byte[]? Rgb24ToJpeg(byte[] rgb, int w, int h, int quality)
     {
         int bgraStride = w * 4;
         int srcStride  = w * 3;
-        var bgra = new byte[bgraStride * h];
-        for (int row = 0; row < h; row++)
+        var bgra = System.Buffers.ArrayPool<byte>.Shared.Rent(bgraStride * h);
+        try
         {
-            int srcRow = h - 1 - row;
-            for (int col = 0; col < w; col++)
+            for (int row = 0; row < h; row++)
             {
-                int s = srcRow * srcStride + col * 3;
-                int d = row   * bgraStride + col * 4;
-                if (s + 2 >= rgb.Length) break;
-                bgra[d] = rgb[s]; bgra[d+1] = rgb[s+1]; bgra[d+2] = rgb[s+2]; bgra[d+3] = 255;
+                int srcRow = h - 1 - row;
+                for (int col = 0; col < w; col++)
+                {
+                    int s = srcRow * srcStride + col * 3;
+                    int d = row   * bgraStride + col * 4;
+                    if (s + 2 >= rgb.Length) break;
+                    bgra[d] = rgb[s]; bgra[d+1] = rgb[s+1]; bgra[d+2] = rgb[s+2]; bgra[d+3] = 255;
+                }
             }
+            return BgraToJpeg(bgra, w, h, bgraStride, quality);
         }
-        return BgraToJpeg(bgra, w, h, bgraStride, quality);
+        finally { System.Buffers.ArrayPool<byte>.Shared.Return(bgra); }
     }
 
     private static byte[]? BgraToJpeg(byte[] bgra, int w, int h, int stride, int quality)
