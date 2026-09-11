@@ -39,6 +39,7 @@ public class ConnectedClient : INotifyPropertyChanged
     public DateTime PingSentAt { get; set; }
     public SslStream? Stream { get; set; }
     public SemaphoreSlim WriteLock { get; } = new(1, 1);
+    public readonly Protocol.Packet PingPacket = new() { Type = Protocol.PacketType.Ping };
     public CancellationTokenSource Cts { get; set; } = new();
     public bool PendingUninstall { get; set; }
     // 3s heartbeat interval; 45s window tolerates congested VM connections where

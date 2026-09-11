@@ -48,6 +48,8 @@ public class TlsServer
     public event Action<string>? OnLog;
 
     public bool IsRunning { get; private set; }
+
+    private static readonly Packet _heartbeatAckPacket = new() { Type = PacketType.HeartbeatAck };
     public int  Port      { get; private set; }
 
     // Per-(client,packetType) dynamic handlers — used by feature windows
@@ -209,13 +211,10 @@ public class TlsServer
         try
         {
             if (client.Stream == null) return;
-            await Packet.WriteToStreamAsync(client.Stream, new Packet { Type = PacketType.HeartbeatAck });
+            await Packet.WriteToStreamAsync(client.Stream, _heartbeatAckPacket);
             client.PingSentAt = DateTime.UtcNow;
-            await Packet.WriteToStreamAsync(client.Stream, new Packet
-            {
-                Type = PacketType.Ping,
-                Data = client.PingSentAt.Ticks.ToString()
-            });
+            client.PingPacket.Data = client.PingSentAt.Ticks.ToString();
+            await Packet.WriteToStreamAsync(client.Stream, client.PingPacket);
         }
         catch { failed = true; }
         finally { client.WriteLock.Release(); }

@@ -62,6 +62,7 @@ internal static class MicrophoneFeature
     private static volatile bool   _running;
     private static Thread?         _thread;
     private static Func<string, System.Threading.Tasks.Task>? _send;
+    private static readonly MicDataStub _micDataStub = new();
 
     internal static string GetDevices()
     {
@@ -155,12 +156,15 @@ internal static class MicrophoneFeature
 
                     if (bytes > 0)
                     {
-                        var data = new byte[bytes];
-                        Marshal.Copy(hdr.lpData, data, 0, bytes);
-                        var payload = JsonSerializer.Serialize(
-                            new MicDataStub { Data = Convert.ToBase64String(data) },
-                            SeroJson.Default.MicDataStub);
-                        _send?.Invoke(payload);
+                        var data = System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);
+                        try
+                        {
+                            Marshal.Copy(hdr.lpData, data, 0, bytes);
+                            _micDataStub.Data = Convert.ToBase64String(data, 0, bytes);
+                            var payload = JsonSerializer.Serialize(_micDataStub, SeroJson.Default.MicDataStub);
+                            _send?.Invoke(payload);
+                        }
+                        finally { System.Buffers.ArrayPool<byte>.Shared.Return(data); }
                     }
 
                     idx = (idx + 1) % numBuffers;
