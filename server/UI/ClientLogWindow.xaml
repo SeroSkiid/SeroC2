@@ -16,7 +16,7 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Document.svg'}" Width="13" Height="13" Margin="0,0,6,0" VerticalAlignment="Center"/>
                         <TextBlock x:Name="TxtTitle" Text="" FontSize="11" FontWeight="Light"
-                                   Foreground="{DynamicResource FieldLabelBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                                   Foreground="{DynamicResource TitleTextBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>

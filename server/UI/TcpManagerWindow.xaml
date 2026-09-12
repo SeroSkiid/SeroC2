@@ -16,28 +16,28 @@
             <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding State}" Value="ESTABLISHED">
-                    <Setter Property="Foreground" Value="#4ADE80"/>
+                    <Setter Property="Foreground" Value="{StaticResource GreenBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="LISTEN">
-                    <Setter Property="Foreground" Value="#60A5FA"/>
+                    <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="TIME_WAIT">
-                    <Setter Property="Foreground" Value="#FBBF24"/>
+                    <Setter Property="Foreground" Value="{StaticResource YellowBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="CLOSE_WAIT">
-                    <Setter Property="Foreground" Value="#F87171"/>
+                    <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="SYN_SENT">
-                    <Setter Property="Foreground" Value="#FBBF24"/>
+                    <Setter Property="Foreground" Value="{StaticResource YellowBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="SYN_RCVD">
-                    <Setter Property="Foreground" Value="#FBBF24"/>
+                    <Setter Property="Foreground" Value="{StaticResource YellowBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="FIN_WAIT1">
-                    <Setter Property="Foreground" Value="#F87171"/>
+                    <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
                 </DataTrigger>
                 <DataTrigger Binding="{Binding State}" Value="FIN_WAIT2">
-                    <Setter Property="Foreground" Value="#F87171"/>
+                    <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
                 </DataTrigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>

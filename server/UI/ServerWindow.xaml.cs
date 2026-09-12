@@ -136,7 +136,8 @@ public partial class ServerWindow : ThemedWindow
     {
         "Seven", "Office2010Blue", "Office2010Silver",
         "Office2016Colorful", "Office2019Colorful", "Office2013",
-        "DXStyle"
+        "DXStyle", "VS2017Light", "Office2019White",
+        "Office2019Black", "Office2013DarkGray"
     };
 
     // Resource keys synced to ServerWindow.Resources on every theme/palette change.
@@ -7665,9 +7666,12 @@ Read-Host 'Press Enter to close'
             }
         }
 
-        // HighContrast: yellow accent → black selection text for accessibility
+        // HighContrast post-derive overrides
         if (name == "Office2019HighContrast")
-            res["RowSelTextBrush"] = B("#000000");
+        {
+            res["RowSelTextBrush"]       = B("#000000");
+            res["AlternatingRowBgBrush"] = B("#111100"); // accessibility yellow tint (restores F2 fix)
+        }
 
         // Swap ScrollBar implicit style: each classic theme gets its own wide scrollbar style;
         // all modern/dark themes get the thin modern scrollbar.
