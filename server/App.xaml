@@ -14,7 +14,7 @@
         <Color x:Key="CardColor">#171828</Color>
         <Color x:Key="BorderColor">#1E2038</Color>
         <Color x:Key="BlueColor">#4A85F5</Color>
-        <Color x:Key="VioletColor">#7C5CE8</Color>
+        <Color x:Key="VioletColor">#6366F1</Color>
         <Color x:Key="CyanColor">#89DCEB</Color>
         <Color x:Key="GreenColor">#22C55E</Color>
         <Color x:Key="RedColor">#EF4444</Color>
@@ -28,7 +28,7 @@
         <SolidColorBrush x:Key="CardBrush"    Color="#171828" />
         <SolidColorBrush x:Key="BorderBrush"  Color="#1E2038" />
         <SolidColorBrush x:Key="BlueBrush"    Color="#4A85F5" />
-        <SolidColorBrush x:Key="VioletBrush"  Color="#7C5CE8" />
+        <SolidColorBrush x:Key="VioletBrush"  Color="#6366F1" />
         <SolidColorBrush x:Key="CyanBrush"    Color="#89DCEB" />
         <SolidColorBrush x:Key="GreenBrush"   Color="#22C55E" />
         <SolidColorBrush x:Key="RedBrush"     Color="#EF4444" />

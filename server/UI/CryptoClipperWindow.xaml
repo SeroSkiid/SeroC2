@@ -8,7 +8,7 @@
         ResizeMode="CanResize"
         ShowGlow="False">
 
-    <Window.Resources>
+    <dx:ThemedWindow.Resources>
         <Style x:Key="AddrBox" TargetType="TextBox">
             <Setter Property="Background"              Value="{DynamicResource InputBgBrush}"/>
             <Setter Property="Foreground"              Value="{DynamicResource ContentTextBrush}"/>
@@ -28,7 +28,7 @@
             <Setter Property="Width"       Value="46"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-    </Window.Resources>
+    </dx:ThemedWindow.Resources>
 
         <DockPanel LastChildFill="True">
 

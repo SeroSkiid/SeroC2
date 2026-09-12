@@ -97,11 +97,11 @@
                         <!-- Cascade preview: stacked offset rectangles -->
                         <Canvas Width="120" Height="80" Margin="0,8,0,10">
                             <Rectangle Canvas.Left="2"  Canvas.Top="2"  Width="76" Height="52"
-                                       Fill="{DynamicResource InputBgBrush}" Stroke="#7C5CE8" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
+                                       Fill="{DynamicResource InputBgBrush}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
                             <Rectangle Canvas.Left="16" Canvas.Top="14" Width="76" Height="52"
-                                       Fill="{DynamicResource InputBgBrush}" Stroke="#7C5CE8" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
+                                       Fill="{DynamicResource InputBgBrush}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
                             <Rectangle Canvas.Left="30" Canvas.Top="26" Width="76" Height="52"
-                                       Fill="{DynamicResource InputBgBrush}" Stroke="#7C5CE8" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
+                                       Fill="{DynamicResource InputBgBrush}" Stroke="{DynamicResource AccentBrush}" StrokeThickness="1" RadiusX="3" RadiusY="3"/>
                         </Canvas>
                         <TextBlock x:Name="LblCascadeWindows" Text="Cascade Windows" Foreground="{DynamicResource ContentTextBrush}"
                                    FontSize="12" FontWeight="SemiBold" FontFamily="Segoe UI"

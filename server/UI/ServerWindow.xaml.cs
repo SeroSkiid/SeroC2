@@ -125,7 +125,7 @@ public partial class ServerWindow : ThemedWindow
 
     private static readonly HashSet<string> _lightThemeKeys = new(StringComparer.Ordinal)
     {
-        "VS2017Light", "Seven",
+        "VS2017Light", "Seven", "DXStyle",
         "Office2016Colorful", "Office2019White", "Office2019Colorful",
         "Office2010Blue", "Office2010Silver", "Office2013",
         "Office2019HighContrast"

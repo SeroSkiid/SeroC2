@@ -183,7 +183,8 @@
                                                     <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
                                                 </Trigger>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                                    <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>

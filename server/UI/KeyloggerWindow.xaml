@@ -51,10 +51,10 @@
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
-                            <Grid>
-<TextBlock x:Name="TxtStatus" Text="Starting..."
-                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
-                       VerticalAlignment="Center" Margin="14,0"/>
+            <Grid>
+                <TextBlock x:Name="TxtStatus" Text="Starting..."
+                           Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
+                           VerticalAlignment="Center" Margin="14,0"/>
             </Grid>
         </Border>
 

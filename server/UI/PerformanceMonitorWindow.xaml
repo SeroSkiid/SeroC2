@@ -86,7 +86,7 @@
                             <Border x:Name="BarRam" HorizontalAlignment="Left" Width="0" Height="14" CornerRadius="3">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#3A1A7A" Offset="0"/>
+                                        <GradientStop Color="#4A2890" Offset="0"/>
                                         <GradientStop Color="#7C5CE8" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>
@@ -124,8 +124,8 @@
                             <TextBlock Text="DISK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        VerticalAlignment="Center"/>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <TextBlock Text="R " Foreground="#F59E42" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                                <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="#F59E42" FontFamily="Consolas" Margin="0,0,14,0"/>
+                                <TextBlock Text="R " Foreground="#F59E0B" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                                <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="#F59E0B" FontFamily="Consolas" Margin="0,0,14,0"/>
                                 <TextBlock Text="W " Foreground="#EC4899" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
                                 <TextBlock x:Name="TxtDiskWrite" FontSize="12" FontWeight="Bold" Foreground="#EC4899" FontFamily="Consolas"/>
                             </StackPanel>

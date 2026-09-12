@@ -6,7 +6,7 @@
         WindowStartupLocation="CenterOwner" ResizeMode="CanResize"
         ShowGlow="False">
 
-    <Window.Resources>
+    <dx:ThemedWindow.Resources>
         <Style TargetType="TreeView">
             <Setter Property="Background"   Value="{DynamicResource SectionBgBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
@@ -26,10 +26,8 @@
                 </Trigger>
                 <Trigger Property="IsSelected" Value="True">
                     <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
-                                    <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                                    <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
-                                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
-                    </Trigger>
+                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                </Trigger>
             </Style.Triggers>
         </Style>
         <Style TargetType="DataGridRow">
@@ -88,7 +86,7 @@
             <Setter Property="FontSize"   Value="12"/>
             <Setter Property="Cursor"     Value="Hand"/>
         </Style>
-    </Window.Resources>
+    </dx:ThemedWindow.Resources>
 
         <DockPanel>
             <!-- Title bar -->
