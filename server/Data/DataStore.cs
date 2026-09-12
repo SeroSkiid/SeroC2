@@ -212,13 +212,14 @@ public class DataStore
     private void FlushDirty()
     {
         if (_dirtyHwids.IsEmpty) return;
-        // Drain the dirty set — snapshot keys, then remove as we flush
+        // Snapshot keys, then remove BEFORE writing so any new MarkDirty that races
+        // with UpsertOne re-adds the key and won't be silently dropped.
         var keys = _dirtyHwids.Keys.ToArray();
         foreach (var hwid in keys)
         {
-            if (!AllClients.TryGetValue(hwid, out var record)) continue;
-            UpsertOne(record);
             _dirtyHwids.TryRemove(hwid, out _);
+            if (AllClients.TryGetValue(hwid, out var record))
+                UpsertOne(record);
         }
     }
 
@@ -227,31 +228,61 @@ public class DataStore
         if (_db == null || _upsertCmd == null) return;
         try
         {
+            // Snapshot all fields under _lock so we never capture a torn mix of old/new
+            // values (RecordConnection and RecordDisconnection mutate fields under _lock too).
+            string hwid, assignedId, tag, firstSeen, lastSeen, lastConnected;
+            string username, ip, country, countryCode, machine, os, payload, antivirus, cpu, gpu;
+            long ramUsed, ramTotal;
+            int isAdmin, port;
             string activityJson;
-            lock (_lock) { activityJson = JsonSerializer.Serialize(r.ActivityLog, JsonOpts); }
+
+            lock (_lock)
+            {
+                hwid          = r.Hwid;
+                assignedId    = r.AssignedId;
+                tag           = r.Tag;
+                firstSeen     = r.FirstSeen.ToString("O");
+                lastSeen      = r.LastSeen.ToString("O");
+                lastConnected = r.LastConnectedAt.ToString("O");
+                username      = r.LastUsername;
+                ip            = r.LastIP;
+                country       = r.LastCountry;
+                countryCode   = r.LastCountryCode;
+                machine       = r.LastMachineName;
+                os            = r.LastOS;
+                payload       = r.LastPayload;
+                antivirus     = r.LastAntivirus;
+                cpu           = r.LastCpuName;
+                gpu           = r.LastGpuName;
+                ramUsed       = r.LastRamUsed;
+                ramTotal      = r.LastRamTotal;
+                isAdmin       = r.LastIsAdmin ? 1 : 0;
+                port          = r.LastPort;
+                activityJson  = JsonSerializer.Serialize(r.ActivityLog, JsonOpts);
+            }
 
             lock (_db)
             {
-                _upsertCmd.Parameters["@hwid"].Value           = r.Hwid;
-                _upsertCmd.Parameters["@assigned_id"].Value    = r.AssignedId;
-                _upsertCmd.Parameters["@tag"].Value            = r.Tag;
-                _upsertCmd.Parameters["@first_seen"].Value     = r.FirstSeen.ToString("O");
-                _upsertCmd.Parameters["@last_seen"].Value      = r.LastSeen.ToString("O");
-                _upsertCmd.Parameters["@last_connected"].Value = r.LastConnectedAt.ToString("O");
-                _upsertCmd.Parameters["@username"].Value       = r.LastUsername;
-                _upsertCmd.Parameters["@ip"].Value             = r.LastIP;
-                _upsertCmd.Parameters["@country"].Value        = r.LastCountry;
-                _upsertCmd.Parameters["@country_code"].Value   = r.LastCountryCode;
-                _upsertCmd.Parameters["@machine"].Value        = r.LastMachineName;
-                _upsertCmd.Parameters["@os"].Value             = r.LastOS;
-                _upsertCmd.Parameters["@payload"].Value        = r.LastPayload;
-                _upsertCmd.Parameters["@antivirus"].Value      = r.LastAntivirus;
-                _upsertCmd.Parameters["@cpu"].Value            = r.LastCpuName;
-                _upsertCmd.Parameters["@gpu"].Value            = r.LastGpuName;
-                _upsertCmd.Parameters["@ram_used"].Value       = r.LastRamUsed;
-                _upsertCmd.Parameters["@ram_total"].Value      = r.LastRamTotal;
-                _upsertCmd.Parameters["@is_admin"].Value       = r.LastIsAdmin ? 1 : 0;
-                _upsertCmd.Parameters["@port"].Value           = r.LastPort;
+                _upsertCmd.Parameters["@hwid"].Value           = hwid;
+                _upsertCmd.Parameters["@assigned_id"].Value    = assignedId;
+                _upsertCmd.Parameters["@tag"].Value            = tag;
+                _upsertCmd.Parameters["@first_seen"].Value     = firstSeen;
+                _upsertCmd.Parameters["@last_seen"].Value      = lastSeen;
+                _upsertCmd.Parameters["@last_connected"].Value = lastConnected;
+                _upsertCmd.Parameters["@username"].Value       = username;
+                _upsertCmd.Parameters["@ip"].Value             = ip;
+                _upsertCmd.Parameters["@country"].Value        = country;
+                _upsertCmd.Parameters["@country_code"].Value   = countryCode;
+                _upsertCmd.Parameters["@machine"].Value        = machine;
+                _upsertCmd.Parameters["@os"].Value             = os;
+                _upsertCmd.Parameters["@payload"].Value        = payload;
+                _upsertCmd.Parameters["@antivirus"].Value      = antivirus;
+                _upsertCmd.Parameters["@cpu"].Value            = cpu;
+                _upsertCmd.Parameters["@gpu"].Value            = gpu;
+                _upsertCmd.Parameters["@ram_used"].Value       = ramUsed;
+                _upsertCmd.Parameters["@ram_total"].Value      = ramTotal;
+                _upsertCmd.Parameters["@is_admin"].Value       = isAdmin;
+                _upsertCmd.Parameters["@port"].Value           = port;
                 _upsertCmd.Parameters["@activity"].Value       = activityJson;
                 _upsertCmd.ExecuteNonQuery();
             }
@@ -268,7 +299,10 @@ public class DataStore
 
         using var cmd = _db.CreateCommand();
         // WAL mode: readers never block writers; single server process so no conflict
-        cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;";
+        // Two separate calls — ExecuteNonQuery only compiles the first statement in a batch
+        cmd.CommandText = "PRAGMA journal_mode=WAL";
+        cmd.ExecuteNonQuery();
+        cmd.CommandText = "PRAGMA synchronous=NORMAL";
         cmd.ExecuteNonQuery();
 
         cmd.CommandText = """
