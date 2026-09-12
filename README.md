@@ -2,7 +2,7 @@
 
 # SeroRAT <img src="https://flagcdn.com/40x30/fr.png" alt="🇫🇷">
 
-![Version](https://img.shields.io/badge/version-1.8.2-orange.svg)
+![Version](https://img.shields.io/badge/version-1.8.3-orange.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Server .NET](https://img.shields.io/badge/server-.NET%2010-purple.svg)
@@ -10,7 +10,7 @@
 ![Arch](https://img.shields.io/badge/arch-x64-green.svg)
 
 **A Command & Control framework for authorized red team engagements and security research**
-> ***v1.8.2 Prenium*** — Performance Server & Stub(CPU/RAM) audit and Themes(DevExpress) Audit.
+> ***v1.8.3 Prenium*** — GUI audit fixes: theme palette consistency, feature window findings, version bump.
 
 SeroRAT is a modular C2 framework written in C# featuring a WPF server and a hardened NativeAOT client stub. It combines multi-vector persistence, advanced anti-analysis protections, a polymorphic crypter (closed-source), and encrypted TLS communication. Features **DevExpress themes & Icons** (Sero Dark mode, Seven Classic, VS2010, VS2017, Office2010/2013/2016/2019, MetropolisDark, DXStyle, HighContrast etc.), **live language system** (10 languages)
 
