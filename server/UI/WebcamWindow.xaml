@@ -149,7 +149,7 @@
                     <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="{DynamicResource InputBorderBrush}"
                              VerticalAlignment="Center" Margin="0,0,7,0"/>
                     <TextBlock x:Name="TxtStatus" Text="Waiting for device list..."
-                               Foreground="{DynamicResource TitleTextBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource LabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -182,7 +182,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
                     <TextBlock x:Name="TxtLog" FontFamily="Consolas" FontSize="10"
-                               Foreground="#88AABBCC" Padding="10,6" TextWrapping="Wrap"/>
+                               Foreground="{DynamicResource LabelBrush}" Opacity="0.5" Padding="10,6" TextWrapping="Wrap"/>
                 </ScrollViewer>
             </Border>
 

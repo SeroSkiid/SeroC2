@@ -7,9 +7,15 @@
         ShowGlow="False">
     <dx:ThemedWindow.Resources>
         <Style TargetType="DataGridRow">
-            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Background"      Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
         <Style TargetType="DataGridCell">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -129,10 +135,10 @@
                                 <TextBlock Text="{Binding VerifiedDisplay}" FontSize="11" FontWeight="Bold" Margin="0,0,5,0" VerticalAlignment="Center">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Foreground" Value="#EF4444"/>
+                                            <Setter Property="Foreground" Value="{StaticResource RedBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Verified}" Value="True">
-                                                    <Setter Property="Foreground" Value="#22C55E"/>
+                                                    <Setter Property="Foreground" Value="{StaticResource GreenBrush}"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>

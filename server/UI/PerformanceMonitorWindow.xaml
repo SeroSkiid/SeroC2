@@ -86,7 +86,7 @@
                             <Border x:Name="BarRam" HorizontalAlignment="Left" Width="0" Height="14" CornerRadius="3">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#4A2890" Offset="0"/>
+                                        <GradientStop Color="#406366F1" Offset="0"/>
                                         <GradientStop Color="#7C5CE8" Offset="1"/>
                                     </LinearGradientBrush>
                                 </Border.Background>

@@ -8,7 +8,7 @@
         ResizeMode="CanResize"
         ShowGlow="False">
 
-    <Window.Resources>
+    <dx:ThemedWindow.Resources>
         <Style x:Key="FBtn" TargetType="Button">
             <Setter Property="Background"       Value="{DynamicResource BtnBgBrush}"/>
             <Setter Property="Foreground"       Value="{DynamicResource BtnFgBrush}"/>
@@ -119,7 +119,7 @@
             <Setter Property="Margin"       Value="0,0,0,6"/>
             <Setter Property="FontFamily"   Value="Segoe UI Variable Text, Segoe UI"/>
         </Style>
-    </Window.Resources>
+    </dx:ThemedWindow.Resources>
 
         <DockPanel LastChildFill="True">
 

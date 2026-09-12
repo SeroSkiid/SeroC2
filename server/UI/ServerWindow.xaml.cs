@@ -136,8 +136,8 @@ public partial class ServerWindow : ThemedWindow
     {
         "Seven", "Office2010Blue", "Office2010Silver",
         "Office2016Colorful", "Office2019Colorful", "Office2013",
-        "DXStyle", "VS2017Light", "Office2019White",
-        "Office2019Black", "Office2013DarkGray"
+        "DXStyle", "VS2017Light", "VS2017Blue", "Office2019White",
+        "Office2019Black", "Office2013DarkGray", "Office2019DarkGray"
     };
 
     // Resource keys synced to ServerWindow.Resources on every theme/palette change.

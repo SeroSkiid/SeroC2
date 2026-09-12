@@ -8,12 +8,52 @@
         ResizeMode="CanResize"
         ShowGlow="False">
 
+    <dx:ThemedWindow.Resources>
+        <Style TargetType="DataGridRow">
+            <Setter Property="Background"      Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground"      Value="{DynamicResource ContentTextBrush}"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="DataGridCell">
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="BorderThickness"       Value="0"/>
+            <Setter Property="Padding"               Value="0"/>
+            <Setter Property="FocusVisualStyle"      Value="{x:Null}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="DataGridCell">
+                        <Border x:Name="CellBd" Background="Transparent" Padding="8,3" BorderThickness="0">
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                                <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </dx:ThemedWindow.Resources>
+
         <DockPanel LastChildFill="True">
 
             <!-- Title bar -->
             <Border DockPanel.Dock="Top" Height="42" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource TitleBorderBrush}" BorderThickness="0,0,0,1">
                 <Grid Margin="14,0">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Social/tiktok.svg'}" Width="14" Height="14" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtTitle" Text="TikTok Bot" FontSize="11" Foreground="{DynamicResource TitleTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
                         <Border x:Name="BadgeRunning" Margin="10,0,0,0" CornerRadius="3"
                                 Background="{DynamicResource SectionBgBrush}" BorderBrush="#22C55E" BorderThickness="1"
                                 Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
@@ -32,7 +72,7 @@
             <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
                 <Grid Margin="14,0">
-                    <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource TitleTextBrush}"
+                    <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource LabelBrush}"
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
                     <TextBlock x:Name="TxtProgress" Text="" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
