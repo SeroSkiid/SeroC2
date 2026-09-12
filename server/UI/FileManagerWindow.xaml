@@ -65,7 +65,7 @@
                                VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </Button>
                 <TextBox x:Name="TxtPath" Grid.Column="3" Height="26"
-                         Background="{DynamicResource SidebarCtrlBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
+                         Background="{DynamicResource InputBgBrush}" Foreground="{DynamicResource ContentTextBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
                          BorderThickness="1" Padding="6,3" FontFamily="Consolas" FontSize="11"
                          VerticalContentAlignment="Center" KeyDown="TxtPath_KeyDown"/>
                 <Button Grid.Column="4" x:Name="BtnGo" Content="Go" Height="26" MinWidth="46" Width="Auto" Padding="8,0" Margin="4,0,0,0"
@@ -163,7 +163,7 @@
 
                     <!-- Drives list -->
                     <ListBox x:Name="DrivesList" Background="Transparent" BorderThickness="0"
-                             Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" FontSize="12"
+                             Foreground="{DynamicResource SidebarCtrlTextBrush}" FontFamily="Consolas" FontSize="12"
                              Margin="0,4,0,0"
                              SelectionChanged="DrivesList_SelectionChanged">
                         <ListBox.ItemContainerStyle>

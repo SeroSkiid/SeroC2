@@ -82,7 +82,7 @@
                         </Grid>
                     </Border>
                     <ListBox x:Name="ListFiles" Background="Transparent" BorderThickness="0"
-                             Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" FontSize="12"
+                             Foreground="{DynamicResource SidebarCtrlTextBrush}" FontFamily="Consolas" FontSize="12"
                              SelectionChanged="ListFiles_SelectionChanged"
                              ContextMenuOpening="ListFiles_ContextMenuOpening">
                         <ListBox.ContextMenu>
@@ -107,7 +107,7 @@
                                 <Setter Property="Padding" Value="10,6"/>
                                 <Setter Property="Background" Value="Transparent"/>
                                 <Setter Property="BorderThickness" Value="0"/>
-                                <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource SidebarCtrlTextBrush}"/>
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListBoxItem">

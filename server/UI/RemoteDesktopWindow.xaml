@@ -41,11 +41,11 @@
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                         <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource FieldLabelBrush}"
+                                <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                            FontSize="10" FontFamily="Segoe UI Mono" MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
-                                <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource FieldLabelBrush}"
+                                <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                            FontSize="10" FontFamily="Segoe UI Mono" MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
-                                <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource FieldLabelBrush}"
+                                <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                            FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Right" Margin="0,0,8,0"/>
                             </StackPanel>
                         </Border>
@@ -93,7 +93,7 @@
                         <Slider x:Name="SldQuality" Minimum="60" Maximum="95" Value="90" Width="80"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtQuality" Text="90" Foreground="{DynamicResource LabelBrush}"
+                            <TextBlock x:Name="TxtQuality" Text="90" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
                         </Border>
 
@@ -105,7 +105,7 @@
                         <Slider x:Name="SldScale" Minimum="25" Maximum="100" Value="100" Width="70"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtScale" Text="100%" Foreground="{DynamicResource LabelBrush}"
+                            <TextBlock x:Name="TxtScale" Text="100%" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono" Width="30" TextAlignment="Center"/>
                         </Border>
                     </StackPanel>
@@ -122,7 +122,7 @@
                         <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="{DynamicResource InputBorderBrush}"
                                  VerticalAlignment="Center" Margin="0,0,7,0"/>
                         <TextBlock x:Name="TxtStatus" Text="Connecting..."
-                                   Foreground="{DynamicResource FieldLabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
                                    VerticalAlignment="Center"/>
                     </StackPanel>
                     <!-- Center: input toggles -->
@@ -157,10 +157,10 @@
                        Loaded="Img_Loaded"/>
                 <StackPanel x:Name="PnlNoSession" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False">
                     <TextBlock Text="No active session"
-                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="14" FontWeight="SemiBold"
+                               Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="14" FontWeight="SemiBold"
                                FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
                     <TextBlock Text="Select a monitor and click START"
-                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"
                                HorizontalAlignment="Center" Margin="0,4,0,0"/>
                 </StackPanel>
 
@@ -194,7 +194,7 @@
                         <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
                                    FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
                         <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
-                                   Foreground="{DynamicResource FieldLabelBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                                   Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
                                    HorizontalAlignment="Center" Margin="0,6,0,0"/>
                     </StackPanel>
                 </Grid>

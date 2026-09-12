@@ -72,7 +72,7 @@
                         </Border>
 
                         <ListBox x:Name="ClientList" Background="Transparent" BorderThickness="0"
-                                 Foreground="{DynamicResource ContentTextBrush}" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12">
+                                 Foreground="{DynamicResource SidebarCtrlTextBrush}" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="Background"      Value="Transparent"/>
@@ -105,9 +105,9 @@
                                                   VerticalAlignment="Center" Margin="0,0,6,0"
                                                   Checked="Client_SelectChanged" Unchecked="Client_SelectChanged"/>
                                         <StackPanel Grid.Column="1">
-                                            <TextBlock Text="{Binding Label}" Foreground="{DynamicResource ContentTextBrush}"
+                                            <TextBlock Text="{Binding Label}" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                                        FontSize="11" FontFamily="Segoe UI Variable Text, Segoe UI"/>
-                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource LabelBrush}"
+                                            <TextBlock Text="{Binding Status}" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                                        FontSize="9" FontFamily="Consolas" Margin="0,1,0,2"/>
                                         </StackPanel>
                                     </Grid>

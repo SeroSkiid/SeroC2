@@ -43,16 +43,16 @@
                     <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3"
                             Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource FieldLabelBrush}"
+                            <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono"
                                        MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource FieldLabelBrush}"
+                            <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono"
                                        MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource FieldLabelBrush}"
+                            <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono"
                                        MinWidth="44" TextAlignment="Right" Margin="0,0,8,0"/>
-                            <TextBlock x:Name="SignalIcon" Text="&#xEB44;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource FieldLabelBrush}"
+                            <TextBlock x:Name="SignalIcon" Text="&#xEB44;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="12" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Border>
@@ -102,7 +102,7 @@
                             Style="{StaticResource SlimSlider}"/>
                     <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
                             Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtQuality" Text="20" Foreground="{DynamicResource LabelBrush}"
+                        <TextBlock x:Name="TxtQuality" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                    FontSize="10" FontFamily="Segoe UI Mono"
                                    Width="18" TextAlignment="Center"/>
                     </Border>
@@ -113,7 +113,7 @@
                             Style="{StaticResource SlimSlider}"/>
                     <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
                             Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource LabelBrush}"
+                        <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                    FontSize="10" FontFamily="Segoe UI Mono"
                                    Width="18" TextAlignment="Center"/>
                     </Border>
@@ -171,7 +171,7 @@
             <!-- Placeholder shown before streaming starts -->
             <TextBlock x:Name="TxtPlaceholder"
                        Text="Waiting for device list..."
-                       Foreground="{DynamicResource FieldLabelBrush}" FontSize="13" FontWeight="SemiBold"
+                       Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="13" FontWeight="SemiBold"
                        FontFamily="Segoe UI Variable Text, Segoe UI"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        IsHitTestVisible="False"/>
@@ -207,7 +207,7 @@
                     <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
                                FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
                     <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
-                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
                                HorizontalAlignment="Center" Margin="0,6,0,0"/>
                 </StackPanel>
             </Grid>
