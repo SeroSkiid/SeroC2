@@ -128,7 +128,8 @@ public partial class ServerWindow : ThemedWindow
         "VS2017Light", "Seven", "DXStyle",
         "Office2016Colorful", "Office2019White", "Office2019Colorful",
         "Office2010Blue", "Office2010Silver", "Office2013",
-        "Office2019HighContrast"
+        // Office2019HighContrast intentionally excluded: its background is #000000,
+        // so dark-mode log colors (white/bright) are required for readable contrast.
     };
 
     // Themes with a vivid coloured title bar — feature window title text must be white/light
@@ -166,7 +167,7 @@ public partial class ServerWindow : ThemedWindow
         "NavIconBrush", "NavTextBrush", "NavHoverBgBrush", "NavHoverIconBrush",
         "NavHoverTextBrush", "NavSelBgBrush", "NavSelTextBrush", "NavSelIconBrush",
         "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
-        "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
+        "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "TitleTextBrush", "SectionBgBrush", "SectionBorderBrush",
         "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
         "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
         "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
