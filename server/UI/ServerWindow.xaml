@@ -1322,7 +1322,7 @@
                         </Grid>
                         <Image x:Name="ScreenPopupImage" Stretch="Uniform"
                                MaxHeight="680" MaxWidth="1068"/>
-                        <TextBlock x:Name="ScreenPopupSub" Foreground="#404878" FontSize="10"
+                        <TextBlock x:Name="ScreenPopupSub" Foreground="#6878A8" FontSize="10"
                                    FontFamily="Consolas" Margin="0,8,0,0"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
