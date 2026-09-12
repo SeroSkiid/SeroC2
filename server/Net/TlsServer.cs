@@ -145,10 +145,14 @@ public class TlsServer
         foreach (var ip in _authFail.Keys)
             if (_authFail.TryGetValue(ip, out var v) && now > v.unbanAt)
                 _authFail.TryRemove(ip, out _);
-        // Country cache has no natural expiry — cap at 50k entries to prevent unbounded growth
-        // over the server's lifetime when many unique bot IPs connect and disconnect.
+        // Country cache has no natural expiry — cap at 50k entries to prevent unbounded growth.
+        // Progressive eviction removes ~10k random entries instead of clearing the whole cache,
+        // so common IPs that reconnect immediately after eviction don't all miss at once.
         if (_countryCache.Count > 50_000)
-            _countryCache.Clear();
+        {
+            var toRemove = _countryCache.Keys.Take(10_000).ToList();
+            foreach (var k in toRemove) _countryCache.TryRemove(k, out _);
+        }
     }
 
     public void Stop()
@@ -221,10 +225,18 @@ public class TlsServer
         if (failed) DisconnectClient(client.Id);
     }
 
+    // Cap concurrent SendToAll tasks so 100k clients don't spawn 100k Tasks at once.
+    // 256 concurrent sends keeps throughput high while bounding memory and GC pressure.
+    private static readonly SemaphoreSlim _sendAllSem = new(256, 256);
+
     public Task SendToAll(Packet packet)
     {
-        // Enumerate Values directly — no ToList() snapshot allocation
-        var tasks = ConnectedClients.Values.Select(c => SendToClient(c.Id, packet));
+        var tasks = ConnectedClients.Values.Select(async c =>
+        {
+            await _sendAllSem.WaitAsync().ConfigureAwait(false);
+            try { await SendToClient(c.Id, packet).ConfigureAwait(false); }
+            finally { _sendAllSem.Release(); }
+        });
         return Task.WhenAll(tasks);
     }
 

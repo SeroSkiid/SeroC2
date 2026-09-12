@@ -71,20 +71,23 @@ public class DataStore
     public void Log(string message)
     {
         var entry = $"[{DateTime.Now:HH:mm:ss}] {message}";
-        lock (_logsLock)
-        {
-            Logs.Add(entry);
-            // Trim: keep newest 500 entries via Clear+re-add (O(n)) instead of
-            // 500× RemoveAt(0) (O(n²) due to List<T> shift on every removal).
-            if (Logs.Count > 1000)
-            {
-                var keep = Logs.Skip(500).ToList();
-                Logs.Clear();
-                foreach (var l in keep) Logs.Add(l);
-            }
-        }
         // Queue for async disk write — never blocks the caller
         _logQueue.Enqueue(entry);
+        // Dispatch ObservableCollection mutation to UI thread so callers are never blocked
+        // by the O(n) trim. All Logs writes are serialized by the Dispatcher queue.
+        System.Windows.Application.Current?.Dispatcher.BeginInvoke(() =>
+        {
+            lock (_logsLock)
+            {
+                Logs.Add(entry);
+                if (Logs.Count > 1000)
+                {
+                    var keep = Logs.Skip(500).ToList();
+                    Logs.Clear();
+                    foreach (var l in keep) Logs.Add(l);
+                }
+            }
+        });
     }
 
     private void FlushLogQueue(object? sender, System.Timers.ElapsedEventArgs e)

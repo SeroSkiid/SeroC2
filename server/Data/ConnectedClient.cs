@@ -116,7 +116,13 @@ public class ConnectedClient : INotifyPropertyChanged
     public float CpuUsage
     {
         get => _cpuUsage;
-        set { if (_cpuUsage != value) { _cpuUsage = value; Notify(); Notify(nameof(CpuBrush)); } }
+        set
+        {
+            // Suppress PropertyChanged for sub-2% changes — avoids ~300 UI events/s at 1k+ clients
+            bool notify = Math.Abs(_cpuUsage - value) >= 2f;
+            _cpuUsage = value;
+            if (notify) { Notify(); Notify(nameof(CpuBrush)); }
+        }
     }
     public Brush CpuBrush => _cpuUsage < 40 ? _brushGreen : _cpuUsage < 75 ? _brushYellow : _brushRed;
 
@@ -143,13 +149,10 @@ public class ConnectedClient : INotifyPropertyChanged
         get => _pingMs;
         set
         {
-            if (_pingMs != value)
-            {
-                _pingMs = value;
-                Notify();
-                Notify(nameof(PingDisplay));
-                Notify(nameof(PingBrush));
-            }
+            // Suppress PropertyChanged for sub-10ms changes — ping bounces constantly at scale
+            bool notify = Math.Abs(_pingMs - value) >= 10;
+            _pingMs = value;
+            if (notify) { Notify(); Notify(nameof(PingDisplay)); Notify(nameof(PingBrush)); }
         }
     }
     public string PingDisplay => _pingMs < 0 ? "..." : $"{_pingMs} ms";

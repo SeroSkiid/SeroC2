@@ -1,5 +1,4 @@
 using System.IO;
-using Newtonsoft.Json;
 
 namespace SeroServer.Protocol;
 
@@ -259,7 +258,7 @@ public class Packet
 
     public static async Task WriteToStreamAsync(Stream stream, Packet packet, CancellationToken ct = default)
     {
-        var json = JsonConvert.SerializeObject(packet);
+        var json = System.Text.Json.JsonSerializer.Serialize(packet);
         // Encode JSON directly into a rented buffer (offset 4), write length header at offset 0.
         // Eliminates the intermediate body byte[] and the separate 4-byte lenBuf allocation.
         // GetMaxByteCount over-estimates (×3+1) but the rented buffer is returned immediately.

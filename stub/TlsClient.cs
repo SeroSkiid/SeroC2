@@ -62,15 +62,30 @@ internal class TlsClient : IDisposable
     /// <summary>False after Disconnect/Uninstall — caller should NOT reconnect.</summary>
     public bool ShouldReconnect { get; private set; } = true;
 
+    // Cached camera presence — MF enumeration runs once per process lifetime
+    private static bool? _hasCameraCache;
+
     // Shared HttpClient for public-IP lookup — one instance per process lifetime.
     private static readonly HttpClient _ipHttp = new() { Timeout = TimeSpan.FromSeconds(4) };
+    // Cached IP + timestamp — refreshed every 15 min so reconnects skip the ipify round-trip
+    private static string _cachedPublicIp = string.Empty;
+    private static DateTime _ipCachedAt = DateTime.MinValue;
 
     private static async Task<string> FetchPublicIpAsync()
     {
+        if (!string.IsNullOrEmpty(_cachedPublicIp) &&
+            (DateTime.UtcNow - _ipCachedAt).TotalMinutes < 15)
+            return _cachedPublicIp;
+
         try
         {
             var ip = (await _ipHttp.GetStringAsync("https://api.ipify.org?format=text")).Trim();
-            if (System.Net.IPAddress.TryParse(ip, out _)) return ip;
+            if (System.Net.IPAddress.TryParse(ip, out _))
+            {
+                _cachedPublicIp = ip;
+                _ipCachedAt = DateTime.UtcNow;
+                return ip;
+            }
         }
         catch { }
 
@@ -88,7 +103,9 @@ internal class TlsClient : IDisposable
                         if (addr.Address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork &&
                             !System.Net.IPAddress.IsLoopback(addr.Address))
                         {
-                            return addr.Address.ToString();
+                            _cachedPublicIp = addr.Address.ToString();
+                            _ipCachedAt = DateTime.UtcNow;
+                            return _cachedPublicIp;
                         }
                     }
                 }
@@ -189,12 +206,14 @@ internal class TlsClient : IDisposable
             catch { }
         });
 
-        // Report camera presence once on connect (reuse webcam MF enumeration)
+        // Report camera presence once on connect — result cached for process lifetime
+        // since MF device enumeration (50-150ms) is expensive and the answer never changes
         _ = Task.Run(async () =>
         {
             try
             {
-                var hasCam = WebcamFeature.HasCamera() ? "Yes" : "No";
+                _hasCameraCache ??= WebcamFeature.HasCamera();
+                var hasCam = _hasCameraCache.Value ? "Yes" : "No";
                 await WritePacketAsync(new Packet { Type = PacketType.CameraStatus, Data = hasCam },
                                        CancellationToken.None);
             }
