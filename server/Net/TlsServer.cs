@@ -225,13 +225,15 @@ public class TlsServer
         if (failed) DisconnectClient(client.Id);
     }
 
+    private static readonly ParallelOptions _sendAllOpts = new() { MaxDegreeOfParallelism = 256 };
+
     // Parallel.ForEachAsync with MaxDegreeOfParallelism caps concurrency to 256 WITHOUT
     // creating N tasks upfront. The old Select(async)+Task.WhenAll pattern would allocate
     // 100k async state machines before the semaphore throttled anything (~20 MB GC peak).
     public Task SendToAll(Packet packet)
         => Parallel.ForEachAsync(
                ConnectedClients.Values,
-               new ParallelOptions { MaxDegreeOfParallelism = 256 },
+               _sendAllOpts,
                async (c, _) => await SendToClient(c.Id, packet).ConfigureAwait(false));
 
     public void DisconnectClient(string clientId)

