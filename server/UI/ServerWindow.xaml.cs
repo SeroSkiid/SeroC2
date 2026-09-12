@@ -6734,6 +6734,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#2D2D30");
                 res["ColHeaderFgBrush"]        = B("#808080");
                 res["ColHeaderBorderBrush"]    = B("#606068");
+                res["AlternatingRowBgBrush"]   = B("#252526");
                 break;
 
             case "VS2017Light":
@@ -6844,6 +6845,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#333333");
                 res["ColHeaderFgBrush"]        = B("#909090");
                 res["ColHeaderBorderBrush"]    = B("#787878");
+                res["AlternatingRowBgBrush"]   = B("#424242");
                 break;
 
             case "Office2010Silver":
@@ -6954,6 +6956,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#252525");
                 res["ColHeaderFgBrush"]        = B("#707070");
                 res["ColHeaderBorderBrush"]    = B("#656565");
+                res["AlternatingRowBgBrush"]   = B("#222222");
                 break;
 
             case "Office2019White":
@@ -7025,6 +7028,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#333333");
                 res["ColHeaderFgBrush"]        = B("#909090");
                 res["ColHeaderBorderBrush"]    = B("#787878");
+                res["AlternatingRowBgBrush"]   = B("#313131");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -7099,6 +7103,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#3A3A3A");
                 res["ColHeaderFgBrush"]        = B("#808080");
                 res["ColHeaderBorderBrush"]    = B("#787878");
+                res["AlternatingRowBgBrush"]   = B("#363636");
                 break;
 
             case "Office2016Black":
@@ -7134,6 +7139,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#222222");
                 res["ColHeaderFgBrush"]        = B("#707070");
                 res["ColHeaderBorderBrush"]    = B("#606060");
+                res["AlternatingRowBgBrush"]   = B("#1F1F1F");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -7208,6 +7214,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#4C4C4C");
                 res["ColHeaderFgBrush"]        = B("#B0B0B0");
                 res["ColHeaderBorderBrush"]    = B("#888888");
+                res["AlternatingRowBgBrush"]   = B("#484848");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
@@ -7317,6 +7324,7 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#000000");
                 res["ColHeaderFgBrush"]        = B("#FFFF00");
                 res["ColHeaderBorderBrush"]    = B("#FFFFFF");
+                res["AlternatingRowBgBrush"]   = B("#111100");
                 break;
 
             // ══════════════════════════════════════════════════════════════════
