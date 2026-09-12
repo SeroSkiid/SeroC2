@@ -1407,6 +1407,7 @@
                                             <TextBox x:Name="TxtPort"
                                                      Style="{StaticResource STxt}" Text="7777"
                                                      BorderThickness="0" Background="Transparent"
+                                                     Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                                      Padding="0" FontSize="12" FontWeight="SemiBold"
                                                      MaxLength="5" Width="46" VerticalAlignment="Center"
                                                      PreviewTextInput="TxtPort_PreviewTextInput"
