@@ -55,14 +55,32 @@ public class DataStore
     private readonly ConcurrentQueue<string> _logQueue = new();
     private readonly System.Timers.Timer _logFlushTimer;
 
-    public ObservableCollection<string> Logs { get; } = [];
+    // Fires one Reset instead of 500 Add events when trimming, preventing UI freeze
+    // on connection bursts. Kept private; Logs property exposes ObservableCollection<string>
+    // so callers (XAML bindings, other classes) see the same type as before.
+    private sealed class LogCollection : ObservableCollection<string>
+    {
+        public void TrimTo(int keep)
+        {
+            if (Count <= keep) return;
+            var last = this.Skip(Count - keep).ToList();
+            Items.Clear();
+            foreach (var s in last) Items.Add(s);
+            OnCollectionChanged(new System.Collections.Specialized.NotifyCollectionChangedEventArgs(
+                System.Collections.Specialized.NotifyCollectionChangedAction.Reset));
+            OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Count"));
+            OnPropertyChanged(new System.ComponentModel.PropertyChangedEventArgs("Item[]"));
+        }
+    }
+    private readonly LogCollection _logs = new();
+    public ObservableCollection<string> Logs => _logs;
 
     /// <summary>Persistent client records indexed by HWID.</summary>
     public ConcurrentDictionary<string, ClientRecord> AllClients { get; } = new();
 
     public DataStore()
     {
-        System.Windows.Data.BindingOperations.EnableCollectionSynchronization(Logs, _logsLock);
+        System.Windows.Data.BindingOperations.EnableCollectionSynchronization(_logs, _logsLock);
 
         Directory.CreateDirectory(DataDir);
         OpenDb();
@@ -88,13 +106,8 @@ public class DataStore
         {
             lock (_logsLock)
             {
-                Logs.Add(entry);
-                if (Logs.Count > 1000)
-                {
-                    var keep = Logs.Skip(500).ToList();
-                    Logs.Clear();
-                    foreach (var l in keep) Logs.Add(l);
-                }
+                _logs.Add(entry);
+                if (_logs.Count > 1000) _logs.TrimTo(500);
             }
         });
     }

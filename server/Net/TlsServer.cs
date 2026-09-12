@@ -225,20 +225,14 @@ public class TlsServer
         if (failed) DisconnectClient(client.Id);
     }
 
-    // Cap concurrent SendToAll tasks so 100k clients don't spawn 100k Tasks at once.
-    // 256 concurrent sends keeps throughput high while bounding memory and GC pressure.
-    private static readonly SemaphoreSlim _sendAllSem = new(256, 256);
-
+    // Parallel.ForEachAsync with MaxDegreeOfParallelism caps concurrency to 256 WITHOUT
+    // creating N tasks upfront. The old Select(async)+Task.WhenAll pattern would allocate
+    // 100k async state machines before the semaphore throttled anything (~20 MB GC peak).
     public Task SendToAll(Packet packet)
-    {
-        var tasks = ConnectedClients.Values.Select(async c =>
-        {
-            await _sendAllSem.WaitAsync().ConfigureAwait(false);
-            try { await SendToClient(c.Id, packet).ConfigureAwait(false); }
-            finally { _sendAllSem.Release(); }
-        });
-        return Task.WhenAll(tasks);
-    }
+        => Parallel.ForEachAsync(
+               ConnectedClients.Values,
+               new ParallelOptions { MaxDegreeOfParallelism = 256 },
+               async (c, _) => await SendToClient(c.Id, packet).ConfigureAwait(false));
 
     public void DisconnectClient(string clientId)
     {
