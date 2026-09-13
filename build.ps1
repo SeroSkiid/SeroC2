@@ -22,14 +22,28 @@ Write-Step "Building server (net10.0-windows)..."
 $csproj = Get-ChildItem $Server -Filter "*.csproj" | Select-Object -First 1
 if (-not $csproj) { Write-Err "No .csproj found in server/" }
 
+# Skip NuGet restore if packages are already cached (project.assets.json present and non-empty).
+# Saves 60-90s on subsequent builds. Re-run setup-prerequisites.ps1 or delete obj\ to force restore.
+$assetsJson = Join-Path $Server "obj\project.assets.json"
+$noRestore  = (Test-Path $assetsJson) -and ((Get-Item $assetsJson).Length -gt 0)
+if ($noRestore) {
+    Write-Host "  NuGet cache hit — skipping restore (delete obj\ to force)" -ForegroundColor DarkGray
+} else {
+    Write-Host "  NuGet cache miss — restoring packages..." -ForegroundColor DarkGray
+}
+
 $tmpOut = Join-Path $env:TEMP "sero_publish_$(Get-Random)"
-dotnet publish $csproj.FullName `
-    -c Release `
-    -r win-x64 `
-    --self-contained `
-    -p:DebugType=None `
-    -p:PublishTrimmed=false `
-    -o $tmpOut
+$publishArgs = @(
+    "publish", $csproj.FullName,
+    "-c", "Release",
+    "-r", "win-x64",
+    "--self-contained",
+    "-p:DebugType=None",
+    "-p:PublishTrimmed=false",
+    "-o", $tmpOut
+)
+if ($noRestore) { $publishArgs += "--no-restore" }
+& dotnet @publishArgs
 
 if ($LASTEXITCODE -ne 0) { Write-Err "Server build failed" }
 
