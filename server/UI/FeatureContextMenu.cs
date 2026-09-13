@@ -221,8 +221,10 @@ internal static class FeatureContextMenu
         mi.Icon = MakeIcon(svgPath);
         // DX theme sets hover background but does not adapt foreground on IsHighlighted
         // for top-level parent items. Force system highlight text color directly.
-        mi.MouseEnter += (s, _) => { if (s is MenuItem m) m.Foreground = System.Windows.SystemColors.HighlightTextBrush; };
-        mi.MouseLeave += (s, _) => { if (s is MenuItem m) m.ClearValue(MenuItem.ForegroundProperty); };
+        mi.MouseEnter    += (s, _) => { if (s is MenuItem m) m.Foreground = System.Windows.SystemColors.HighlightTextBrush; };
+        mi.MouseLeave    += (s, _) => { if (s is MenuItem m && !m.IsSubmenuOpen) m.ClearValue(MenuItem.ForegroundProperty); };
+        mi.SubmenuOpened += (s, _) => { if (s is MenuItem m) m.Foreground = System.Windows.SystemColors.HighlightTextBrush; };
+        mi.SubmenuClosed += (s, _) => { if (s is MenuItem m) m.ClearValue(MenuItem.ForegroundProperty); };
         return mi;
     }
 
