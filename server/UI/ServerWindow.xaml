@@ -163,6 +163,8 @@
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsHighlighted" Value="True">
                                 <Setter TargetName="bd" Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                <Setter Property="Foreground" Value="{DynamicResource NavHoverTextBrush}"/>
+                                <Setter TargetName="Arrow" Property="Fill" Value="{DynamicResource NavHoverTextBrush}"/>
                             </Trigger>
                             <Trigger Property="Role" Value="SubmenuHeader">
                                 <Setter TargetName="Arrow" Property="Visibility" Value="Visible"/>
