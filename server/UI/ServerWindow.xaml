@@ -3602,7 +3602,7 @@
                                 </Grid>
                                 <ListBox x:Name="WinNotifyKeywordsList"
                                          Height="130"
-                                         Background="{DynamicResource SidebarCtrlBgBrush}"
+                                         Background="{DynamicResource InputBgBrush}"
                                          BorderBrush="{DynamicResource InputBorderBrush}"
                                          BorderThickness="1"
                                          Foreground="{DynamicResource ContentTextBrush}"
@@ -3615,6 +3615,15 @@
                                             <Setter Property="Padding" Value="8,4"/>
                                             <Setter Property="Background" Value="Transparent"/>
                                             <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource NavSelBgBrush}"/>
+                                                    <Setter Property="Foreground" Value="{DynamicResource NavSelTextBrush}"/>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="{DynamicResource NavHoverBgBrush}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
                                         </Style>
                                     </ListBox.ItemContainerStyle>
                                 </ListBox>
@@ -3808,12 +3817,13 @@
                                     <CheckBox x:Name="SettingsDevLogs" Content="Enable diagnostic logging (crashes, disconnections, stream events)"
                                               Style="{StaticResource SChk}" IsChecked="True" Margin="0,0,0,4"
                                               Checked="SettingsDevLogs_Changed" Unchecked="SettingsDevLogs_Changed" />
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,20">
-                                        <TextBlock x:Name="TxtDevLogsPath" Text="" Foreground="{DynamicResource LabelBrush}"
-                                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
-                                        <Button x:Name="BtnOpenDiagFolder" Content="Open folder" Margin="10,0,0,0" Height="22" Padding="8,0"
+                                    <DockPanel Margin="0,0,0,20" LastChildFill="True">
+                                        <Button x:Name="BtnOpenDiagFolder" Content="Open folder" DockPanel.Dock="Right" Margin="10,0,0,0" Height="22" Padding="8,0"
                                                 Style="{StaticResource SBtn}" Click="OpenDiagLogsFolder_Click"/>
-                                    </StackPanel>
+                                        <TextBlock x:Name="TxtDevLogsPath" Text="" Foreground="{DynamicResource LabelBrush}"
+                                                   FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                    </DockPanel>
 
                                     <TextBlock x:Name="LblSettTheme" Text="THEME" Style="{StaticResource SLabel}" />
                                     <ComboBox x:Name="SettingsTheme"
