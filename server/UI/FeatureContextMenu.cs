@@ -232,6 +232,8 @@ internal static class FeatureContextMenu
     {
         var mi = new MenuItem { Header = header };
         mi.Icon = MakeIcon(svgPath);
+        mi.MouseEnter += (s, _) => { if (s is MenuItem m) m.Foreground = System.Windows.SystemColors.HighlightTextBrush; };
+        mi.MouseLeave += (s, _) => { if (s is MenuItem m) m.ClearValue(MenuItem.ForegroundProperty); };
         mi.Click += (_, _) =>
         {
             try { onClick(); }
