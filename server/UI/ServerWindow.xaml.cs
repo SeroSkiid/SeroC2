@@ -152,7 +152,7 @@ public partial class ServerWindow : ThemedWindow
         "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
         "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "SectionBgBrush", "SectionBorderBrush",
         "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
-        "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
+        "FieldLabelBrush", "TitleLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
         "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
         "ColHeaderBgBrush", "ColHeaderFgBrush", "ColHeaderBorderBrush", "ColHeaderHoverBrush", "ColSeparatorBrush", "ColAccentBarBrush",
         "AlternatingRowBgBrush", "RowHoverBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush", "FlagUnknownBrush",
@@ -169,7 +169,7 @@ public partial class ServerWindow : ThemedWindow
         "NavSectionBrush", "SidebarCtrlBgBrush", "SidebarCtrlBorderBrush", "SidebarCtrlTextBrush",
         "WindowBgBrush", "TitleBgBrush", "TitleBorderBrush", "TitleTextBrush", "SectionBgBrush", "SectionBorderBrush",
         "ActivityBgBrush", "InputBgBrush", "InputBorderBrush", "ContentTextBrush", "LabelBrush",
-        "FieldLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
+        "FieldLabelBrush", "TitleLabelBrush", "BtnBgBrush", "BtnBorderBrush", "BtnHoverBgBrush", "BtnHoverBorderBrush",
         "BtnPressedBgBrush", "BtnFgBrush", "BtnPrimaryBgBrush", "CardBgBrush", "ChartBgBrush", "ProgressTrackBrush",
         "AlternatingRowBgBrush", "RowSelBgBrush", "RowSelTextBrush", "RowSelBorderBrush",
         "RowHoverBgBrush",
@@ -7256,6 +7256,13 @@ Read-Host 'Press Enter to close'
                 res["ColHeaderBgBrush"]        = B("#C8DCF0");
                 res["ColHeaderFgBrush"]        = B("#1A1A2E");
                 res["ColHeaderBorderBrush"]    = B("#8AAED4");
+                // DXStyle has a dark title bar (#201F35) but a light theme everywhere else.
+                // Accent (#3E6FA8) on that dark bar is only ~3:1 — override to a readable light blue.
+                res["TitleTextBrush"]          = B("#D0E0F8");
+                Resources["TitleTextBrush"]    = B("#D0E0F8");
+                // Secondary label text on TitleBgBrush panels (TxtCount, status bars, section headers).
+                // FieldLabelBrush (#586880) is designed for light backgrounds and fails on dark title bar.
+                res["TitleLabelBrush"]         = B("#80B0D8");
                 break;
 
             case "MetropolisDark":
@@ -7673,6 +7680,11 @@ Read-Host 'Press Enter to close'
             res["RowSelTextBrush"]       = B("#000000");
             res["AlternatingRowBgBrush"] = B("#111100"); // accessibility yellow tint (restores F2 fix)
         }
+
+        // TitleLabelBrush — secondary text on TitleBgBrush panels (counts, status bars, section headers).
+        // DXStyle overrides this explicitly above; all other themes inherit FieldLabelBrush.
+        if (!res.Contains("TitleLabelBrush") && res.Contains("FieldLabelBrush"))
+            res["TitleLabelBrush"] = res["FieldLabelBrush"];
 
         // Swap ScrollBar implicit style: each classic theme gets its own wide scrollbar style;
         // all modern/dark themes get the thin modern scrollbar.

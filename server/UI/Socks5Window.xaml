@@ -35,7 +35,7 @@
                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
                 <Grid>
                     <TextBlock x:Name="TxtStatus" Text="Configure port and click Start"
-                               Foreground="{DynamicResource FieldLabelBrush}" FontSize="11" FontFamily="Consolas"
+                               Foreground="{DynamicResource TitleLabelBrush}" FontSize="11" FontFamily="Consolas"
                                VerticalAlignment="Center" Margin="14,0"/>
                 </Grid>
             </Border>

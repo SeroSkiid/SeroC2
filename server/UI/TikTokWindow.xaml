@@ -72,7 +72,7 @@
             <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
                 <Grid Margin="14,0">
-                    <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource LabelBrush}"
+                    <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource TitleLabelBrush}"
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"/>
                     <TextBlock x:Name="TxtProgress" Text="" Foreground="{DynamicResource AccentBrush}"
                                FontSize="11" FontFamily="Consolas" VerticalAlignment="Center"
@@ -108,7 +108,7 @@
                         <Border DockPanel.Dock="Bottom" Background="{DynamicResource TitleBgBrush}" BorderBrush="{DynamicResource InputBorderBrush}"
                                 BorderThickness="0,1,0,0" Padding="10,4">
                             <TextBlock x:Name="TxtSelCount" FontSize="9" FontFamily="Consolas"
-                                       Foreground="{DynamicResource LabelBrush}" VerticalAlignment="Center"/>
+                                       Foreground="{DynamicResource TitleLabelBrush}" VerticalAlignment="Center"/>
                         </Border>
 
                         <ListBox x:Name="ClientList" Background="Transparent" BorderThickness="0"

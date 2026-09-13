@@ -76,7 +76,7 @@
         <!-- Status bar -->
         <Border DockPanel.Dock="Bottom" Height="26" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource LabelBrush}"
+            <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource TitleLabelBrush}"
                        FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="14,0"/>
         </Border>
 
@@ -98,7 +98,7 @@
                     <Border DockPanel.Dock="Top" Padding="10,6" Background="{DynamicResource TitleBgBrush}"
                             BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,0,0,1">
                         <TextBlock x:Name="TxtQuickAccess" Text="QUICK ACCESS" FontSize="9" FontWeight="Bold"
-                                   Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas"/>
+                                   Foreground="{DynamicResource TitleLabelBrush}" FontFamily="Consolas"/>
                     </Border>
 
                     <!-- Quick access buttons -->
@@ -158,7 +158,7 @@
                     <Border DockPanel.Dock="Top" Padding="10,6" Background="{DynamicResource TitleBgBrush}"
                             BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1" Margin="0,8,0,0">
                         <TextBlock x:Name="TxtDrives" Text="DRIVES" FontSize="9" FontWeight="Bold"
-                                   Foreground="{DynamicResource FieldLabelBrush}" FontFamily="Consolas"/>
+                                   Foreground="{DynamicResource TitleLabelBrush}" FontFamily="Consolas"/>
                     </Border>
 
                     <!-- Drives list -->

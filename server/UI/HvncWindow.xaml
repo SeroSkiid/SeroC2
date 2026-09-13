@@ -160,7 +160,7 @@
                 <!-- Right: resolution -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <TextBlock x:Name="TxtResolution" Text=""
-                               Foreground="{DynamicResource LabelBrush}" FontSize="9" FontFamily="Segoe UI Mono"
+                               Foreground="{DynamicResource TitleLabelBrush}" FontSize="9" FontFamily="Segoe UI Mono"
                                VerticalAlignment="Center" Margin="0,0,10,0"/>
                 </StackPanel>
             </Grid>

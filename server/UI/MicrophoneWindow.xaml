@@ -32,7 +32,7 @@
         <Border DockPanel.Dock="Bottom" Height="28" Background="{DynamicResource TitleBgBrush}"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0">
             <Grid>
-                <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource LabelBrush}"
+                <TextBlock x:Name="TxtStatus" Text="Ready" Foreground="{DynamicResource TitleLabelBrush}"
                            FontSize="11" FontFamily="Consolas" VerticalAlignment="Center" Margin="14,0"/>
             </Grid>
         </Border>
@@ -47,7 +47,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Device:" Foreground="{DynamicResource LabelBrush}"
+                    <TextBlock Grid.Column="0" Text="Device:" Foreground="{DynamicResource TitleLabelBrush}"
                                FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <ComboBox Grid.Column="1" x:Name="CmbDevice" Height="28"
                               Style="{StaticResource SCombo}" FontSize="11"/>

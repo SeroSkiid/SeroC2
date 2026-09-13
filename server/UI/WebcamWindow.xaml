@@ -149,7 +149,7 @@
                     <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="{DynamicResource InputBorderBrush}"
                              VerticalAlignment="Center" Margin="0,0,7,0"/>
                     <TextBlock x:Name="TxtStatus" Text="Waiting for device list..."
-                               Foreground="{DynamicResource LabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource TitleLabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
