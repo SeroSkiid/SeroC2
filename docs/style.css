@@ -412,13 +412,8 @@ body::before {
   justify-content: center;
   width: 340px;
 }
-.logo3d-scene {
-  perspective: 700px;
-  perspective-origin: 50% 60%;
-}
-.logo3d-plane {
-  transform-style: preserve-3d;
-}
+.logo3d-scene {}
+.logo3d-plane {}
 .logo3d-img {
   width: 300px;
   max-width: 100%;
