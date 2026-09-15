@@ -417,18 +417,19 @@ body::before {
   perspective-origin: 50% 60%;
 }
 .logo3d-plane {
-  transform: rotateX(-28deg) scale(1.0);
   transform-style: preserve-3d;
-  transition: transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-.hero-logo3d:hover .logo3d-plane {
-  transform: rotateX(-12deg) scale(1.06);
 }
 .logo3d-img {
   width: 300px;
   max-width: 100%;
   display: block;
-  filter: drop-shadow(0 0 70px rgba(74,133,245,0.45)) drop-shadow(0 28px 56px rgba(0,0,0,0.55));
+  opacity: 0.88;
+  filter: brightness(1.55) contrast(1.12) saturate(1.05)
+          drop-shadow(0 0 22px rgba(74,133,245,0.92))
+          drop-shadow(0 0 44px rgba(74,133,245,0.50))
+          drop-shadow(0 4px 10px rgba(0,0,0,0.65));
+  animation: logo3d 9s linear infinite;
+  will-change: transform;
 }
 .logo3d-glow {
   position: absolute;
