@@ -137,7 +137,7 @@
     <p class="eyebrow"><span class="dot-live"></span><span class="prompt">$</span>&nbsp;<span data-i18n="hero.eyebrow">source available &nbsp;·&nbsp; authorized use only &nbsp;·&nbsp; free</span></p>
     <h1><span data-i18n="hero.h1a">The C2/RAT they charge</span><br><em data-i18n="hero.h1b">$2,000 for.</em><br><span class="hero-free" data-i18n="hero.h1c">Free.</span></h1>
     <p class="hero-lead" data-i18n="hero.lead">
-      HVNC, DXGI remote desktop H264, remote webcam via DirectShow,
+      HVNC, DXGI remote desktop H.264 up to 144fps+, remote webcam via DirectShow,
       process hollowing with PPID spoof, NativeAOT stub — 40+ features.
       Everything the expensive ones have. None of the price tag.
     </p>
@@ -204,11 +204,11 @@
       <div class="dd-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       </div>
-      <h3 data-i18n="dd.rdp.h3">Remote Desktop — H.264 at 60 fps</h3>
-      <p data-i18n="dd.rdp.p1">Screen capture uses DXGI Desktop Duplication (<code>IDXGIOutput1::DuplicateOutput</code>) — GPU-direct, aligned to VBLANK for natural 60 fps pacing with no CPU copies. Falls back to GDI BitBlt on RDP sessions and headless machines.</p>
+      <h3 data-i18n="dd.rdp.h3">Remote Desktop — H.264, configurable FPS</h3>
+      <p data-i18n="dd.rdp.p1">Screen capture uses DXGI Desktop Duplication (<code>IDXGIOutput1::DuplicateOutput</code>) — GPU-direct, paced to the target's monitor VBLANK. On a 60 Hz screen it runs at 60 fps, on 144 Hz at 144 fps — the FPS slider in the server lets you cap or push it to any value. Falls back to GDI BitBlt on RDP sessions and headless machines.</p>
       <p data-i18n="dd.rdp.p2">Captured BGRA frames are encoded via <strong>Windows Media Foundation's built-in H.264 MFT</strong> (<code>CLSID_CMSH264EncoderMFT</code>) — no FFmpeg, no third-party dependency. The pixel pipeline converts BGRA to NV12 (BT.601 limited range) in-place, then produces H.264 Baseline Annex-B NAL units with <code>MF_LOW_LATENCY=1</code> for minimal encoder delay. Bitrate scales automatically with resolution and FPS. On older or headless targets where MF is unavailable, the stream falls back to 64×64 JPEG block diff.</p>
       <div class="dd-tags">
-        <span data-i18n="dd.rdp.tag1">DXGI + GDI fallback</span><span data-i18n="dd.rdp.tag2">H.264 Baseline</span><span data-i18n="dd.rdp.tag3">MF_LOW_LATENCY</span><span data-i18n="dd.rdp.tag4">no FFmpeg</span><span data-i18n="dd.rdp.tag5">NativeAOT COM</span>
+        <span data-i18n="dd.rdp.tag1">DXGI VBLANK-paced</span><span data-i18n="dd.rdp.tag2">H.264 Baseline</span><span data-i18n="dd.rdp.tag3">configurable FPS</span><span data-i18n="dd.rdp.tag4">no FFmpeg</span><span data-i18n="dd.rdp.tag5">NativeAOT COM</span>
       </div>
     </div>
     <div class="deepdive-card reveal">

@@ -159,7 +159,7 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 
 **Primary — DXGI Desktop Duplication** (`IDXGIOutput1::DuplicateOutput`):
 - GPU-direct capture via the DWM compositor — no CPU copies
-- Blocks on `AcquireNextFrame(timeout=16ms)` aligned to VBLANK — natural 60 fps pacing
+- Blocks on `AcquireNextFrame` aligned to VBLANK — paced to the target's monitor refresh rate (60 fps on 60 Hz, 144 fps on 144 Hz). The FPS slider in the server lets you set any target rate; `Fps=0` (default) follows the monitor's native refresh
 
 **Fallback — GDI BitBlt** (`GetDC` + `BitBlt`):
 - Works on RDP sessions, headless machines, non-BGRA GPU formats
