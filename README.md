@@ -165,7 +165,15 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 - Works on RDP sessions, headless machines, non-BGRA GPU formats
 - Multi-monitor aware via `EnumDisplayMonitors`
 
-**Delta compression — 64×64 block diff:**
+**H.264 stream (primary transport):**
+- Frames are encoded via Windows Media Foundation's built-in `CLSID_CMSH264EncoderMFT` — no FFmpeg, no third-party codec, zero extra dependencies
+- NativeAOT-compatible: implemented entirely as raw COM vtable P/Invoke — no reflection-based COM interop, no `[DllImport]` on the MFT itself
+- Pixel pipeline: BGRA (from DXGI/GDI) → **NV12** (BT.601 limited-range conversion, in-place) → H.264 **Baseline Annex-B** NAL units
+- `MF_LOW_LATENCY=1` is set before the media type negotiation so the encoder pipeline adds zero buffering latency
+- Bitrate is computed adaptively from resolution and FPS; dimensions are aligned to even pixels (H.264 requirement)
+- Output is a self-contained Annex-B byte stream, base64-packed per packet and decoded server-side by `H264Decoder.cs` (Media Foundation hardware decoder)
+
+**Fallback — 64×64 block diff + JPEG** (when MF is unavailable):
 - Only changed blocks are encoded and transmitted
 - Below 15% change → quality boosted to 95 for sharp text
 - Above threshold → full frame sent instead
@@ -202,6 +210,15 @@ Hidden Virtual Desktop — creates an isolated Windows session invisible to the 
 1. Right-click a client → **HVNC**
 2. Use the browser launcher buttons (Explorer, Chrome, Firefox, Edge, Brave, Opera, Opera GX, Telegram, Discord) for instant stealth sessions
 3. Full mouse + keyboard input injection on the hidden desktop
+
+### How it works
+
+The stub calls `CreateDesktop("SeroHVNC", ...)` to create an isolated desktop object. Browser and app processes are launched via `CreateProcessW` with `STARTUPINFOW.lpDesktop = "SeroHVNC"` and `SW_SHOWMAXIMIZED` — they appear in the hidden session and are never visible on the user's desktop.
+
+**H.264 stream:**
+- Same pipeline as Remote Desktop — BGRA composite captured from the shadow desktop, encoded via `CLSID_CMSH264EncoderMFT` (Windows Media Foundation, NativeAOT COM vtable P/Invoke)
+- BGRA → NV12 (BT.601) → H.264 Baseline Annex-B, `MF_LOW_LATENCY=1`
+- Falls back to JPEG if MF is unavailable on the target
 
 ---
 
