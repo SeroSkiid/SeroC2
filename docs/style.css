@@ -421,6 +421,10 @@ body::before {
   opacity: 0.88;
   animation: logo3d 9s linear infinite;
   will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
 }
 .logo3d-glow {
   display: none;
