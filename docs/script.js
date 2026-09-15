@@ -1188,3 +1188,25 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
     }
   });
 })();
+
+/* ── GitHub star count (live from API, cached 1h in localStorage) ── */
+(function () {
+  const el = document.getElementById('gh-star-count');
+  if (!el) return;
+  const CACHE_KEY = 'gh_stars_cache';
+  const CACHE_TTL = 3600 * 1000;
+  function set(n) { el.textContent = '★ ' + n.toLocaleString(); }
+  try {
+    const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+    if (c && Date.now() - c.ts < CACHE_TTL) { set(c.n); return; }
+  } catch (_) {}
+  fetch('https://api.github.com/repos/SeroSkiid/SeroC2')
+    .then(r => r.json())
+    .then(d => {
+      if (typeof d.stargazers_count === 'number') {
+        set(d.stargazers_count);
+        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ n: d.stargazers_count, ts: Date.now() })); } catch (_) {}
+      }
+    })
+    .catch(() => {});
+})();

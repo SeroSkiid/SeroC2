@@ -201,6 +201,12 @@ body::before {
   transition: border-color 0.15s, color 0.15s;
 }
 .btn-outline:hover { border-color: rgba(59,130,246,0.35); color: var(--text); }
+.gh-stars {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.15); font-size: 0.78rem; font-weight: 600;
+  letter-spacing: 0.02em; color: #fde68a;
+}
 .hero-meta {
   font-family: 'JetBrains Mono', monospace; font-size: 0.77rem; color: var(--muted);
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
