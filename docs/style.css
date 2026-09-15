@@ -419,18 +419,11 @@ body::before {
   max-width: 100%;
   display: block;
   opacity: 0.88;
-  filter: brightness(1.55) contrast(1.12) saturate(1.05)
-          drop-shadow(0 0 22px rgba(74,133,245,0.92))
-          drop-shadow(0 0 44px rgba(74,133,245,0.50))
-          drop-shadow(0 4px 10px rgba(0,0,0,0.65));
   animation: logo3d 9s linear infinite;
   will-change: transform;
 }
 .logo3d-glow {
-  position: absolute;
-  bottom: -10%;
-  left: 50%;
-  transform: translateX(-50%);
+  display: none;
   width: 340px;
   height: 160px;
   background: radial-gradient(ellipse at center, rgba(74,133,245,0.10) 0%, transparent 68%);
