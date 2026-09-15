@@ -651,6 +651,10 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   from { opacity: 0; transform: translateY(-20px); }
   to   { opacity: 1; transform: none; }
 }
+@keyframes enterRight {
+  from { opacity: 0; transform: translateX(44px); filter: blur(10px); }
+  to   { opacity: 1; transform: none; filter: blur(0); }
+}
 
 #nav            { animation: enterNav   0.45s ease 0.80s both; }
 .hero .eyebrow       { animation: enterSlide 0.40s ease 0.90s both; }
@@ -659,6 +663,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 .hero .hero-lead     { animation: enterSlide 0.45s ease 1.15s both; }
 .hero .hero-actions  { animation: enterSlide 0.40s ease 1.24s both; }
 .hero .hero-meta     { animation: enterSlide 0.35s ease 1.32s both; }
+.hero .hero-logo3d   { animation: enterRight 0.70s cubic-bezier(0.2,0,0,1) 1.00s both; }
 
 /* ── Scroll reveal ── */
 .reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.38s ease, transform 0.38s ease; will-change: opacity, transform; }
