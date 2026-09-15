@@ -1,6 +1,6 @@
 <img src="docs/assets/serofondtransparent.png" height="80" align="left"/>
 
-# SeroRAT <img src="https://flagcdn.com/40x30/fr.png" alt="🇫🇷">
+# SeroRAT
 
 ![Version](https://img.shields.io/badge/version-1.8.3-orange.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
@@ -621,4 +621,4 @@ For commercial licensing: [github.com/SeroSkiid](https://github.com/SeroSkiid)
 
 ---
 
-**Developed by SeroSkiid**
+**Developed by SeroSkiid** <img src="https://flagcdn.com/40x30/fr.png" alt="🇫🇷">
