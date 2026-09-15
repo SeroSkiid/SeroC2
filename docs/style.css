@@ -75,18 +75,17 @@ body::before {
 /* ── Brand ── */
 .brand { text-decoration: none; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .brand-sero {
-  font-size: 1.05rem; font-weight: 700; letter-spacing: 0.03em;
-  background: linear-gradient(90deg, #4a85f5 0%, #7c5ce8 100%);
+  font-size: 1.05rem; font-weight: 700; letter-spacing: 0.07em;
+  background: linear-gradient(110deg, #9cc8ff 0%, #4a85f5 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
   display: inline-block;
   animation: brandGlitch 13s infinite;
 }
 .brand-rat {
-  font-size: 1.05rem; font-weight: 600;
-  background: linear-gradient(180deg, #d8dcf0 0%, #8890b8 50%, #c4c8e0 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  font-size: 1.05rem; font-weight: 500; letter-spacing: 0.05em;
+  color: rgba(180,190,220,0.55);
 }
-.brand-icon { width: 20px; height: 20px; border-radius: 4px; object-fit: contain; }
+.brand-icon { width: 20px; height: 20px; border-radius: 0; object-fit: contain; }
 
 /* ── Nav ── */
 #nav {
@@ -393,6 +392,49 @@ body::before {
   font-family: 'JetBrains Mono', monospace; font-size: 0.67rem;
   padding: 3px 9px; border-radius: 4px;
   background: rgba(59,130,246,0.07); border: 1px solid rgba(59,130,246,0.14); color: var(--blue);
+}
+
+/* ── 3D Logo Divider ── */
+.logo3d-divider {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 80px 16px 100px;
+  overflow: hidden;
+}
+.logo3d-scene {
+  perspective: 700px;
+  perspective-origin: 50% 60%;
+}
+.logo3d-plane {
+  transform: rotateX(-28deg) scale(1.0);
+  transform-style: preserve-3d;
+  transition: transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.logo3d-divider:hover .logo3d-plane {
+  transform: rotateX(-12deg) scale(1.06);
+}
+.logo3d-img {
+  width: 320px;
+  max-width: 62vw;
+  display: block;
+  filter: drop-shadow(0 0 70px rgba(74,133,245,0.40)) drop-shadow(0 28px 56px rgba(0,0,0,0.60));
+}
+.logo3d-glow {
+  position: absolute;
+  bottom: 8%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 520px;
+  max-width: 90vw;
+  height: 180px;
+  background: radial-gradient(ellipse at center, rgba(74,133,245,0.09) 0%, transparent 68%);
+  pointer-events: none;
+}
+@media (max-width: 600px) {
+  .logo3d-img { width: 200px; max-width: 72vw; }
+  .logo3d-divider { padding: 56px 16px 72px; }
 }
 
 /* ── Contributors ── */
