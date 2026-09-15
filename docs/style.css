@@ -160,19 +160,33 @@ body::before {
   89%           { filter: hue-rotate(18deg) saturate(1.4) brightness(1.05); transform: translateX(-1px); }
   90%           { filter: none; transform: none; }
 }
-.hero h1 {
-  font-size: clamp(1.5rem, 5vw, 3.2rem);
-  font-weight: 700; line-height: 1.08;
-  letter-spacing: -0.04em; margin-bottom: 24px; max-width: 700px;
-  text-shadow: 0 2px 40px rgba(7,8,15,0.9), 0 0 80px rgba(7,8,15,0.7);
+.hero h1 { font-size: clamp(1.5rem, 5vw, 3.2rem); font-weight: 700; line-height: 1.08; letter-spacing: -0.04em; margin-bottom: 24px; max-width: 700px; }
+.hero-brand {
+  font-size: clamp(3.4rem, 10.5vw, 8.5rem);
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  margin-bottom: 10px;
+  user-select: none;
 }
-.hero h1 em {
-  font-style: normal;
-  background: linear-gradient(90deg, var(--blue) 0%, #818cf8 100%);
+.hb-sero {
+  background: linear-gradient(115deg, #7db3f9 0%, #dce8ff 100%);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-  filter: drop-shadow(0 0 18px rgba(74,133,245,0.50)) drop-shadow(0 0 44px rgba(74,133,245,0.22));
+  filter: drop-shadow(0 0 32px rgba(74,133,245,0.22));
 }
-.hero-free { color: var(--green); }
+.hb-rat {
+  background: linear-gradient(115deg, #94a3b8 0%, #c8d8ec 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  opacity: 0.55;
+}
+.hero-brand-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 32px;
+}
 .hero-lead {
   font-size: 1.05rem; color: var(--muted);
   line-height: 1.75; max-width: 500px; margin-bottom: 36px;
@@ -584,11 +598,12 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
 }
 
 #nav            { animation: enterNav   0.45s ease 0.80s both; }
-.hero .eyebrow  { animation: enterSlide 0.40s ease 0.90s both; }
-.hero h1        { animation: enterBlur  0.65s cubic-bezier(0.2,0,0,1) 0.95s both; }
-.hero .hero-lead    { animation: enterSlide 0.45s ease 1.10s both; }
-.hero .hero-actions { animation: enterSlide 0.40s ease 1.20s both; }
-.hero .hero-meta    { animation: enterSlide 0.35s ease 1.28s both; }
+.hero .eyebrow       { animation: enterSlide 0.40s ease 0.90s both; }
+.hero .hero-brand    { animation: enterBlur  0.65s cubic-bezier(0.2,0,0,1) 0.95s both; }
+.hero .hero-brand-label { animation: enterSlide 0.40s ease 1.08s both; }
+.hero .hero-lead     { animation: enterSlide 0.45s ease 1.15s both; }
+.hero .hero-actions  { animation: enterSlide 0.40s ease 1.24s both; }
+.hero .hero-meta     { animation: enterSlide 0.35s ease 1.32s both; }
 
 /* ── Scroll reveal ── */
 .reveal { opacity: 0; transform: translateY(10px); transition: opacity 0.38s ease, transform 0.38s ease; will-change: opacity, transform; }
@@ -675,6 +690,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .btn-gh { font-size: 0.78rem; padding: 6px 10px; }
   .hero { padding: 90px 0 48px; }
   .hero h1 { font-size: clamp(1.55rem, 7vw, 2.4rem); letter-spacing: -0.035em; }
+  .hero-brand { font-size: clamp(2.8rem, 13vw, 5rem); letter-spacing: 0.04em; }
   .hero-lead { font-size: 0.93rem; }
   .hero-meta { font-size: 0.7rem; gap: 6px; }
   .hero-actions { flex-direction: column; align-items: stretch; }
@@ -722,6 +738,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   .container { padding: 0 12px; }
   .hero { padding: 78px 0 32px; }
   .hero h1 { font-size: clamp(1.45rem, 8.5vw, 2rem); }
+  .hero-brand { font-size: clamp(2.4rem, 15vw, 4rem); }
   .hero-lead { font-size: 0.86rem; }
   .eyebrow { font-size: 0.67rem; gap: 6px; }
   .btn-primary, .btn-outline { font-size: 0.84rem; padding: 10px 14px; }
@@ -822,6 +839,7 @@ footer { position: relative; z-index: 1; border-top: 1px solid var(--border); pa
   /* Hero */
   .hero { padding: 76px 0 28px; }
   .hero h1 { font-size: clamp(1.55rem, 9vw, 2.2rem); line-height: 1.10; }
+  .hero-brand { font-size: clamp(2.2rem, 17vw, 3.6rem); letter-spacing: 0.03em; }
   .hero-lead { font-size: 0.84rem; margin-bottom: 24px; max-width: 100%; }
   .hero-meta { flex-wrap: wrap; column-gap: 6px; row-gap: 4px; }
   .hero-meta .sep { display: none; }
