@@ -621,4 +621,4 @@ For commercial licensing: [github.com/SeroSkiid](https://github.com/SeroSkiid)
 
 ---
 
-**Developed by SeroSkiid** <img src="https://flagcdn.com/40x30/fr.png" alt="🇫🇷">
+*Developed by SeroSkiid* <img src="https://flagcdn.com/20x15/fr.png" alt="🇫🇷">
