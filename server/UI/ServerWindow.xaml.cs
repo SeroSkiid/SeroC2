@@ -3675,7 +3675,9 @@ internal static class UninstallerConfig
             await File.WriteAllTextAsync(Path.Combine(uninstDir, "UninstallerConfig.cs"), cfgContent);
 
             var tempOut = Path.Combine(Path.GetTempPath(), "sero_uninst_" + Guid.NewGuid().ToString("N")[..8]);
-            var psi = new System.Diagnostics.ProcessStartInfo("dotnet",
+            var dotnetExeUninst = File.Exists(@"C:\Program Files\dotnet\dotnet.exe")
+                ? @"C:\Program Files\dotnet\dotnet.exe" : "dotnet";
+            var psi = new System.Diagnostics.ProcessStartInfo(dotnetExeUninst,
                 $"publish \"{Path.Combine(uninstDir, "MinerUninstaller.csproj")}\" -c Release -r win-x64 --sc true -o \"{tempOut}\" --nologo")
             {
                 CreateNoWindow  = true,
