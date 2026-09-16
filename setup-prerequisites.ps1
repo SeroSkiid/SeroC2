@@ -47,11 +47,7 @@ if ($dotnet) {
 if (-not $dotnetOk) {
     Write-Step "Installing .NET 10 SDK (x64)..."
 
-    winget install --id Microsoft.DotNet.SDK.10 -e `
-        --source winget `
-        --silent `
-        --accept-package-agreements `
-        --accept-source-agreements
+    winget install --id Microsoft.DotNet.SDK.10 -e --source winget --silent --accept-package-agreements --accept-source-agreements
 
     # Refresh PATH in current session so dotnet 10 is found immediately
     $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
@@ -88,10 +84,7 @@ if ($clFound) {
 } else {
     Write-Step "Installing VS Build Tools 2022 with C++ workload (this may take 5-10 minutes)..."
 
-    winget install Microsoft.VisualStudio.2022.BuildTools `
-        --override "--quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --wait" `
-        --accept-package-agreements `
-        --accept-source-agreements
+    winget install Microsoft.VisualStudio.2022.BuildTools --override "--quiet --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --wait" --accept-package-agreements --accept-source-agreements
 
     Write-OK "VS Build Tools installed"
 }
@@ -107,10 +100,7 @@ if ($rcFound) {
 } else {
     Write-Step "Installing Windows 10 SDK..."
 
-    winget install Microsoft.WindowsSDK.10.0.22621 `
-        --silent `
-        --accept-package-agreements `
-        --accept-source-agreements
+    winget install Microsoft.WindowsSDK.10.0.22621 --silent --accept-package-agreements --accept-source-agreements
 
     Write-OK "Windows SDK installed"
 }
