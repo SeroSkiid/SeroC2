@@ -65,7 +65,7 @@ if (-not $dotnetOk) {
         if ($verAfter -match "^10\.") {
             Write-OK ".NET 10 SDK installed and active ($verAfter)"
         } else {
-            Write-Err "dotnet resolved to $verAfter — restart your terminal and re-run if builds fail"
+            Write-Err "dotnet resolved to $verAfter -- restart your terminal and re-run if builds fail"
         }
     } catch {
         Write-OK ".NET 10 SDK installed (restart terminal to activate)"
@@ -107,4 +107,4 @@ if ($rcFound) {
 
 Write-Host ""
 Write-Host "=== All prerequisites installed ===" -ForegroundColor Green
-Write-Host "You can now build Sero C2 from Visual Studio or via 'dotnet build'." -ForegroundColor White
+Write-Host "You can now build Sero C2 from Visual Studio or via dotnet build." -ForegroundColor White
