@@ -4226,9 +4226,12 @@ Read-Host 'Press Enter to close'
             // Compatible with crypter/loader — they just compress+encrypt the PE, size reduction is fine.
             var ilcThreads = Math.Min(Environment.ProcessorCount, 8);
             var publishArgs = $"publish \"{csprojPath}\" -c Release -r win-x64 -p:PublishAot=true -p:InvariantGlobalization=true -p:IlcOptimizationPreference=Size -p:IlcGenerateStackTraceData=false -p:IlcFoldIdenticalMethodBodies=true -p:IlcMaxParallelism={ilcThreads}{iconArg} -o \"{tempOut}\"";
+            var dotnetExe = File.Exists(@"C:\Program Files\dotnet\dotnet.exe")
+                ? @"C:\Program Files\dotnet\dotnet.exe"
+                : "dotnet";
             var psi = new System.Diagnostics.ProcessStartInfo
             {
-                FileName = "dotnet",
+                FileName = dotnetExe,
                 Arguments = publishArgs,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,

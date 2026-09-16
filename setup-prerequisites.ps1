@@ -45,7 +45,7 @@ if ($dotnet) {
 }
 
 if (-not $dotnetOk) {
-    Write-Step "Installing .NET 10 SDK..."
+    Write-Step "Installing .NET 10 SDK (x64)..."
 
     winget install --id Microsoft.DotNet.SDK.10 -e `
         --source winget `
@@ -53,7 +53,27 @@ if (-not $dotnetOk) {
         --accept-package-agreements `
         --accept-source-agreements
 
-    Write-OK ".NET 10 SDK installed"
+    # Refresh PATH in current session so dotnet 10 is found immediately
+    $env:PATH = [System.Environment]::GetEnvironmentVariable("PATH", "Machine") + ";" +
+                [System.Environment]::GetEnvironmentVariable("PATH", "User")
+
+    # Ensure C:\Program Files\dotnet comes before any user-scope dotnet (e.g. .NET 8)
+    $dotnet10 = "C:\Program Files\dotnet"
+    if ((Test-Path $dotnet10) -and ($env:PATH -notlike "*$dotnet10*")) {
+        $env:PATH = $dotnet10 + ";" + $env:PATH
+    }
+
+    # Verify the active SDK is now 10.x
+    try {
+        $verAfter = & "$dotnet10\dotnet.exe" --version 2>$null
+        if ($verAfter -match "^10\.") {
+            Write-OK ".NET 10 SDK installed and active ($verAfter)"
+        } else {
+            Write-Err "dotnet resolved to $verAfter — restart your terminal and re-run if builds fail"
+        }
+    } catch {
+        Write-OK ".NET 10 SDK installed (restart terminal to activate)"
+    }
 }
 
 # 3. Visual Studio Build Tools 2022 with C++ workload
