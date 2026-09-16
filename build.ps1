@@ -43,7 +43,8 @@ $publishArgs = @(
     "-o", $tmpOut
 )
 if ($noRestore) { $publishArgs += "--no-restore" }
-& dotnet @publishArgs
+$dotnetExe = if (Test-Path "C:\Program Files\dotnet\dotnet.exe") { "C:\Program Files\dotnet\dotnet.exe" } else { "dotnet" }
+& $dotnetExe @publishArgs
 
 if ($LASTEXITCODE -ne 0) { Write-Err "Server build failed" }
 
