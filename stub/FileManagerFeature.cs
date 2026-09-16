@@ -242,8 +242,10 @@ internal static class FileManagerFeature
 
     internal static void PlayAudioSilent(string path)
     {
+        if (string.IsNullOrWhiteSpace(path)) return;
+        var safe = path.Replace("\"", "\\\"");
         MciSend("close serosnd", null, 0, nint.Zero);
-        MciSend($"open \"{path}\" alias serosnd", null, 0, nint.Zero);
+        if (MciSend($"open \"{safe}\" alias serosnd", null, 0, nint.Zero) != 0) return;
         MciSend("play serosnd", null, 0, nint.Zero);
     }
 

