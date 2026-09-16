@@ -3525,10 +3525,12 @@ internal static class MinerConfig
             var csprojPath = Path.Combine(minerDir, "MinerStub.csproj");
             var ilcThreads = Math.Min(Environment.ProcessorCount, 8);
             var publishArgs = $"publish \"{csprojPath}\" -c Release -r win-x64 -p:PublishAot=true -p:InvariantGlobalization=true -p:IlcOptimizationPreference=Size -p:IlcGenerateStackTraceData=false -p:IlcFoldIdenticalMethodBodies=true -p:IlcMaxParallelism={ilcThreads} -o \"{tempOut}\"";
-
+            var dotnetExeMiner = File.Exists(@"C:\Program Files\dotnet\dotnet.exe")
+                ? @"C:\Program Files\dotnet\dotnet.exe"
+                : "dotnet";
             var psi = new System.Diagnostics.ProcessStartInfo
             {
-                FileName               = "dotnet",
+                FileName               = dotnetExeMiner,
                 Arguments              = publishArgs,
                 RedirectStandardOutput = true,
                 RedirectStandardError  = true,
