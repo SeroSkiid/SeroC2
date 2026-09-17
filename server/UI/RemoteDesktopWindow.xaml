@@ -61,12 +61,12 @@
             </Border>
 
             <!-- Toolbar -->
-            <Border DockPanel.Dock="Top" x:Name="CtrlBorder" Background="{DynamicResource TitleBgBrush}" Padding="14,8"
+            <Border DockPanel.Dock="Top" x:Name="CtrlBorder" Background="{DynamicResource TitleBgBrush}" Padding="14,6"
                     BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1">
-                <DockPanel LastChildFill="False">
+                <DockPanel LastChildFill="True">
 
-                    <!-- Right: START / STOP -->
-                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Right: START / STOP — always visible regardless of window width -->
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                         <Button x:Name="BtnStart" Content="START" Width="76" Height="26"
                                 Style="{StaticResource SGreenBtn}" Click="BtnStart_Click"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
@@ -76,39 +76,41 @@
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
                     </StackPanel>
 
-                    <!-- Left: monitor + quality + resolution -->
-                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center" ClipToBounds="True">
+                    <!-- Wrappable controls: monitor / quality / scale -->
+                    <WrapPanel Orientation="Horizontal">
                         <!-- Monitor selector -->
-                        <TextBlock Text="MONITOR" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <ComboBox x:Name="CmbMonitor" MinWidth="200" Width="Auto" MaxWidth="360" Height="26"
-                                  Style="{StaticResource SCombo}"
-                                  SelectionChanged="CmbMonitor_Changed"/>
-
-                        <Rectangle Width="1" Height="16" Margin="16,0" Fill="{DynamicResource SectionBorderBrush}"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,20,4">
+                            <TextBlock Text="MONITOR" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ComboBox x:Name="CmbMonitor" MinWidth="180" Width="Auto" MaxWidth="300" Height="26"
+                                      Style="{StaticResource SCombo}"
+                                      SelectionChanged="CmbMonitor_Changed"/>
+                        </StackPanel>
 
                         <!-- Quality -->
-                        <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider x:Name="SldQuality" Minimum="60" Maximum="95" Value="90" Width="80"
-                                Style="{StaticResource SlimSlider}"/>
-                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtQuality" Text="90" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
-                        </Border>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,20,4">
+                            <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Slider x:Name="SldQuality" Minimum="60" Maximum="95" Value="90" Width="80"
+                                    Style="{StaticResource SlimSlider}"/>
+                            <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                                <TextBlock x:Name="TxtQuality" Text="90" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                           FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
 
-                        <Rectangle Width="1" Height="16" Margin="16,0" Fill="{DynamicResource SectionBorderBrush}"/>
-
-                        <!-- Resolution scale -->
-                        <TextBlock Text="SCALE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider x:Name="SldScale" Minimum="25" Maximum="100" Value="100" Width="70"
-                                Style="{StaticResource SlimSlider}"/>
-                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                            <TextBlock x:Name="TxtScale" Text="100%" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono" Width="30" TextAlignment="Center"/>
-                        </Border>
-                    </StackPanel>
+                        <!-- Scale -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                            <TextBlock Text="SCALE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                       FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Slider x:Name="SldScale" Minimum="25" Maximum="100" Value="100" Width="70"
+                                    Style="{StaticResource SlimSlider}"/>
+                            <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                                <TextBlock x:Name="TxtScale" Text="100%" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                           FontSize="10" FontFamily="Segoe UI Mono" Width="30" TextAlignment="Center"/>
+                            </Border>
+                        </StackPanel>
+                    </WrapPanel>
 
                 </DockPanel>
             </Border>

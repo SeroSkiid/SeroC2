@@ -72,12 +72,12 @@
         </Border>
 
         <!-- Toolbar -->
-        <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" Padding="12,8"
+        <Border DockPanel.Dock="Top" Background="{DynamicResource TitleBgBrush}" Padding="12,6"
                 BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,1">
-            <DockPanel LastChildFill="False">
+            <DockPanel LastChildFill="True">
 
-                <!-- Right: AUTO START toggle + START / STOP -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Right: AUTO START + START / STOP — always visible -->
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
                     <CheckBox x:Name="ChkAutoStart" Content="AUTO START"
                               ToolTip="Automatically start streaming when the window opens"
                               IsChecked="False" VerticalAlignment="Center" Margin="0,0,10,0"
@@ -92,51 +92,48 @@
                             FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
                 </StackPanel>
 
-                <!-- Right-2: Quality + FPS sliders -->
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal"
-                            VerticalAlignment="Center" Margin="0,0,14,0" ClipToBounds="True">
-                    <Rectangle Width="1" Height="16" Margin="0,0,14,0" Fill="{DynamicResource SectionBorderBrush}"/>
-                    <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                               FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="20" Width="72"
-                            Style="{StaticResource SlimSlider}"/>
-                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
-                            Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtQuality" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                   FontSize="10" FontFamily="Segoe UI Mono"
-                                   Width="18" TextAlignment="Center"/>
-                    </Border>
-                    <Rectangle Width="1" Height="16" Margin="12,0" Fill="{DynamicResource SectionBorderBrush}"/>
-                    <TextBlock Text="FPS" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                               FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <Slider x:Name="SldFps" Minimum="5" Maximum="60" Value="20" Width="58"
-                            Style="{StaticResource SlimSlider}"/>
-                    <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
-                            Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                   FontSize="10" FontFamily="Segoe UI Mono"
-                                   Width="18" TextAlignment="Center"/>
-                    </Border>
-                </StackPanel>
+                <!-- Wrappable controls: device / resolution / quality / fps -->
+                <WrapPanel Orientation="Horizontal">
+                    <!-- Device + resolution -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,20,4">
+                        <TextBlock Text="DEVICE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <ComboBox x:Name="CmbDevice" MinWidth="160" Width="Auto" MaxWidth="280" Height="26"
+                                  Style="{StaticResource SCombo}"/>
+                        <TextBlock Text="RES" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="12,0,8,0"/>
+                        <ComboBox x:Name="CmbResolution" Width="72" Height="26"
+                                  Style="{StaticResource SCombo}" SelectedIndex="0">
+                            <ComboBoxItem Content="Native"/>
+                            <ComboBoxItem Content="720p"/>
+                            <ComboBoxItem Content="480p"/>
+                            <ComboBoxItem Content="360p"/>
+                            <ComboBoxItem Content="240p"/>
+                        </ComboBox>
+                    </StackPanel>
 
-                <!-- Left: device selector + resolution -->
-                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="DEVICE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                               FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="CmbDevice" MinWidth="180" Width="Auto" MaxWidth="320" Height="26"
-                              Style="{StaticResource SCombo}"/>
-                    <Rectangle Width="1" Height="16" Margin="12,0" Fill="{DynamicResource SectionBorderBrush}"/>
-                    <TextBlock Text="RES" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                               FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                    <ComboBox x:Name="CmbResolution" Width="72" Height="26"
-                              Style="{StaticResource SCombo}" SelectedIndex="0">
-                        <ComboBoxItem Content="Native"/>
-                        <ComboBoxItem Content="720p"/>
-                        <ComboBoxItem Content="480p"/>
-                        <ComboBoxItem Content="360p"/>
-                        <ComboBoxItem Content="240p"/>
-                    </ComboBox>
-                </StackPanel>
+                    <!-- Quality + FPS sliders -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,0,4">
+                        <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="20" Width="72"
+                                Style="{StaticResource SlimSlider}"/>
+                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
+                                Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                            <TextBlock x:Name="TxtQuality" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="FPS" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
+                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="14,0,8,0"/>
+                        <Slider x:Name="SldFps" Minimum="5" Maximum="60" Value="20" Width="58"
+                                Style="{StaticResource SlimSlider}"/>
+                        <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
+                                Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
+                            <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                        </Border>
+                    </StackPanel>
+                </WrapPanel>
 
             </DockPanel>
         </Border>

@@ -72,22 +72,22 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Checkboxes -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Checkboxes — WrapPanel so they flow to a second line on narrow windows -->
+                    <WrapPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <CheckBox x:Name="ChkMouse" Content="MOUSE" IsChecked="True"
-                                  Style="{StaticResource TbarChk}" Margin="0,0,10,0"
+                                  Style="{StaticResource TbarChk}" Margin="0,0,10,3"
                                   ToolTip="Mouse input"/>
                         <CheckBox x:Name="ChkKeyboard" Content="KEYBOARD" IsChecked="True"
-                                  Style="{StaticResource TbarChk}" Margin="0,0,10,0"
+                                  Style="{StaticResource TbarChk}" Margin="0,0,10,3"
                                   ToolTip="Keyboard input"/>
                         <CheckBox x:Name="ChkClipboard" Content="CLIPBOARD" IsChecked="False"
-                                  Style="{StaticResource TbarChk}" Margin="0,0,10,0"
+                                  Style="{StaticResource TbarChk}" Margin="0,0,10,3"
                                   ToolTip="Clipboard sync — when active, auto-pushes server clipboard to remote desktop"
                                   Checked="ChkClipboard_Checked" Unchecked="ChkClipboard_Unchecked"/>
                         <CheckBox x:Name="ChkCloneProfile" Content="CLONE PROFILE" IsChecked="True"
-                                  Style="{StaticResource TbarChk}"
+                                  Style="{StaticResource TbarChk}" Margin="0,0,0,3"
                                   ToolTip="Clone browser profile before launch — copies cookies/sessions into the HVNC desktop"/>
-                    </StackPanel>
+                    </WrapPanel>
 
                     <!-- Quality + FPS sliders -->
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
