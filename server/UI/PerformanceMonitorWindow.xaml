@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         Title="Performance Monitor"
-        Width="720" Height="660" MinWidth="520" MinHeight="480"
+        Width="720" Height="660" MinWidth="520" MinHeight="420"
         WindowStartupLocation="CenterOwner"
         ResizeMode="CanResize"
         ShowGlow="False">
@@ -40,130 +40,163 @@
             </Grid>
         </Border>
 
-        <!-- Performance panels -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="16,14,16,14">
+        <!-- Performance panels — proportional rows so all graphs are always fully visible -->
+        <Grid Margin="12,8,12,8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"/>    <!-- CPU -->
+                <RowDefinition Height="*"/>    <!-- RAM -->
+                <RowDefinition Height="*"/>    <!-- Network -->
+                <RowDefinition Height="*"/>    <!-- Disk -->
+                <RowDefinition Height="Auto"/> <!-- GPU — 0 height when Collapsed, auto when visible -->
+            </Grid.RowDefinitions>
 
-                <!-- CPU -->
-                <Border Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6" Padding="14,12" Margin="0,0,0,10"
-                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,4">
-                            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                <TextBlock Text="CPU" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"/>
-                                <TextBlock x:Name="TxtCpuName" Text="" FontSize="9" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                           FontFamily="Consolas" Visibility="Collapsed" TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <TextBlock x:Name="TxtCpu" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
-                        </Grid>
-                        <Border Height="14" Background="{DynamicResource InputBgBrush}" CornerRadius="3" Margin="0,4,0,0">
-                            <Border x:Name="BarCpu" HorizontalAlignment="Left" Width="0" Height="14" CornerRadius="3">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="{StaticResource VioletColor}" Offset="0"/>
-                                        <GradientStop Color="{DynamicResource AccentColor}" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
+            <!-- CPU -->
+            <Border Grid.Row="0" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6"
+                    Padding="14,10" Margin="0,0,0,6"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="24"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock Text="CPU" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"/>
+                            <TextBlock x:Name="TxtCpuName" Text="" FontSize="9" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontFamily="Consolas" Visibility="Collapsed" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtCpu" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                    </Grid>
+                    <Border Grid.Row="1" Height="10" Background="{DynamicResource InputBgBrush}" CornerRadius="3">
+                        <Border x:Name="BarCpu" HorizontalAlignment="Left" Width="0" Height="10" CornerRadius="3">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="{StaticResource VioletColor}" Offset="0"/>
+                                    <GradientStop Color="{DynamicResource AccentColor}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                         </Border>
-                        <Canvas x:Name="SparkCpu" Height="52" Margin="0,8,0,0" ClipToBounds="True"
-                                Background="{DynamicResource ChartBgBrush}"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
+                    <Canvas Grid.Row="2" x:Name="SparkCpu" Margin="0,6,0,0" ClipToBounds="True"
+                            Background="{DynamicResource ChartBgBrush}"/>
+                </Grid>
+            </Border>
 
-                <!-- RAM -->
-                <Border Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6" Padding="14,12" Margin="0,0,0,10"
-                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,8">
-                            <TextBlock Text="RAM" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       VerticalAlignment="Center"/>
-                            <TextBlock x:Name="TxtRam" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
-                        </Grid>
-                        <Border Height="14" Background="{DynamicResource InputBgBrush}" CornerRadius="3">
-                            <Border x:Name="BarRam" HorizontalAlignment="Left" Width="0" Height="14" CornerRadius="3">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#406366F1" Offset="0"/>
-                                        <GradientStop Color="#7C5CE8" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
+            <!-- RAM -->
+            <Border Grid.Row="1" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6"
+                    Padding="14,10" Margin="0,0,0,6"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="24"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <TextBlock Text="RAM" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                   VerticalAlignment="Center"/>
+                        <TextBlock x:Name="TxtRam" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                    </Grid>
+                    <Border Grid.Row="1" Height="10" Background="{DynamicResource InputBgBrush}" CornerRadius="3">
+                        <Border x:Name="BarRam" HorizontalAlignment="Left" Width="0" Height="10" CornerRadius="3">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#406366F1" Offset="0"/>
+                                    <GradientStop Color="#7C5CE8" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                         </Border>
-                        <Canvas x:Name="SparkRam" Height="52" Margin="0,8,0,0" ClipToBounds="True"
-                                Background="{DynamicResource ChartBgBrush}"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
+                    <Canvas Grid.Row="2" x:Name="SparkRam" Margin="0,6,0,0" ClipToBounds="True"
+                            Background="{DynamicResource ChartBgBrush}"/>
+                </Grid>
+            </Border>
 
-                <!-- Network -->
-                <Border Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6" Padding="14,12" Margin="0,0,0,10"
-                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,8">
-                            <TextBlock Text="NETWORK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       VerticalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <TextBlock Text="↑ " Foreground="#22C55E" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                                <TextBlock x:Name="TxtNetSent" FontSize="12" FontWeight="Bold" Foreground="#22C55E" FontFamily="Consolas" Margin="0,0,14,0"/>
-                                <TextBlock Text="↓ " Foreground="{DynamicResource AccentBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                                <TextBlock x:Name="TxtNetRecv" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"/>
-                            </StackPanel>
-                        </Grid>
-                        <Canvas x:Name="SparkNet" Height="52" ClipToBounds="True"
-                                Background="{DynamicResource ChartBgBrush}"/>
-                    </StackPanel>
-                </Border>
+            <!-- Network -->
+            <Border Grid.Row="2" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6"
+                    Padding="14,10" Margin="0,0,0,6"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="24"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <TextBlock Text="NETWORK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="↑ " Foreground="#22C55E" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtNetSent" FontSize="12" FontWeight="Bold" Foreground="#22C55E" FontFamily="Consolas" Margin="0,0,14,0"/>
+                            <TextBlock Text="↓ " Foreground="{DynamicResource AccentBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtNetRecv" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"/>
+                        </StackPanel>
+                    </Grid>
+                    <Canvas Grid.Row="1" x:Name="SparkNet" ClipToBounds="True"
+                            Background="{DynamicResource ChartBgBrush}"/>
+                </Grid>
+            </Border>
 
-                <!-- Disk -->
-                <Border Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6" Padding="14,12" Margin="0,0,0,10"
-                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,8">
-                            <TextBlock Text="DISK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       VerticalAlignment="Center"/>
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                <TextBlock Text="R " Foreground="#F59E0B" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                                <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="#F59E0B" FontFamily="Consolas" Margin="0,0,14,0"/>
-                                <TextBlock Text="W " Foreground="{StaticResource RedBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                                <TextBlock x:Name="TxtDiskWrite" FontSize="12" FontWeight="Bold" Foreground="{StaticResource RedBrush}" FontFamily="Consolas"/>
-                            </StackPanel>
-                        </Grid>
-                        <Canvas x:Name="SparkDisk" Height="52" ClipToBounds="True"
-                                Background="{DynamicResource ChartBgBrush}"/>
-                    </StackPanel>
-                </Border>
+            <!-- Disk -->
+            <Border Grid.Row="3" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6"
+                    Padding="14,10" Margin="0,0,0,6"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" MinHeight="24"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,6">
+                        <TextBlock Text="DISK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                   VerticalAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                            <TextBlock Text="R " Foreground="#F59E0B" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="#F59E0B" FontFamily="Consolas" Margin="0,0,14,0"/>
+                            <TextBlock Text="W " Foreground="{StaticResource RedBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtDiskWrite" FontSize="12" FontWeight="Bold" Foreground="{StaticResource RedBrush}" FontFamily="Consolas"/>
+                        </StackPanel>
+                    </Grid>
+                    <Canvas Grid.Row="1" x:Name="SparkDisk" ClipToBounds="True"
+                            Background="{DynamicResource ChartBgBrush}"/>
+                </Grid>
+            </Border>
 
-                <!-- GPU (shown only when name or utilization is available) -->
-                <Border x:Name="CardGpu" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6" Padding="14,12"
-                        BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" Visibility="Collapsed">
-                    <StackPanel>
-                        <Grid Margin="0,0,0,4">
-                            <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                                <TextBlock Text="GPU" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"/>
-                                <TextBlock x:Name="TxtGpuName" Text="" FontSize="9" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                           FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
-                            </StackPanel>
-                            <TextBlock x:Name="TxtGpuUsage" FontSize="20" FontWeight="Bold" Foreground="{StaticResource YellowBrush}"
-                                       HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
-                        </Grid>
-                        <Border Height="14" Background="{DynamicResource InputBgBrush}" CornerRadius="3" Margin="0,4,0,0">
-                            <Border x:Name="BarGpu" HorizontalAlignment="Left" Width="0" Height="14" CornerRadius="3">
-                                <Border.Background>
-                                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                        <GradientStop Color="#40F59E0B" Offset="0"/>
-                                        <GradientStop Color="{StaticResource YellowColor}" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Border.Background>
-                            </Border>
+            <!-- GPU — Auto row: takes 0 height when Collapsed, natural height when Visible -->
+            <Border Grid.Row="4" x:Name="CardGpu" Background="{DynamicResource SidebarCtrlBgBrush}" CornerRadius="6"
+                    Padding="14,10" Margin="0,0,0,0"
+                    BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="1" Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="60"/>
+                    </Grid.RowDefinitions>
+                    <Grid Grid.Row="0" Margin="0,0,0,4">
+                        <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                            <TextBlock Text="GPU" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"/>
+                            <TextBlock x:Name="TxtGpuName" Text="" FontSize="9" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtGpuUsage" FontSize="20" FontWeight="Bold" Foreground="{StaticResource YellowBrush}"
+                                   HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
+                    </Grid>
+                    <Border Grid.Row="1" Height="10" Background="{DynamicResource InputBgBrush}" CornerRadius="3">
+                        <Border x:Name="BarGpu" HorizontalAlignment="Left" Width="0" Height="10" CornerRadius="3">
+                            <Border.Background>
+                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                    <GradientStop Color="#40F59E0B" Offset="0"/>
+                                    <GradientStop Color="{StaticResource YellowColor}" Offset="1"/>
+                                </LinearGradientBrush>
+                            </Border.Background>
                         </Border>
-                        <Canvas x:Name="SparkGpu" Height="52" Margin="0,8,0,0" ClipToBounds="True"
-                                Background="{DynamicResource ChartBgBrush}"/>
-                    </StackPanel>
-                </Border>
+                    </Border>
+                    <Canvas Grid.Row="2" x:Name="SparkGpu" Margin="0,6,0,0" ClipToBounds="True"
+                            Background="{DynamicResource ChartBgBrush}"/>
+                </Grid>
+            </Border>
 
-            </StackPanel>
-        </ScrollViewer>
+        </Grid>
     </DockPanel>
 </dx:ThemedWindow>
