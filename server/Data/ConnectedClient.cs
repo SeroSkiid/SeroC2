@@ -132,7 +132,7 @@ public class ConnectedClient : INotifyPropertyChanged
     public string CpuLoadDisplay => _cpuUsage > 0 ? $"{_cpuUsage:0}%" : "—";
 
     private string _gpuName = string.Empty;
-    public string GpuName { get => _gpuName; set { if (_gpuName != value) { _gpuName = value; Notify(); } } }
+    public string GpuName { get => _gpuName; set { if (_gpuName != value) { _gpuName = value; Notify(); Notify(nameof(GpuDisplay)); } } }
     public string GpuDisplay => string.IsNullOrEmpty(_gpuName) ? "—" : _gpuName;
 
     private long _ramUsed;
@@ -150,7 +150,7 @@ public class ConnectedClient : INotifyPropertyChanged
         set
         {
             // Suppress PropertyChanged for sub-10ms changes — ping bounces constantly at scale
-            bool notify = Math.Abs(_pingMs - value) >= 10;
+            bool notify = _pingMs < 0 || Math.Abs(_pingMs - value) >= 10;
             _pingMs = value;
             if (notify) { Notify(); Notify(nameof(PingDisplay)); Notify(nameof(PingBrush)); }
         }

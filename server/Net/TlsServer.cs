@@ -460,6 +460,11 @@ public class TlsServer
                             client.IdleSeconds = hwStats.IdleSeconds;
                             if (!string.IsNullOrEmpty(hwStats.CpuName)) client.CpuName = hwStats.CpuName;
                             if (!string.IsNullOrEmpty(hwStats.GpuName)) client.GpuName = hwStats.GpuName;
+                            if (_store.AllClients.TryGetValue(client.Hwid, out var hwRec) && hwStats.RamTotal > 0)
+                            {
+                                hwRec.LastRamUsed  = hwStats.RamUsed;
+                                hwRec.LastRamTotal = hwStats.RamTotal;
+                            }
                         }
                         break;
 
