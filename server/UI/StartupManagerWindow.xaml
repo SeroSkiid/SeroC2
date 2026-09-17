@@ -130,15 +130,49 @@
                             <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
                                 <Image x:Name="StupIcon" Source="{Binding IconImage}" Width="16" Height="16"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
-                                <dx:DXImage x:Name="StupFallback"
+                                <dx:DXImage x:Name="StupFbReg"
+                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"
+                                            Width="14" Height="14" Visibility="Collapsed"/>
+                                <dx:DXImage x:Name="StupFbFile"
+                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}"
+                                            Width="14" Height="14" Visibility="Collapsed"/>
+                                <dx:DXImage x:Name="StupFbTask"
                                             Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"
                                             Width="14" Height="14" Visibility="Collapsed"/>
                             </Grid>
                             <DataTemplate.Triggers>
-                                <DataTrigger Binding="{Binding IconImage}" Value="{x:Null}">
-                                    <Setter TargetName="StupFallback" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="StupIcon"     Property="Visibility" Value="Collapsed"/>
-                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
+                                        <Condition Binding="{Binding Type}" Value="Reg"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="StupFbReg" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="StupIcon"  Property="Visibility" Value="Collapsed"/>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
+                                        <Condition Binding="{Binding Type}" Value="File"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="StupFbFile" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
+                                        <Condition Binding="{Binding Type}" Value="Task"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="StupFbTask" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
+                                        <Condition Binding="{Binding Type}" Value="WMI"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <Setter TargetName="StupFbTask" Property="Visibility" Value="Visible"/>
+                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
+                                </MultiDataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
