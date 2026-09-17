@@ -91,6 +91,11 @@ internal static class StartupManagerFeature
         AddRegEntries(fast, Registry.LocalMachine, @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce", "Reg", "HKLM\\RunOnce");
         AddStartupFolder(fast, Environment.GetFolderPath(Environment.SpecialFolder.Startup),       "File", "User Startup");
         AddStartupFolder(fast, Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup), "File", "Common Startup");
+        AddWinlogonEntries(fast);
+        AddAppInitDllEntries(fast);
+        AddIfeoEntries(fast);
+        AddActiveSetupEntries(fast);
+        AddRegValue(fast, Registry.CurrentUser, @"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows", "Load", "Reg", "HKCU\\Windows\\Load");
 
         // Slow: schtasks + 2× wmic — run all three concurrently instead of sequentially
         var tSched = Task.Run(() => { var l = new List<StartupEntryStub>(); AddScheduledTasks(l); return l; });
@@ -223,12 +228,64 @@ internal static class StartupManagerFeature
             switch (type)
             {
                 case "Reg":
-                    RegistryHive hive = location.StartsWith("HKLM") ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
-                    string subKey = location.Contains("RunOnce")
-                        ? @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
-                        : @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
-                    using (var key = RegistryKey.OpenBaseKey(hive, RegistryView.Default).OpenSubKey(subKey, true))
-                        key?.DeleteValue(name, false);
+                    switch (location)
+                    {
+                        case "HKCU\\Run": case "HKCU\\RunOnce": case "HKLM\\Run": case "HKLM\\RunOnce":
+                        {
+                            var h = location.StartsWith("HKLM") ? RegistryHive.LocalMachine : RegistryHive.CurrentUser;
+                            var sk = location.Contains("RunOnce")
+                                ? @"SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce"
+                                : @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run";
+                            using var k = RegistryKey.OpenBaseKey(h, RegistryView.Default).OpenSubKey(sk, true);
+                            k?.DeleteValue(name, false);
+                            break;
+                        }
+                        case "HKLM\\Winlogon":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default)
+                                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon", true);
+                            if (k == null) break;
+                            bool isUserinit = name.EndsWith("Userinit", StringComparison.OrdinalIgnoreCase);
+                            k.SetValue(isUserinit ? "Userinit" : "Shell",
+                                       isUserinit ? @"C:\Windows\system32\userinit.exe," : "explorer.exe");
+                            break;
+                        }
+                        case "HKLM\\AppInit_DLLs":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default)
+                                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows", true);
+                            k?.SetValue("AppInit_DLLs", "");
+                            break;
+                        }
+                        case "HKCU\\AppInit_DLLs":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows", true);
+                            k?.SetValue("AppInit_DLLs", "");
+                            break;
+                        }
+                        case "HKCU\\Windows\\Load":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, RegistryView.Default)
+                                .OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows", true);
+                            k?.SetValue("Load", "");
+                            break;
+                        }
+                        case "HKLM\\IFEO":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default)
+                                .OpenSubKey($@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\{name}", true);
+                            k?.DeleteValue("Debugger", false);
+                            break;
+                        }
+                        case "HKLM\\Active Setup":
+                        {
+                            using var k = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Default)
+                                .OpenSubKey($@"SOFTWARE\Microsoft\Active Setup\Installed Components\{name}", true);
+                            k?.DeleteValue("StubPath", false);
+                            break;
+                        }
+                    }
                     break;
 
                 case "File":
@@ -278,6 +335,101 @@ internal static class StartupManagerFeature
         }
         fields.Add(cur.ToString());
         return [.. fields];
+    }
+
+    private static void AddWinlogonEntries(List<StartupEntryStub> list)
+    {
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon");
+            if (key == null) return;
+            var userinit = key.GetValue("Userinit")?.ToString() ?? "";
+            foreach (var part in userinit.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            {
+                if (part.Equals("userinit.exe", StringComparison.OrdinalIgnoreCase) ||
+                    part.EndsWith("\\userinit.exe", StringComparison.OrdinalIgnoreCase)) continue;
+                list.Add(new StartupEntryStub { Name = "Winlogon\\Userinit", Path = part, Type = "Reg", Location = "HKLM\\Winlogon" });
+            }
+            var shell = key.GetValue("Shell")?.ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(shell) &&
+                !shell.Equals("explorer.exe", StringComparison.OrdinalIgnoreCase) &&
+                !shell.EndsWith("\\explorer.exe", StringComparison.OrdinalIgnoreCase))
+                list.Add(new StartupEntryStub { Name = "Winlogon\\Shell", Path = shell, Type = "Reg", Location = "HKLM\\Winlogon" });
+        }
+        catch { }
+    }
+
+    private static void AddAppInitDllEntries(List<StartupEntryStub> list)
+    {
+        foreach (var (root, hive) in new[] { (Registry.LocalMachine, "HKLM"), (Registry.CurrentUser, "HKCU") })
+        {
+            try
+            {
+                using var key = root.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Windows");
+                var dlls = key?.GetValue("AppInit_DLLs")?.ToString() ?? "";
+                if (string.IsNullOrWhiteSpace(dlls)) continue;
+                foreach (var dll in dlls.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var p = dll.Trim('"');
+                    if (!string.IsNullOrWhiteSpace(p))
+                        list.Add(new StartupEntryStub { Name = "AppInit_DLLs", Path = p, Type = "Reg", Location = $"{hive}\\AppInit_DLLs" });
+                }
+            }
+            catch { }
+        }
+    }
+
+    private static void AddIfeoEntries(List<StartupEntryStub> list)
+    {
+        try
+        {
+            using var root = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options");
+            if (root == null) return;
+            foreach (var sub in root.GetSubKeyNames())
+            {
+                using var sk = root.OpenSubKey(sub);
+                var dbg = sk?.GetValue("Debugger")?.ToString() ?? "";
+                if (string.IsNullOrWhiteSpace(dbg)) continue;
+                var low = dbg.ToLowerInvariant();
+                if (low.Contains("vsjitdebugger") || low.Contains("drwtsn32") ||
+                    low.Contains("\\cdb.exe")      || low.Contains("\\ntsd.exe") ||
+                    low.Contains("\\windbg.exe")) continue;
+                list.Add(new StartupEntryStub { Name = sub, Path = dbg, Type = "Reg", Location = "HKLM\\IFEO" });
+            }
+        }
+        catch { }
+    }
+
+    private static void AddActiveSetupEntries(List<StartupEntryStub> list)
+    {
+        try
+        {
+            using var root = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Active Setup\Installed Components");
+            if (root == null) return;
+            foreach (var sub in root.GetSubKeyNames())
+            {
+                using var sk = root.OpenSubKey(sub);
+                var stubPath = sk?.GetValue("StubPath")?.ToString() ?? "";
+                if (string.IsNullOrWhiteSpace(stubPath)) continue;
+                var low = stubPath.ToLowerInvariant().TrimStart('"');
+                if (low.StartsWith(@"c:\windows\system32\") || low.StartsWith(@"c:\windows\syswow64\") ||
+                    low.StartsWith(@"%systemroot%\")         || low.StartsWith(@"%windir%\")) continue;
+                list.Add(new StartupEntryStub { Name = sub, Path = stubPath, Type = "Reg", Location = "HKLM\\Active Setup" });
+            }
+        }
+        catch { }
+    }
+
+    private static void AddRegValue(List<StartupEntryStub> list, RegistryKey root, string keyPath, string valueName, string type, string location)
+    {
+        try
+        {
+            using var key = root.OpenSubKey(keyPath);
+            var val = key?.GetValue(valueName)?.ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(val))
+                list.Add(new StartupEntryStub { Name = valueName, Path = val, Type = type, Location = location });
+        }
+        catch { }
     }
 
     private static void AddRegEntries(List<StartupEntryStub> list, RegistryKey root, string keyPath, string type, string location)

