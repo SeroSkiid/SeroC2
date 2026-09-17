@@ -1,10 +1,6 @@
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using DevExpress.Xpf.Core;
 using Newtonsoft.Json;
 using SeroServer.Net;
@@ -95,9 +91,7 @@ public partial class StartupManagerWindow : ThemedWindow
                                   && !e.Path.Contains('\\') && !e.Path.Contains('/')
                                   && !e.Path.Contains(':') && !e.Path.StartsWith("%");
                     if (isComTask) continue;
-                    var vm = new StartupEntryVM(e.Name, e.Type, e.Location, e.Path, e.Verified, e.Publisher);
-                    vm.IconImage = DecodeIcon(e.IconB64);
-                    _entries.Add(vm);
+                    _entries.Add(new StartupEntryVM(e.Name, e.Type, e.Location, e.Path, e.Verified, e.Publisher));
                 }
                 _awaitingResponse = false;
                 _refreshCts?.Cancel();
@@ -143,24 +137,6 @@ public partial class StartupManagerWindow : ThemedWindow
             try { System.Windows.Clipboard.SetText(vm.Path); TxtStatus.Text = string.Format(Lang.Get("COPIED"), vm.Path); } catch { }
     }
 
-    private static BitmapSource? DecodeIcon(string b64)
-    {
-        if (string.IsNullOrEmpty(b64)) return null;
-        try
-        {
-            var bytes = Convert.FromBase64String(b64);
-            using var ms = new System.IO.MemoryStream(bytes);
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption  = BitmapCacheOption.OnLoad;
-            bmp.StreamSource = ms;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
-    }
-
     private void Close_Click(object s, RoutedEventArgs e) => Close();
 
     private void GridStartup_ContextMenuOpening(object sender, System.Windows.Controls.ContextMenuEventArgs e)
@@ -169,18 +145,8 @@ public partial class StartupManagerWindow : ThemedWindow
     }
 }
 
-public class StartupEntryVM : INotifyPropertyChanged
+public class StartupEntryVM
 {
-    public event PropertyChangedEventHandler? PropertyChanged;
-    private void N([CallerMemberName] string? p = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(p));
-
-    private ImageSource? _iconImage;
-    public ImageSource? IconImage
-    {
-        get => _iconImage;
-        set { if (!ReferenceEquals(_iconImage, value)) { _iconImage = value; N(); } }
-    }
-
     public string Name      { get; }
     public string Type      { get; }
     public string Location  { get; }

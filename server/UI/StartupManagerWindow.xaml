@@ -127,53 +127,24 @@
                 <DataGridTemplateColumn Width="40" CanUserSort="False">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Grid Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                <Image x:Name="StupIcon" Source="{Binding IconImage}" Width="16" Height="16"
-                                       RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
-                                <dx:DXImage x:Name="StupFbReg"
-                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"
-                                            Width="14" Height="14" Visibility="Collapsed"/>
-                                <dx:DXImage x:Name="StupFbFile"
-                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}"
-                                            Width="14" Height="14" Visibility="Collapsed"/>
-                                <dx:DXImage x:Name="StupFbTask"
-                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"
-                                            Width="14" Height="14" Visibility="Collapsed"/>
-                            </Grid>
-                            <DataTemplate.Triggers>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
-                                        <Condition Binding="{Binding Type}" Value="Reg"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="StupFbReg" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="StupIcon"  Property="Visibility" Value="Collapsed"/>
-                                </MultiDataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
-                                        <Condition Binding="{Binding Type}" Value="File"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="StupFbFile" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
-                                </MultiDataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
-                                        <Condition Binding="{Binding Type}" Value="Task"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="StupFbTask" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
-                                </MultiDataTrigger>
-                                <MultiDataTrigger>
-                                    <MultiDataTrigger.Conditions>
-                                        <Condition Binding="{Binding IconImage}" Value="{x:Null}"/>
-                                        <Condition Binding="{Binding Type}" Value="WMI"/>
-                                    </MultiDataTrigger.Conditions>
-                                    <Setter TargetName="StupFbTask" Property="Visibility" Value="Visible"/>
-                                    <Setter TargetName="StupIcon"   Property="Visibility" Value="Collapsed"/>
-                                </MultiDataTrigger>
-                            </DataTemplate.Triggers>
+                            <dx:DXImage Width="14" Height="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <dx:DXImage.Style>
+                                    <Style TargetType="dx:DXImage">
+                                        <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Type}" Value="File">
+                                                <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="Task">
+                                                <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Type}" Value="WMI">
+                                                <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </dx:DXImage.Style>
+                            </dx:DXImage>
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
