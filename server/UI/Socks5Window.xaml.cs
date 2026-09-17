@@ -156,6 +156,7 @@ public partial class Socks5Window : ThemedWindow
     private async Task HandleLocalClient(TcpClient client)
     {
         string sessionId = Guid.NewGuid().ToString("N")[..8];
+        bool _counted = false;
         try
         {
             var stream = client.GetStream();
@@ -202,6 +203,7 @@ public partial class Socks5Window : ThemedWindow
             });
 
             int cnt = Interlocked.Increment(ref _connCount);
+            _counted = true;
             _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
             AddLog($"[>] Session {sessionId}  local:{((System.Net.IPEndPoint?)client.Client.RemoteEndPoint)?.Port}");
 
@@ -227,8 +229,11 @@ public partial class Socks5Window : ThemedWindow
         {
             _pending.TryRemove(sessionId, out _);
             try { client.Close(); } catch { }
-            int cnt = Interlocked.Decrement(ref _connCount);
-            _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
+            if (_counted)
+            {
+                int cnt = Interlocked.Decrement(ref _connCount);
+                _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
+            }
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.SocksClose,
