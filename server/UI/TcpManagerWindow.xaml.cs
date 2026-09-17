@@ -137,25 +137,22 @@ public partial class TcpManagerWindow : ThemedWindow
                     }
                 });
 
-                // Phase 2: decode per-app icons sent inline by stub (cached on stub side per exe path)
-                var iconBatch = new List<(string key, BitmapSource icon)>();
-                foreach (var e in data.Entries)
-                {
-                    if (!string.IsNullOrEmpty(e.IconB64))
-                    {
-                        var icon = DecodeIcon(e.IconB64);
-                        if (icon != null)
-                            iconBatch.Add((MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid), icon));
-                    }
-                }
-                if (iconBatch.Count > 0)
+                // Phase 2: decode icons on UI (STA) thread — BitmapImage requires STA, not safe on threadpool
+                var iconData = data.Entries
+                    .Where(e => !string.IsNullOrEmpty(e.IconB64))
+                    .Select(e => (Key: MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid), e.IconB64))
+                    .ToList();
+                if (iconData.Count > 0)
                 {
                     Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                     {
                         var byKey = _entries.ToDictionary(e => MakeKey(e));
-                        foreach (var (key, icon) in iconBatch)
-                            if (byKey.TryGetValue(key, out var vm))
-                                vm.IconImage = icon;
+                        foreach (var (key, b64) in iconData)
+                        {
+                            if (!byKey.TryGetValue(key, out var vm)) continue;
+                            var icon = DecodeIcon(b64);
+                            if (icon != null) vm.IconImage = icon;
+                        }
                     });
                 }
             });

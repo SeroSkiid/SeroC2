@@ -779,7 +779,7 @@ internal class TlsClient : IDisposable
 
                 // ── Window Manager ───────────────────────────────────
                 case PacketType.WinGetList:
-                    _ = WritePacketAsync(new Packet { Type = PacketType.WinListResult, Data = WindowManagerFeature.GetList() }, ct);
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet { Type = PacketType.WinListResult, Data = WindowManagerFeature.GetList() }, CancellationToken.None));
                     break;
 
                 case PacketType.WinAction:
@@ -791,7 +791,10 @@ internal class TlsClient : IDisposable
                 case PacketType.RegGetChildren:
                     var regGet = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.RegGetChildrenStub);
                     if (regGet != null)
-                        _ = WritePacketAsync(new Packet { Type = PacketType.RegChildrenResult, Data = RegistryEditorFeature.GetChildren(regGet.KeyPath) }, ct);
+                    {
+                        var kp = regGet.KeyPath;
+                        _ = Task.Run(async () => await WritePacketAsync(new Packet { Type = PacketType.RegChildrenResult, Data = RegistryEditorFeature.GetChildren(kp) }, CancellationToken.None));
+                    }
                     break;
 
                 case PacketType.RegSetValue:

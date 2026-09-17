@@ -226,25 +226,21 @@ public partial class ProcessManagerWindow : ThemedWindow
                 TxtStatus.Foreground = (Brush)FindResource("FieldLabelBrush");
             });
 
-            // Phase 2: decode per-app icons sent inline by stub (cached on stub side per exe path)
-            var iconBatch = new System.Collections.Generic.List<(int Pid, BitmapSource Icon)>();
-            foreach (var p in d.Processes)
-            {
-                if (!string.IsNullOrEmpty(p.IconB64))
-                {
-                    var icon = DecodeIcon(p.IconB64);
-                    if (icon != null)
-                        iconBatch.Add((p.Pid, icon));
-                }
-            }
-            if (iconBatch.Count > 0)
+            // Phase 2: decode icons on UI (STA) thread — BitmapImage requires STA, not safe on threadpool
+            var iconData = d.Processes
+                .Where(p => !string.IsNullOrEmpty(p.IconB64))
+                .Select(p => (p.Pid, p.IconB64))
+                .ToList();
+            if (iconData.Count > 0)
             {
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
-                    foreach (var (pid, icon) in iconBatch)
+                    foreach (var (pid, b64) in iconData)
                     {
                         var vm = _all.FirstOrDefault(x => x.Pid == pid);
-                        if (vm != null) vm.IconImage = icon;
+                        if (vm == null) continue;
+                        var icon = DecodeIcon(b64);
+                        if (icon != null) vm.IconImage = icon;
                     }
                 });
             }
