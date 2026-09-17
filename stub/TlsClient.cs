@@ -1035,22 +1035,26 @@ internal class TlsClient : IDisposable
     [System.Runtime.InteropServices.DllImport("pdh.dll")]
     private static extern int PdhCloseQuery(IntPtr q);
 
+    private readonly object _cpuLock = new();
     private long _lastIdle, _lastKernel, _lastUser;
     private float SampleCpu()
     {
-        try
+        lock (_cpuLock)
         {
-            GetSystemTimes(out long idle, out long kernel, out long user);
-            long dIdle   = idle   - _lastIdle;
-            long dKernel = kernel - _lastKernel;
-            long dUser   = user   - _lastUser;
-            _lastIdle = idle; _lastKernel = kernel; _lastUser = user;
-            long total = dKernel + dUser;
-            if (total <= 0) return 0f;
-            float usage = (1f - (float)dIdle / total) * 100f;
-            return Math.Max(0f, Math.Min(100f, usage));
+            try
+            {
+                GetSystemTimes(out long idle, out long kernel, out long user);
+                long dIdle   = idle   - _lastIdle;
+                long dKernel = kernel - _lastKernel;
+                long dUser   = user   - _lastUser;
+                _lastIdle = idle; _lastKernel = kernel; _lastUser = user;
+                long total = dKernel + dUser;
+                if (total <= 0) return 0f;
+                float usage = (1f - (float)dIdle / total) * 100f;
+                return Math.Max(0f, Math.Min(100f, usage));
+            }
+            catch { return 0f; }
         }
-        catch { return 0f; }
     }
 
     private HardwareStatsStub SampleHardware(float cpu)
@@ -1071,7 +1075,7 @@ internal class TlsClient : IDisposable
         {
             var lii = new LASTINPUTINFO { cbSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<LASTINPUTINFO>() };
             if (GetLastInputInfo(ref lii))
-                idleSec = Math.Max(0, (int)((uint)Environment.TickCount - lii.dwTime) / 1000);
+                idleSec = (int)Math.Clamp(((long)((uint)Environment.TickCount - lii.dwTime)) / 1000L, 0L, int.MaxValue);
         }
         catch { }
         return new HardwareStatsStub
@@ -1298,7 +1302,7 @@ internal class TlsClient : IDisposable
     private async Task HeartbeatSender(CancellationToken ct)
     {
         // Prime CPU counters before first sample
-        GetSystemTimes(out _lastIdle, out _lastKernel, out _lastUser);
+        lock (_cpuLock) GetSystemTimes(out _lastIdle, out _lastKernel, out _lastUser);
 
         int hwTick = 0;
         while (!ct.IsCancellationRequested)

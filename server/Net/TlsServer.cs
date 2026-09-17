@@ -70,10 +70,10 @@ public class TlsServer
     private bool IsRateLimited(string ip)
     {
         var now = DateTime.UtcNow;
-        _connRate.AddOrUpdate(ip,
+        var updated = _connRate.AddOrUpdate(ip,
             _ => (1, now.AddMinutes(1)),
             (_, v) => now > v.reset ? (1, now.AddMinutes(1)) : (v.count + 1, v.reset));
-        return _connRate.TryGetValue(ip, out var r) && r.count > MaxConnPerMinute;
+        return updated.count > MaxConnPerMinute;
     }
 
     private bool IsTempBanned(string ip)

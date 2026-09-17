@@ -617,66 +617,13 @@ public partial class HvncWindow : ThemedWindow
 
     private void BtnCustomPath_Click(object s, RoutedEventArgs e)
     {
-        var res = System.Windows.Application.Current.Resources;
-        var bgBrush     = res["WindowBgBrush"]      as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Black;
-        var fgBrush     = res["ContentTextBrush"]   as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.White;
-        var labelBrush  = res["FieldLabelBrush"]    as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Gray;
-        var inputBg     = res["InputBgBrush"]        as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.DarkBlue;
-        var inputBorder = res["InputBorderBrush"]    as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.Gray;
-
-        var win = new Window
-        {
-            Title = Lang.Get("HVNC_CUSTOM_PATH_TITLE"),
-            Width = 500, Height = 148,
-            WindowStyle = WindowStyle.ToolWindow,
-            ResizeMode = ResizeMode.NoResize,
-            WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            Owner = this,
-            Background = bgBrush
-        };
-
-        var stack = new System.Windows.Controls.StackPanel { Margin = new Thickness(12) };
-
-        var hint = new System.Windows.Controls.TextBlock
-        {
-            Text = Lang.Get("HVNC_CUSTOM_PATH_HINT"),
-            Foreground = labelBrush,
-            FontSize = 10, Margin = new Thickness(0, 0, 0, 4)
-        };
-
-        var tb = new System.Windows.Controls.TextBox
-        {
-            Background  = inputBg,
-            Foreground  = fgBrush,
-            BorderBrush = inputBorder,
-            CaretBrush  = fgBrush,
-            FontSize = 11, Height = 26, Margin = new Thickness(0, 0, 0, 8),
-            Padding = new Thickness(6, 0, 6, 0)
-        };
-        tb.KeyDown += (_, ke) =>
-        {
-            if (ke.Key == System.Windows.Input.Key.Return) { win.DialogResult = true; win.Close(); }
-            if (ke.Key == System.Windows.Input.Key.Escape) { win.Close(); }
-        };
-
-        var btn = new System.Windows.Controls.Button
-        {
-            Content = Lang.Get("ACT_LAUNCH"), Height = 28,
-            Background  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(80, 0x22, 0xC5, 0x5E)),
-            Foreground  = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E)),
-            BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E)),
-            FontWeight  = System.Windows.FontWeights.SemiBold, FontSize = 11
-        };
-        btn.Click += (_, _) => { win.DialogResult = true; win.Close(); };
-
-        stack.Children.Add(hint);
-        stack.Children.Add(tb);
-        stack.Children.Add(btn);
-        win.Content = stack;
-        win.Loaded += (_, _) => tb.Focus();
-
-        if (win.ShowDialog() == true && !string.IsNullOrWhiteSpace(tb.Text))
-            SendExec(tb.Text.Trim(), ChkCloneProfile.IsChecked == true);
+        var path = UiHelpers.PromptInput(
+            Lang.Get("HVNC_CUSTOM_PATH_TITLE"),
+            Lang.Get("HVNC_CUSTOM_PATH_HINT"),
+            Lang.Get("ACT_LAUNCH"),
+            owner: this);
+        if (path != null)
+            SendExec(path, ChkCloneProfile.IsChecked == true);
     }
 
 }

@@ -139,10 +139,10 @@ public partial class RemoteShellWindow : ThemedWindow
             Data = cmd
         };
 
-        foreach (var client in _clients)
-        {
+        List<ConnectedClient> snapshot;
+        lock (_clientsLock) { snapshot = _clients.ToList(); }
+        foreach (var client in snapshot)
             await _server.SendToClient(client.Id, packet);
-        }
 
         OutputScroller.ScrollToEnd();
     }

