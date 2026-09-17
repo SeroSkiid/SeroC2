@@ -465,6 +465,7 @@ public partial class WebcamWindow : ThemedWindow
                 _wasStreaming = false;
                 SendProbe(); // request device list first
                 // Delay slightly to let device list arrive, then start
+                _resumeTimer?.Stop();
                 _resumeTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1500) };
                 _resumeTimer.Tick += (_, _) =>
                 {

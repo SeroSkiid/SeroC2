@@ -95,65 +95,60 @@ public partial class TcpManagerWindow : ThemedWindow
             var data = JsonConvert.DeserializeObject<TcpListResultData>(pkt.Data);
             if (data == null) return;
 
-            _ = Task.Run(() =>
+            // Pre-snapshot icon data on the packet thread (avoids second dictionary scan on UI thread)
+            var iconData = data.Entries
+                .Where(e => !string.IsNullOrEmpty(e.IconB64))
+                .Select(e => (Key: MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid), e.IconB64))
+                .ToList();
+
+            Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
             {
-                // Phase 1: incremental update of entries on UI thread
-                Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+                var selectedKey = GetSelectedKey();
+                var byKey = _entries.ToDictionary(e => MakeKey(e));
+
+                var seenKeys = new HashSet<string>();
+                foreach (var e in data.Entries)
                 {
-                    var selectedKey = GetSelectedKey();
-                    var byKey = _entries.ToDictionary(e => MakeKey(e));
-
-                    var seenKeys = new HashSet<string>();
-                    foreach (var e in data.Entries)
+                    var key = MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid);
+                    seenKeys.Add(key);
+                    if (byKey.TryGetValue(key, out var existing))
                     {
-                        var key = MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid);
-                        seenKeys.Add(key);
-                        if (byKey.TryGetValue(key, out var existing))
-                        {
-                            existing.ProcessName = e.ProcessName;
-                            existing.ExePath     = e.ExePath;
-                            existing.State       = e.State;
-                        }
-                        else
-                        {
-                            _entries.Add(new TcpEntryVM
-                            {
-                                Pid = e.Pid, ProcessName = e.ProcessName, ExePath = e.ExePath,
-                                LocalAddr = e.LocalAddr, RemoteAddr = e.RemoteAddr, State = e.State
-                            });
-                        }
+                        existing.ProcessName = e.ProcessName;
+                        existing.ExePath     = e.ExePath;
+                        existing.State       = e.State;
                     }
-                    for (int i = _entries.Count - 1; i >= 0; i--)
-                        if (!seenKeys.Contains(MakeKey(_entries[i])))
-                            _entries.RemoveAt(i);
-
-                    TxtCount.Text  = $"({_entries.Count})";
-                    TxtStatus.Text = string.Format(Lang.Get("TCP_UPDATED"), _entries.Count, DateTime.Now.ToString("HH:mm:ss"));
-
-                    if (selectedKey != null)
+                    else
                     {
-                        var restore = _entries.FirstOrDefault(e => MakeKey(e) == selectedKey);
-                        if (restore != null) GridTcp.SelectedItem = restore;
+                        _entries.Add(new TcpEntryVM
+                        {
+                            Pid = e.Pid, ProcessName = e.ProcessName, ExePath = e.ExePath,
+                            LocalAddr = e.LocalAddr, RemoteAddr = e.RemoteAddr, State = e.State
+                        });
                     }
-                });
+                }
+                for (int i = _entries.Count - 1; i >= 0; i--)
+                    if (!seenKeys.Contains(MakeKey(_entries[i])))
+                        _entries.RemoveAt(i);
 
-                // Phase 2: decode icons on UI (STA) thread — BitmapImage requires STA, not safe on threadpool
-                var iconData = data.Entries
-                    .Where(e => !string.IsNullOrEmpty(e.IconB64))
-                    .Select(e => (Key: MakeKey(e.LocalAddr, e.RemoteAddr, e.Pid), e.IconB64))
-                    .ToList();
+                TxtCount.Text  = $"({_entries.Count})";
+                TxtStatus.Text = string.Format(Lang.Get("TCP_UPDATED"), _entries.Count, DateTime.Now.ToString("HH:mm:ss"));
+
+                if (selectedKey != null)
+                {
+                    var restore = _entries.FirstOrDefault(e => MakeKey(e) == selectedKey);
+                    if (restore != null) GridTcp.SelectedItem = restore;
+                }
+
+                // Decode icons inline — BitmapImage requires STA; we're already on the UI thread
                 if (iconData.Count > 0)
                 {
-                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
+                    var byKeyNow = _entries.ToDictionary(e => MakeKey(e));
+                    foreach (var (key, b64) in iconData)
                     {
-                        var byKey = _entries.ToDictionary(e => MakeKey(e));
-                        foreach (var (key, b64) in iconData)
-                        {
-                            if (!byKey.TryGetValue(key, out var vm)) continue;
-                            var icon = DecodeIcon(b64);
-                            if (icon != null) vm.IconImage = icon;
-                        }
-                    });
+                        if (!byKeyNow.TryGetValue(key, out var vm)) continue;
+                        var icon = DecodeIcon(b64);
+                        if (icon != null) vm.IconImage = icon;
+                    }
                 }
             });
         }
@@ -246,23 +241,7 @@ public partial class TcpManagerWindow : ThemedWindow
         catch { }
     }
 
-    private static BitmapSource? DecodeIcon(string b64)
-    {
-        if (string.IsNullOrEmpty(b64)) return null;
-        try
-        {
-            var bytes = Convert.FromBase64String(b64);
-            using var ms = new System.IO.MemoryStream(bytes);
-            var bmp = new BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption  = BitmapCacheOption.OnLoad;
-            bmp.StreamSource = ms;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
-    }
+    private static BitmapSource? DecodeIcon(string b64) => UiHelpers.DecodeIcon(b64) as BitmapSource;
 
     private async void BlockIp_Click(object s, RoutedEventArgs e)
     {

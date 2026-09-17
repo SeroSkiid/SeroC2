@@ -94,13 +94,15 @@ public partial class InstalledAppsWindow : ThemedWindow
             var d = JsonConvert.DeserializeObject<InstalledListResultData>(pkt.Data);
             if (d == null) return;
 
-            // Cancel any in-flight icon request loop from a previous refresh
+            // Cancel any in-flight icon request loop from a previous refresh (Cancel is thread-safe)
             _iconCts.Cancel();
-            _iconCts = new CancellationTokenSource();
-            var cts = _iconCts;
 
             Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
             {
+                // Create new CTS on UI thread so reads from Closed/OnClientDisconnected don't race
+                _iconCts = new CancellationTokenSource();
+                var cts = _iconCts;
+
                 _all.Clear();
                 lock (_iconPending) _iconPending.Clear();
                 foreach (var a in d.Apps)
@@ -236,21 +238,5 @@ public partial class InstalledAppsWindow : ThemedWindow
         return raw;
     }
 
-    private static System.Windows.Media.ImageSource? DecodeIcon(string b64)
-    {
-        if (string.IsNullOrEmpty(b64)) return null;
-        try
-        {
-            var bytes = Convert.FromBase64String(b64);
-            using var ms = new System.IO.MemoryStream(bytes);
-            var bmp = new System.Windows.Media.Imaging.BitmapImage();
-            bmp.BeginInit();
-            bmp.CacheOption  = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-            bmp.StreamSource = ms;
-            bmp.EndInit();
-            bmp.Freeze();
-            return bmp;
-        }
-        catch { return null; }
-    }
+    private static System.Windows.Media.ImageSource? DecodeIcon(string b64) => UiHelpers.DecodeIcon(b64);
 }

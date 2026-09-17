@@ -32,6 +32,7 @@ public partial class RegistryEditorWindow : ThemedWindow
     private readonly string     _clientId;
     private readonly ObservableCollection<RegValueVM> _values = [];
     private string _currentPath = "";
+    private bool   _disconnected;
 
     // Root hives
     private static readonly string[] _roots = ["HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER", "HKEY_CLASSES_ROOT", "HKEY_USERS"];
@@ -53,12 +54,14 @@ public partial class RegistryEditorWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.RegChildrenResult, OnChildren);
         _server.RegisterHandler(clientId, PacketType.RegAck, OnAck);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.RegChildrenResult);
             _server.UnregisterHandler(clientId, PacketType.RegAck);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -143,6 +146,7 @@ public partial class RegistryEditorWindow : ThemedWindow
 
     private void RequestChildren(string path)
     {
+        if (_disconnected) return;
         _ = _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.RegGetChildren,
@@ -226,6 +230,7 @@ public partial class RegistryEditorWindow : ThemedWindow
                     TxtStatus.Text = Lang.Get("REG_SUCCESS");
                     // Reload current path
                     if (_pendingExpand?.Tag is RegKeyNode n) n.IsLoaded = false;
+                    _pendingExpand = null;
                     RequestChildren(_currentPath);
                 }
                 else
@@ -368,6 +373,17 @@ public partial class RegistryEditorWindow : ThemedWindow
         dlg.Content = sp;
         txt.SelectAll(); txt.Focus();
         return dlg.ShowDialog() == true ? txt.Text : null;
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            GridValues.Opacity = 0.55;
+            TxtStatus.Text     = Lang.Get("PM_DISCONNECTED");
+        });
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

