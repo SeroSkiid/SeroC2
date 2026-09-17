@@ -146,18 +146,20 @@ public partial class InstalledAppsWindow : ThemedWindow
         try
         {
             var d = JsonConvert.DeserializeObject<InstalledIconResultData>(pkt.Data);
-            if (d == null || string.IsNullOrEmpty(d.Name)) return;
-            var icon = DecodeIcon(d.IconB64);
-            if (icon == null) return;
+            if (d == null || string.IsNullOrEmpty(d.Name) || string.IsNullOrEmpty(d.IconB64)) return;
+            var name = d.Name;
+            var b64  = d.IconB64;
+            // Decode on UI (STA) thread — BitmapImage requires STA, not safe on packet handler thread
             Dispatcher.BeginInvoke(DispatcherPriority.Background, () =>
             {
-                // INPC on Icon — only set the property, no VM replacement
-                var vm = _all.FirstOrDefault(a => string.Equals(a.Name, d.Name, StringComparison.OrdinalIgnoreCase));
+                var icon = DecodeIcon(b64);
+                if (icon == null) return;
+                var vm = _all.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
                 if (vm != null) vm.Icon = icon;
 
                 if (!ReferenceEquals(_view, _all))
                 {
-                    var vvm = _view.FirstOrDefault(a => string.Equals(a.Name, d.Name, StringComparison.OrdinalIgnoreCase));
+                    var vvm = _view.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
                     if (vvm != null) vvm.Icon = icon;
                 }
             });
