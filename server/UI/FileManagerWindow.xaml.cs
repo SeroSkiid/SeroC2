@@ -46,7 +46,8 @@ public partial class FileManagerWindow : ThemedWindow
         // happen to be set simultaneously (e.g. rapid selection change during download).
         _server.RegisterHandler(clientId, PacketType.FmFileData, pkt =>
         {
-            if (_pendingData != null) _pendingData.TrySetResult(pkt.Data);
+            var pd = _pendingData;
+            if (pd != null) pd.TrySetResult(pkt.Data);
             else _pendingPreview?.TrySetResult(pkt.Data);
         });
         _server.RegisterHandler(clientId, PacketType.FmHashResult,  pkt => { _pendingHash?.TrySetResult(pkt.Data); });
@@ -185,14 +186,17 @@ public partial class FileManagerWindow : ThemedWindow
         {
             // Cancel any concurrent Navigate so its response doesn't land in the new TCS.
             _pendingList?.TrySetCanceled();
-            _pendingList = new TaskCompletionSource<string>();
+            var thisTcs = new TaskCompletionSource<string>();
+            _pendingList = thisTcs;
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmList,
                 Data = JsonConvert.SerializeObject(new FmListData { Path = path })
             });
 
-            var json = await _pendingList.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            // Await the local TCS — if _pendingList was replaced by a newer Navigate,
+            // thisTcs will be canceled by it and we fall into the catch below.
+            var json = await thisTcs.Task.WaitAsync(TimeSpan.FromSeconds(15));
             var result = JsonConvert.DeserializeObject<FmListResultData>(json);
             if (result == null) { TxtStatus.Text = Lang.Get("FM_NO_RESPONSE"); return; }
             if (!string.IsNullOrEmpty(result.Error))
@@ -225,8 +229,9 @@ public partial class FileManagerWindow : ThemedWindow
             if (TxtFileCount != null)
                 TxtFileCount.Text = $"{files} files — {dirs} directories";
         }
-        catch (TimeoutException) { TxtStatus.Text = Lang.Get("FM_TIMEOUT"); }
-        catch (Exception ex)    { TxtStatus.Text = ex.Message; }
+        catch (TimeoutException)           { TxtStatus.Text = Lang.Get("FM_TIMEOUT"); }
+        catch (OperationCanceledException) { /* superseded by a newer Navigate call */ }
+        catch (Exception ex)               { TxtStatus.Text = ex.Message; }
         finally { _pendingList = null; }
     }
 

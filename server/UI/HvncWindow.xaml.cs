@@ -245,6 +245,7 @@ public partial class HvncWindow : ThemedWindow
     private void ClipSync_Tick(object? sender, EventArgs e)
     {
         if (_closed) { _clipTimer?.Stop(); return; }
+        if (WindowState == WindowState.Minimized) return;
         string text;
         try { text = System.Windows.Clipboard.GetText(); }
         catch { return; }
@@ -383,22 +384,25 @@ public partial class HvncWindow : ThemedWindow
                 ImgFrame.Source = _wb;
             }
             _wb.Lock();
-            _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0);
-            _wb.Unlock();
+            try { _wb.WritePixels(new Int32Rect(0, 0, w, h), pixels, stride, 0); }
+            finally { _wb.Unlock(); }
             TxtPlaceholder.Visibility = Visibility.Collapsed;
-        }
-        finally { Interlocked.Exchange(ref _renderBusy, 0); }
 
-        _frameCount++;
-        var now = DateTime.UtcNow;
-        if ((now - _fpsTime).TotalSeconds >= 1)
-        {
-            TxtFps.Text        = $"{_frameCount} fps";
-            TxtResolution.Text = $"{_remoteW}×{_remoteH}";
-            _frameCount = 0;
-            _fpsTime = now;
+            _frameCount++;
+            var now = DateTime.UtcNow;
+            if ((now - _fpsTime).TotalSeconds >= 1)
+            {
+                TxtFps.Text        = $"{_frameCount} fps";
+                TxtResolution.Text = $"{_remoteW}×{_remoteH}";
+                _frameCount = 0;
+                _fpsTime = now;
+            }
         }
-        SendAck();
+        finally
+        {
+            Interlocked.Exchange(ref _renderBusy, 0);
+            SendAck();
+        }
     }
 
     // ── Input mapping ─────────────────────────────────────────────────────────

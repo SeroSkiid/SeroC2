@@ -53,9 +53,8 @@ internal class TlsClient : IDisposable
 
     // Cached packets for hot heartbeat path — no mutable Data, safe to share across ticks.
     private static readonly Packet _heartbeatPacket = new() { Type = PacketType.Heartbeat };
-    // Reused hardware-stats stub — fields are mutated then serialized synchronously in a
-    // single-task context (HeartbeatSender), so there is no concurrent-access risk.
-    private readonly HardwareStatsStub _hwStatsStub = new();
+    // Hardware stats — new instance per sample; PerfMonLoop and HeartbeatSender both call
+    // SampleHardware concurrently, so returning a new object is the safe path.
 
     private CancellationTokenSource? _sessionCts;
 
@@ -1075,13 +1074,15 @@ internal class TlsClient : IDisposable
                 idleSec = Math.Max(0, (int)((uint)Environment.TickCount - lii.dwTime) / 1000);
         }
         catch { }
-        _hwStatsStub.CpuUsage    = cpu;
-        _hwStatsStub.RamUsed     = ramUsed;
-        _hwStatsStub.RamTotal    = ramTotal;
-        _hwStatsStub.CpuName     = _cpuName ??= GetCpuName();
-        _hwStatsStub.GpuName     = _gpuName ??= GetGpuName();
-        _hwStatsStub.IdleSeconds = idleSec;
-        return _hwStatsStub;
+        return new HardwareStatsStub
+        {
+            CpuUsage    = cpu,
+            RamUsed     = ramUsed,
+            RamTotal    = ramTotal,
+            CpuName     = _cpuName ??= GetCpuName(),
+            GpuName     = _gpuName ??= GetGpuName(),
+            IdleSeconds = idleSec
+        };
     }
 
     private static string? _cpuName;
