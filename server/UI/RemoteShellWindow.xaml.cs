@@ -12,6 +12,7 @@ public partial class RemoteShellWindow : ThemedWindow
     private readonly TlsServer _server;
     private readonly List<ConnectedClient> _clients;
     private readonly HashSet<string> _hwids;
+    private readonly object _clientsLock = new();
     private System.Windows.Threading.DispatcherTimer? _reconnectTimer;
     private int _reconnectCountdown;
 
@@ -48,10 +49,10 @@ public partial class RemoteShellWindow : ThemedWindow
 
     private void OnClientDisconnected(ConnectedClient c)
     {
-        if (!_clients.Any(x => x.Id == c.Id)) return;
+        lock (_clientsLock) { if (!_clients.Any(x => x.Id == c.Id)) return; }
         Dispatcher.BeginInvoke(() =>
         {
-            _clients.RemoveAll(x => x.Id == c.Id);
+            lock (_clientsLock) { _clients.RemoveAll(x => x.Id == c.Id); }
             if (_clients.Count > 0) return; // still have other clients connected
 
             _reconnectCountdown = 60;
@@ -81,7 +82,7 @@ public partial class RemoteShellWindow : ThemedWindow
         if (!_hwids.Contains(c.Hwid)) return;
         Dispatcher.BeginInvoke(() =>
         {
-            _clients.Add(c);
+            lock (_clientsLock) { _clients.Add(c); }
 
             // Hide overlay, cancel timer
             _reconnectTimer?.Stop();
@@ -96,7 +97,7 @@ public partial class RemoteShellWindow : ThemedWindow
     private void OnShellOutput(string clientId, string output)
     {
         // Only show output from our target clients
-        if (!_clients.Any(c => c.Id == clientId)) return;
+        lock (_clientsLock) { if (!_clients.Any(c => c.Id == clientId)) return; }
 
         Dispatcher.BeginInvoke(() =>
         {

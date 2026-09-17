@@ -410,12 +410,15 @@ public partial class RemoteDesktopWindow : ThemedWindow
             if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
             EnsureFrame(w, h);
             _frame!.Lock();
-            foreach (var (bx, by, bw, bh, pix, stride) in blocks)
+            try
             {
-                try { _frame.WritePixels(new Int32Rect(bx, by, bw, bh), pix, stride, 0); }
-                catch { }
+                foreach (var (bx, by, bw, bh, pix, stride) in blocks)
+                {
+                    try { _frame.WritePixels(new Int32Rect(bx, by, bw, bh), pix, stride, 0); }
+                    catch { }
+                }
             }
-            _frame.Unlock();
+            finally { _frame.Unlock(); }
             UpdateFps();
             Interlocked.Exchange(ref _renderBusy, 0);
             if (!_closed && !ackAlreadySent) SendAck();
@@ -609,7 +612,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 _autoStarted = true;
                 int idx = Interlocked.Increment(ref _openCount);
                 int delay = 300 + (idx % 20) * 150;
-                Task.Delay(delay).ContinueWith(_ => Dispatcher.BeginInvoke(SendStart));
+                Task.Delay(delay).ContinueWith(_ => Dispatcher.BeginInvoke(() => { if (!_closed) SendStart(); }));
             }
         }
         catch { }

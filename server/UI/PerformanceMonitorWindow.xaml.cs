@@ -92,11 +92,13 @@ public partial class PerformanceMonitorWindow : ThemedWindow
         TxtTitle.Text = label;
 
         _server.RegisterHandler(clientId, PacketType.PerfMonData, OnPerfData);
+        _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         Closed += (_, _) =>
         {
             _server.UnregisterHandler(clientId, PacketType.PerfMonData);
+            _server.ClientDisconnected -= OnClientDisconnected;
             _ = _server.SendToClient(clientId, new Packet { Type = PacketType.PerfMonStop });
             Lang.LanguageChanged -= ApplyLanguage;
         };
@@ -288,6 +290,12 @@ public partial class PerformanceMonitorWindow : ThemedWindow
         if (totalMb >= 1024)
             return $"{usedMb / 1024.0:F1} / {totalMb / 1024.0:F1} GB";
         return $"{usedMb:N0} / {totalMb:N0} MB";
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() => TxtStatus.Text = Lang.Get("PM_DISCONNECTED"));
     }
 
     private void Close_Click(object s, RoutedEventArgs e) => Close();

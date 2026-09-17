@@ -81,6 +81,7 @@ public partial class HvncWindow : ThemedWindow
         Lang.LanguageChanged += ApplyLanguage;
         ApplyLanguage();
         PreviewKeyDown += (_, e) => { if (e.Key == Key.F12) { ToggleHideMode(); e.Handled = true; } };
+        Deactivated += (_, _) => _ctrlDown = false; // prevent Ctrl from sticking after Alt-Tab
         Closed += (_, _) =>
         {
             _closed = true;

