@@ -588,17 +588,6 @@ public class TlsServer
         }
     }
 
-    private static bool IsPrivateIp(System.Net.IPAddress addr)
-    {
-        var b = addr.GetAddressBytes();
-        if (addr.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
-            return b[0] == 10
-                || (b[0] == 172 && b[1] >= 16 && b[1] <= 31)
-                || (b[0] == 192 && b[1] == 168)
-                || (b[0] == 169 && b[1] == 254); // link-local
-        return false;
-    }
-
     private static bool IsLocalOrPrivateIp(string ip)
     {
         if (string.IsNullOrEmpty(ip)) return true;

