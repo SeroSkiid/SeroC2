@@ -86,14 +86,14 @@ public class TlsServer
     private void RecordAuthFailure(string ip)
     {
         var now = DateTime.UtcNow;
-        _authFail.AddOrUpdate(ip,
+        var r = _authFail.AddOrUpdate(ip,
             _ => (1, now.AddMinutes(5)),
             (_, v) =>
             {
                 if (now > v.unbanAt) return (1, now.AddMinutes(5));
                 return (v.fails + 1, now.AddMinutes(5)); // extend ban on each new failure
             });
-        if (_authFail.TryGetValue(ip, out var r) && r.fails >= MaxAuthFails)
+        if (r.fails >= MaxAuthFails)
             Log($"[RATE] {ip} temp-banned for 5 min after {r.fails} auth failures.");
     }
 

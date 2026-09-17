@@ -847,13 +847,14 @@ internal static class HvncFeature
     }
 
     // Walks child window tree to find a window with the given class name.
-    private static nint FindChildByClass(nint parent, string cls)
+    private static nint FindChildByClass(nint parent, string cls, int depth = 0)
     {
+        if (depth > 32) return 0;
         nint child = GetWindow(parent, 5 /*GW_CHILD*/);
         while (child != 0)
         {
             if (WinClass(child) == cls) return child;
-            nint found = FindChildByClass(child, cls);
+            nint found = FindChildByClass(child, cls, depth + 1);
             if (found != 0) return found;
             child = GetWindow(child, 2 /*GW_HWNDNEXT*/);
         }
@@ -864,14 +865,15 @@ internal static class HvncFeature
     // Win11 taskbar hosts its app icons in a WinUI3/XAML island. PostMessage to the outer
     // Shell_TrayWnd or DesktopWindowContentBridge is swallowed by the composition layer.
     // The only window that processes WM_LBUTTONDOWN is Windows.UI.Input.InputSite.WindowClass.
-    private static nint FindInputSite(nint parent)
+    private static nint FindInputSite(nint parent, int depth = 0)
     {
+        if (depth > 32) return 0;
         nint child = GetWindow(parent, 5 /*GW_CHILD*/);
         while (child != 0)
         {
             if (WinClass(child) == "Windows.UI.Input.InputSite.WindowClass")
                 return child;
-            nint found = FindInputSite(child);
+            nint found = FindInputSite(child, depth + 1);
             if (found != 0) return found;
             child = GetWindow(child, 2 /*GW_HWNDNEXT*/);
         }

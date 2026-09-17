@@ -82,10 +82,13 @@ public partial class ServerWindow : ThemedWindow
     private const int LogTrimTo   = 1000;
     private System.Windows.Documents.Paragraph? _logPara;
 
+    [System.Diagnostics.Conditional("DEBUG")]
     public static void ReportGlobalActivity(string action, string target, string status) { }
 
+    [System.Diagnostics.Conditional("DEBUG")]
     private void SetStatus(string text, string? activityAction = null, string? activityTarget = null, string? activityStatus = null) { }
 
+    [System.Diagnostics.Conditional("DEBUG")]
     private void UpdateSignalHealth() { }
 
     // Coloured log brushes — updated by UpdateLogBrushes() on every theme change

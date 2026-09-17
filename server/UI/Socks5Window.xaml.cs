@@ -227,6 +227,8 @@ public partial class Socks5Window : ThemedWindow
         {
             _pending.TryRemove(sessionId, out _);
             try { client.Close(); } catch { }
+            int cnt = Interlocked.Decrement(ref _connCount);
+            _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.SocksClose,
