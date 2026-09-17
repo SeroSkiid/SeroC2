@@ -26,10 +26,9 @@ public partial class MinerStatsWindow : DevExpress.Xpf.Core.ThemedWindow
 
     private void Window_Loaded(object sender, RoutedEventArgs e)
     {
-        Title = Lang.Get("MNR_STATS_TITLE");
-        PillOnlineLbl.Text   = " " + Lang.Get("MNR_STATS_ONLINE");
-        PillAcceptedLbl.Text = " " + Lang.Get("MNR_STATS_ACCEPTED");
+        ApplyLanguage();
         TxtStatsPort.Text = (_host?.Port ?? _defaultPort).ToString();
+        Lang.LanguageChanged += ApplyLanguage;
         UpdateStartStopUI();
         if (_host != null)
         {
@@ -39,8 +38,17 @@ public partial class MinerStatsWindow : DevExpress.Xpf.Core.ThemedWindow
         }
     }
 
+    private void ApplyLanguage()
+    {
+        Title = Lang.Get("MNR_STATS_TITLE");
+        if (PillOnlineLbl   != null) PillOnlineLbl.Text   = " " + Lang.Get("MNR_STATS_ONLINE");
+        if (PillAcceptedLbl != null) PillAcceptedLbl.Text = " " + Lang.Get("MNR_STATS_ACCEPTED");
+        UpdateStartStopUI();
+    }
+
     private void Window_Closed(object sender, EventArgs e)
     {
+        Lang.LanguageChanged -= ApplyLanguage;
         if (_host != null)
             _host.Changed -= OnChanged;
         _timer.Stop();
@@ -97,7 +105,7 @@ public partial class MinerStatsWindow : DevExpress.Xpf.Core.ThemedWindow
         StatusDot.Fill = running
             ? new SolidColorBrush(Color.FromRgb(0x22, 0xC5, 0x5E))
             : new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80));
-        LblStatus.Text   = running ? "Running" : "Stopped";
+        LblStatus.Text   = running ? Lang.Get("MNR_RUNNING") : Lang.Get("MNR_STOPPED");
         LblEndpoint.Text = running ? $"  ·  http://localhost:{_host!.Port}/api/report" : "";
     }
 

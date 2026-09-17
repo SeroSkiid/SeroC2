@@ -27,7 +27,8 @@ public partial class FileManagerWindow : ThemedWindow
     private TaskCompletionSource<string>? _pendingAck;
     // Monotone counter — incremented before each preview request.
     // Checked after the await so a stale response that completed the TCS is silently discarded.
-    private int _previewSerial;
+    private int  _previewSerial;
+    private bool _previewIsPlaceholder = true;
 
     public FileManagerWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -120,7 +121,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (BtnGo            != null) BtnGo.Content            = Lang.Get("FM_GO");
         if (TxtQuickAccess   != null) TxtQuickAccess.Text      = Lang.Get("FM_QUICK_ACCESS");
         if (TxtDrives        != null) TxtDrives.Text           = Lang.Get("FM_DRIVES");
-        if (TxtPreviewInfo   != null && TxtPreviewInfo.Text == "Select a file") TxtPreviewInfo.Text = Lang.Get("FM_SELECT_FILE");
+        if (TxtPreviewInfo   != null && _previewIsPlaceholder) TxtPreviewInfo.Text = Lang.Get("FM_SELECT_FILE");
         if (MnuFmRefresh     != null) MnuFmRefresh.Header     = Lang.Get("ACT_REFRESH");
         if (MnuFmExecNormal  != null) MnuFmExecNormal.Header  = Lang.Get("ACT_EXEC_NORMAL");
         if (MnuFmExecHidden  != null) MnuFmExecHidden.Header  = Lang.Get("ACT_EXEC_HIDDEN");
@@ -1129,6 +1130,7 @@ public partial class FileManagerWindow : ThemedWindow
             }
             else
             {
+                _previewIsPlaceholder = false;
                 TxtPreviewInfo.Text = $"{vm.Name}\n{vm.SizeDisplay}\n{vm.Modified}";
                 ShowPreviewPanel("empty");
             }

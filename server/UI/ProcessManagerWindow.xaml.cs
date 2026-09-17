@@ -135,7 +135,7 @@ public partial class ProcessManagerWindow : ThemedWindow
         if (ColPid          != null) ColPid.Header          = Lang.Get("PM_COL_PID");
         if (ColCpu          != null) ColCpu.Header          = Lang.Get("PM_COL_CPU");
         if (ColMem          != null) ColMem.Header          = Lang.Get("PM_COL_MEM");
-        if (ColNet          != null) ColNet.Header          = "I/O";   // total disk+net throughput, not network-only
+        if (ColNet          != null) ColNet.Header          = Lang.Get("PM_COL_IO");
         if (ColTitle        != null) ColTitle.Header        = Lang.Get("WIN_COL_TITLE");
         if (TxtBtnTree      != null) TxtBtnTree.Text        = _treeMode ? Lang.Get("ACT_TREE") + " ✓" : Lang.Get("ACT_TREE");
         if (TxtStatus       != null && string.IsNullOrEmpty(TxtStatus.Text))

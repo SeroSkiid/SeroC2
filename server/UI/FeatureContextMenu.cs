@@ -143,7 +143,7 @@ internal static class FeatureContextMenu
         }));
         mgmt.Items.Add(MakeItem(Lang.Get("FEAT_UNINSTALL"),      "SvgImages/Icon Builder/Actions_Trash.svg",             () =>
         {
-            if (MessageBox.Show(Lang.Get("POPUP_UNINSTALL_CONFIRM"), Lang.Get("POPUP_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (MessageBox.Show(string.Format(Lang.Get("POPUP_UNINSTALL_CONFIRM"), 1), Lang.Get("POPUP_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 _ = server.SendToClient(clientId, new Packet { Type = PacketType.Uninstall, Data = "{}" });
                 ServerWindow.ReportGlobalActivity("Uninstall", clientId, "complete");
