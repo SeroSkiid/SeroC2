@@ -1017,10 +1017,6 @@ internal class TlsClient : IDisposable
     private struct LASTINPUTINFO { public uint cbSize; public uint dwTime; }
     [System.Runtime.InteropServices.DllImport("user32.dll")] private static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
     [System.Runtime.InteropServices.DllImport("kernel32.dll")] private static extern bool GetSystemTimes(out long idleTime, out long kernelTime, out long userTime);
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true, CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
-    private static extern IntPtr CreateFileW(string lpFileName, uint dwDesiredAccess, uint dwShareMode, IntPtr lpSecurityAttributes, uint dwCreationDisposition, uint dwFlagsAndAttributes, IntPtr hTemplateFile);
-    [System.Runtime.InteropServices.DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool DeviceIoControl(IntPtr hDevice, uint dwIoControlCode, IntPtr lpInBuffer, uint nInBufferSize, IntPtr lpOutBuffer, uint nOutBufferSize, out uint lpBytesReturned, IntPtr lpOverlapped);
     [System.Runtime.InteropServices.DllImport("pdh.dll")]
     private static extern int PdhOpenQuery(IntPtr src, IntPtr ud, out IntPtr q);
     [System.Runtime.InteropServices.DllImport("pdh.dll", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
@@ -1029,6 +1025,8 @@ internal class TlsClient : IDisposable
     private static extern int PdhCollectQueryData(IntPtr q);
     [System.Runtime.InteropServices.DllImport("pdh.dll")]
     private static extern int PdhGetFormattedCounterArrayW(IntPtr c, uint fmt, ref int sz, out int cnt, IntPtr buf);
+    [System.Runtime.InteropServices.DllImport("pdh.dll")]
+    private static extern int PdhCloseQuery(IntPtr q);
 
     private long _lastIdle, _lastKernel, _lastUser;
     private float SampleCpu()
@@ -1122,16 +1120,9 @@ internal class TlsClient : IDisposable
     private bool _netPrimed;
     private System.Net.NetworkInformation.NetworkInterface[]? _netIfCache;
     private DateTime _netIfRefreshAt = DateTime.MinValue;
-    private long _lastDiskRead, _lastDiskWrite;
-    private DateTime _lastDiskTs = DateTime.UtcNow;
-    private bool _diskPrimed;
-    private nint[]? _diskHandlesCache;
-    private bool _diskHandlesCacheReady;
-    private static readonly IntPtr INVALID_HANDLE = new(-1);
-    private const uint GENERIC_READ = 0x80000000;
-    private const uint FILE_SHARE_RW = 3; // FILE_SHARE_READ | FILE_SHARE_WRITE
-    private const uint OPEN_EXISTING = 3;
-    private const uint IOCTL_DISK_PERFORMANCE = 0x00070020;
+    private IntPtr _diskQuery = IntPtr.Zero;
+    private IntPtr _diskCtrR  = IntPtr.Zero;
+    private IntPtr _diskCtrW  = IntPtr.Zero;
 
     private (long sentKBps, long recvKBps) SampleNetwork()
     {
@@ -1178,55 +1169,36 @@ internal class TlsClient : IDisposable
     {
         try
         {
-            // Open handles once and cache — CreateFileW on physical drives is expensive
-            if (!_diskHandlesCacheReady)
+            const uint PDH_FMT_DOUBLE = 0x200;
+            if (_diskQuery == IntPtr.Zero)
             {
-                var handles = new System.Collections.Generic.List<nint>(8);
-                for (int d = 0; d < 8; d++)
-                {
-                    var h = CreateFileW($@"\\.\PhysicalDrive{d}", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-                    if (h == INVALID_HANDLE) break;
-                    handles.Add(h);
-                }
-                if (handles.Count == 0)
-                {
-                    // Fallback: volume C:
-                    var h = CreateFileW(@"\\.\C:", GENERIC_READ, FILE_SHARE_RW, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
-                    if (h != INVALID_HANDLE) handles.Add(h);
-                }
-                _diskHandlesCache = handles.ToArray();
-                _diskHandlesCacheReady = true;
-            }
-
-            if (_diskBuf == IntPtr.Zero) _diskBuf = System.Runtime.InteropServices.Marshal.AllocHGlobal(96);
-            long totalRead = 0, totalWrite = 0;
-            bool gotAny = false;
-            if (_diskHandlesCache != null)
-            {
-                foreach (var h in _diskHandlesCache)
-                {
-                    if (DeviceIoControl(h, IOCTL_DISK_PERFORMANCE, IntPtr.Zero, 0, _diskBuf, 96, out _, IntPtr.Zero))
-                    {
-                        totalRead  += System.Runtime.InteropServices.Marshal.ReadInt64(_diskBuf, 0);
-                        totalWrite += System.Runtime.InteropServices.Marshal.ReadInt64(_diskBuf, 8);
-                        gotAny = true;
-                    }
-                }
-            }
-
-            if (!gotAny) return (0, 0);
-            var now = DateTime.UtcNow;
-            if (!_diskPrimed)
-            {
-                _lastDiskRead = totalRead; _lastDiskWrite = totalWrite; _lastDiskTs = now;
-                _diskPrimed = true;
+                if (PdhOpenQuery(IntPtr.Zero, IntPtr.Zero, out _diskQuery) != 0) { _diskQuery = IntPtr.Zero; return (0, 0); }
+                PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Read Bytes/sec",  IntPtr.Zero, out _diskCtrR);
+                PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Write Bytes/sec", IntPtr.Zero, out _diskCtrW);
+                PdhCollectQueryData(_diskQuery); // baseline — rate counters need two samples
                 return (0, 0);
             }
-            double elapsed = (now - _lastDiskTs).TotalSeconds;
-            long readKBps  = elapsed > 0 ? (long)((totalRead  - _lastDiskRead)  / elapsed / 1024) : 0;
-            long writeKBps = elapsed > 0 ? (long)((totalWrite - _lastDiskWrite) / elapsed / 1024) : 0;
-            _lastDiskRead = totalRead; _lastDiskWrite = totalWrite; _lastDiskTs = now;
-            return (Math.Max(0, readKBps), Math.Max(0, writeKBps));
+            PdhCollectQueryData(_diskQuery);
+
+            static double ReadSingleCounter(IntPtr ctr, uint fmt)
+            {
+                int sz = 0;
+                PdhGetFormattedCounterArrayW(ctr, fmt, ref sz, out _, IntPtr.Zero);
+                if (sz <= 0) return 0;
+                var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(sz);
+                try
+                {
+                    // PDH_FMT_COUNTERVALUE_ITEM_W: 8 (name ptr) + 4 (CStatus) + 4 (pad) + 8 (double) = 24 bytes
+                    if (PdhGetFormattedCounterArrayW(ctr, fmt, ref sz, out int cnt, buf) == 0 && cnt > 0)
+                        return BitConverter.Int64BitsToDouble(System.Runtime.InteropServices.Marshal.ReadInt64(buf, 16));
+                }
+                finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buf); }
+                return 0;
+            }
+
+            long readKBps  = Math.Max(0, (long)(ReadSingleCounter(_diskCtrR, PDH_FMT_DOUBLE) / 1024));
+            long writeKBps = Math.Max(0, (long)(ReadSingleCounter(_diskCtrW, PDH_FMT_DOUBLE) / 1024));
+            return (readKBps, writeKBps);
         }
         catch { return (0, 0); }
     }
@@ -2168,11 +2140,8 @@ internal class TlsClient : IDisposable
         _frameCh.Writer.TryComplete();
         _ctrlOutCh.Writer.TryComplete();
         _frameOutCh.Writer.TryComplete();
-        if (_diskHandlesCache != null)
-            foreach (var h in _diskHandlesCache)
-                if (h != 0) CloseHandle((IntPtr)h);
-        if (_diskBuf != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_diskBuf); _diskBuf = IntPtr.Zero; }
-        if (_gpuBuf  != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf);  _gpuBuf  = IntPtr.Zero; }
+        if (_diskQuery != IntPtr.Zero) { PdhCloseQuery(_diskQuery); _diskQuery = IntPtr.Zero; }
+        if (_gpuBuf   != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
     }
 }
 
