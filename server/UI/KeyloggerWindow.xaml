@@ -155,6 +155,83 @@
                                     Style="{StaticResource SBtn}" FontSize="9" Click="BtnSave_Click"/>
                         </Grid>
                     </Border>
+
+                    <!-- FTP Auto-Upload panel -->
+                    <Border DockPanel.Dock="Bottom" Background="{DynamicResource TitleBgBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}" BorderThickness="0,1,0,0"
+                            Padding="10,7,10,8">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Header + status -->
+                            <DockPanel Grid.Row="0" Margin="0,0,0,5">
+                                <TextBlock Text="AUTO-UPLOAD" DockPanel.Dock="Left"
+                                           Foreground="{DynamicResource TitleLabelBrush}"
+                                           FontSize="9" FontWeight="Bold" FontFamily="Consolas"
+                                           VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                <TextBlock x:Name="TxtFtpStatus" Text="Not configured"
+                                           Foreground="{DynamicResource LabelBrush}"
+                                           FontSize="10" FontFamily="Consolas" VerticalAlignment="Center"/>
+                            </DockPanel>
+
+                            <!-- Row 1: Host, Port, User, Password -->
+                            <Grid Grid.Row="1" Margin="0,0,0,4">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="60" MaxWidth="70"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                    <TextBlock Text="Host" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBox x:Name="TxtFtpHost" Height="24" FontSize="11"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,4,0">
+                                    <TextBlock Text="Port" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBox x:Name="TxtFtpPort" Height="24" FontSize="11" Text="21"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" Margin="0,0,4,0">
+                                    <TextBlock Text="User" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBox x:Name="TxtFtpUser" Height="24" FontSize="11"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="3">
+                                    <TextBlock Text="Password" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <PasswordBox x:Name="TxtFtpPass" Height="24" FontSize="11"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Row 2: Remote Path, Max Size, Clipboard, Apply -->
+                            <Grid Grid.Row="2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="80" MaxWidth="90"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Margin="0,0,4,0">
+                                    <TextBlock Text="Remote Path" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBox x:Name="TxtFtpPath" Height="24" FontSize="11" Text="/"/>
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Margin="0,0,4,0">
+                                    <TextBlock Text="Max Size (KB)" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBox x:Name="TxtMaxSizeKb" Height="24" FontSize="11" Text="500"/>
+                                </StackPanel>
+                                <CheckBox x:Name="ChkClipboard" Grid.Column="2" Content="Clipboard"
+                                          IsChecked="True" Margin="4,12,8,0"
+                                          Foreground="{DynamicResource ContentTextBrush}" FontSize="11"
+                                          VerticalAlignment="Bottom"/>
+                                <Button x:Name="BtnFtpApply" Grid.Column="3" Height="24" Padding="12,0"
+                                        Style="{StaticResource SBtn}" FontSize="11"
+                                        Content="Apply" VerticalAlignment="Bottom"
+                                        Click="BtnFtpApply_Click"/>
+                            </Grid>
+                        </Grid>
+                    </Border>
+
                     <TextBox x:Name="TxtLog"
                              Background="{DynamicResource WindowBgBrush}"
                              Foreground="{DynamicResource ContentTextBrush}"
