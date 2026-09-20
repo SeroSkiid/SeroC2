@@ -232,6 +232,7 @@ Full remote file system browser with icon-per-extension UI.
 - **Download / Upload** — single file up/down
 - **Execute** — Normal, Hidden, or As Admin
 - **Rename / Delete / New Folder**
+- **File Editor** - Edit file
 - **SHA-256 Hash** — computed on client, copied to clipboard
 - **Show / Hide** — toggle hidden file attribute
 - **Set as Wallpaper** — set any image as desktop background
