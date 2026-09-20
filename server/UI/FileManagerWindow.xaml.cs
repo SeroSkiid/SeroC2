@@ -137,6 +137,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmRename      != null) MnuFmRename.Header      = Lang.Get("ACT_RENAME");
         if (MnuFmDelete      != null) MnuFmDelete.Header      = Lang.Get("ACT_DELETE");
         if (MnuFmHash        != null) MnuFmHash.Header        = Lang.Get("FM_HASH");
+        if (MnuFmEdit        != null) MnuFmEdit.Header        = Lang.Get("FM_EDIT");
         if (MnuFmShowHide    != null) MnuFmShowHide.Header    = Lang.Get("FM_SHOW_HIDE");
         if (MnuFmSetAttr     != null) MnuFmSetAttr.Header     = Lang.Get("FM_SET_ATTR");
         if (MnuFmWallpaper   != null) MnuFmWallpaper.Header   = Lang.Get("FM_WALLPAPER");
@@ -602,6 +603,89 @@ public partial class FileManagerWindow : ThemedWindow
             ServerWindow.LogGlobal($"[FM] Hash computation failed/timed out for '{path}' on client {_clientId}: {ex.Message}");
         }
         finally { _pendingHash = null; }
+    }
+
+    private static readonly HashSet<string> _binaryExtensions = new(StringComparer.OrdinalIgnoreCase)
+        { ".exe",".dll",".sys",".bin",".dat",".zip",".7z",".rar",".tar",".gz",".bz2",
+          ".png",".jpg",".jpeg",".gif",".bmp",".ico",".tiff",".webp",".mp3",".mp4",
+          ".avi",".mkv",".wav",".flac",".ogg",".pdf",".docx",".xlsx",".pptx",".db",
+          ".sqlite",".lnk",".msi",".cab",".iso",".img" };
+
+    private async void Edit_Click(object s, RoutedEventArgs e)
+    {
+        if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
+        if (_pendingData != null) return;
+        if (_binaryExtensions.Contains(Path.GetExtension(row.Name)))
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Binary files cannot be edited as text.");
+            return;
+        }
+        var path = Path.Combine(_currentPath, row.Name);
+        TxtStatus.Text = Lang.Get("FM_EDITOR_LOADING");
+        ServerWindow.ReportGlobalActivity("Edit file", row.Name, "running");
+
+        _pendingPreview?.TrySetCanceled();
+        _pendingPreview = null;
+        _previewSerial++;
+        var tcs = new TaskCompletionSource<string>();
+        _pendingPreview = tcs;
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.FmDownload,
+                Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
+            });
+            var json = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(60));
+            var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
+            if (result == null || !string.IsNullOrEmpty(result.Error))
+            {
+                TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error ?? "No data");
+                return;
+            }
+            var bytes = await Task.Run(() => Convert.FromBase64String(result.Data));
+            if (bytes.Length > 2 * 1024 * 1024)
+            {
+                TxtStatus.Text = Lang.Get("FM_EDITOR_TOO_LARGE");
+                return;
+            }
+            var text = System.Text.Encoding.UTF8.GetString(bytes);
+            TxtStatus.Text = row.Name;
+
+            var saveCallback = new Func<string, Task<bool>>(async newText =>
+            {
+                if (_pendingAck != null) return false;
+                var encoded = await Task.Run(() => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(newText)));
+                _pendingAck = new TaskCompletionSource<string>();
+                try
+                {
+                    await _server.SendToClient(_clientId, new Packet
+                    {
+                        Type = PacketType.FmUpload,
+                        Data = JsonConvert.SerializeObject(new FmUploadData { Path = path, Data = encoded })
+                    });
+                    var ackJson = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(30));
+                    var ack = JsonConvert.DeserializeObject<FmAckData>(ackJson);
+                    return ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error));
+                }
+                catch { return false; }
+                finally { _pendingAck = null; }
+            });
+
+            var editor = new FileEditorWindow(row.Name, path, text, saveCallback);
+            editor.Owner = this;
+            editor.Show();
+        }
+        catch (OperationCanceledException) { TxtStatus.Text = ""; }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Edit file failed", row.Name, "failed");
+        }
+        finally
+        {
+            if (_pendingPreview == tcs) _pendingPreview = null;
+        }
     }
 
     private async void ShowHide_Click(object s, RoutedEventArgs e)

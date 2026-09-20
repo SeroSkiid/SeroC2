@@ -1,0 +1,80 @@
+<dx:ThemedWindow x:Class="SeroServer.UI.FileEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
+        Title="File Editor"
+        Width="860" Height="560" MinWidth="480" MinHeight="320"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="CanResize" ShowGlow="False"
+        Closing="Window_Closing">
+
+    <DockPanel LastChildFill="True">
+
+        <!-- Toolbar -->
+        <Border DockPanel.Dock="Top"
+                Background="{DynamicResource SectionBgBrush}"
+                BorderBrush="{DynamicResource SectionBorderBrush}"
+                BorderThickness="0,0,0,1" Padding="8,6">
+            <DockPanel LastChildFill="False">
+                <Button x:Name="BtnSave" DockPanel.Dock="Left"
+                        Content="Save to client"
+                        Click="BtnSave_Click"
+                        Padding="12,4" Margin="0,0,8,0"
+                        Foreground="{DynamicResource ContentTextBrush}"
+                        Background="{DynamicResource AccentBrush}"
+                        Style="{StaticResource SBtn}"/>
+                <CheckBox x:Name="ChkWordWrap" DockPanel.Dock="Left"
+                          Content="Word Wrap"
+                          VerticalAlignment="Center"
+                          Foreground="{DynamicResource ContentTextBrush}"
+                          Checked="ChkWordWrap_Changed"
+                          Unchecked="ChkWordWrap_Changed"/>
+                <TextBlock x:Name="TxtFilePath" DockPanel.Dock="Right"
+                           VerticalAlignment="Center"
+                           FontSize="11"
+                           Foreground="{DynamicResource SubtleTextBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="400"
+                           Margin="8,0,0,0"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Status bar -->
+        <Border DockPanel.Dock="Bottom"
+                Background="{DynamicResource SectionBgBrush}"
+                BorderBrush="{DynamicResource SectionBorderBrush}"
+                BorderThickness="0,1,0,0" Padding="8,3">
+            <DockPanel>
+                <TextBlock x:Name="TxtStatus" DockPanel.Dock="Left"
+                           VerticalAlignment="Center"
+                           FontSize="11"
+                           Foreground="{DynamicResource SubtleTextBrush}"/>
+                <TextBlock x:Name="TxtCaret" DockPanel.Dock="Right"
+                           VerticalAlignment="Center"
+                           FontSize="11"
+                           Foreground="{DynamicResource SubtleTextBrush}"
+                           Text="Ln 1, Col 1"/>
+            </DockPanel>
+        </Border>
+
+        <!-- Editor -->
+        <TextBox x:Name="TxtEditor"
+                 AcceptsReturn="True" AcceptsTab="True"
+                 TextWrapping="NoWrap"
+                 HorizontalScrollBarVisibility="Auto"
+                 VerticalScrollBarVisibility="Auto"
+                 FontFamily="Consolas,Courier New,monospace"
+                 FontSize="13"
+                 Foreground="{DynamicResource ContentTextBrush}"
+                 Background="{DynamicResource WindowBgBrush}"
+                 CaretBrush="{DynamicResource ContentTextBrush}"
+                 SelectionBrush="{DynamicResource AccentBrush}"
+                 SelectionOpacity="0.3"
+                 BorderThickness="0"
+                 Padding="8"
+                 SpellCheck.IsEnabled="False"
+                 TextChanged="TxtEditor_TextChanged"
+                 SelectionChanged="TxtEditor_SelectionChanged"
+                 KeyDown="TxtEditor_KeyDown"/>
+    </DockPanel>
+</dx:ThemedWindow>
