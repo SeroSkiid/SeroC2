@@ -2652,6 +2652,7 @@
                                                     Visibility="{Binding IsChecked, ElementName=BldHollowing, Converter={StaticResource BoolToVis}}">
                                             <TextBlock x:Name="BldLblTargetProcess" Text="TARGET PROCESS" Style="{StaticResource SFieldLabel}" />
                                             <ComboBox x:Name="BldHollowTarget" MaxDropDownHeight="460"
+                                                      Style="{StaticResource SCombo}"
                                                       IsEditable="True" Text=""
                                                       FontFamily="Consolas" FontSize="11"
                                                       Background="{DynamicResource InputBgBrush}"
