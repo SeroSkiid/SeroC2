@@ -1123,6 +1123,8 @@ internal class TlsClient : IDisposable
     private static extern int PdhGetFormattedCounterArrayW(IntPtr c, uint fmt, ref int sz, out int cnt, IntPtr buf);
     [System.Runtime.InteropServices.DllImport("pdh.dll")]
     private static extern int PdhCloseQuery(IntPtr q);
+    [System.Runtime.InteropServices.DllImport("ntdll.dll")]
+    private static extern int NtQuerySystemInformation(int cls, IntPtr buf, int size, out int ret);
 
     private readonly object _cpuLock = new();
     private long _lastIdle, _lastKernel, _lastUser;
@@ -1225,6 +1227,10 @@ internal class TlsClient : IDisposable
     private IntPtr _diskQuery = IntPtr.Zero;
     private IntPtr _diskCtrR  = IntPtr.Zero;
     private IntPtr _diskCtrW  = IntPtr.Zero;
+    // NtQuery fallback fields (used when PDH counters fail)
+    private long _diskNtLastRead  = -1;
+    private long _diskNtLastWrite = -1;
+    private long _diskNtLastTick  = 0;
 
     private (long sentKBps, long recvKBps) SampleNetwork()
     {
@@ -1269,18 +1275,20 @@ internal class TlsClient : IDisposable
 
     private (long readKBps, long writeKBps) SampleDisk()
     {
+        // Primary: PDH physical disk counters
         try
         {
             const uint PDH_FMT_DOUBLE = 0x200;
             if (_diskQuery == IntPtr.Zero)
             {
-                if (PdhOpenQuery(IntPtr.Zero, IntPtr.Zero, out _diskQuery) != 0) { _diskQuery = IntPtr.Zero; return (0, 0); }
-                PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Read Bytes/sec",  IntPtr.Zero, out _diskCtrR);
-                PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Write Bytes/sec", IntPtr.Zero, out _diskCtrW);
-                PdhCollectQueryData(_diskQuery); // baseline — rate counters need two samples
+                if (PdhOpenQuery(IntPtr.Zero, IntPtr.Zero, out _diskQuery) != 0) { _diskQuery = IntPtr.Zero; goto ntFallback; }
+                if (PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Read Bytes/sec",  IntPtr.Zero, out _diskCtrR) != 0 ||
+                    PdhAddEnglishCounterW(_diskQuery, @"\PhysicalDisk(_Total)\Disk Write Bytes/sec", IntPtr.Zero, out _diskCtrW) != 0)
+                { _diskQuery = IntPtr.Zero; goto ntFallback; }
+                PdhCollectQueryData(_diskQuery);
                 return (0, 0);
             }
-            PdhCollectQueryData(_diskQuery);
+            if (PdhCollectQueryData(_diskQuery) != 0) goto ntFallback;
 
             static double ReadSingleCounter(IntPtr ctr, uint fmt)
             {
@@ -1290,7 +1298,6 @@ internal class TlsClient : IDisposable
                 var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(sz);
                 try
                 {
-                    // PDH_FMT_COUNTERVALUE_ITEM_W: 8 (name ptr) + 4 (CStatus) + 4 (pad) + 8 (double) = 24 bytes
                     if (PdhGetFormattedCounterArrayW(ctr, fmt, ref sz, out int cnt, buf) == 0 && cnt > 0)
                         return BitConverter.Int64BitsToDouble(System.Runtime.InteropServices.Marshal.ReadInt64(buf, 16));
                 }
@@ -1298,9 +1305,33 @@ internal class TlsClient : IDisposable
                 return 0;
             }
 
-            long readKBps  = Math.Max(0, (long)(ReadSingleCounter(_diskCtrR, PDH_FMT_DOUBLE) / 1024));
-            long writeKBps = Math.Max(0, (long)(ReadSingleCounter(_diskCtrW, PDH_FMT_DOUBLE) / 1024));
-            return (readKBps, writeKBps);
+            long r = Math.Max(0, (long)(ReadSingleCounter(_diskCtrR, PDH_FMT_DOUBLE) / 1024));
+            long w = Math.Max(0, (long)(ReadSingleCounter(_diskCtrW, PDH_FMT_DOUBLE) / 1024));
+            if (r > 0 || w > 0) return (r, w);
+        }
+        catch { _diskQuery = IntPtr.Zero; }
+
+        // Fallback: NtQuerySystemInformation(SystemPerformanceInformation) — works without admin
+        ntFallback:
+        try
+        {
+            // SYSTEM_PERFORMANCE_INFORMATION: IdleProcessTime(8) + IoReadTransferCount(8) + IoWriteTransferCount(8) + ...
+            const int cls = 2, bufSize = 312;
+            var ntBuf = System.Runtime.InteropServices.Marshal.AllocHGlobal(bufSize);
+            try
+            {
+                if (NtQuerySystemInformation(cls, ntBuf, bufSize, out _) != 0) return (0, 0);
+                long readBytes  = System.Runtime.InteropServices.Marshal.ReadInt64(ntBuf, 8);
+                long writeBytes = System.Runtime.InteropServices.Marshal.ReadInt64(ntBuf, 16);
+                long now = Environment.TickCount64;
+                if (_diskNtLastRead < 0) { _diskNtLastRead = readBytes; _diskNtLastWrite = writeBytes; _diskNtLastTick = now; return (0, 0); }
+                long ms = Math.Max(1, now - _diskNtLastTick);
+                long rKBps = Math.Max(0, (readBytes  - _diskNtLastRead)  * 1000 / ms / 1024);
+                long wKBps = Math.Max(0, (writeBytes - _diskNtLastWrite) * 1000 / ms / 1024);
+                _diskNtLastRead = readBytes; _diskNtLastWrite = writeBytes; _diskNtLastTick = now;
+                return (rKBps, wKBps);
+            }
+            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(ntBuf); }
         }
         catch { return (0, 0); }
     }

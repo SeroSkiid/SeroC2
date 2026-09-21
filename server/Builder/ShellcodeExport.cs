@@ -91,7 +91,8 @@ public static class ShellcodeExport
         try
         {
             var binDir  = Path.GetDirectoryName(clExe)!;
-            var msvcDir = Path.GetFullPath(Path.Combine(binDir, "..", "..", "..", ".."));
+            // cl.exe sits at: MSVC\<ver>\bin\Hostx64\x64\cl.exe  → 3 levels up = MSVC\<ver>
+            var msvcDir = Path.GetFullPath(Path.Combine(binDir, "..", "..", ".."));
             var include = Path.Combine(msvcDir, "include");
             var lib     = Path.Combine(msvcDir, "lib", "x64");
 

@@ -44,8 +44,14 @@
                 <!-- Right: FPS + window controls -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     <Border Margin="0,0,12,0" Padding="8,3" CornerRadius="3" Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
-                        <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                   FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Center"/>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
+                            <TextBlock x:Name="TxtFps" Text="0 fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
+                                       FontSize="10" FontFamily="Segoe UI Mono" MinWidth="44" TextAlignment="Right"/>
+                        </StackPanel>
                     </Border>
                     <Button x:Name="BtnMenu" Height="26" Padding="8,0" Margin="0,0,4,0"
                             Style="{StaticResource SBtn}" FontSize="11"
@@ -109,14 +115,18 @@
                             <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
                         </Border>
+                        <Rectangle Width="1" Height="16" Margin="12,0,12,0" Fill="{DynamicResource SectionBorderBrush}"/>
+                        <CheckBox x:Name="ChkSmooth" Content="SMOOTH" IsChecked="True"
+                                  Style="{StaticResource TbarChk}" VerticalAlignment="Center"
+                                  ToolTip="High-quality bicubic scaling (uncheck for nearest-neighbour / fastest)"/>
                     </StackPanel>
 
                     <!-- START / STOP -->
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <Button x:Name="BtnStart" Content="START" Width="76" Height="26"
+                        <Button x:Name="BtnStart" Content="START" MinWidth="64" Height="26"
                                 Style="{StaticResource SGreenBtn}" Click="BtnStart_Click"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
-                        <Button x:Name="BtnStop" Content="STOP" Width="70" Height="26" Margin="5,0,0,0"
+                        <Button x:Name="BtnStop" Content="STOP" MinWidth="58" Height="26" Margin="5,0,0,0"
                                 Style="{StaticResource SRedBtn}" Click="BtnStop_Click"
                                 IsEnabled="False" Opacity="0.35"
                                 FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>

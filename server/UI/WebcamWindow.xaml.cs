@@ -68,6 +68,10 @@ public partial class WebcamWindow : ThemedWindow
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; UiPrefs.Set("WcamQuality", (int)e.NewValue); };
         SldFps.ValueChanged     += (_, e) => { TxtFpsVal.Text  = $"{(int)e.NewValue}"; UiPrefs.Set("WcamFps",    (int)e.NewValue); };
         CmbResolution.SelectionChanged += (_, _) => UiPrefs.Set("WcamRes", CmbResolution.SelectedIndex);
+        ChkSmooth.IsChecked = UiPrefs.GetInt("WcamSmooth", 1) == 1;
+        ChkSmooth.Checked   += (_, _) => { ApplyScalingMode(); UiPrefs.Set("WcamSmooth", 1); };
+        ChkSmooth.Unchecked += (_, _) => { ApplyScalingMode(); UiPrefs.Set("WcamSmooth", 0); };
+        ApplyScalingMode();
 
         RegisterWcamHandlers(_clientId);
         _server.ClientDisconnected += OnClientDisconnected;
@@ -109,6 +113,10 @@ public partial class WebcamWindow : ThemedWindow
     }
 
     // ── Fullscreen ────────────────────────────────────────────────────────────
+
+    private void ApplyScalingMode() =>
+        RenderOptions.SetBitmapScalingMode(ImgFrame,
+            ChkSmooth.IsChecked == true ? BitmapScalingMode.HighQuality : BitmapScalingMode.NearestNeighbor);
 
     private void ApplyLanguage()
     {

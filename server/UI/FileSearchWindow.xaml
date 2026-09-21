@@ -48,13 +48,13 @@
                 <TextBlock x:Name="TxtLblPath" Grid.Row="0" Grid.Column="0" Text="Root Path:"
                            Foreground="{DynamicResource TitleLabelBrush}" FontSize="11" VerticalAlignment="Center"/>
                 <TextBox   Grid.Row="0" Grid.Column="1" x:Name="TxtPath" Height="26"
-                           Style="{StaticResource SInput}" FontSize="11" Text="C:\"
+                           Style="{StaticResource STxt}" FontSize="11" Text="C:\"
                            FontFamily="Consolas"/>
 
                 <TextBlock x:Name="TxtLblPattern" Grid.Row="0" Grid.Column="3" Text="Pattern:"
                            Foreground="{DynamicResource TitleLabelBrush}" FontSize="11" VerticalAlignment="Center"/>
                 <TextBox   Grid.Row="0" Grid.Column="4" x:Name="TxtPattern" Height="26"
-                           Style="{StaticResource SInput}" FontSize="11" Text="*"
+                           Style="{StaticResource STxt}" FontSize="11" Text="*"
                            FontFamily="Consolas"/>
 
                 <!-- Row 2: Recursive + Search button -->

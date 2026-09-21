@@ -25,6 +25,7 @@ public partial class HvncWindow : ThemedWindow
     private bool _wasStreaming;
     private volatile bool _closed, _streaming;
     private int _frameCount;
+    private int _bytesReceived;
     private DateTime _fpsTime = DateTime.UtcNow;
     private long _lastMoveMs;
     private bool _ctrlDown;
@@ -69,6 +70,9 @@ public partial class HvncWindow : ThemedWindow
 
         SldQuality.ValueChanged += (_, e) => TxtQuality.Text = $"{(int)e.NewValue}";
         SldFps.ValueChanged     += (_, e) => TxtFpsVal.Text  = $"{(int)e.NewValue}";
+        ChkSmooth.Checked   += (_, _) => ApplyScalingMode();
+        ChkSmooth.Unchecked += (_, _) => ApplyScalingMode();
+        ApplyScalingMode();
 
         _server.RegisterHandler(clientId, PacketType.HvncFrame,
             pkt => OnHvncFrame(clientId, pkt.Data));
@@ -108,6 +112,10 @@ public partial class HvncWindow : ThemedWindow
         Loaded += (_, _) => BeginAnimation(OpacityProperty,
             new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(180)));
     }
+
+    private void ApplyScalingMode() =>
+        RenderOptions.SetBitmapScalingMode(ImgFrame,
+            ChkSmooth.IsChecked == true ? BitmapScalingMode.HighQuality : BitmapScalingMode.NearestNeighbor);
 
     private void ApplyLanguage()
     {
@@ -276,6 +284,7 @@ public partial class HvncWindow : ThemedWindow
 
             if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
             var jpegBytes = Convert.FromBase64String(frame.J);
+            Interlocked.Add(ref _bytesReceived, frame.J.Length);
             Task.Run(() =>
             {
                 try
@@ -327,6 +336,7 @@ public partial class HvncWindow : ThemedWindow
             if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
 
             var h264Bytes = Convert.FromBase64String(frame.D);
+            Interlocked.Add(ref _bytesReceived, frame.D.Length);
             int fw = frame.W, fh = frame.H;
 
             Task.Run(() =>
@@ -397,6 +407,10 @@ public partial class HvncWindow : ThemedWindow
                 TxtResolution.Text = $"{_remoteW}×{_remoteH}";
                 _frameCount = 0;
                 _fpsTime = now;
+                int bRecv = Interlocked.Exchange(ref _bytesReceived, 0);
+                TxtBandwidth.Text = $"{bRecv * 8.0 / 1_000_000.0:F1} Mbps";
+                if (_server.ConnectedClients.TryGetValue(_clientId, out var cli2))
+                    TxtPing.Text = $"{cli2.PingMs} ms";
             }
         }
         finally

@@ -63,7 +63,7 @@ internal static class GeoFeature
                         var clsid  = CLSID_Location;
                         var locIid = IID_ILocation;
                         if (CoCreateInstance(ref clsid, nint.Zero, 1, ref locIid, out var loc) != 0)
-                        { tcs.SetResult((0, 0, 0, false, "Location service unavailable (lfsvc not running).")); return; }
+                        { tcs.SetResult((0, 0, 0, false, "lfsvc_unavailable")); return; }
 
                         var iidLL   = IID_ILatLongReport;
                         Marshal.GetDelegateForFunctionPointer<SetDesiredAccuracyDelegate>(Vtbl(loc, 10))(loc, ref iidLL, 1); // HIGH
@@ -106,7 +106,7 @@ internal static class GeoFeature
             thread.Start();
 
             var (lat, lon, acc, gotFix, errMsg) = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(20));
-            if (!gotFix) return Error(errMsg);
+            if (!gotFix) return await GetLocationByIpAsync(errMsg);
 
             string city = "", region = "", country = "";
             try
@@ -166,12 +166,54 @@ internal static class GeoFeature
         catch { }
     }
 
+    private static async Task<string> GetLocationByIpAsync(string originalError)
+    {
+        try
+        {
+            var resp = await _http.GetStringAsync("http://ip-api.com/json");
+            var ip   = JsonSerializer.Deserialize(resp, IpApiCtx.Default.IpApiResponse);
+            if (ip?.Status == "success")
+            {
+                return JsonSerializer.Serialize(new GeoResultStub
+                {
+                    Lat      = ip.Lat,
+                    Lon      = ip.Lon,
+                    Accuracy = 5000,
+                    Source   = "ip-api.com",
+                    City     = ip.City       ?? "",
+                    Region   = ip.RegionName ?? "",
+                    Country  = ip.Country    ?? "",
+                    Isp      = ip.Isp        ?? "",
+                }, SeroJson.Default.GeoResultStub);
+            }
+        }
+        catch { }
+        var reason = originalError == "lfsvc_unavailable"
+            ? "Location service unavailable (lfsvc not running) and IP fallback failed."
+            : originalError;
+        return Error(reason);
+    }
+
     private static string Error(string msg) =>
         JsonSerializer.Serialize(new GeoResultStub { Error = msg }, SeroJson.Default.GeoResultStub);
 }
 
 [JsonSerializable(typeof(NominatimResponse))]
 internal partial class NominatimCtx : JsonSerializerContext { }
+
+[JsonSerializable(typeof(IpApiResponse))]
+internal partial class IpApiCtx : JsonSerializerContext { }
+
+internal class IpApiResponse
+{
+    [JsonPropertyName("status")]     public string? Status     { get; set; }
+    [JsonPropertyName("country")]    public string? Country    { get; set; }
+    [JsonPropertyName("regionName")] public string? RegionName { get; set; }
+    [JsonPropertyName("city")]       public string? City       { get; set; }
+    [JsonPropertyName("lat")]        public double  Lat        { get; set; }
+    [JsonPropertyName("lon")]        public double  Lon        { get; set; }
+    [JsonPropertyName("isp")]        public string? Isp        { get; set; }
+}
 
 internal class NominatimResponse
 {

@@ -159,7 +159,10 @@ internal static class ProcessManagerFeature
                     NetKbps   = netKbps,
                     Title     = p.MainWindowHandle != IntPtr.Zero ? p.MainWindowTitle : "",
                     ExePath   = exePath,
-                    IconB64   = _iconCache.GetOrAdd(exePath, path => StubIconHelper.ExtractExeIcon(path))
+                    IconB64   = _iconCache.GetOrAdd(exePath, path =>
+                        string.IsNullOrEmpty(path)
+                            ? StubIconHelper.GetGenericExeIcon()
+                            : (StubIconHelper.ExtractExeIcon(path) is { Length: > 0 } b64 ? b64 : StubIconHelper.GetGenericExeIcon()))
                 });
             }
             catch { list.Add(new ProcEntryStub { Pid = p.Id, Name = p.ProcessName }); }
@@ -204,9 +207,26 @@ internal static class ProcessManagerFeature
         finally { CloseHandle(h); }
     }
 
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint sz);
+
     private static string GetExePath(Process p)
     {
-        try { return p.MainModule?.FileName ?? ""; }
+        try { var f = p.MainModule?.FileName; if (!string.IsNullOrEmpty(f)) return f; }
+        catch { }
+        // Fallback: QueryFullProcessImageName needs only PROCESS_QUERY_LIMITED_INFORMATION (0x1000)
+        try
+        {
+            var h = OpenProcess(0x1000, false, p.Id);
+            if (h == IntPtr.Zero) return "";
+            try
+            {
+                var sb = new System.Text.StringBuilder(1024);
+                uint sz = 1024;
+                return QueryFullProcessImageName(h, 0, sb, ref sz) ? sb.ToString() : "";
+            }
+            finally { CloseHandle(h); }
+        }
         catch { return ""; }
     }
 }

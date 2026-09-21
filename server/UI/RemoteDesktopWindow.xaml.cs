@@ -66,6 +66,10 @@ public partial class RemoteDesktopWindow : ThemedWindow
         TxtScale.Text    = $"{(int)SldScale.Value}%";
         SldQuality.ValueChanged += (_, e) => { TxtQuality.Text = $"{(int)e.NewValue}"; _quality = (int)e.NewValue; UiPrefs.Set("RdpQuality", (int)e.NewValue); };
         SldScale.ValueChanged   += (_, e) => { TxtScale.Text = $"{(int)e.NewValue}%"; UiPrefs.Set("RdpScale", (int)e.NewValue); };
+        ChkSmooth.IsChecked = UiPrefs.GetInt("RdpSmooth", 1) == 1;
+        ChkSmooth.Checked   += (_, _) => { ApplyScalingMode(); UiPrefs.Set("RdpSmooth", 1); };
+        ChkSmooth.Unchecked += (_, _) => { ApplyScalingMode(); UiPrefs.Set("RdpSmooth", 0); };
+        ApplyScalingMode();
 
 
         // Checkboxes always start unchecked — user enables manually each session
@@ -154,6 +158,10 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 new Packet { Type = PacketType.RdpGetMonitors, Data = "{}" });
         };
     }
+
+    private void ApplyScalingMode() =>
+        RenderOptions.SetBitmapScalingMode(ImgFrame,
+            ChkSmooth.IsChecked == true ? BitmapScalingMode.HighQuality : BitmapScalingMode.NearestNeighbor);
 
     private void ApplyLanguage()
     {

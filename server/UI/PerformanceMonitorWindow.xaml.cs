@@ -35,7 +35,7 @@ public partial class PerformanceMonitorWindow : ThemedWindow
         public void EnsureCreated(Canvas c, Color lineColor, Color fillColor)
         {
             if (FillPoly != null) return;
-            var gridBrush = new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF));
+            var gridBrush = new SolidColorBrush(Color.FromArgb(0x55, 0xA0, 0xA8, 0xC0));
             var da = new DoubleCollection { 3, 5 };
             GridQ1  = new Line { Stroke = gridBrush, StrokeThickness = 0.5, StrokeDashArray = da };
             GridMid = new Line { Stroke = gridBrush, StrokeThickness = 0.5, StrokeDashArray = da };
@@ -67,7 +67,7 @@ public partial class PerformanceMonitorWindow : ThemedWindow
         public void EnsureCreated(Canvas c, Color sentCol, Color recvCol)
         {
             if (SentPoly != null) return;
-            var gridBrush = new SolidColorBrush(Color.FromArgb(0x22, 0xFF, 0xFF, 0xFF));
+            var gridBrush = new SolidColorBrush(Color.FromArgb(0x55, 0xA0, 0xA8, 0xC0));
             GridMid = new Line { Stroke = gridBrush, StrokeThickness = 0.5, StrokeDashArray = new DoubleCollection { 3, 5 } };
             SentFill = new Polygon { Fill = new SolidColorBrush(Color.FromArgb(0x35, sentCol.R, sentCol.G, sentCol.B)), StrokeThickness = 0 };
             RecvFill = new Polygon { Fill = new SolidColorBrush(Color.FromArgb(0x35, recvCol.R, recvCol.G, recvCol.B)), StrokeThickness = 0 };

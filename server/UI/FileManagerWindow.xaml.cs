@@ -193,6 +193,13 @@ public partial class FileManagerWindow : ThemedWindow
         win.Show();
     }
 
+    private void FileSearchCtx_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var win = new FileSearchWindow(_server, _clientId, TxtTitle.Text);
+        win.SetRootPath(_currentPath);
+        win.Show();
+    }
+
     private async Task Navigate(string path)
     {
         TxtStatus.Text = Lang.Get("FM_LOADING");

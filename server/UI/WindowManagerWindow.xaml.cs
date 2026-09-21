@@ -145,7 +145,12 @@ public partial class WindowManagerWindow : ThemedWindow
             {
                 var selectedHandles = GridWins.SelectedItems.Cast<WindowEntryVM>()
                                               .Select(v => v.Handle).ToHashSet();
+                // Pin column widths before clear to prevent * column from jumping when items return
+                var savedColWidths = GridWins.Columns.Select(c => c.ActualWidth).ToArray();
                 _windows.Clear();
+                for (int ci = 0; ci < GridWins.Columns.Count && ci < savedColWidths.Length; ci++)
+                    if (savedColWidths[ci] > 0)
+                        GridWins.Columns[ci].Width = new System.Windows.Controls.DataGridLength(savedColWidths[ci]);
                 foreach (var w in d.Windows)
                     _windows.Add(new WindowEntryVM
                     {

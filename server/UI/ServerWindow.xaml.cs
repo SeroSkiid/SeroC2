@@ -4407,38 +4407,6 @@ Read-Host 'Press Enter to close'
                 // No crypter — icon already embedded via -p:ApplicationIcon at compile time
             }
 
-            if (BldUpx.IsChecked == true)
-            {
-                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_UPX");
-                Log("[*] Builder: Running UPX...");
-                string upxExe = "upx";
-                var toolsUpx = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "tools", "upx.exe");
-                if (File.Exists(toolsUpx)) upxExe = toolsUpx;
-                var upxPsi = new System.Diagnostics.ProcessStartInfo
-                {
-                    FileName = upxExe,
-                    Arguments = $"--best --lzma \"{outputExe}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                };
-                try
-                {
-                    using var upxProc = System.Diagnostics.Process.Start(upxPsi)!;
-                    var upxOut = await upxProc.StandardOutput.ReadToEndAsync();
-                    var upxErr = await upxProc.StandardError.ReadToEndAsync();
-                    await upxProc.WaitForExitAsync();
-                    if (upxProc.ExitCode == 0)
-                        Log("[+] Builder: UPX compression applied.");
-                    else
-                        Log($"[!] Builder: UPX failed (exit {upxProc.ExitCode}) — skipped. Put upx.exe in PATH or tools/.");
-                }
-                catch
-                {
-                    Log("[!] Builder: UPX not found — skipped. Put upx.exe in PATH or tools/.");
-                }
-            }
 
             var size = new FileInfo(outputExe).Length;
             var sizeStr = size < 1024 * 1024
@@ -7646,8 +7614,19 @@ Read-Host 'Press Enter to close'
         {
             if (res["SectionBgBrush"] is System.Windows.Media.SolidColorBrush sBg2)
             { var cb = new System.Windows.Media.SolidColorBrush(sBg2.Color); cb.Freeze(); res["CardBgBrush"] = cb; Resources["CardBgBrush"] = cb; }
-            if (res["ActivityBgBrush"] is System.Windows.Media.SolidColorBrush aBg2)
-            { var ch = new System.Windows.Media.SolidColorBrush(aBg2.Color); ch.Freeze(); res["ChartBgBrush"] = ch; Resources["ChartBgBrush"] = ch; }
+            // ChartBgBrush: sparklines need a dark background for contrast — clamp to max brightness 25
+            if (res["WindowBgBrush"] is System.Windows.Media.SolidColorBrush wBg2)
+            {
+                var c = wBg2.Color;
+                int bri = (c.R + c.G + c.B) / 3;
+                System.Windows.Media.Color chartCol;
+                if (bri > 25)
+                    chartCol = System.Windows.Media.Color.FromRgb((byte)(c.R * 15 / 255), (byte)(c.G * 15 / 255), (byte)(c.B * 15 / 255));
+                else
+                    chartCol = c;
+                var ch = new System.Windows.Media.SolidColorBrush(chartCol); ch.Freeze();
+                res["ChartBgBrush"] = ch; Resources["ChartBgBrush"] = ch;
+            }
             if (res["SectionBorderBrush"] is System.Windows.Media.SolidColorBrush sbBr2)
             { var pt = new System.Windows.Media.SolidColorBrush(sbBr2.Color); pt.Freeze(); res["ProgressTrackBrush"] = pt; Resources["ProgressTrackBrush"] = pt; }
         }
@@ -8635,7 +8614,6 @@ Read-Host 'Press Enter to close'
         if (BldAntiKill       != null) BldAntiKill.Content       = Lang.Get("BLD_CHK_ANTIKILL");
         if (BldEncrypt        != null) BldEncrypt.Content        = Lang.Get("BLD_CHK_CRYPTER");
         if (BldUacBypass      != null) BldUacBypass.Content      = Lang.Get("BLD_CHK_UAC");
-        if (BldUpx            != null) BldUpx.Content            = Lang.Get("BLD_CHK_UPX");
         if (TxtMaxPersist     != null) TxtMaxPersist.Text        = Lang.Get("BLD_MAX_PERSIST");
         if (BldTxtUacWarning  != null) BldTxtUacWarning.Text     = Lang.Get("BLD_UAC_WARNING");
 

@@ -20,6 +20,11 @@ internal static class TcpManagerFeature
     [DllImport("iphlpapi.dll")]
     private static extern int GetExtendedTcpTable(nint pTcpTable, ref uint pdwSize, bool bOrder, int ulAf, int TableClass, int Reserved);
 
+    [DllImport("kernel32.dll")] private static extern nint OpenProcess(uint access, bool inherit, int pid);
+    [DllImport("kernel32.dll")] private static extern bool CloseHandle(nint h);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(nint h, uint flags, System.Text.StringBuilder buf, ref uint sz);
+
     [DllImport("iphlpapi.dll")]
     private static extern int SetTcpEntry(ref MIB_TCPROW tcpRow);
 
@@ -76,8 +81,22 @@ internal static class TcpManagerFeature
                                 if (pidSet.Contains(p.Id))
                                 {
                                     procNames[p.Id] = p.ProcessName;
-                                    try { procPaths[p.Id] = p.MainModule?.FileName ?? ""; }
-                                    catch { procPaths[p.Id] = ""; }
+                                    string exePath = "";
+                                    try { exePath = p.MainModule?.FileName ?? ""; } catch { }
+                                    if (string.IsNullOrEmpty(exePath))
+                                    {
+                                        try
+                                        {
+                                            var h = OpenProcess(0x1000, false, p.Id);
+                                            if (h != nint.Zero)
+                                            {
+                                                try { var sb = new System.Text.StringBuilder(1024); uint sz = 1024; if (QueryFullProcessImageName(h, 0, sb, ref sz)) exePath = sb.ToString(); }
+                                                finally { CloseHandle(h); }
+                                            }
+                                        }
+                                        catch { }
+                                    }
+                                    procPaths[p.Id] = exePath;
                                 }
                     }
                     catch { }
@@ -104,7 +123,10 @@ internal static class TcpManagerFeature
                             LocalAddr = $"{localIp}:{localPort}",
                             RemoteAddr = row.dwState == 2 /*LISTEN*/ ? "*:*" : $"{remoteIp}:{remotePort}",
                             State = state,
-                            IconB64 = _iconCache.GetOrAdd(path, p => StubIconHelper.ExtractExeIcon(p))
+                            IconB64 = _iconCache.GetOrAdd(path, p =>
+                                string.IsNullOrEmpty(p)
+                                    ? StubIconHelper.GetGenericExeIcon()
+                                    : (StubIconHelper.ExtractExeIcon(p) is { Length: > 0 } b64 ? b64 : StubIconHelper.GetGenericExeIcon()))
                         });
                     }
                 }
