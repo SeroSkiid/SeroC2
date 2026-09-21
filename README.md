@@ -35,7 +35,7 @@ SeroRAT is a modular C2 framework written in C# featuring a WPF server and a har
 **Prerequisites:**
 - ![VS2022](https://img.shields.io/badge/Visual%20Studio-2022-purple?logo=visualstudio) **Visual Studio 2022** with **Desktop development with C++** workload
 - ![Windows](https://img.shields.io/badge/Windows%20SDK-10.0.22621+-blue?logo=windows) **Windows SDK 10.0.22621+**
-- <img src="docs/assets/dotnet.svg" height="18" valign="middle"> **.NET 10 SDK**
+- <img src="docs/assets/dotnet.svg" height="18" valign="middle"> **.NET 10 SDK** *(10.x only — .NET 8 / 9 are not supported)*
 - <img src="docs/assets/devexpress.png" height="18" valign="middle"> **DevExpress 25.2 WPF** NuGet packages — required for compilation. The project uses `dx:ThemedWindow`, `dx:DXImage`, and the DevExpress theme engine throughout. Packages (`DevExpress.Wpf.Core`, `DevExpress.Images`, and theme packages) are restored from nuget.org automatically on build. Register your trial or licensed key at `%AppData%\DevExpress\DevExpress_License.txt` (or set the `DevExpress_License` environment variable) — see [DevExpress license key setup](https://docs.devexpress.com/GeneralInformation/116698).
 
 ### Step 1 — Install prerequisites
@@ -103,7 +103,7 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | Speaker | ✅ | Victim playback device loopback — waveform visualization, save WAV |
 | Speak to Client | ✅ | Stream operator microphone to victim speakers in real time via `waveOut` |
 | Geolocation | ✅ | Windows Location API (GPS / Wi-Fi / cell), Nominatim reverse-geocoding, embedded Google Maps |
-| Fake Update Screen | ✅ | Full-screen Windows Update overlay with configurable duration and optional auto-reboot |
+| Fake Update Screen | ✅ | Real Settings → Windows Update lock (`usoclient` + input hooks); configurable duration + optional auto-reboot |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
@@ -315,9 +315,11 @@ Queries the victim's physical location using the Windows Location platform.
 
 ## 🪟 Fake Update Screen
 
-Displays a convincing full-screen Windows Update overlay on the victim's machine.
+Opens the victim's real **Settings → Windows Update** page and blocks physical input, making the machine appear to be installing updates.
 
-- Mimics the genuine Windows 11 "Installing updates…" screen — animated progress ring, realistic percentage crawl
+- Triggers genuine Windows Update activity via `usoclient.exe StartScan` (+ `StartDownload` / `StartInstall` if elevated) — the update progress shown is real
+- Maximizes the Settings window and pins it topmost so the victim cannot close or minimize it
+- Installs `WH_KEYBOARD_LL` and `WH_MOUSE_LL` hooks to block all physical keyboard and mouse input — **RDP / operator-injected input passes through unblocked**
 - **Duration** — configurable in minutes; `0` = stays open until explicitly closed by the operator
 - **Auto-reboot** — optionally restarts the PC when the timer expires (`shutdown /r /t 30`)
 - **Hide** button lets the operator close the overlay remotely at any time
@@ -619,7 +621,7 @@ SeroC2/
 │   ├── SpeakerFeature.cs          # WASAPI loopback + waveOut injection receiver
 │   ├── GeoFeature.cs              # Windows Location API + Nominatim reverse-geocoding
 │   ├── FileSearchFeature.cs       # Recursive glob file search (capped at 500 results)
-│   ├── FakeUpdateFeature.cs       # Full-screen Windows Update overlay + optional reboot
+│   ├── FakeUpdateFeature.cs       # Real Settings → Windows Update lock (usoclient + input hooks) + optional reboot
 │   ├── FunFeature.cs              # Fun commands (TTS, msgbox, screen, etc.)
 │   ├── KeyloggerFeature.cs        # WH_KEYBOARD_LL hook, offline disk logging (by date)
 │   ├── CryptoClipperFeature.cs    # Clipboard monitoring + crypto address swap

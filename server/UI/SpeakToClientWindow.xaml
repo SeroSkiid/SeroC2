@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:dx="http://schemas.devexpress.com/winfx/2008/xaml/core"
         Title="Speak to Client"
-        Width="400" Height="210" MinWidth="340" MinHeight="185"
+        Width="400" Height="230" MinWidth="340" MinHeight="205"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize"
         ShowGlow="False">
@@ -41,6 +41,14 @@
                                FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
                     <ComboBox Grid.Column="1" x:Name="CmbMicDevice" Height="28"
                               Style="{StaticResource SCombo}" FontSize="11"/>
+                </Grid>
+
+                <!-- VU meter (visible while speaking) -->
+                <Grid x:Name="VuMeterContainer" Height="5" Margin="0,0,0,12" Visibility="Collapsed">
+                    <Border CornerRadius="2" Background="{DynamicResource InputBorderBrush}"/>
+                    <Border x:Name="VuBar" HorizontalAlignment="Left" Width="0" CornerRadius="2">
+                        <Border.Background><SolidColorBrush Color="#3B82F6"/></Border.Background>
+                    </Border>
                 </Grid>
 
                 <!-- Action buttons -->

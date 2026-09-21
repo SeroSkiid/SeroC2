@@ -106,6 +106,7 @@ public partial class SpeakToClientWindow : ThemedWindow
 
         var chunk = new byte[args.BytesRecorded];
         Array.Copy(args.Buffer, chunk, args.BytesRecorded);
+        float peak = ComputePeak(args.Buffer, args.BytesRecorded);
 
         await _server.SendToClient(_clientId, new Packet
         {
@@ -116,9 +117,22 @@ public partial class SpeakToClientWindow : ThemedWindow
         long kb = _bytesSent / 1024;
         await Dispatcher.BeginInvoke(() =>
         {
-            if (_speaking)
-                TxtStatus.Text = string.Format(Lang.Get("SPK_INJECTING"), kb);
+            if (!_speaking) return;
+            VuMeterContainer.Visibility = Visibility.Visible;
+            VuBar.Width = VuMeterContainer.ActualWidth * Math.Min(peak * 2.5f, 1f);
+            TxtStatus.Text = string.Format(Lang.Get("SPK_INJECTING"), kb);
         });
+    }
+
+    private static float ComputePeak(byte[] buf, int count)
+    {
+        float peak = 0;
+        for (int i = 0; i + 1 < count; i += 2)
+        {
+            float v = Math.Abs(BitConverter.ToInt16(buf, i)) / 32768f;
+            if (v > peak) peak = v;
+        }
+        return peak;
     }
 
     private void StopInternal()
@@ -128,6 +142,8 @@ public partial class SpeakToClientWindow : ThemedWindow
         {
             BtnSpeakStart.IsEnabled = true;
             BtnSpeakStop.IsEnabled  = false;
+            VuBar.Width = 0;
+            VuMeterContainer.Visibility = Visibility.Collapsed;
         });
         if (_waveIn != null)
         {
