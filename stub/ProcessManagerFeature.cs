@@ -159,14 +159,35 @@ internal static class ProcessManagerFeature
                     NetKbps   = netKbps,
                     Title     = p.MainWindowHandle != IntPtr.Zero ? p.MainWindowTitle : "",
                     ExePath   = exePath,
-                    IconB64   = _iconCache.GetOrAdd(exePath, path =>
-                        string.IsNullOrEmpty(path)
-                            ? StubIconHelper.GetGenericExeIcon()
-                            : (StubIconHelper.ExtractExeIcon(path) is { Length: > 0 } b64 ? b64 : StubIconHelper.GetGenericExeIcon()))
+                    // IconB64 populated below after parallel pre-warm
                 });
             }
             catch { list.Add(new ProcEntryStub { Pid = p.Id, Name = p.ProcessName }); }
             finally { try { p.Dispose(); } catch { } }
+        }
+
+        // Pre-warm icon cache for new paths in parallel (SHGetFileInfo is the bottleneck on first open)
+        var newPaths = list
+            .Select(e => e.ExePath)
+            .Where(path => !string.IsNullOrEmpty(path) && !_iconCache.ContainsKey(path))
+            .Distinct()
+            .ToList();
+        if (newPaths.Count > 0)
+        {
+            Parallel.ForEach(newPaths, new ParallelOptions { MaxDegreeOfParallelism = 6 }, path =>
+            {
+                var b64 = StubIconHelper.ExtractExeIcon(path);
+                _iconCache.TryAdd(path, string.IsNullOrEmpty(b64) ? StubIconHelper.GetGenericExeIcon() : b64);
+            });
+        }
+
+        // Assign icons from cache (always cached now)
+        foreach (var e in list)
+        {
+            if (!string.IsNullOrEmpty(e.ExePath))
+                e.IconB64 = _iconCache.GetOrAdd(e.ExePath, _ => StubIconHelper.GetGenericExeIcon());
+            else if (string.IsNullOrEmpty(e.IconB64))
+                e.IconB64 = StubIconHelper.GetGenericExeIcon();
         }
 
         // Remove stale samples for dead processes
