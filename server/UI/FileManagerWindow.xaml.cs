@@ -102,11 +102,15 @@ public partial class FileManagerWindow : ThemedWindow
         PreviewVideo.MediaOpened  += (_, _) => { PreviewVideo.Play(); _videoPlaying = true; };
         // MediaEnded: video finished — reset flag so next click restarts instead of pausing
         PreviewVideo.MediaEnded   += (_, _) => { _videoPlaying = false; };
-        // MediaFailed: codec missing or corrupt file — show error in the preview panel
+        // MediaFailed: codec missing or corrupt file — show user-friendly error
         PreviewVideo.MediaFailed  += (_, args) =>
         {
             _videoPlaying = false;
-            TxtPreviewInfo.Text = args.ErrorException?.Message ?? "Media failed to load";
+            var hr = args.ErrorException?.HResult ?? 0;
+            // 0xC00D0035 = MF_E_FILE_NOT_FOUND, 0xC00D001A = no codec
+            TxtPreviewInfo.Text = hr == unchecked((int)0xC00D001A) || hr == unchecked((int)0x80040265)
+                ? "Codec not supported (install K-Lite or VLC codec pack)"
+                : "Media failed: file not found or format unsupported";
             ShowPreviewPanel("empty");
         };
 
@@ -1159,10 +1163,12 @@ public partial class FileManagerWindow : ThemedWindow
         TxtPreviewName.Text = vm.Name;
         BtnPreview.IsEnabled = true;
         // Auto-preview for images, text, and small videos (< 30 MB)
+        // .webp excluded — WPF BitmapImage has no native WEBP decoder
+        // .mkv/.webm excluded — WMF has no built-in codec on stock Windows
         var ext = Path.GetExtension(vm.Name).ToLowerInvariant();
-        bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
+        bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
         bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
-        bool isVideo = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+        bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
         if (isImage || isText || (isVideo && vm.SizeRaw < 30L * 1024 * 1024))
             BtnPreview_Click(null!, new RoutedEventArgs());
     }
@@ -1173,7 +1179,7 @@ public partial class FileManagerWindow : ThemedWindow
         var path = _currentPath.TrimEnd('\\', '/') + "\\" + vm.Name;
         var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
 
-        bool isVideoPreview = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+        bool isVideoPreview = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
         if (isVideoPreview && vm.SizeRaw >= 30L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Video too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 30 MB.";
@@ -1214,23 +1220,31 @@ public partial class FileManagerWindow : ThemedWindow
             if (result == null || bytes == null || !string.IsNullOrEmpty(result.Error))
             { TxtPreviewInfo.Text = result?.Error ?? "Error"; ShowPreviewPanel("empty"); return; }
 
-            bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".webp" or ".ico";
-            bool isVideo = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+            bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
+            bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
             bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
                                 or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
 
             if (isImage)
             {
-                using var ms = new System.IO.MemoryStream(bytes);
-                var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                bmp.BeginInit();
-                bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                bmp.StreamSource = ms;
-                bmp.EndInit();
-                bmp.Freeze();
-                PreviewImage.Source = bmp;
-                ShowPreviewPanel("image");
-                TxtPreviewName.Text = $"{vm.Name}  ({bmp.PixelWidth}×{bmp.PixelHeight})";
+                try
+                {
+                    using var ms = new System.IO.MemoryStream(bytes);
+                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                    bmp.BeginInit();
+                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                    bmp.StreamSource = ms;
+                    bmp.EndInit();
+                    bmp.Freeze();
+                    PreviewImage.Source = bmp;
+                    ShowPreviewPanel("image");
+                    TxtPreviewName.Text = $"{vm.Name}  ({bmp.PixelWidth}×{bmp.PixelHeight})";
+                }
+                catch
+                {
+                    TxtPreviewInfo.Text = $"Image format not supported by WPF: {ext}";
+                    ShowPreviewPanel("empty");
+                }
             }
             else if (isVideo)
             {

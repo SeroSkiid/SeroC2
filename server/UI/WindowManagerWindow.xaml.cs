@@ -100,10 +100,27 @@ public partial class WindowManagerWindow : ThemedWindow
         if (ColWinHandle  != null) ColWinHandle.Header  = Lang.Get("WIN_COL_HANDLE");
     }
 
+    // System background/input-method windows with no real UI — always hidden
+    private static readonly HashSet<string> _bgClasses = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "MSCTFIME UI", "IME", "CiceroUIWndFrame", "ImmersiveBackgroundWindow",
+        "ApplicationManager_ImmersiveShellWindow", "Shell_TrayWnd",
+        "Progman", "WorkerW"
+    };
+
     private bool FilterWindow(object obj)
     {
-        if (string.IsNullOrWhiteSpace(_searchText)) return true;
         var vm = (WindowEntryVM)obj;
+
+        // Hide truly invisible windows
+        if (!vm.Visible) return false;
+        // Hide known system background classes
+        if (_bgClasses.Contains(vm.ClassName)) return false;
+        // Hide zero-title windows whose class suggests no real UI (e.g. generic message-only WNDs)
+        if (string.IsNullOrWhiteSpace(vm.Title) && vm.ClassName.StartsWith("CiceroUI", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        if (string.IsNullOrWhiteSpace(_searchText)) return true;
         return vm.Title.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
             || vm.ClassName.Contains(_searchText, StringComparison.OrdinalIgnoreCase)
             || vm.ProcessName.Contains(_searchText, StringComparison.OrdinalIgnoreCase);

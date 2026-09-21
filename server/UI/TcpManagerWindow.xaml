@@ -168,7 +168,7 @@
                                 <Image x:Name="ProcIcon" Source="{Binding IconImage}" Width="16" Height="16"
                                        RenderOptions.BitmapScalingMode="NearestNeighbor" SnapsToDevicePixels="True"/>
                                 <dx:DXImage x:Name="ProcFallback"
-                                            Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Organization.svg'}"
+                                            Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Forms_Application.svg'}"
                                             Width="14" Height="14" Visibility="Collapsed"/>
                             </Grid>
                             <DataTemplate.Triggers>

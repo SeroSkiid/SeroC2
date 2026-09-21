@@ -273,10 +273,11 @@ internal static class RemoteDesktopFeature
             SendMonitorListPublic(_send!);
 
             int monIdx   = Math.Clamp(_cfg.Monitor, 0, Math.Max(0, _monitors.Length - 1));
-            // Fps=0 means unlimited — DXGI path is bounded by the 16ms VBLANK wait;
-            // the GDI fallback path has no hardware throttle so floor at 16ms (≈60fps)
-            // to prevent pegging a CPU core if DXGI becomes unavailable mid-session.
-            int targetMs = _cfg.Fps > 0 ? Math.Max(1, 1000 / _cfg.Fps) : 16;
+            // Fps=0 = unlimited. DXGI provides natural VBLANK pacing via AcquireNextFrame
+            // (returns when a new frame is ready, bounded by monitor refresh rate).
+            // No extra sleep needed — adding one would cap a 120 Hz monitor at 60 fps.
+            // GDI path has no hardware throttle; GDI encode overhead (~10ms) acts as a floor.
+            int targetMs = _cfg.Fps > 0 ? Math.Max(1, 1000 / _cfg.Fps) : 0;
 
             // Try DXGI Desktop Duplication for this monitor (falls back to GDI per frame if unavailable)
             DxgiCapture.TryInit(monIdx);

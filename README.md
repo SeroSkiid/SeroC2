@@ -10,7 +10,7 @@
 ![Arch](https://img.shields.io/badge/arch-x64-green.svg)
 
 **A Command & Control framework for authorized red team engagements and security research**
-> ***v1.8.4 Prenium*** — Geolocation, Speaker, Speak to Client, File Search, Fake Update Screen.
+> ***v1.8.4 Prenium*** — Geolocation, Speaker, Speak to Client, File Search.
 
 SeroRAT is a modular C2 framework written in C# featuring a WPF server and a hardened NativeAOT client stub. It combines multi-vector persistence, advanced anti-analysis protections, a polymorphic crypter (closed-source), and encrypted TLS communication. Features **DevExpress themes & Icons** (Sero Dark mode, Seven Classic, VS2010, VS2017, Office2010/2013/2016/2019, MetropolisDark, DXStyle, HighContrast etc.), **live language system** (10 languages : Italian, Spanish, Portuguese, French, English, German, Russian, Chinese, Arabic, Turkish)
 
@@ -103,7 +103,6 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | Speaker | ✅ | Victim playback device loopback — waveform visualization, save WAV |
 | Speak to Client | ✅ | Stream operator microphone to victim speakers in real time via `waveOut` |
 | Geolocation | ✅ | Windows Location API (GPS / Wi-Fi / cell), Nominatim reverse-geocoding, embedded Google Maps |
-| Fake Update Screen | ✅ | Real Settings → Windows Update lock (`usoclient` + input hooks); configurable duration + optional auto-reboot |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
@@ -144,7 +143,6 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 - [Speaker](#-speaker)
 - [Speak to Client](#-speak-to-client)
 - [Geolocation](#-geolocation)
-- [Fake Update Screen](#-fake-update-screen)
 - [Keylogger](#️-keylogger)
 - [Crypto Clipper](#-crypto-clipper)
 - [Process Manager](#️-process-manager)
@@ -533,7 +531,6 @@ SeroC2/
 │   │   ├── SpeakToClientWindow.*  # Server mic → victim speaker injection
 │   │   ├── GeoWindow.*            # Geolocation — Windows Location API + Google Maps embed
 │   │   ├── FileSearchWindow.*     # Remote file search with glob patterns
-│   │   ├── FakeUpdateWindow.*     # Fake Windows Update overlay control
 │   │   ├── FileEditorWindow.*     # Remote text file editor with save-to-client
 │   │   ├── FunWindow.*            # Fun / prank controls
 │   │   ├── KeyloggerWindow.*      # Keylogger viewer
@@ -607,7 +604,6 @@ SeroC2/
 │   ├── SpeakerFeature.cs          # WASAPI loopback + waveOut injection receiver
 │   ├── GeoFeature.cs              # Windows Location API + Nominatim reverse-geocoding
 │   ├── FileSearchFeature.cs       # Recursive glob file search (capped at 500 results)
-│   ├── FakeUpdateFeature.cs       # Real Settings → Windows Update lock (usoclient + input hooks) + optional reboot
 │   ├── FunFeature.cs              # Fun commands (TTS, msgbox, screen, etc.)
 │   ├── KeyloggerFeature.cs        # WH_KEYBOARD_LL hook, offline disk logging (by date)
 │   ├── CryptoClipperFeature.cs    # Clipboard monitoring + crypto address swap

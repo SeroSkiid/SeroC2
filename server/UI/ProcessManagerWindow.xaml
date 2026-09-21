@@ -13,12 +13,6 @@
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsClient}" Value="True">
-                    <Setter Property="BorderBrush" Value="#F59E0B"/>
-                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
-                </DataTrigger>
-            </Style.Triggers>
         </Style>
         <Style TargetType="DataGridCell">
             <Setter Property="OverridesDefaultStyle" Value="True"/>
@@ -161,7 +155,7 @@
                                            RenderOptions.BitmapScalingMode="NearestNeighbor"
                                            SnapsToDevicePixels="True" VerticalAlignment="Center"/>
                                     <dx:DXImage x:Name="ProcFallback"
-                                                Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Organization.svg'}"
+                                                Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Forms_Application.svg'}"
                                                 Width="14" Height="14" VerticalAlignment="Center"
                                                 Visibility="Collapsed"/>
                                 </Grid>

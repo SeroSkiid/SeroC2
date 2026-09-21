@@ -2316,17 +2316,6 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
-    private async void FakeUpdate_Click(object sender, RoutedEventArgs e)
-    {
-        var clients = GetSelectedClients();
-        if (clients.Count == 0 || _server == null) return;
-        foreach (var c in clients)
-        {
-            OpenFeatureWindow<FakeUpdateWindow>(c.Id, () => new FakeUpdateWindow(_server, c.Id, c.Id));
-            if (clients.Count > 1) await Task.Delay(80);
-        }
-    }
-
     // Opens a File Manager window for the given client and navigates it to the specified path.
     internal async void OpenFileManagerAt(string clientId, string path)
     {
@@ -7495,7 +7484,7 @@ Read-Host 'Press Enter to close'
                 res["NavHoverIconBrush"]       = B("#2A4A78");
                 res["NavHoverTextBrush"]       = B("#1A2840");
                 res["NavSelTextBrush"]         = B("#0E2848");
-                res["NavSelIconBrush"]         = B("#18C0F0");  // DX Seven authentic Win7 cyan (132 occ)
+                res["NavSelIconBrush"]         = B("#0E2848");  // match NavSelTextBrush — darkens on selection (Seven Classic)
                 res["NavSectionBrush"]         = B("#0D3878");
                 res["SidebarCtrlBgBrush"]      = B("#EDF4FB");
                 res["SidebarCtrlBorderBrush"]  = B("#C8DBF0");
@@ -8528,7 +8517,6 @@ Read-Host 'Press Enter to close'
         if (MenuItemSpeaker       != null) MenuItemSpeaker.Header       = Lang.Get("FEAT_SPEAKER");
         if (MenuItemSpeakToClient != null) MenuItemSpeakToClient.Header = Lang.Get("FEAT_SPEAK_TO_CLIENT");
         if (MenuItemGeolocation   != null) MenuItemGeolocation.Header   = Lang.Get("FEAT_GEOLOCATION");
-        if (MenuItemFakeUpdate    != null) MenuItemFakeUpdate.Header    = Lang.Get("FEAT_FAKE_UPDATE");
         if (MenuItemKeylogger     != null) MenuItemKeylogger.Header     = Lang.Get("FEAT_KEYLOGGER");
         if (MenuItemPerfMonitor   != null) MenuItemPerfMonitor.Header   = Lang.Get("FEAT_PERF_MONITOR");
 
@@ -9477,7 +9465,6 @@ Read-Host 'Press Enter to close'
             "SpeakToClientWindow"    => Lang.Get("FEAT_SPEAK_TO_CLIENT"),
             "FileSearchWindow"       => Lang.Get("FEAT_FILE_SEARCH"),
             "GeoWindow"           => Lang.Get("FEAT_GEOLOCATION"),
-            "FakeUpdateWindow"    => Lang.Get("FEAT_FAKE_UPDATE"),
             _ => win.Title
         };
     }

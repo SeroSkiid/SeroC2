@@ -136,9 +136,9 @@
                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
                   HeadersVisibility="Column" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12"
                   SelectionMode="Extended" SelectionUnit="FullRow" CanUserAddRows="False"
+                  CanUserReorderColumns="False"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
-                  EnableColumnVirtualization="True"
                   ScrollViewer.CanContentScroll="True"
                   ContextMenuOpening="GridWins_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">

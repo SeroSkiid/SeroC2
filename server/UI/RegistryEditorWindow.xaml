@@ -39,8 +39,6 @@
                 <Trigger Property="IsSelected"  Value="True">
                     <Setter Property="Background"      Value="{DynamicResource RowSelBgBrush}"/>
                     <Setter Property="Foreground"      Value="{DynamicResource RowSelTextBrush}"/>
-                    <Setter Property="BorderBrush"     Value="{DynamicResource RowSelBorderBrush}"/>
-                    <Setter Property="BorderThickness" Value="3,0,0,0"/>
                 </Trigger>
             </Style.Triggers>
         </Style>

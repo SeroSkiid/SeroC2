@@ -110,8 +110,6 @@ internal static class FeatureContextMenu
             ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_DISABLE_UAC"), clientId));
         }));
         misc.Items.Add(new Separator());
-        if (excludeWindowType != "FakeUpdateWindow")
-            misc.Items.Add(MakeItem(Lang.Get("FEAT_FAKE_UPDATE"), "SvgImages/Icon Builder/Actions_Download.svg", () => mainWindow.OpenFeatureWindow<FakeUpdateWindow>(clientId, () => new FakeUpdateWindow(server, clientId, clientId))));
         if (excludeWindowType != "FileSearchWindow")
             misc.Items.Add(MakeItem(Lang.Get("FEAT_FILE_SEARCH"), "SvgImages/Icon Builder/Actions_Find.svg",     () => mainWindow.OpenFeatureWindow<FileSearchWindow>(clientId, () => new FileSearchWindow(server, clientId, clientId))));
         menu.Items.Add(misc);

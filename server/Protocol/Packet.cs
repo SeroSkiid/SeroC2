@@ -218,10 +218,6 @@ public enum PacketType
     WindowNotifyKeywords = 282, // server→client: {Keywords:[...]}
     WindowNotifyAlert    = 283, // client→server: {Title, Keyword, Screenshot}
 
-    // Fake Update Screen
-    FakeUpdateStart = 284,  // server→client: show full-screen fake Windows Update overlay
-    FakeUpdateStop  = 285,  // server→client: close overlay
-    FakeUpdateAck   = 286,  // client→server: {Success, Error}
 }
 
 public class Packet
@@ -781,11 +777,4 @@ public class SpeakerStartData     { public int DeviceIndex { get; set; } }
 public class SpeakerDataPacket    { public string Data { get; set; } = string.Empty; }
 public class SpeakerInjectStartData { public int SampleRate { get; set; } = 44100; public int Channels { get; set; } = 1; public int BitsPerSample { get; set; } = 16; }
 
-// ── Fake Update Screen ────────────────────────────────
-public class FakeUpdateStartData
-{
-    public int  DurationMinutes { get; set; }  // 0 = infinite; > 0 = auto-close after N min
-    public bool RebootAfter     { get; set; }  // restart PC when duration expires
-}
-public class FakeUpdateAckData    { public bool Success { get; set; } public string Error { get; set; } = string.Empty; }
 
