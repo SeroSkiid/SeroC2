@@ -279,6 +279,21 @@
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Padding"         Value="4" />
             <Setter Property="FontSize"        Value="12" />
+            <!-- Force ContentTextBrush on each item — DX Office Dark/Black themes override
+                 the inherited ListBox.Foreground with a system brush, making text invisible. -->
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                        <Setter Property="Padding"    Value="4,2"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Foreground" Value="{DynamicResource ContentTextBrush}"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
         </Style>
 
         <!-- ── ComboBox ───────────────────────────────────────── -->

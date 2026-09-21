@@ -184,6 +184,15 @@ public partial class FileManagerWindow : ThemedWindow
 
     // ── Navigation ────────────────────────────────────
 
+    internal async Task NavigateTo(string path) => await Navigate(path);
+
+    private void FileSearch_Click(object sender, System.Windows.RoutedEventArgs e)
+    {
+        var win = new FileSearchWindow(_server, _clientId, TxtTitle.Text);
+        win.SetRootPath(TxtPath.Text);
+        win.Show();
+    }
+
     private async Task Navigate(string path)
     {
         TxtStatus.Text = Lang.Get("FM_LOADING");

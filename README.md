@@ -2,7 +2,7 @@
 
 # *SeroRAT*
 
-![Version](https://img.shields.io/badge/version-1.8.3-orange.svg)
+![Version](https://img.shields.io/badge/version-1.8.4-orange.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Server .NET](https://img.shields.io/badge/server-.NET%2010-purple.svg)
@@ -10,7 +10,7 @@
 ![Arch](https://img.shields.io/badge/arch-x64-green.svg)
 
 **A Command & Control framework for authorized red team engagements and security research**
-> ***v1.8.3 Prenium*** — Better GUI and performance.
+> ***v1.8.4 Prenium*** — Geolocation, Speaker, Speak to Client, File Search, Fake Update Screen.
 
 SeroRAT is a modular C2 framework written in C# featuring a WPF server and a hardened NativeAOT client stub. It combines multi-vector persistence, advanced anti-analysis protections, a polymorphic crypter (closed-source), and encrypted TLS communication. Features **DevExpress themes & Icons** (Sero Dark mode, Seven Classic, VS2010, VS2017, Office2010/2013/2016/2019, MetropolisDark, DXStyle, HighContrast etc.), **live language system** (10 languages : Italian, Spanish, Portuguese, French, English, German, Russian, Chinese, Arabic, Turkish)
 
@@ -96,9 +96,14 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | HVNC | ✅ | Hidden virtual desktop — isolated session, full browser support, H264 stream |
 | Remote Shell | ✅ | Interactive cmd/PowerShell |
 | File Manager | ✅ | Navigate, download, upload, rename, delete, hash, exec, wallpaper, 7-zip |
+| File Search | ✅ | Recursive glob search on the victim's file system; results open directly in File Manager |
 | TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, Block IP / Block Port toolbar buttons |
 | Startup Manager | ✅ | List/delete Registry Run, Startup folder, Scheduled Tasks, WMI Event Subscriptions — Authenticode signature + publisher per entry |
 | Microphone | ✅ | Real-time audio capture, waveform visualization, live listen in server, save WAV |
+| Speaker | ✅ | Victim playback device loopback — waveform visualization, save WAV |
+| Speak to Client | ✅ | Stream operator microphone to victim speakers in real time via `waveOut` |
+| Geolocation | ✅ | Windows Location API (GPS / Wi-Fi / cell), Nominatim reverse-geocoding, embedded Google Maps |
+| Fake Update Screen | ✅ | Full-screen Windows Update overlay with configurable duration and optional auto-reboot |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
 | Crypto Clipper | ✅ | Monitors clipboard for BTC/ETH/LTC/TRX/SOL/XMR/XRP/DASH/BCH/BNB, silent address swap |
@@ -134,6 +139,12 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 - [Remote Webcam](#-remote-webcam)
 - [HVNC](#-hvnc)
 - [File Manager](#-file-manager)
+- [File Search](#-file-search)
+- [Microphone](#️-microphone)
+- [Speaker](#-speaker)
+- [Speak to Client](#-speak-to-client)
+- [Geolocation](#-geolocation)
+- [Fake Update Screen](#-fake-update-screen)
 - [Keylogger](#️-keylogger)
 - [Crypto Clipper](#-crypto-clipper)
 - [Process Manager](#️-process-manager)
@@ -260,6 +271,72 @@ Real-time audio capture using WaveIn (WinMM):
 - Live waveform visualization (bar graph, 50 ms refresh)
 - Buffered PCM stream (16-bit, 16 kHz, mono)
 - **Save as WAV** — proper WAV header written to disk
+
+## 🔊 Speaker
+
+Remote loopback capture — listen to what is playing on the victim's audio output.
+
+- **Device listing** — enumerates all WASAPI render (playback) devices by their real name via `IPropertyStore`
+- **Live waveform** — 50 ms-refresh bar graph with real-time peak detection
+- **Save as WAV** — writes a proper WAV header (PCM 16-bit or IEEE_FLOAT 32-bit depending on the device's native format) and saves all captured chunks to a file of your choice
+
+---
+
+## 📢 Speak to Client
+
+Stream the operator's microphone audio to the victim's default speaker output in real time.
+
+- Captures from any microphone on the **server** (WaveIn, 44 100 Hz / 16-bit mono)
+- Sends PCM frames as `SpeakerInjectData` packets (base64-encoded)
+- Victim decodes via native `waveOut` API — no disk writes, instant playback
+- Stopping or disconnecting cleanly drains the output device and releases all resources
+
+---
+
+## 📍 Geolocation
+
+Queries the victim's physical location using the Windows Location platform.
+
+### How it works
+
+- Reads from **Windows Sensor / Location** (`Windows.Devices.Geolocation`) — uses GPS hardware if available, falls back to Wi-Fi triangulation, then cell tower data
+- Attempts to enable location services automatically (registry consent key + `lfsvc` service start)
+- Reverse-geocodes coordinates via **Nominatim (OpenStreetMap)** — returns city, region and country in English
+- All coordinates are formatted with `CultureInfo.InvariantCulture` — locale-safe on any Windows locale (French Windows, etc.)
+
+### Server UI
+
+- Embedded **Google Maps** preview in the window's top panel
+- Address card showing city, region, country, GPS accuracy (metres) and source (GPS / Wi-Fi / Cellular)
+- **Copy Coordinates** and **Open in Maps** buttons
+- Raw JSON expander for the full Nominatim response
+
+---
+
+## 🪟 Fake Update Screen
+
+Displays a convincing full-screen Windows Update overlay on the victim's machine.
+
+- Mimics the genuine Windows 11 "Installing updates…" screen — animated progress ring, realistic percentage crawl
+- **Duration** — configurable in minutes; `0` = stays open until explicitly closed by the operator
+- **Auto-reboot** — optionally restarts the PC when the timer expires (`shutdown /r /t 30`)
+- **Hide** button lets the operator close the overlay remotely at any time
+- Server receives `FakeUpdateAck` confirming success or reporting an error
+
+---
+
+## 🔎 File Search
+
+Search for files on the victim's file system using glob patterns. Accessible from the **File Manager toolbar**.
+
+- **Root path** — any local path; environment variables are expanded on the victim (`%APPDATA%`, `%USERPROFILE%`, etc.)
+- **Pattern** — standard Windows glob (`*.pdf`, `secret*`, `*.docx`…)
+- **Recursive** toggle — search all subdirectories
+- Results capped at **500 entries** to avoid flooding
+- **Open in File Manager** — right-click any result to navigate to its directory in the remote file browser
+- **Copy Path** — copies the full remote path to clipboard
+
+---
 
 ## 🎮 Fun
 Interactive prank / control panel:
@@ -464,6 +541,12 @@ SeroC2/
 │   │   ├── TcpManagerWindow.*     # TCP connection manager
 │   │   ├── StartupManagerWindow.* # Startup entries manager
 │   │   ├── MicrophoneWindow.*     # Microphone capture + waveform + live listen
+│   │   ├── SpeakerWindow.*        # Victim speaker loopback — waveform + save WAV
+│   │   ├── SpeakToClientWindow.*  # Server mic → victim speaker injection
+│   │   ├── GeoWindow.*            # Geolocation — Windows Location API + Google Maps embed
+│   │   ├── FileSearchWindow.*     # Remote file search with glob patterns
+│   │   ├── FakeUpdateWindow.*     # Fake Windows Update overlay control
+│   │   ├── FileEditorWindow.*     # Remote text file editor with save-to-client
 │   │   ├── FunWindow.*            # Fun / prank controls
 │   │   ├── KeyloggerWindow.*      # Keylogger viewer
 │   │   ├── CryptoClipperWindow.*  # Crypto clipper config + detection log
@@ -533,6 +616,10 @@ SeroC2/
 │   ├── TcpManagerFeature.cs       # TCP table + force-close
 │   ├── StartupManagerFeature.cs   # Startup enumeration + deletion
 │   ├── MicrophoneFeature.cs       # WaveIn PCM capture
+│   ├── SpeakerFeature.cs          # WASAPI loopback + waveOut injection receiver
+│   ├── GeoFeature.cs              # Windows Location API + Nominatim reverse-geocoding
+│   ├── FileSearchFeature.cs       # Recursive glob file search (capped at 500 results)
+│   ├── FakeUpdateFeature.cs       # Full-screen Windows Update overlay + optional reboot
 │   ├── FunFeature.cs              # Fun commands (TTS, msgbox, screen, etc.)
 │   ├── KeyloggerFeature.cs        # WH_KEYBOARD_LL hook, offline disk logging (by date)
 │   ├── CryptoClipperFeature.cs    # Clipboard monitoring + crypto address swap
