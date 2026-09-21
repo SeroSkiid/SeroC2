@@ -38,6 +38,7 @@ public partial class InstalledAppsWindow : ThemedWindow
     private readonly string    _clientId;
     private readonly ObservableCollection<InstalledAppVM> _all  = [];
     private          ObservableCollection<InstalledAppVM> _view = [];
+    private readonly Dictionary<string, InstalledAppVM>   _allByName = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _iconPending = [];
     private CancellationTokenSource _iconCts = new();
     private bool _disconnected = false;
@@ -84,6 +85,8 @@ public partial class InstalledAppsWindow : ThemedWindow
     private void Refresh()
     {
         if (_disconnected) return;
+        TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
+        BtnRefresh.IsEnabled = false;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.InstalledGetList });
     }
 
@@ -104,9 +107,11 @@ public partial class InstalledAppsWindow : ThemedWindow
                 var cts = _iconCts;
 
                 _all.Clear();
+                _allByName.Clear();
                 lock (_iconPending) _iconPending.Clear();
                 foreach (var a in d.Apps)
-                    _all.Add(new InstalledAppVM
+                {
+                    var vm = new InstalledAppVM
                     {
                         Name            = a.Name,
                         Version         = a.Version,
@@ -114,10 +119,14 @@ public partial class InstalledAppsWindow : ThemedWindow
                         InstallDate     = FormatInstallDate(a.InstallDate),
                         UninstallString = a.UninstallString,
                         Verified        = a.Verified
-                    });
+                    };
+                    _all.Add(vm);
+                    _allByName[a.Name] = vm;
+                }
                 ApplyFilter(TxtSearch.Text);
                 TxtCount.Text  = $"({d.Apps.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("INS_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Apps.Count);
+                BtnRefresh.IsEnabled = true;
                 _ = RequestIconsAsync(d.Apps, cts.Token);
             });
         }
@@ -156,14 +165,8 @@ public partial class InstalledAppsWindow : ThemedWindow
             {
                 var icon = DecodeIcon(b64);
                 if (icon == null) return;
-                var vm = _all.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
-                if (vm != null) vm.Icon = icon;
-
-                if (!ReferenceEquals(_view, _all))
-                {
-                    var vvm = _view.FirstOrDefault(a => string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase));
-                    if (vvm != null) vvm.Icon = icon;
-                }
+                if (_allByName.TryGetValue(name, out var vm))
+                    vm.Icon = icon;
             });
         }
         catch { }
@@ -210,7 +213,11 @@ public partial class InstalledAppsWindow : ThemedWindow
         });
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();
+    private void BtnRefresh_Click(object s, RoutedEventArgs e)
+    {
+        _iconCts.Cancel();
+        Refresh();
+    }
 
     private void GridApps_CopyName_Click(object s, RoutedEventArgs e)
     {

@@ -70,6 +70,7 @@ public partial class StartupManagerWindow : ThemedWindow
             // 14 s elapsed without a response — update status
             _ = Dispatcher.BeginInvoke(() =>
             {
+                BtnRefresh.IsEnabled = true;
                 if (_awaitingResponse)
                     TxtStatus.Text = Lang.Get("ERR_NO_RESPONSE");
             });
@@ -101,6 +102,7 @@ public partial class StartupManagerWindow : ThemedWindow
                 _refreshCts?.Cancel();
                 TxtCount.Text  = $"({_entries.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("STUP_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), _entries.Count);
+                BtnRefresh.IsEnabled = true;
             });
         }
         catch { }
@@ -119,7 +121,11 @@ public partial class StartupManagerWindow : ThemedWindow
         });
     }
 
-    private async void Refresh_Click(object s, RoutedEventArgs e) => await Refresh();
+    private async void Refresh_Click(object s, RoutedEventArgs e)
+    {
+        BtnRefresh.IsEnabled = false;
+        await Refresh();
+    }
 
     private async void Delete_Click(object s, RoutedEventArgs e)
     {

@@ -86,7 +86,7 @@
                     <TextBlock x:Name="TxtCount" FontSize="11" Foreground="{DynamicResource TitleLabelBrush}" FontFamily="Consolas" Margin="8,0,0,0"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,2,0">
-                    <Button Height="27" Width="30" Margin="0,0,4,0"
+                    <Button x:Name="BtnRefresh" Height="27" Width="30" Margin="0,0,4,0"
                             Style="{StaticResource SBtn}" Padding="0" Click="BtnRefresh_Click"
                             ToolTip="Refresh">
                         <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="14" Height="14"/>

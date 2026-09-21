@@ -132,6 +132,7 @@ public partial class TcpManagerWindow : ThemedWindow
 
                 TxtCount.Text  = $"({_entries.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("TCP_UPDATED"), _entries.Count, DateTime.Now.ToString("HH:mm:ss"));
+                BtnRefresh.IsEnabled = true;
 
                 if (selectedKey != null)
                 {
@@ -188,7 +189,11 @@ public partial class TcpManagerWindow : ThemedWindow
         });
     }
 
-    private async void Refresh_Click(object s, RoutedEventArgs e) { try { await Refresh(); } catch { } }
+    private async void Refresh_Click(object s, RoutedEventArgs e)
+    {
+        BtnRefresh.IsEnabled = false;
+        try { await Refresh(); } catch { BtnRefresh.IsEnabled = true; }
+    }
 
     private async void CloseConn_Click(object s, RoutedEventArgs e)
     {

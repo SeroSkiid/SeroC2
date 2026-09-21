@@ -77,7 +77,7 @@
                         <TextBlock x:Name="TxtCount" FontSize="11" Foreground="{DynamicResource TitleLabelBrush}" FontFamily="Consolas" Margin="8,0,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <Button Content="&#x27F3;" Height="27" Width="30" Margin="0,0,4,0" Style="{StaticResource SBtn}" FontSize="14" Padding="0" Click="BtnRefresh_Click"/>
+                        <Button x:Name="BtnRefresh" Content="&#x27F3;" Height="27" Width="30" Margin="0,0,4,0" Style="{StaticResource SBtn}" FontSize="14" Padding="0" Click="BtnRefresh_Click"/>
                     </StackPanel>
                 </Grid>
             </Border>

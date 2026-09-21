@@ -80,6 +80,7 @@ public partial class DeviceManagerWindow : ThemedWindow
     private void Refresh()
     {
         if (_disconnected) return;
+        TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevGetList });
     }
 
@@ -96,6 +97,7 @@ public partial class DeviceManagerWindow : ThemedWindow
                     _devices.Add(new DeviceEntryVM { DeviceId = dev.DeviceId, Name = dev.Name, Class = dev.Class, Status = dev.Status, Manufacturer = dev.Manufacturer });
                 TxtCount.Text = $"({d.Devices.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("DEV_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Devices.Count);
+                BtnRefresh.IsEnabled = true;
             });
         }
         catch { }
@@ -111,7 +113,11 @@ public partial class DeviceManagerWindow : ThemedWindow
         ServerWindow.LogGlobal($"[DEV] Uninstalled device '{vm.Name}' (ID: {vm.DeviceId}) on client {_clientId}.");
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();
+    private void BtnRefresh_Click(object s, RoutedEventArgs e)
+    {
+        BtnRefresh.IsEnabled = false;
+        Refresh();
+    }
 
     private void GridDevs_CopyName_Click(object s, RoutedEventArgs e)
     {

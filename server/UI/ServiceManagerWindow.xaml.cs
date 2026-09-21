@@ -187,7 +187,8 @@ public partial class ServiceManagerWindow : ThemedWindow
             Dispatcher.BeginInvoke(() =>
             {
                 // Diff update: remove absent, update existing, add new
-                var incoming = d.Services.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
+                var incoming    = d.Services.ToDictionary(s => s.Name, StringComparer.OrdinalIgnoreCase);
+                var existingMap = _services.ToDictionary(v => v.Name, StringComparer.OrdinalIgnoreCase);
                 for (int i = _services.Count - 1; i >= 0; i--)
                 {
                     if (!incoming.ContainsKey(_services[i].Name))
@@ -195,8 +196,7 @@ public partial class ServiceManagerWindow : ThemedWindow
                 }
                 foreach (var s in d.Services)
                 {
-                    var existing = _services.FirstOrDefault(v => string.Equals(v.Name, s.Name, StringComparison.OrdinalIgnoreCase));
-                    if (existing != null)
+                    if (existingMap.TryGetValue(s.Name, out var existing))
                     {
                         existing.Status      = s.Status;
                         existing.StartType   = s.StartType;
@@ -218,6 +218,7 @@ public partial class ServiceManagerWindow : ThemedWindow
                 }
                 TxtCount.Text  = $"({d.Services.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("SVC_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Services.Count);
+                BtnRefresh.IsEnabled = true;
             });
         }
         catch { }
@@ -275,7 +276,11 @@ public partial class ServiceManagerWindow : ThemedWindow
         ServerWindow.LogGlobal($"[SVC] Sent {labelEn} command for {(sel.Count == 1 ? $"service '{sel[0].DisplayName}'" : $"{sel.Count} services")} on client {_clientId}.");
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();
+    private void BtnRefresh_Click(object s, RoutedEventArgs e)
+    {
+        BtnRefresh.IsEnabled = false;
+        Refresh();
+    }
     private void BtnStart_Click  (object s, RoutedEventArgs e) => SendAction(PacketType.SvcStart);
     private void BtnStop_Click   (object s, RoutedEventArgs e) => SendAction(PacketType.SvcStop);
     private void BtnRestart_Click(object s, RoutedEventArgs e) => SendAction(PacketType.SvcRestart);

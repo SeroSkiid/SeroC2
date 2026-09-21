@@ -169,6 +169,7 @@ public partial class ProcessManagerWindow : ThemedWindow
 
             Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
             {
+                BtnRefresh.IsEnabled = true;
                 var selectedPid = (GridProcs.SelectedItem as ProcEntryVM)?.Pid;
 
                 // Update existing or add new
@@ -226,7 +227,7 @@ public partial class ProcessManagerWindow : ThemedWindow
                 TxtStatus.Foreground = (Brush)FindResource("FieldLabelBrush");
             });
 
-            // Phase 2: decode icons on UI (STA) thread — BitmapImage requires STA, not safe on threadpool
+            // Phase 2: decode icons — only for processes that don't have one yet (avoids ~1MB re-decode every 2s)
             var iconData = d.Processes
                 .Where(p => !string.IsNullOrEmpty(p.IconB64))
                 .Select(p => (p.Pid, p.IconB64))
@@ -235,10 +236,11 @@ public partial class ProcessManagerWindow : ThemedWindow
             {
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
+                    var allByPid2 = _all.ToDictionary(x => x.Pid);
                     foreach (var (pid, b64) in iconData)
                     {
-                        var vm = _all.FirstOrDefault(x => x.Pid == pid);
-                        if (vm == null) continue;
+                        if (!allByPid2.TryGetValue(pid, out var vm)) continue;
+                        if (vm.IconImage != null) continue; // already decoded
                         var icon = DecodeIcon(b64);
                         if (icon != null) vm.IconImage = icon;
                     }
@@ -384,7 +386,11 @@ public partial class ProcessManagerWindow : ThemedWindow
         });
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestRefresh();
+    private void BtnRefresh_Click(object s, RoutedEventArgs e)
+    {
+        BtnRefresh.IsEnabled = false;
+        RequestRefresh();
+    }
 
     private void BtnKill_Click(object s, RoutedEventArgs e)
     {

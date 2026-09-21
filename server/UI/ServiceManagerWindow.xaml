@@ -128,7 +128,7 @@
                     </Grid>
                 </Border>
                 <!-- Refresh only — actions via right-click -->
-                <Button Grid.Column="1" Height="26" Padding="10,0"
+                <Button x:Name="BtnRefresh" Grid.Column="1" Height="26" Padding="10,0"
                         Style="{StaticResource SBtn}" FontSize="11" Click="BtnRefresh_Click"
                         VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
