@@ -313,20 +313,6 @@ Queries the victim's physical location using the Windows Location platform.
 
 ---
 
-## 🪟 Fake Update Screen
-
-Opens the victim's real **Settings → Windows Update** page and blocks physical input, making the machine appear to be installing updates.
-
-- Triggers genuine Windows Update activity via `usoclient.exe StartScan` (+ `StartDownload` / `StartInstall` if elevated) — the update progress shown is real
-- Maximizes the Settings window and pins it topmost so the victim cannot close or minimize it
-- Installs `WH_KEYBOARD_LL` and `WH_MOUSE_LL` hooks to block all physical keyboard and mouse input — **RDP / operator-injected input passes through unblocked**
-- **Duration** — configurable in minutes; `0` = stays open until explicitly closed by the operator
-- **Auto-reboot** — optionally restarts the PC when the timer expires (`shutdown /r /t 30`)
-- **Hide** button lets the operator close the overlay remotely at any time
-- Server receives `FakeUpdateAck` confirming success or reporting an error
-
----
-
 ## 🔎 File Search
 
 Search for files on the victim's file system using glob patterns. Accessible from the **File Manager toolbar**.
