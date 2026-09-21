@@ -255,25 +255,4 @@ public static class ShellcodeExport
         log($"[+] Shellcode: blob = {blob.Length / 1024.0:F0} KB");
         return blob;
     }
-
-    /// <summary>Formats the blob as a C byte-array for embedding in a custom loader.</summary>
-    public static string ToCArray(byte[] blob, string varName = "shellcode_blob")
-    {
-        var sb = new StringBuilder();
-        sb.AppendLine($"// Shellcode blob — {blob.Length} bytes");
-        sb.AppendLine($"// Call: entry = (char*){varName} + 8 + *(uint32_t*)({varName}+4)");
-        sb.AppendLine($"// Then: ((DWORD(WINAPI*)(LPVOID))entry)({varName})");
-        sb.AppendLine($"static const unsigned char {varName}[] = {{");
-        for (int i = 0; i < blob.Length; i++)
-        {
-            if (i % 16 == 0) sb.Append("    ");
-            sb.Append($"0x{blob[i]:X2}");
-            if (i < blob.Length - 1) sb.Append(", ");
-            if (i % 16 == 15) sb.AppendLine();
-        }
-        if (blob.Length % 16 != 0) sb.AppendLine();
-        sb.AppendLine("};");
-        sb.AppendLine($"static const unsigned int {varName}_size = {blob.Length}u;");
-        return sb.ToString();
-    }
 }

