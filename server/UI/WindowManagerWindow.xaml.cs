@@ -112,8 +112,6 @@ public partial class WindowManagerWindow : ThemedWindow
     {
         var vm = (WindowEntryVM)obj;
 
-        // Hide truly invisible windows
-        if (!vm.Visible) return false;
         // Hide known system background classes
         if (_bgClasses.Contains(vm.ClassName)) return false;
         // Hide zero-title windows whose class suggests no real UI (e.g. generic message-only WNDs)

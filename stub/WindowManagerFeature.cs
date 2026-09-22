@@ -44,8 +44,6 @@ internal static class WindowManagerFeature
         SendMessageTimeout(hwnd, WM_GETICON, 2, 0, SMTO_ABORTIFHUNG, 50, out nint hIcon); // ICON_SMALL2
         if (hIcon == 0) SendMessageTimeout(hwnd, WM_GETICON, 0, 0, SMTO_ABORTIFHUNG, 50, out hIcon); // ICON_SMALL
         if (hIcon == 0) SendMessageTimeout(hwnd, WM_GETICON, 1, 0, SMTO_ABORTIFHUNG, 50, out hIcon); // ICON_BIG
-        if (hIcon == 0) hIcon = GetClassLongPtrW(hwnd, GCL_HICONSM);
-        if (hIcon == 0) hIcon = GetClassLongPtrW(hwnd, GCL_HICON);
         if (hIcon != 0)
         {
             try
@@ -138,6 +136,13 @@ internal static class WindowManagerFeature
         return JsonSerializer.Serialize(new WinListResultStub { Windows = wins }, SeroJson.Default.WinListResultStub);
     }
 
+    private static readonly HashSet<string> _protectedFromFreeze = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "csrss", "smss", "wininit", "winlogon", "lsass", "services", "svchost",
+        "dwm", "explorer", "searchhost", "shellexperiencehost",
+        "startmenuexperiencehost", "textinputhost",
+    };
+
     internal static void DoAction(long handle, string action)
     {
         try
@@ -161,6 +166,8 @@ internal static class WindowManagerFeature
                     GetWindowThreadProcessId(hwnd, out uint fpid);
                     if (fpid > 0)
                     {
+                        try { using var fp = System.Diagnostics.Process.GetProcessById((int)fpid); if (_protectedFromFreeze.Contains(fp.ProcessName)) break; }
+                        catch { break; }
                         var hProc = OpenProcess(PROCESS_SUSPEND_RESUME, false, fpid);
                         if (hProc != IntPtr.Zero)
                         {

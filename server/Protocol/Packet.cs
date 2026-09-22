@@ -630,6 +630,7 @@ public class PerfMonData
     public string CpuName       { get; set; } = "";
     public string GpuName       { get; set; } = "";
     public float  GpuUsage      { get; set; } = -1f;  // 0-100 or -1 if unavailable
+    public float  DiskUsagePct  { get; set; } = -1f;  // 0-100 or -1 if unavailable
 }
 
 // ── TCP Firewall ──────────────────────────────────────

@@ -115,6 +115,8 @@ public partial class PerformanceMonitorWindow : ThemedWindow
     {
         this.Title = Lang.Get("FEAT_PERF_MONITOR");
         if (TxtBtnActions != null) TxtBtnActions.Text = Lang.Get("ACT_ACTIONS");
+        if (TxtNetLabel   != null) TxtNetLabel.Text   = Lang.Get("PERF_NETWORK");
+        if (TxtDiskLabel  != null) TxtDiskLabel.Text  = Lang.Get("PERF_DISK");
     }
 
     private void OnPerfData(Packet pkt)
@@ -165,6 +167,15 @@ public partial class PerformanceMonitorWindow : ThemedWindow
                 _diskWHistory.Count > 0 ? _diskWHistory.Max() : 1L));
             DrawDualSparkline(SparkDisk, _diskRHistory, _diskWHistory, maxDisk,
                 Color.FromRgb(0xF5, 0x9E, 0x42), Color.FromRgb(0xEC, 0x48, 0x99));
+            if (d.DiskUsagePct >= 0f)
+            {
+                if (BarDiskRow.Visibility != Visibility.Visible)
+                    BarDiskRow.Visibility = Visibility.Visible;
+                if (TxtDiskPct.Visibility != Visibility.Visible)
+                    TxtDiskPct.Visibility = Visibility.Visible;
+                TxtDiskPct.Text = $"{d.DiskUsagePct:F0}%";
+                SetBar(BarDisk, d.DiskUsagePct / 100f);
+            }
 
             // ── GPU ──────────────────────────────────────────────────────────
             if (!string.IsNullOrEmpty(d.GpuName) && TxtGpuName.Text != d.GpuName)

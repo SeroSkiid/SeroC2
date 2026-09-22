@@ -3685,7 +3685,7 @@ internal static class MinerConfig
 
             var size = new FileInfo(outputExe).Length;
             Log($"[+] MinerBuilder: {Path.GetFileName(outputExe)} ({size:N0} bytes) saved.");
-            TxtMnrBuildStatus.Text = $"Built: {Path.GetFileName(outputExe)} ({size / 1024} KB)";
+            TxtMnrBuildStatus.Text = $"{Lang.Get("BUILDER_BUILT")}: {Path.GetFileName(outputExe)} ({size / 1024} KB)";
             MessageBox.Show(string.Format(Lang.Get("MINER_BUILT_MSG"), Path.GetFileName(outputExe), size / 1024, Path.GetFileName(uninstallerExePath)),
                 "Sero — Miner Built", MessageBoxButton.OK, MessageBoxImage.Information);
         }
@@ -4410,7 +4410,7 @@ Read-Host 'Press Enter to close'
             {
                 TxtBuildStatus.Text = Lang.Get("BLD_STATUS_PACKER");
                 Log("[*] Builder: Applying custom packer...");
-                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta);
+                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta, GetHollowTarget());
             }
 
             if (shellcodeMode)
@@ -4455,7 +4455,7 @@ Read-Host 'Press Enter to close'
                     ? $"{size / 1024.0:F0} KB"
                     : $"{size / (1024.0 * 1024.0):F1} MB";
                 Log($"[+] Builder: {Path.GetFileName(workingExe)} ({size:N0} bytes) saved.");
-                TxtBuildStatus.Text = $"Built: {Path.GetFileName(workingExe)} ({sizeStr})";
+                TxtBuildStatus.Text = $"{Lang.Get("BUILDER_BUILT")}: {Path.GetFileName(workingExe)} ({sizeStr})";
                 SetStatus("Build successful.");
                 NotificationService.NotifyBuildSuccess();
                 ShowBuildResult(Path.GetFileName(workingExe), sizeStr);

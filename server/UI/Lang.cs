@@ -769,6 +769,9 @@ namespace SeroServer.UI
 
             // ── Performance Monitor ───────────────────────────────────────────
             ["PERF_STREAMING"]      = new() { ["en"]="Streaming at 1 s interval", ["fr"]="Streaming à 1 s d'intervalle", ["es"]="Transmisión a 1 s de intervalo", ["de"]="Stream im 1-s-Intervall", ["pt"]="Streaming em intervalo de 1 s", ["it"]="Streaming a intervallo di 1 s", ["ru"]="Стрим с интервалом 1 с", ["zh"]="每1秒推送数据", ["ar"]="بث بفاصل 1 ثانية", ["tr"]="1 sn aralıkla yayın yapılıyor" },
+            ["PERF_NETWORK"]        = new() { ["en"]="NETWORK",    ["fr"]="RÉSEAU",       ["es"]="RED",          ["de"]="NETZWERK",      ["pt"]="REDE",      ["it"]="RETE",      ["ru"]="СЕТЬ",  ["zh"]="网络",  ["ar"]="الشبكة", ["tr"]="AĞ" },
+            ["PERF_DISK"]           = new() { ["en"]="DISK",       ["fr"]="DISQUE",       ["es"]="DISCO",        ["de"]="DATENTRÄGER",   ["pt"]="DISCO",     ["it"]="DISCO",     ["ru"]="ДИСК",  ["zh"]="磁盘",  ["ar"]="القرص", ["tr"]="DİSK" },
+            ["BUILDER_BUILT"]       = new() { ["en"]="Built",      ["fr"]="Compilé",      ["es"]="Compilado",    ["de"]="Erstellt",      ["pt"]="Compilado", ["it"]="Compilato", ["ru"]="Собран",["zh"]="已构建",["ar"]="تم البناء", ["tr"]="Derlendi" },
 
             // ── HVNC ─────────────────────────────────────────────────────────
             ["HVNC_CLONING"]        = new() { ["en"]="Cloning profile...", ["fr"]="Clonage du profil...", ["es"]="Clonando perfil...", ["de"]="Profil klonen...", ["pt"]="Clonando perfil...", ["it"]="Clonazione profilo...", ["ru"]="Клонирование профиля...", ["zh"]="正在克隆配置文件...", ["ar"]="جارٍ استنساخ الملف الشخصي...", ["tr"]="Profil klonlanıyor..." },
