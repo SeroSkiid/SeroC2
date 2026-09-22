@@ -123,17 +123,12 @@ public static class ShellcodeExport
     private static string? FindLoaderSrc()
     {
         var base_ = AppDomain.CurrentDomain.BaseDirectory;
-        var path  = Path.Combine(base_, "Stubs", "ShellcodeLoader.cpp");
-        if (File.Exists(path)) return path;
-
-        var dir = new DirectoryInfo(base_);
-        while (dir != null)
+        var candidates = new[]
         {
-            path = Path.Combine(dir.FullName, "Stubs", "ShellcodeLoader.cpp");
-            if (File.Exists(path)) return path;
-            dir = dir.Parent;
-        }
-        return null;
+            Path.Combine(base_, "Stubs", "ShellcodeLoader.cpp"),
+            Path.Combine(base_, "ShellcodeLoader.cpp"),
+        };
+        return candidates.FirstOrDefault(File.Exists);
     }
 
     // ── PE helpers ─────────────────────────────────────────────────────────────
