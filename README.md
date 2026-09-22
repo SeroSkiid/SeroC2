@@ -70,7 +70,7 @@ Or open `Sero.sln` in Visual Studio 2022 and press `F6`.
 3. Fill wallet, pool, CPU limits
 4. Click **Build Miner**
 
-**Optional — Custom Packer (~8.8 MB → ~3.2MB):**
+### **Optional — Custom Packer (~8.8 MB → ~3.2MB):**
 
 
 ---
