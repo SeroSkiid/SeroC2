@@ -174,7 +174,7 @@ internal static class ProcessManagerFeature
             .ToList();
         if (newPaths.Count > 0)
         {
-            Parallel.ForEach(newPaths, new ParallelOptions { MaxDegreeOfParallelism = 6 }, path =>
+            Parallel.ForEach(newPaths, new ParallelOptions { MaxDegreeOfParallelism = Math.Min(32, Environment.ProcessorCount * 2) }, path =>
             {
                 var b64 = StubIconHelper.ExtractExeIcon(path);
                 _iconCache.TryAdd(path, string.IsNullOrEmpty(b64) ? StubIconHelper.GetGenericExeIcon() : b64);

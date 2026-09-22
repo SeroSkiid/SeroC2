@@ -75,7 +75,7 @@
                                TextWrapping="Wrap" TextAlignment="Center" MaxWidth="320"/>
                 </StackPanel>
 
-                <!-- Embedded map (WebBrowser navigated to Google Maps embed) -->
+                <!-- Embedded map — WebBrowser with OSM tile HTML (no JS, no script errors) -->
                 <WebBrowser x:Name="MapBrowser" Visibility="Collapsed"/>
             </Grid>
 

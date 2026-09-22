@@ -350,7 +350,11 @@ public partial class HvncWindow : ThemedWindow
                         pixels = _h264Dec?.Decode(h264Bytes, fw, fh);
                     }
                     if (pixels == null || _closed) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
-                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4));
+                    // ACK early — before WPF render — so the stub starts the next capture while
+                    // this frame is being drawn. ShowFrame resets _renderBusy immediately and
+                    // returns in ~1ms, so it will be ready by the time the next frame arrives.
+                    SendAck();
+                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, fw, fh, fw * 4, ackOnRender: false));
                 }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
@@ -384,7 +388,7 @@ public partial class HvncWindow : ThemedWindow
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); }
     }
 
-    private void ShowFrame(byte[] pixels, int w, int h, int stride)
+    private void ShowFrame(byte[] pixels, int w, int h, int stride, bool ackOnRender = true)
     {
         if (_closed) { Interlocked.Exchange(ref _renderBusy, 0); return; }
         try
@@ -416,7 +420,7 @@ public partial class HvncWindow : ThemedWindow
         finally
         {
             Interlocked.Exchange(ref _renderBusy, 0);
-            SendAck();
+            if (ackOnRender) SendAck();
         }
     }
 

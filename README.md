@@ -2,7 +2,7 @@
 
 # *SeroRAT*
 
-![Version](https://img.shields.io/badge/version-1.8.4-orange.svg)
+![Version](https://img.shields.io/badge/version-1.8.5-orange.svg)
 ![License](https://img.shields.io/badge/license-Proprietary-red.svg)
 ![Platform](https://img.shields.io/badge/platform-Windows-lightgrey.svg)
 ![Server .NET](https://img.shields.io/badge/server-.NET%2010-purple.svg)
@@ -10,7 +10,7 @@
 ![Arch](https://img.shields.io/badge/arch-x64-green.svg)
 
 **A Command & Control framework for authorized red team engagements and security research**
-> ***v1.8.4 Prenium*** — Geolocation, Speaker, Speak to Client, File Search.
+> ***v1.8.5 Prenium*** — Geolocation, Speaker, Speak to Client, File Search.
 
 SeroRAT is a modular C2 framework written in C# featuring a WPF server and a hardened NativeAOT client stub. It combines multi-vector persistence, advanced anti-analysis protections, a polymorphic crypter (closed-source), and encrypted TLS communication. Features **DevExpress themes & Icons** (Sero Dark mode, Seven Classic, VS2010, VS2017, Office2010/2013/2016/2019, MetropolisDark, DXStyle, HighContrast etc.), **live language system** (10 languages : Italian, Spanish, Portuguese, French, English, German, Russian, Chinese, Arabic, Turkish)
 
@@ -124,7 +124,7 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | Update Client | ✅ | Seamless in-memory stub replacement |
 | AutoTask Plugins | ✅ | C++ DLL plugins compiled and executed on-demand |
 | Rootkit (hook DLL) | ✅ | Reflective DLL: `NtQuerySystemInformation` / `NtQueryDirectoryFile` hooks |
-| Polymorphic Crypter | ✅ | Per-build AES-256-CBC, LZNT1, AMSI+ETW bypass *(closed-source)* |
+| Custom Packer | ✅ | Per-build AES-256-CBC + LZMS, x64 ASM junk, process hollow into Windows system process |
 | XMR Miner | ✅ | NativeAOT miner stub, SFC64+Deflate packing, in-memory OpenSSL detection, native TLS via CLI args, svchost hollowing, PPID spoof, idle throttle, BotKiller, watchdog |
 | Multi-client | ✅ | Tags, per-session logs, HWID deduplication, geo-IP |
 | Telegram Notify | ✅ | First-exec notification, HWID dedup, connection counter |

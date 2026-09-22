@@ -2,10 +2,10 @@ namespace SeroStub;
 
 internal static class Config
 {
-    public static readonly string[] Hosts = new[] { "127.0.0.1" };
-    public const int Port = 7777;
+    public static readonly string[] Hosts = new[] { "localhost" };
+    public const int Port = 5555;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\02e75f0230b340d6b686244c5cec7540";
+    public const string MutexName = "Global\\e902f9dc1fac41d2a829b97a7c98201a";
 
     public const bool AntiDebug = false;
     public const bool AntiVM = false;
@@ -28,7 +28,7 @@ internal static class Config
     public const string CertHash = "07AAB3993AEFC4F6B065B04E1EDA9E20E14649C3852D7079A852B421534AB423";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "345ea966ea2b4263a951646caf1e91be";
+    public const string BuildId = "530b7676fd934586bfc0af3e3056d473";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
@@ -49,5 +49,5 @@ internal static class Config
     public static readonly byte[] TelegramTokenSfc   = new byte[] {  };
     public static readonly byte[] TelegramChatId1Sfc = new byte[] {  };
     public static readonly byte[] TelegramChatId2Sfc = new byte[] {  };
-    public static readonly byte[] TelegramSfcSeed    = new byte[] { 142, 156, 34, 146, 146, 37, 255, 96, 180, 139, 74, 148, 16, 137, 220, 151, 135, 81, 28, 196, 198, 160, 184, 218, 207, 154, 84, 98, 182, 39, 94, 76 };
+    public static readonly byte[] TelegramSfcSeed    = new byte[] { 159, 10, 31, 129, 3, 46, 132, 254, 123, 210, 104, 75, 25, 60, 224, 223, 233, 127, 15, 207, 3, 252, 109, 179, 51, 187, 253, 45, 160, 141, 104, 147 };
 }

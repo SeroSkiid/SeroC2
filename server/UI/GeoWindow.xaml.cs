@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Windows;
 using DevExpress.Xpf.Core;
 using Newtonsoft.Json;
@@ -93,13 +94,62 @@ public partial class GeoWindow : ThemedWindow
             BtnOpenMap.IsEnabled    = true;
             PnlData.Visibility      = Visibility.Visible;
 
-            // Load embedded map
+            // Load embedded map — OSM tiles via NavigateToString (no JS, no script error)
             PnlMapIdle.Visibility  = Visibility.Collapsed;
             PnlMapError.Visibility = Visibility.Collapsed;
-            MapBrowser.Navigate(new Uri(
-                $"https://maps.google.com/maps?q={data.Lat.ToString("G", CultureInfo.InvariantCulture)},{data.Lon.ToString("G", CultureInfo.InvariantCulture)}&z=15&output=embed"));
-            MapBrowser.Visibility = Visibility.Visible;
+            ShowTileMap(data.Lat, data.Lon);
         });
+    }
+
+    private void ShowTileMap(double lat, double lon)
+    {
+        const int zoom = 14;
+        const int w = 480, h = 220;
+
+        double n = 1 << zoom;
+        double tx = (lon + 180.0) / 360.0 * n;
+        double latRad = lat * Math.PI / 180.0;
+        double ty = (1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * n;
+
+        int txi = (int)Math.Floor(tx);
+        int tyi = (int)Math.Floor(ty);
+        int pinInTileX = (int)((tx - txi) * 256);
+        int pinInTileY = (int)((ty - tyi) * 256);
+
+        // Position grid so pin appears at map center
+        int gridLeft = w / 2 - (256 + pinInTileX);
+        int gridTop  = h / 2 - (256 + pinInTileY);
+
+        var sb = new StringBuilder();
+        sb.Append("<!DOCTYPE html><html><head>");
+        sb.Append("<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"/>");
+        sb.Append("<style>*{margin:0;padding:0;border:0;}");
+        sb.Append("body{overflow:hidden;background:#aad3df;}");
+        sb.Append($".m{{position:relative;width:{w}px;height:{h}px;overflow:hidden;}}");
+        sb.Append(".t{position:absolute;width:256px;height:256px;}");
+        sb.Append(".pin{position:absolute;width:12px;height:12px;background:#e83030;");
+        sb.Append("border:2px solid #fff;border-radius:50%;margin-left:-6px;margin-top:-6px;");
+        sb.Append("box-shadow:0 1px 4px rgba(0,0,0,.55);}");
+        sb.Append("</style></head><body><div class=\"m\">");
+
+        int nTiles = (int)n;
+        for (int dy = -1; dy <= 1; dy++)
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            int ty2 = tyi + dy;
+            if (ty2 < 0 || ty2 >= nTiles) continue;
+            int tx2 = ((txi + dx) % nTiles + nTiles) % nTiles;
+            int imgL = gridLeft + (dx + 1) * 256;
+            int imgT = gridTop  + (dy + 1) * 256;
+            sb.Append($"<img class=\"t\" style=\"left:{imgL}px;top:{imgT}px\"");
+            sb.Append($" src=\"https://tile.openstreetmap.org/{zoom}/{tx2}/{ty2}.png\">");
+        }
+
+        sb.Append($"<div class=\"pin\" style=\"left:{w / 2}px;top:{h / 2}px;\"></div>");
+        sb.Append("</div></body></html>");
+
+        MapBrowser.NavigateToString(sb.ToString());
+        MapBrowser.Visibility = Visibility.Visible;
     }
 
     private void ShowError(string msg)

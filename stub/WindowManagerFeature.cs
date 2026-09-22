@@ -70,11 +70,12 @@ internal static class WindowManagerFeature
         {
             using var p = System.Diagnostics.Process.GetProcessById((int)pid);
             var exe = p.MainModule?.FileName;
-            if (string.IsNullOrEmpty(exe)) return "";
+            if (string.IsNullOrEmpty(exe)) return StubIconHelper.GetGenericExeIcon();
             if (_iconCache.Count > 500) _iconCache.Clear();
-            return _iconCache.GetOrAdd(exe, path => StubIconHelper.ExtractExeIcon(path));
+            var icon = _iconCache.GetOrAdd(exe, path => StubIconHelper.ExtractExeIcon(path));
+            return string.IsNullOrEmpty(icon) ? StubIconHelper.GetGenericExeIcon() : icon;
         }
-        catch { return ""; }
+        catch { return StubIconHelper.GetGenericExeIcon(); }
     }
 
     private const int SW_HIDE     = 0;

