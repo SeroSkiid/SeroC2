@@ -261,11 +261,102 @@
                                                 <DataTrigger Binding="{Binding Class}" Value="BluetoothDevice">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Bluetooth.svg'}"/>
                                                 </DataTrigger>
+                                                <!-- ACPI / system platform devices (very common) -->
+                                                <DataTrigger Binding="{Binding Class}" Value="ACPI">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="ACPIProcessor">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Cpu.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Battery -->
+                                                <DataTrigger Binding="{Binding Class}" Value="Battery">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Sensors (gyro, light, accelerometer…) -->
+                                                <DataTrigger Binding="{Binding Class}" Value="Sensor">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Cpu.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="HidSensor">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Cpu.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="SensorCollection">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Cpu.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Biometric (fingerprint reader) -->
+                                                <DataTrigger Binding="{Binding Class}" Value="Biometric">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Security.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- HID (some devices report just "HID" rather than "HIDClass") -->
+                                                <DataTrigger Binding="{Binding Class}" Value="HID">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Mouse.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- HD Audio controller -->
+                                                <DataTrigger Binding="{Binding Class}" Value="HDAudio">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Speaker.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="HdAudio">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Speaker.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- FireWire / IEEE 1394 -->
+                                                <DataTrigger Binding="{Binding Class}" Value="1394">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="61883">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="AVC">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- USB Type-C port manager -->
+                                                <DataTrigger Binding="{Binding Class}" Value="UCM">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="UCMUSBPD">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- SD / flash storage -->
+                                                <DataTrigger Binding="{Binding Class}" Value="SDHost">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_HardDrive.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="MTD">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_HardDrive.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- PCMCIA / SmartCard -->
+                                                <DataTrigger Binding="{Binding Class}" Value="PCMCIA">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_HardDrive.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="SmartCard">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Security.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Infrared / IrDA -->
+                                                <DataTrigger Binding="{Binding Class}" Value="Infrared">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="IrDA">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Tape drives -->
+                                                <DataTrigger Binding="{Binding Class}" Value="TapeDrive">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_HardDrive.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Multifunction / IEEE 1284.4 -->
+                                                <DataTrigger Binding="{Binding Class}" Value="MultiFunction">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="Dot4">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Printer.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="Dot4Print">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Printer.svg'}"/>
+                                                </DataTrigger>
                                                 <!-- Generic/extension/unknown classes -->
                                                 <DataTrigger Binding="{Binding Class}" Value="Extension">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="GenericDevice">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="Unknown">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
                                                 </DataTrigger>
                                                 <!-- Catch-all: empty or unrecognised class name -->
