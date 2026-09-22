@@ -1158,6 +1158,9 @@ public partial class FileManagerWindow : ThemedWindow
                 ? $"{GridFiles.SelectedItems.Count} items selected"
                 : "No file selected";
             BtnPreview.IsEnabled = false;
+            _previewIsPlaceholder = true;
+            TxtPreviewInfo.Text = Lang.Get("FM_SELECT_FILE");
+            ShowPreviewPanel("empty");
             return;
         }
         TxtPreviewName.Text = vm.Name;
@@ -1227,7 +1230,7 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
             });
-            bool isVideoExt = ext is ".mp4" or ".avi" or ".mkv" or ".mov" or ".wmv" or ".webm" or ".m4v";
+            bool isVideoExt = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
             var json   = await _pendingPreview.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
             // Discard stale response — a newer preview request already took over.
             if (_previewSerial != mySerial) return;
@@ -1270,6 +1273,7 @@ public partial class FileManagerWindow : ThemedWindow
             bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
                                 or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
 
+            _previewIsPlaceholder = false;
             if (isImage)
             {
                 if (bmp != null)
@@ -1303,6 +1307,8 @@ public partial class FileManagerWindow : ThemedWindow
                 _previewTempFile = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
                     _tempPrefix + Guid.NewGuid().ToString("N") + ext2);
                 await System.IO.File.WriteAllBytesAsync(_previewTempFile, bytes);
+                // Re-check serial — user may have changed selection during a slow disk write (30 MB).
+                if (_previewSerial != mySerial) return;
                 // Make element visible BEFORE setting source so MediaElement can measure
                 _videoPlaying = false;
                 ShowPreviewPanel("video");
@@ -1326,7 +1332,13 @@ public partial class FileManagerWindow : ThemedWindow
                 {
                     // Decode only enough bytes to reach the display limit (UTF-8 worst case: 4 bytes/char)
                     var text = System.Text.Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 200_000 * 4));
-                    if (text.Length > 200_000) text = text[..200_000] + "\n[truncated]";
+                    if (text.Length > 200_000)
+                    {
+                        // Back off one char if the cut lands inside a surrogate pair
+                        int cut = 200_000;
+                        if (char.IsHighSurrogate(text[cut - 1])) cut--;
+                        text = text[..cut] + "\n[truncated]";
+                    }
                     PreviewText.Text = text;
                     ShowPreviewPanel("text");
                 }
