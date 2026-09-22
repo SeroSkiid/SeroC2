@@ -631,6 +631,13 @@ public partial class FileManagerWindow : ThemedWindow
           ".avi",".mkv",".wav",".flac",".ogg",".pdf",".docx",".xlsx",".pptx",".db",
           ".sqlite",".lnk",".msi",".cab",".iso",".img" };
 
+    private static readonly HashSet<string> _previewImageExts = new(StringComparer.OrdinalIgnoreCase)
+        { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".ico" };
+    private static readonly HashSet<string> _previewVideoExts = new(StringComparer.OrdinalIgnoreCase)
+        { ".mp4", ".avi", ".mov", ".wmv", ".m4v" };
+    private static readonly HashSet<string> _previewTextExts  = new(StringComparer.OrdinalIgnoreCase)
+        { ".txt", ".log", ".ini", ".cfg", ".json", ".xml", ".csv", ".bat", ".ps1", ".py", ".cs", ".md", ".html", ".css" };
+
     private async void Edit_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
@@ -1169,12 +1176,9 @@ public partial class FileManagerWindow : ThemedWindow
         // .webp excluded — WPF BitmapImage has no native WEBP decoder
         // .mkv/.webm excluded — WMF has no built-in codec on stock Windows
         var ext = Path.GetExtension(vm.Name).ToLowerInvariant();
-        bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
-        bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
-        bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
-        if ((isImage && vm.SizeRaw <= 20L * 1024 * 1024)
-         || (isText  && vm.SizeRaw <= 4L  * 1024 * 1024)
-         || (isVideo && vm.SizeRaw <  30L * 1024 * 1024))
+        if ((_previewImageExts.Contains(ext) && vm.SizeRaw <= 20L * 1024 * 1024)
+         || (_previewTextExts.Contains(ext)  && vm.SizeRaw <= 4L  * 1024 * 1024)
+         || (_previewVideoExts.Contains(ext) && vm.SizeRaw <  30L * 1024 * 1024))
             BtnPreview_Click(null!, new RoutedEventArgs());
     }
 
@@ -1184,7 +1188,12 @@ public partial class FileManagerWindow : ThemedWindow
         var path = _currentPath.TrimEnd('\\', '/') + "\\" + vm.Name;
         var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
 
-        bool isVideoPreview = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
+        // Cancel any in-flight download before the gates — a gate that returns early would
+        // otherwise leave the serial unchanged, letting a stale response overwrite its message.
+        _pendingPreview?.TrySetCanceled();
+        _pendingPreview = null;
+        int mySerial = ++_previewSerial;
+
         if (ext is ".mkv" or ".webm")
         {
             // WMF has no built-in codec for MKV/WebM on stock Windows — block before downloading
@@ -1192,20 +1201,19 @@ public partial class FileManagerWindow : ThemedWindow
             ShowPreviewPanel("empty");
             return;
         }
-        if (isVideoPreview && vm.SizeRaw >= 30L * 1024 * 1024)
+        if (_previewVideoExts.Contains(ext) && vm.SizeRaw >= 30L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Video too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 30 MB.";
             ShowPreviewPanel("empty");
             return;
         }
-        if ((ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico") && vm.SizeRaw > 20L * 1024 * 1024)
+        if (_previewImageExts.Contains(ext) && vm.SizeRaw > 20L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Image too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 20 MB.";
             ShowPreviewPanel("empty");
             return;
         }
-        if ((ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css")
-            && vm.SizeRaw > 4L * 1024 * 1024)
+        if (_previewTextExts.Contains(ext) && vm.SizeRaw > 4L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Text file too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 4 MB.";
             ShowPreviewPanel("empty");
@@ -1220,21 +1228,18 @@ public partial class FileManagerWindow : ThemedWindow
         var myTcs = new TaskCompletionSource<string>();
         try
         {
-            // Capture serial before the request — checked after await so a stale response
-            // that completed the TCS with the wrong file's data is silently discarded.
-            int mySerial = ++_previewSerial;
-            _pendingPreview?.TrySetCanceled();
             _pendingPreview = myTcs;
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
             });
-            var json   = await _pendingPreview.Task.WaitAsync(isVideoPreview ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
+            bool isVideo = _previewVideoExts.Contains(ext);
+            var json   = await _pendingPreview.Task.WaitAsync(isVideo ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
             // Discard stale response — a newer preview request already took over.
             if (_previewSerial != mySerial) return;
             // Offload JSON decode + Base64 decode + BitmapImage creation to background thread
-            bool isImageExt = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
+            bool isImage = _previewImageExts.Contains(ext);
             var (result, bytes, bmp) = await Task.Run(() =>
             {
                 var r = JsonConvert.DeserializeObject<FmFileDataResult>(json);
@@ -1242,7 +1247,7 @@ public partial class FileManagerWindow : ThemedWindow
                     return (r, (byte[]?)null, (System.Windows.Media.Imaging.BitmapImage?)null);
                 var b = Convert.FromBase64String(r.Data);
                 System.Windows.Media.Imaging.BitmapImage? img = null;
-                if (isImageExt && b.Length > 0)
+                if (isImage && b.Length > 0)
                 {
                     try
                     {
@@ -1267,9 +1272,7 @@ public partial class FileManagerWindow : ThemedWindow
             if (bytes.Length == 0)
             { TxtPreviewInfo.Text = string.Format(Lang.Get("FM_ERR_EMPTY_FILE"), vm.Name); ShowPreviewPanel("empty"); return; }
 
-            bool isImage = isImageExt;
-            bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
-                                or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
+            bool isText = _previewTextExts.Contains(ext);
 
             _previewIsPlaceholder = false;
             if (isImage)
@@ -1286,7 +1289,7 @@ public partial class FileManagerWindow : ThemedWindow
                     ShowPreviewPanel("empty");
                 }
             }
-            else if (isVideoPreview)
+            else if (isVideo)
             {
                 // Retire the previous temp file asynchronously — WMF may still hold its lock.
                 var oldTmp = _previewTempFile;
