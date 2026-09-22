@@ -289,35 +289,41 @@ internal sealed class H264Encoder : IDisposable
 
     static unsafe void BgraToNv12(byte* bgra, int w, int h, int bgraStride, byte* nv12)
     {
-        byte* yPlane  = nv12;
-        byte* uvPlane = nv12 + w * h;
+        nint bgraBase = (nint)bgra;
+        nint yBase    = (nint)nv12;
+        nint uvBase   = (nint)(nv12 + w * h);
+        int  _w       = w;
+        int  _stride  = bgraStride;
 
-        for (int y = 0; y < h; y++)
+        System.Threading.Tasks.Parallel.For(0, h, y =>
         {
-            byte* srcRow = bgra + (long)y * bgraStride;
-            byte* yRow   = yPlane + (long)y * w;
-
-            for (int x = 0; x < w; x++)
+            unsafe
             {
-                int b = srcRow[x * 4];
-                int g = srcRow[x * 4 + 1];
-                int r = srcRow[x * 4 + 2];
-                yRow[x] = (byte)(((66 * r + 129 * g + 25 * b + 128) >> 8) + 16);
-            }
+                byte* srcRow = (byte*)(bgraBase + (long)y * _stride);
+                byte* yRow   = (byte*)(yBase    + (long)y * _w);
 
-            if ((y & 1) == 0)
-            {
-                byte* uvRow = uvPlane + (long)(y >> 1) * w;
-                for (int x = 0; x < w; x += 2)
+                for (int x = 0; x < _w; x++)
                 {
                     int b = srcRow[x * 4];
                     int g = srcRow[x * 4 + 1];
                     int r = srcRow[x * 4 + 2];
-                    uvRow[x]     = (byte)(((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128); // U
-                    uvRow[x + 1] = (byte)(((112 * r - 94 * g -  18 * b + 128) >> 8) + 128); // V
+                    yRow[x] = (byte)(((66 * r + 129 * g + 25 * b + 128) >> 8) + 16);
+                }
+
+                if ((y & 1) == 0)
+                {
+                    byte* uvRow = (byte*)(uvBase + (long)(y >> 1) * _w);
+                    for (int x = 0; x < _w; x += 2)
+                    {
+                        int b = srcRow[x * 4];
+                        int g = srcRow[x * 4 + 1];
+                        int r = srcRow[x * 4 + 2];
+                        uvRow[x]     = (byte)(((-38 * r - 74 * g + 112 * b + 128) >> 8) + 128); // U
+                        uvRow[x + 1] = (byte)(((112 * r - 94 * g -  18 * b + 128) >> 8) + 128); // V
+                    }
                 }
             }
-        }
+        });
     }
 
     // ── Vtable helpers ─────────────────────────────────────────────────────────

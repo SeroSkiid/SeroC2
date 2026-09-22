@@ -220,9 +220,6 @@ internal sealed class H264Decoder : IDisposable
                 try
                 {
                     if (cbLen == 0 || pNv12 == 0) return null;
-                    var nv12 = new byte[cbLen];
-                    Marshal.Copy(pNv12, nv12, 0, (int)cbLen);
-
                     // Derive actual NV12 stride from the buffer size: size = stride * h * 3/2
                     // so stride = size * 2 / (3 * h). Use hintH from packet.
                     int h = hintH > 0 ? hintH : 1;
@@ -230,7 +227,14 @@ internal sealed class H264Decoder : IDisposable
                     int stride = (hintH > 0 && cbLen > 0) ? (int)((long)cbLen * 2 / 3 / hintH) : w;
                     if (stride < w) stride = w;
 
-                    return Nv12ToBgra(nv12, w, h, stride);
+                    // Pool the NV12 copy — avoids a per-frame heap alloc
+                    var nv12 = System.Buffers.ArrayPool<byte>.Shared.Rent((int)cbLen);
+                    try
+                    {
+                        Marshal.Copy(pNv12, nv12, 0, (int)cbLen);
+                        return Nv12ToBgra(nv12, w, h, stride);
+                    }
+                    finally { System.Buffers.ArrayPool<byte>.Shared.Return(nv12); }
                 }
                 finally { Fn<Unlock_Del>(pOutBuf, 4)(pOutBuf); }
             }

