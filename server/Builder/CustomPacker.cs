@@ -817,7 +817,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
                 dir = Path.GetDirectoryName(dir) ?? "";
                 var vcvars = Path.Combine(dir, "Auxiliary", "Build", "vcvarsall.bat");
                 if (!File.Exists(vcvars)) continue;
-                if (vcvars.IndexOfAny(new[] { '"', '&', '|', '>', '<', ';', '%' }) >= 0) continue;
+                if (vcvars.IndexOfAny(new[] { '"', '&', '|', '>', '<', ';', '%', '!', '^' }) >= 0) continue;
                 var psi = new System.Diagnostics.ProcessStartInfo("cmd.exe",
                     $"/c \"\"{vcvars}\" amd64 && set\"")
                 {

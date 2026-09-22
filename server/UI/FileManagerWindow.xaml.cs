@@ -1169,7 +1169,9 @@ public partial class FileManagerWindow : ThemedWindow
         bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
         bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
         bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
-        if (isImage || isText || (isVideo && vm.SizeRaw < 30L * 1024 * 1024))
+        if ((isImage && vm.SizeRaw <= 20L * 1024 * 1024)
+         || (isText  && vm.SizeRaw <= 4L  * 1024 * 1024)
+         || (isVideo && vm.SizeRaw <  30L * 1024 * 1024))
             BtnPreview_Click(null!, new RoutedEventArgs());
     }
 
@@ -1186,19 +1188,33 @@ public partial class FileManagerWindow : ThemedWindow
             ShowPreviewPanel("empty");
             return;
         }
+        if ((ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico") && vm.SizeRaw > 20L * 1024 * 1024)
+        {
+            TxtPreviewInfo.Text = $"Image too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 20 MB.";
+            ShowPreviewPanel("empty");
+            return;
+        }
+        if ((ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs")
+            && vm.SizeRaw > 4L * 1024 * 1024)
+        {
+            TxtPreviewInfo.Text = $"Text file too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 4 MB.";
+            ShowPreviewPanel("empty");
+            return;
+        }
 
         _videoPlaying = false;
         TxtPreviewInfo.Text = Lang.Get("STATUS_LOADING");
         ShowPreviewPanel("empty");
         BtnPreview.IsEnabled = false;
 
+        var myTcs = new TaskCompletionSource<string>();
         try
         {
             // Capture serial before the request — checked after await so a stale response
             // that completed the TCS with the wrong file's data is silently discarded.
             int mySerial = ++_previewSerial;
             _pendingPreview?.TrySetCanceled();
-            _pendingPreview = new TaskCompletionSource<string>();
+            _pendingPreview = myTcs;
             await _server.SendToClient(_clientId, new Packet
             {
                 Type = PacketType.FmDownload,
@@ -1208,39 +1224,54 @@ public partial class FileManagerWindow : ThemedWindow
             var json   = await _pendingPreview.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
             // Discard stale response — a newer preview request already took over.
             if (_previewSerial != mySerial) return;
-            // Offload JSON decode + Base64 decode to background thread
-            var (result, bytes) = await Task.Run(() =>
+            // Offload JSON decode + Base64 decode + BitmapImage creation to background thread
+            bool isImageExt = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
+            var (result, bytes, bmp) = await Task.Run(() =>
             {
                 var r = JsonConvert.DeserializeObject<FmFileDataResult>(json);
-                var b = (r != null && string.IsNullOrEmpty(r.Error)) ? Convert.FromBase64String(r.Data) : null;
-                return (r, b);
+                if (r == null || !string.IsNullOrEmpty(r.Error))
+                    return (r, (byte[]?)null, (System.Windows.Media.Imaging.BitmapImage?)null);
+                var b = Convert.FromBase64String(r.Data);
+                System.Windows.Media.Imaging.BitmapImage? img = null;
+                if (isImageExt && b.Length > 0)
+                {
+                    try
+                    {
+                        using var bmpMs = new System.IO.MemoryStream(b);
+                        var tmp = new System.Windows.Media.Imaging.BitmapImage();
+                        tmp.BeginInit();
+                        tmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        tmp.StreamSource = bmpMs;
+                        tmp.EndInit();
+                        tmp.Freeze();
+                        img = tmp;
+                    }
+                    catch { }
+                }
+                return (r, (byte[]?)b, img);
             });
             // Re-check serial — user may have selected a different file while decoding (heavy for 30 MB video).
             if (_previewSerial != mySerial) return;
-            if (result == null || bytes == null || !string.IsNullOrEmpty(result.Error))
+            if (result == null || !string.IsNullOrEmpty(result.Error))
             { TxtPreviewInfo.Text = result?.Error ?? "Error"; ShowPreviewPanel("empty"); return; }
+            if (bytes == null) { TxtPreviewInfo.Text = "Error decoding data"; ShowPreviewPanel("empty"); return; }
+            if (bytes.Length == 0)
+            { TxtPreviewInfo.Text = $"{vm.Name} — file is empty (0 bytes)"; ShowPreviewPanel("empty"); return; }
 
-            bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
+            bool isImage = isImageExt;
             bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
             bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
                                 or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
 
             if (isImage)
             {
-                try
+                if (bmp != null)
                 {
-                    using var ms = new System.IO.MemoryStream(bytes);
-                    var bmp = new System.Windows.Media.Imaging.BitmapImage();
-                    bmp.BeginInit();
-                    bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
-                    bmp.StreamSource = ms;
-                    bmp.EndInit();
-                    bmp.Freeze();
                     PreviewImage.Source = bmp;
                     ShowPreviewPanel("image");
                     TxtPreviewName.Text = $"{vm.Name}  ({bmp.PixelWidth}×{bmp.PixelHeight})";
                 }
-                catch
+                else
                 {
                     TxtPreviewInfo.Text = $"Image format not supported by WPF: {ext}";
                     ShowPreviewPanel("empty");
@@ -1275,10 +1306,23 @@ public partial class FileManagerWindow : ThemedWindow
             }
             else if (isText)
             {
-                var text = System.Text.Encoding.UTF8.GetString(bytes);
-                if (text.Length > 200_000) text = text[..200_000] + "\n[truncated]";
-                PreviewText.Text = text;
-                ShowPreviewPanel("text");
+                // Binary detection: scan first 512 bytes for null chars and non-printable bytes
+                int chk = Math.Min(bytes.Length, 512);
+                int nonPrint = 0;
+                for (int i = 0; i < chk; i++) { byte c = bytes[i]; if (c == 0 || c < 9 || (c > 13 && c < 32 && c != 27)) nonPrint++; }
+                if ((double)nonPrint / chk >= 0.05)
+                {
+                    TxtPreviewInfo.Text = "Binary content — not displayable as text.";
+                    ShowPreviewPanel("empty");
+                }
+                else
+                {
+                    // Decode only enough bytes to reach the display limit (UTF-8 worst case: 4 bytes/char)
+                    var text = System.Text.Encoding.UTF8.GetString(bytes, 0, Math.Min(bytes.Length, 200_000 * 4));
+                    if (text.Length > 200_000) text = text[..200_000] + "\n[truncated]";
+                    PreviewText.Text = text;
+                    ShowPreviewPanel("text");
+                }
             }
             else
             {
@@ -1289,7 +1333,7 @@ public partial class FileManagerWindow : ThemedWindow
         }
         catch (OperationCanceledException) { /* superseded by a newer preview request — silent */ }
         catch (Exception ex) { TxtPreviewInfo.Text = ex.Message; ShowPreviewPanel("empty"); }
-        finally { _pendingPreview = null; BtnPreview.IsEnabled = true; }
+        finally { if (_pendingPreview == myTcs) _pendingPreview = null; BtnPreview.IsEnabled = true; }
     }
 
     private void ShowPreviewPanel(string which)
