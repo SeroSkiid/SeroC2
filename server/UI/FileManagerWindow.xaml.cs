@@ -721,7 +721,11 @@ public partial class FileManagerWindow : ThemedWindow
             editor.Owner = this;
             editor.Show();
         }
-        catch (OperationCanceledException) { TxtStatus.Text = ""; }
+        catch (OperationCanceledException)
+        {
+            TxtStatus.Text = "";
+            ServerWindow.ReportGlobalActivity("Edit file failed", row.Name, "failed");
+        }
         catch (Exception ex)
         {
             TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
