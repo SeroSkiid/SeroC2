@@ -684,12 +684,14 @@ public partial class FileManagerWindow : ThemedWindow
             if (result == null || !string.IsNullOrEmpty(result.Error))
             {
                 TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error ?? "No data");
+                ServerWindow.ReportGlobalActivity("Edit file failed", row.Name, "failed");
                 return;
             }
             var bytes = await Task.Run(() => Convert.FromBase64String(result.Data));
             if (bytes.Length > 2 * 1024 * 1024)
             {
                 TxtStatus.Text = Lang.Get("FM_EDITOR_TOO_LARGE");
+                ServerWindow.ReportGlobalActivity("Edit file failed", row.Name, "failed");
                 return;
             }
             var text = System.Text.Encoding.UTF8.GetString(bytes);
