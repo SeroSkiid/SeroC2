@@ -124,7 +124,7 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | Update Client | ✅ | Seamless in-memory stub replacement |
 | AutoTask Plugins | ✅ | C++ DLL plugins compiled and executed on-demand |
 | Rootkit (hook DLL) | ✅ | Reflective DLL: `NtQuerySystemInformation` / `NtQueryDirectoryFile` hooks |
-| Custom Packer | ✅ | Per-build AES-256-CBC + LZMS, x64 ASM junk, process hollow into Windows system process |
+| Custom Packer | ✅ | Per-build AES-256-CBC + LZMS, x64 ASM junk|
 | XMR Miner | ✅ | NativeAOT miner stub, SFC64+Deflate packing, in-memory OpenSSL detection, native TLS via CLI args, svchost hollowing, PPID spoof, idle throttle, BotKiller, watchdog |
 | Multi-client | ✅ | Tags, per-session logs, HWID deduplication, geo-IP |
 | Telegram Notify | ✅ | First-exec notification, HWID dedup, connection counter |
