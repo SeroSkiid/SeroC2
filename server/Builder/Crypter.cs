@@ -15,6 +15,8 @@ public record LoaderMetadata(
 
 public static class CrypterBuilder
 {
+    public static bool IsAvailable => false;
+
     public static Task ApplyAsync(
         string exePath,
         Action<string> log,
