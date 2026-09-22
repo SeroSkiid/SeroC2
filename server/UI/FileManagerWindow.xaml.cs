@@ -700,8 +700,8 @@ public partial class FileManagerWindow : ThemedWindow
             var saveCallback = new Func<string, Task<bool>>(async newText =>
             {
                 if (_pendingAck != null) return false;
+                _pendingAck = new TaskCompletionSource<string>(); // claim slot before any await so guard stays effective
                 var encoded = await Task.Run(() => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(newText)));
-                _pendingAck = new TaskCompletionSource<string>();
                 try
                 {
                     await _server.SendToClient(_clientId, new Packet
