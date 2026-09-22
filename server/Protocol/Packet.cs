@@ -131,7 +131,7 @@ public enum PacketType
 
     // Geolocation
     GeoRequest = 195,  // server→client: no payload
-    GeoResult  = 196,  // client→server: {Lat, Lon, Accuracy, Source, City, Country, Error}
+    GeoResult  = 196,  // client→server: {Lat, Lon, Accuracy, Source, City, Region, Country, Isp, Error}
 
     // Speaker Loopback
     SpeakerGetDevices    = 215,  // server→client: request device list
@@ -762,7 +762,7 @@ public class GeoResultData
 {
     public double Lat      { get; set; }
     public double Lon      { get; set; }
-    public float  Accuracy { get; set; }
+    public double Accuracy { get; set; }
     public string Source   { get; set; } = string.Empty;  // "ip" / "windows"
     public string City     { get; set; } = string.Empty;
     public string Region   { get; set; } = string.Empty;

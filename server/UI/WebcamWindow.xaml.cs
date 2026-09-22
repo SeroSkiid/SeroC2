@@ -426,7 +426,7 @@ public partial class WebcamWindow : ThemedWindow
             _wasStreaming = _streaming;
             if (_streaming) SetStreamingState(false);
             _reconnectCountdown = 60;
-            TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+            TxtReconnectCountdown.Text = string.Format(Lang.Get("RDP_RECONNECTING"), _reconnectCountdown);
             ReconnectOverlay.Visibility = Visibility.Visible;
             TxtStatus.Text = Lang.Get("CONN_LOST");
             ServerWindow.ReportGlobalActivity("⚡ Connection lost", _clientId, "failed");
@@ -436,7 +436,7 @@ public partial class WebcamWindow : ThemedWindow
             _reconnectTimer.Tick += (_, _) =>
             {
                 _reconnectCountdown--;
-                TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+                TxtReconnectCountdown.Text = string.Format(Lang.Get("RDP_RECONNECTING"), _reconnectCountdown);
                 if (_reconnectCountdown <= 0)
                 {
                     _reconnectTimer.Stop();

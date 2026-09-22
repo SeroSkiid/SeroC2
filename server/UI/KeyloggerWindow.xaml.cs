@@ -74,7 +74,7 @@ public partial class KeyloggerWindow : ThemedWindow
         if (MnuKlRefresh    != null) MnuKlRefresh.Header  = Lang.Get("ACT_REFRESH");
         if (BtnDownloadFile != null) BtnDownloadFile.Content = Lang.Get("ACT_DOWNLOAD");
         if (BtnDeleteFile   != null) BtnDeleteFile.Content   = Lang.Get("ACT_DELETE");
-        if (TxtViewerTitle  != null && TxtViewerTitle.Text == "Select a log file to view")
+        if (TxtViewerTitle  != null && string.IsNullOrEmpty(_currentFilename))
             TxtViewerTitle.Text = Lang.Get("KL_SELECT_FILE");
     }
 
@@ -199,11 +199,11 @@ public partial class KeyloggerWindow : ThemedWindow
         var clip    = ChkClipboard.IsChecked == true;
 
         if (string.IsNullOrEmpty(host))
-        { TxtFtpStatus.Text = "✗ Host is required"; return; }
+        { TxtFtpStatus.Text = Lang.Get("KL_FTP_HOST_REQUIRED"); return; }
         if (!int.TryParse(portStr, out var port) || port < 1 || port > 65535)
-        { TxtFtpStatus.Text = "✗ Invalid port"; return; }
+        { TxtFtpStatus.Text = Lang.Get("KL_FTP_INVALID_PORT"); return; }
         if (!int.TryParse(sizeStr, out var maxKb) || maxKb < 1)
-        { TxtFtpStatus.Text = "✗ Invalid max size"; return; }
+        { TxtFtpStatus.Text = Lang.Get("KL_FTP_INVALID_SIZE"); return; }
 
         try
         {

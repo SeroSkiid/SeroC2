@@ -52,8 +52,9 @@ public partial class GeoWindow : ThemedWindow
 
     private async void Locate_Click(object sender, RoutedEventArgs e)
     {
-        BtnLocate.IsEnabled = false;
-        TxtStatus.Text      = Lang.Get("GEO_LOCATING");
+        BtnLocate.IsEnabled  = false;
+        BtnOpenMap.IsEnabled = false;
+        TxtStatus.Text       = Lang.Get("GEO_LOCATING");
 
         PnlMapIdle.Visibility  = Visibility.Visible;
         PnlMapError.Visibility = Visibility.Collapsed;
@@ -61,15 +62,26 @@ public partial class GeoWindow : ThemedWindow
         PnlData.Visibility     = Visibility.Collapsed;
         TxtIdle.Text           = Lang.Get("GEO_LOCATING");
 
-        await _server.SendToClient(_clientId, new Packet { Type = PacketType.GeoRequest });
+        try
+        {
+            await _server.SendToClient(_clientId, new Packet { Type = PacketType.GeoRequest });
+        }
+        catch
+        {
+            BtnLocate.IsEnabled = true;
+            ShowError(Lang.Get("PM_DISCONNECTED"));
+        }
     }
 
     private void OnResult(Packet pkt)
     {
-        var data = JsonConvert.DeserializeObject<GeoResultData>(pkt.Data);
         Dispatcher.BeginInvoke(() =>
         {
             BtnLocate.IsEnabled = true;
+
+            GeoResultData? data;
+            try { data = JsonConvert.DeserializeObject<GeoResultData>(pkt.Data); }
+            catch { ShowError(Lang.Get("GEO_PARSE_ERR")); return; }
 
             if (data == null) { ShowError(Lang.Get("GEO_PARSE_ERR")); return; }
             if (!string.IsNullOrEmpty(data.Error)) { ShowError(data.Error); return; }

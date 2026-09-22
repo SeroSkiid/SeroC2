@@ -15,6 +15,7 @@ public partial class RemoteShellWindow : ThemedWindow
     private readonly object _clientsLock = new();
     private System.Windows.Threading.DispatcherTimer? _reconnectTimer;
     private int _reconnectCountdown;
+    private bool _shellOutputHasContent;
 
     public RemoteShellWindow(TlsServer server, List<ConnectedClient> clients)
     {
@@ -56,7 +57,7 @@ public partial class RemoteShellWindow : ThemedWindow
             if (_clients.Count > 0) return; // still have other clients connected
 
             _reconnectCountdown = 60;
-            TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+            TxtReconnectCountdown.Text = string.Format(Lang.Get("RDP_RECONNECTING"), _reconnectCountdown);
             ReconnectOverlay.Visibility = Visibility.Visible;
             ServerWindow.ReportGlobalActivity("⚡ Connection lost", "Shell", "failed");
 
@@ -65,7 +66,7 @@ public partial class RemoteShellWindow : ThemedWindow
             _reconnectTimer.Tick += (_, _) =>
             {
                 _reconnectCountdown--;
-                TxtReconnectCountdown.Text = $"Reconnecting... ({_reconnectCountdown}s)";
+                TxtReconnectCountdown.Text = string.Format(Lang.Get("RDP_RECONNECTING"), _reconnectCountdown);
                 if (_reconnectCountdown <= 0)
                 {
                     _reconnectTimer.Stop();
@@ -88,7 +89,7 @@ public partial class RemoteShellWindow : ThemedWindow
             _reconnectTimer?.Stop();
             ReconnectOverlay.Visibility = Visibility.Collapsed;
 
-            TxtOutput.AppendText("\n--- Session reconnected ---");
+            TxtOutput.AppendText("\n" + Lang.Get("SHELL_SESSION_RECONNECTED"));
             OutputScroller.ScrollToEnd();
             ServerWindow.ReportGlobalActivity("✓ Reconnected (Shell)", c.Id, "complete");
         });
@@ -102,8 +103,7 @@ public partial class RemoteShellWindow : ThemedWindow
         Dispatcher.BeginInvoke(() =>
         {
             var prefix = _clients.Count > 1 ? $"[{clientId}] " : "";
-            if (TxtOutput.Text == "Type a command and press Enter...")
-                TxtOutput.Text = "";
+            if (!_shellOutputHasContent) { TxtOutput.Text = ""; _shellOutputHasContent = true; }
             TxtOutput.AppendText($"\n{prefix}{output}");
             if (TxtOutput.Text.Length > 50000)
                 TxtOutput.Text = TxtOutput.Text[^50000..];
@@ -127,8 +127,7 @@ public partial class RemoteShellWindow : ThemedWindow
         var cmd = TxtCommand.Text.Trim();
         if (string.IsNullOrEmpty(cmd)) return;
 
-        if (TxtOutput.Text == "Type a command and press Enter...")
-            TxtOutput.Text = "";
+        if (!_shellOutputHasContent) { TxtOutput.Text = ""; _shellOutputHasContent = true; }
         TxtOutput.AppendText($"\n> {cmd}");
         TxtCommand.Clear();
         ServerWindow.ReportGlobalActivity("Remote command", cmd.Length > 20 ? cmd[..20] + "..." : cmd, "running");

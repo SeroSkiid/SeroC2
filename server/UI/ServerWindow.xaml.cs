@@ -2981,7 +2981,7 @@ public partial class ServerWindow : ThemedWindow
 
         if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(chatId1))
         {
-            TxtTelegramTestResult.Text       = "✗ Fill token + Chat ID 1";
+            TxtTelegramTestResult.Text       = Lang.Get("TG_FILL_TOKEN");
             TxtTelegramTestResult.Foreground = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(0xEF, 0x44, 0x44));
             return;
@@ -3044,7 +3044,7 @@ public partial class ServerWindow : ThemedWindow
         BtnTelegramTest.IsEnabled = true;
         if (allOk)
         {
-            TxtTelegramTestResult.Text       = "✓ Success";
+            TxtTelegramTestResult.Text       = Lang.Get("TG_TEST_SUCCESS");
             TxtTelegramTestResult.Foreground = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromRgb(0x22, 0xC5, 0x5E));
         }
@@ -8544,6 +8544,47 @@ Read-Host 'Press Enter to close'
         if (MenuItemSetTag       != null) MenuItemSetTag.Header       = Lang.Get("FEAT_SET_TAG");
         if (MenuItemViewLogs     != null) MenuItemViewLogs.Header     = Lang.Get("FEAT_VIEW_LOGS");
         if (MenuItemCopyIP       != null) MenuItemCopyIP.Header       = Lang.Get("FEAT_COPY_IP");
+
+        // ── All-Clients context menu (mirrors online-grid menu with AllMenu* names) ──
+        if (AllMenuGrpAdmin      != null) AllMenuGrpAdmin.Header      = Lang.Get("FEAT_GRP_ADMIN");
+        if (AllMenuGrpMonitor    != null) AllMenuGrpMonitor.Header    = Lang.Get("FEAT_GRP_MONITORING");
+        if (AllMenuGrpMisc       != null) AllMenuGrpMisc.Header       = Lang.Get("FEAT_GRP_MISC");
+        if (AllMenuGrpFun        != null) AllMenuGrpFun.Header        = Lang.Get("FEAT_GRP_FUN");
+        if (AllMenuGrpClientMgmt != null) AllMenuGrpClientMgmt.Header = Lang.Get("FEAT_GRP_CLIENT");
+        if (AllMenuShell         != null) AllMenuShell.Header         = Lang.Get("FEAT_REMOTE_SHELL");
+        if (AllMenuFileMgr       != null) AllMenuFileMgr.Header       = Lang.Get("FEAT_FILE_MANAGER");
+        if (AllMenuProcMgr       != null) AllMenuProcMgr.Header       = Lang.Get("FEAT_PROCESS_MGR");
+        if (AllMenuStartupMgr    != null) AllMenuStartupMgr.Header    = Lang.Get("FEAT_STARTUP_MGR");
+        if (AllMenuTcp           != null) AllMenuTcp.Header           = Lang.Get("FEAT_TCP_CONN");
+        if (AllMenuSvcMgr        != null) AllMenuSvcMgr.Header        = Lang.Get("FEAT_SERVICE_MGR");
+        if (AllMenuWinMgr        != null) AllMenuWinMgr.Header        = Lang.Get("FEAT_WINDOW_MGR");
+        if (AllMenuRegistry      != null) AllMenuRegistry.Header      = Lang.Get("FEAT_REGISTRY_EDITOR");
+        if (AllMenuInstalledApps != null) AllMenuInstalledApps.Header = Lang.Get("FEAT_INSTALLED_APPS");
+        if (AllMenuDevMgr        != null) AllMenuDevMgr.Header        = Lang.Get("FEAT_DEVICE_MGR");
+        if (AllMenuSocks5        != null) AllMenuSocks5.Header        = Lang.Get("FEAT_SOCKS5");
+        if (AllMenuRemoteExec    != null) AllMenuRemoteExec.Header    = Lang.Get("FEAT_REMOTE_EXEC");
+        if (AllMenuRdp           != null) AllMenuRdp.Header           = Lang.Get("FEAT_REMOTE_DESKTOP");
+        if (AllMenuWebcam        != null) AllMenuWebcam.Header        = Lang.Get("FEAT_WEBCAM");
+        if (AllMenuHvnc          != null) AllMenuHvnc.Header          = Lang.Get("FEAT_HVNC");
+        if (AllMenuMic           != null) AllMenuMic.Header           = Lang.Get("FEAT_MICROPHONE");
+        if (AllMenuSpeaker       != null) AllMenuSpeaker.Header       = Lang.Get("FEAT_SPEAKER");
+        if (AllMenuSpeakToClient != null) AllMenuSpeakToClient.Header = Lang.Get("FEAT_SPEAK_TO_CLIENT");
+        if (AllMenuKeylogger     != null) AllMenuKeylogger.Header     = Lang.Get("FEAT_KEYLOGGER");
+        if (AllMenuGeo           != null) AllMenuGeo.Header           = Lang.Get("FEAT_GEOLOCATION");
+        if (AllMenuPerf          != null) AllMenuPerf.Header          = Lang.Get("FEAT_PERF_MONITOR");
+        if (AllMenuExcludeDefender != null) AllMenuExcludeDefender.Header = Lang.Get("FEAT_EXCLUDE_DEFENDER");
+        if (AllMenuBlockAvDns    != null) AllMenuBlockAvDns.Header    = Lang.Get("FEAT_BLOCK_AV_DNS");
+        if (AllMenuBlockWSReset  != null) AllMenuBlockWSReset.Header  = Lang.Get("FEAT_BLOCK_WSRESET");
+        if (AllMenuDisableUac    != null) AllMenuDisableUac.Header    = Lang.Get("FEAT_DISABLE_UAC");
+        if (AllMenuBotKiller     != null) AllMenuBotKiller.Header     = Lang.Get("FEAT_BOT_KILLER");
+        if (AllMenuFunPanel      != null) AllMenuFunPanel.Header      = Lang.Get("FEAT_FUN_PANEL");
+        if (AllMenuTikTok        != null) AllMenuTikTok.Header        = Lang.Get("FEAT_TIKTOK_BOT");
+        if (AllMenuUacElevation  != null) AllMenuUacElevation.Header  = Lang.Get("FEAT_UAC_ELEVATION");
+        if (AllMenuLoopUac       != null) AllMenuLoopUac.Header       = Lang.Get("FEAT_LOOP_UAC");
+        if (AllMenuUpdate        != null) AllMenuUpdate.Header        = Lang.Get("FEAT_UPDATE_CLIENT");
+        if (AllMenuDisconnect    != null) AllMenuDisconnect.Header    = Lang.Get("FEAT_DISCONNECT");
+        if (AllMenuUninstall     != null) AllMenuUninstall.Header     = Lang.Get("FEAT_UNINSTALL");
+        if (AllMenuCopyIP        != null) AllMenuCopyIP.Header        = Lang.Get("FEAT_COPY_IP");
 
         // ── About section feature list ──
         if (AboutFeatRemoteShell   != null) AboutFeatRemoteShell.Text   = Lang.Get("FEAT_REMOTE_SHELL");

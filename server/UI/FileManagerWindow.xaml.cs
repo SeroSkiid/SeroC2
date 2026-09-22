@@ -109,8 +109,8 @@ public partial class FileManagerWindow : ThemedWindow
             var hr = args.ErrorException?.HResult ?? 0;
             // 0xC00D0035 = MF_E_FILE_NOT_FOUND, 0xC00D001A = no codec
             TxtPreviewInfo.Text = hr == unchecked((int)0xC00D001A) || hr == unchecked((int)0x80040265)
-                ? "Codec not supported (install K-Lite or VLC codec pack)"
-                : "Media failed: file not found or format unsupported";
+                ? Lang.Get("FM_CODEC_ERROR")
+                : Lang.Get("FM_MEDIA_FAILED");
             ShowPreviewPanel("empty");
         };
 
@@ -228,9 +228,9 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 var err = result.Error;
                 // Strip .NET resource key prefix (e.g. "IO_PathNotFound_Path, C:\foo" → "Path not found: C:\foo")
-                if (err.StartsWith("IO_PathNotFound_Path,"))     err = "Path not found: " + err[(err.IndexOf(',') + 1)..].Trim();
-                else if (err.StartsWith("IO_FileNotFound,"))     err = "File not found: " + err[(err.IndexOf(',') + 1)..].Trim();
-                else if (err.StartsWith("UnauthorizedAccess"))   err = "Access denied: " + err[(err.IndexOf(',') + 1)..].TrimStart();
+                if (err.StartsWith("IO_PathNotFound_Path,"))     err = string.Format(Lang.Get("FM_ERR_PATH_NOT_FOUND"), err[(err.IndexOf(',') + 1)..].Trim());
+                else if (err.StartsWith("IO_FileNotFound,"))     err = string.Format(Lang.Get("FM_ERR_FILE_NOT_FOUND"), err[(err.IndexOf(',') + 1)..].Trim());
+                else if (err.StartsWith("UnauthorizedAccess"))   err = string.Format(Lang.Get("FM_ERR_ACCESS_DENIED"),  err[(err.IndexOf(',') + 1)..].TrimStart());
                 TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), err);
                 return;
             }
@@ -252,7 +252,7 @@ public partial class FileManagerWindow : ThemedWindow
             var files = result.Entries.Count - dirs;
             TxtStatus.Text = string.Format(Lang.Get("FM_DIR_STAT"), result.Path, files, dirs);
             if (TxtFileCount != null)
-                TxtFileCount.Text = $"{files} files — {dirs} directories";
+                TxtFileCount.Text = string.Format(Lang.Get("FM_FILE_COUNT"), files, dirs);
         }
         catch (TimeoutException)           { TxtStatus.Text = Lang.Get("FM_TIMEOUT"); }
         catch (OperationCanceledException) { /* superseded by a newer Navigate call */ }
@@ -1254,9 +1254,9 @@ public partial class FileManagerWindow : ThemedWindow
             if (_previewSerial != mySerial) return;
             if (result == null || !string.IsNullOrEmpty(result.Error))
             { TxtPreviewInfo.Text = result?.Error ?? "Error"; ShowPreviewPanel("empty"); return; }
-            if (bytes == null) { TxtPreviewInfo.Text = "Error decoding data"; ShowPreviewPanel("empty"); return; }
+            if (bytes == null) { TxtPreviewInfo.Text = Lang.Get("FM_ERR_DECODE"); ShowPreviewPanel("empty"); return; }
             if (bytes.Length == 0)
-            { TxtPreviewInfo.Text = $"{vm.Name} — file is empty (0 bytes)"; ShowPreviewPanel("empty"); return; }
+            { TxtPreviewInfo.Text = string.Format(Lang.Get("FM_ERR_EMPTY_FILE"), vm.Name); ShowPreviewPanel("empty"); return; }
 
             bool isImage = isImageExt;
             bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
@@ -1312,7 +1312,7 @@ public partial class FileManagerWindow : ThemedWindow
                 for (int i = 0; i < chk; i++) { byte c = bytes[i]; if (c == 0 || c < 9 || (c > 13 && c < 32 && c != 27)) nonPrint++; }
                 if ((double)nonPrint / chk >= 0.05)
                 {
-                    TxtPreviewInfo.Text = "Binary content — not displayable as text.";
+                    TxtPreviewInfo.Text = Lang.Get("FM_BINARY_CONTENT");
                     ShowPreviewPanel("empty");
                 }
                 else

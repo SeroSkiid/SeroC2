@@ -34,7 +34,7 @@ public partial class FunWindow : ThemedWindow
                 var r = JsonConvert.DeserializeObject<FunResultData>(pkt.Data);
                 Dispatcher.BeginInvoke(() =>
                 {
-                    if (r == null) { TxtStatus.Text = "No response from client."; return; }
+                    if (r == null) { TxtStatus.Text = Lang.Get("FM_NO_RESPONSE"); return; }
                     TxtStatus.Text = $"{r.Action}: {r.Result}";
                 });
             }
