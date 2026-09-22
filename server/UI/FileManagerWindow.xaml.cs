@@ -451,7 +451,7 @@ public partial class FileManagerWindow : ThemedWindow
                 finally { _pendingAck = null; }
             }
 
-            NotificationService.NotifyFileDeleted();
+            if (successCount > 0) NotificationService.NotifyFileDeleted();
             if (failedCount == 0)
             {
                 TxtStatus.Text = string.Format(Lang.Get("FM_DELETED_N"), successCount);
@@ -514,6 +514,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void NewFolder_Click(object s, RoutedEventArgs e)
     {
         if (_pendingAck != null || _pendingHash != null) return;
+        if (string.IsNullOrEmpty(_currentPath)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Navigate to a folder first"); return; }
         var name = PromptInput(Lang.Get("FM_NEW_FOLDER_NAME"), Lang.Get("FM_NEW_FOLDER_DEF"));
         if (string.IsNullOrWhiteSpace(name)) return;
         var path = Path.Combine(_currentPath, name);
@@ -772,6 +773,7 @@ public partial class FileManagerWindow : ThemedWindow
             var ack = JsonConvert.DeserializeObject<FmAckData>(json);
             if (ack != null && (ack.Success || string.IsNullOrEmpty(ack.Error)))
             {
+                TxtStatus.Text = string.Format(Lang.Get("FM_ATTR_SET"), row.Name);
                 ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "success");
                 ServerWindow.LogGlobal($"[FM] Attributes set successfully for '{path}' on client {_clientId}.");
             }
@@ -943,6 +945,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void Zip_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row) return;
+        if (string.IsNullOrEmpty(_currentPath)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Navigate to a folder first"); return; }
         var path = Path.Combine(_currentPath, row.Name);
         var dest = path + ".zip";
 
