@@ -265,6 +265,7 @@ public partial class FileManagerWindow : ThemedWindow
     private async void Download_Click(object s, RoutedEventArgs e)
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
+        if (_pendingData != null) return;
         var dlg = new Microsoft.Win32.SaveFileDialog { FileName = row.Name };
         if (dlg.ShowDialog() != true) return;
 
@@ -647,6 +648,11 @@ public partial class FileManagerWindow : ThemedWindow
             TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), "Binary files cannot be edited as text.");
             return;
         }
+        if (row.SizeRaw > 2 * 1024 * 1024)
+        {
+            TxtStatus.Text = Lang.Get("FM_EDITOR_TOO_LARGE");
+            return;
+        }
         var path = Path.Combine(_currentPath, row.Name);
         TxtStatus.Text = Lang.Get("FM_EDITOR_LOADING");
         ServerWindow.ReportGlobalActivity("Edit file", row.Name, "running");
@@ -903,6 +909,7 @@ public partial class FileManagerWindow : ThemedWindow
             }
             catch (Exception ex)
             {
+                _isPlayingAudio = false;
                 TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             }
             return;
@@ -989,8 +996,6 @@ public partial class FileManagerWindow : ThemedWindow
 
         var filename = Path.GetFileName(parsedUri.LocalPath);
         if (string.IsNullOrWhiteSpace(filename)) filename = "download";
-        // Sanitize filename — strip any path separators
-        filename = Path.GetFileName(filename);
         var dest = Path.Combine(_currentPath, filename);
 
         ServerWindow.ReportGlobalActivity("Download URL", filename, "running");
@@ -1206,19 +1211,19 @@ public partial class FileManagerWindow : ThemedWindow
             ShowPreviewPanel("empty");
             return;
         }
-        if (_previewVideoExts.Contains(ext) && vm.SizeRaw >= 30L * 1024 * 1024)
+        if (isVideo && vm.SizeRaw >= 30L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Video too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 30 MB.";
             ShowPreviewPanel("empty");
             return;
         }
-        if (_previewImageExts.Contains(ext) && vm.SizeRaw > 20L * 1024 * 1024)
+        if (isImage && vm.SizeRaw > 20L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Image too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 20 MB.";
             ShowPreviewPanel("empty");
             return;
         }
-        if (_previewTextExts.Contains(ext) && vm.SizeRaw > 4L * 1024 * 1024)
+        if (isText && vm.SizeRaw > 4L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Text file too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 4 MB.";
             ShowPreviewPanel("empty");
