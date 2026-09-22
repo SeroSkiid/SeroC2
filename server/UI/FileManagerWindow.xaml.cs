@@ -343,7 +343,10 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmUpload,
                 Data = payload
             });
-            await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            var ackJson = await _pendingAck.Task.WaitAsync(TimeSpan.FromSeconds(30));
+            var ack = JsonConvert.DeserializeObject<FmAckData>(ackJson);
+            if (ack != null && !ack.Success && !string.IsNullOrEmpty(ack.Error))
+                throw new Exception(ack.Error);
             sw.Stop();
             TxtTransferPct.Text = "100%";
             NotificationService.NotifyUploadComplete();
