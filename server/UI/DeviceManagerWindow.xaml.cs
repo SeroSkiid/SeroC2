@@ -97,7 +97,6 @@ public partial class DeviceManagerWindow : ThemedWindow
                     _devices.Add(new DeviceEntryVM { DeviceId = dev.DeviceId, Name = dev.Name, Class = dev.Class, Status = dev.Status, Manufacturer = dev.Manufacturer });
                 TxtCount.Text = $"({d.Devices.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("DEV_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Devices.Count);
-                BtnRefresh.IsEnabled = true;
             });
         }
         catch { }
@@ -105,6 +104,7 @@ public partial class DeviceManagerWindow : ThemedWindow
 
     private void BtnUninstall_Click(object s, RoutedEventArgs e)
     {
+        if (_disconnected) return;
         if (GridDevs.SelectedItem is not DeviceEntryVM vm) return;
         if (MessageBox.Show(string.Format(Lang.Get("DEV_UNINSTALL_CONFIRM"), vm.Name), Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.DevUninstall, Data = JsonConvert.SerializeObject(new DevUninstallData { DeviceId = vm.DeviceId }) });
@@ -113,11 +113,7 @@ public partial class DeviceManagerWindow : ThemedWindow
         ServerWindow.LogGlobal($"[DEV] Uninstalled device '{vm.Name}' (ID: {vm.DeviceId}) on client {_clientId}.");
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e)
-    {
-        BtnRefresh.IsEnabled = false;
-        Refresh();
-    }
+    private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();
 
     private void GridDevs_CopyName_Click(object s, RoutedEventArgs e)
     {

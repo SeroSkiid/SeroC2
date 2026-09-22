@@ -191,6 +191,7 @@ public partial class WindowManagerWindow : ThemedWindow
 
     private void SendAction(string action)
     {
+        if (_disconnected) return;
         var sel = GridWins.SelectedItems.Cast<WindowEntryVM>().ToList();
         if (sel.Count == 0) return;
         if (action is "close" or "kill")
