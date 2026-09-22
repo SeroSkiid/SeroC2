@@ -539,7 +539,7 @@ SeroC2/
 │   │   ├── ShellIcon.cs           # Shell icon extraction helper
 │   │   └── WindowResizer.cs       # Borderless window resize helper
 │   ├── Builder/                   # Build pipeline (config gen, NativeAOT, crypter bridge)
-│   │   ├── CustomPacker.cs        # Custom packer: LZMS + AES-256-CBC + process hollow; generates polymorphic C loader (MSVC compiled at runtime)
+│   │   ├── CustomPacker.cs        # Custom packer: LZMS + AES-256-CBC ; generates polymorphic C loader (MSVC compiled at runtime)
 │   │   ├── ShellcodeExport.cs     # Packages stub as PIC shellcode blob (.text section + XOR-encoded PE)
 │   │   ├── PluginSources.cs       # C++ plugin source templates + on-demand MSVC compilation
 │   │   └── Crypter.cs             # Crypter bridge — invokes closed-source native loader
