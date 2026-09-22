@@ -313,18 +313,6 @@ Queries the client's physical location using the Windows Location platform.
 
 ---
 
-## 🔎 File Search
-
-Search for files on the client's file system using glob patterns. Accessible from the **File Manager toolbar**.
-
-- **Root path** — any local path; environment variables are expanded on the client (`%APPDATA%`, `%USERPROFILE%`, etc.)
-- **Pattern** — standard Windows glob (`*.pdf`, `secret*`, `*.docx`…)
-- **Recursive** toggle — search all subdirectories
-- Results capped at **500 entries** to avoid flooding
-- **Open in File Manager** — right-click any result to navigate to its directory in the remote file browser
-- **Copy Path** — copies the full remote path to clipboard
-
----
 ## 🎮 Fun
 Interactive prank / control panel:
 
