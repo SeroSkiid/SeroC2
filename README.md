@@ -100,7 +100,7 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, Block IP / Block Port toolbar buttons |
 | Startup Manager | ✅ | List/delete Registry Run, Startup folder, Scheduled Tasks, WMI Event Subscriptions — Authenticode signature + publisher per entry |
 | Microphone | ✅ | Real-time audio capture, waveform visualization, live listen in server, save WAV |
-| Speaker | ✅ | Victim playback device loopback — waveform visualization, save WAV |
+| Speaker | ✅ | Client playback device loopback — waveform visualization, save WAV |
 | Speak to Client | ✅ | Stream operator microphone to client speakers in real time via `waveOut` |
 | Geolocation | ✅ | Windows Location API (GPS / Wi-Fi / cell), Nominatim reverse-geocoding, embedded Google Maps |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
@@ -528,7 +528,7 @@ SeroC2/
 │   │   ├── TcpManagerWindow.*     # TCP connection manager
 │   │   ├── StartupManagerWindow.* # Startup entries manager
 │   │   ├── MicrophoneWindow.*     # Microphone capture + waveform + live listen
-│   │   ├── SpeakerWindow.*        # Victim speaker loopback — waveform + save WAV
+│   │   ├── SpeakerWindow.*        # Client speaker loopback — waveform + save WAV
 │   │   ├── SpeakToClientWindow.*  # Server mic → client speaker injection
 │   │   ├── GeoWindow.*            # Geolocation — Windows Location API + Google Maps embed
 │   │   ├── FileSearchWindow.*     # Remote file search with glob patterns
