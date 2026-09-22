@@ -37,8 +37,7 @@ internal static class ProcessHollowing
     private const int PROC_THREAD_ATTRIBUTE_PARENT_PROCESS = 0x00020000;
 
 
-    // Environment variable marker for detection
-    public const string HOLLOW_ENV_KEY = "__SERO_H__";
+    public static string HOLLOW_ENV_KEY => Config.EnvKeyHollow;
     public const string HOLLOW_ENV_VAL = "1";
 
     /// <summary>Returns true if the current process was started via process hollowing.</summary>

