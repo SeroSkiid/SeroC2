@@ -242,6 +242,7 @@ Full remote file system browser with icon-per-extension UI.
 - **Execute** — Normal, Hidden, or As Admin
 - **Rename / Delete / New Folder**
 - **File Editor** - Edit file
+- **File Search** - Search for files on the client's file system using glob patterns
 - **SHA-256 Hash** — computed on client, copied to clipboard
 - **Show / Hide** — toggle hidden file attribute
 - **Set as Wallpaper** — set any image as desktop background
@@ -308,19 +309,6 @@ Queries the victim's physical location using the Windows Location platform.
 - Address card showing city, region, country, GPS accuracy (metres) and source (GPS / Wi-Fi / Cellular)
 - **Copy Coordinates** and **Open in Maps** buttons
 - Raw JSON expander for the full Nominatim response
-
----
-
-## 🔎 File Search
-
-Search for files on the victim's file system using glob patterns. Accessible from the **File Manager toolbar**.
-
-- **Root path** — any local path; environment variables are expanded on the victim (`%APPDATA%`, `%USERPROFILE%`, etc.)
-- **Pattern** — standard Windows glob (`*.pdf`, `secret*`, `*.docx`…)
-- **Recursive** toggle — search all subdirectories
-- Results capped at **500 entries** to avoid flooding
-- **Open in File Manager** — right-click any result to navigate to its directory in the remote file browser
-- **Copy Path** — copies the full remote path to clipboard
 
 ---
 
