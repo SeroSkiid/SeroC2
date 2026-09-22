@@ -218,7 +218,6 @@ public partial class ServiceManagerWindow : ThemedWindow
                 }
                 TxtCount.Text  = $"({d.Services.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("SVC_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Services.Count);
-                BtnRefresh.IsEnabled = true;
             });
         }
         catch { }
@@ -241,6 +240,7 @@ public partial class ServiceManagerWindow : ThemedWindow
 
     private void SendAction(PacketType type)
     {
+        if (_disconnected) return;
         var sel = GridServices.SelectedItems.Cast<ServiceEntryVM>().ToList();
         if (sel.Count == 0) return;
         string label = type switch
@@ -276,11 +276,7 @@ public partial class ServiceManagerWindow : ThemedWindow
         ServerWindow.LogGlobal($"[SVC] Sent {labelEn} command for {(sel.Count == 1 ? $"service '{sel[0].DisplayName}'" : $"{sel.Count} services")} on client {_clientId}.");
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e)
-    {
-        BtnRefresh.IsEnabled = false;
-        Refresh();
-    }
+    private void BtnRefresh_Click(object s, RoutedEventArgs e) => Refresh();
     private void BtnStart_Click  (object s, RoutedEventArgs e) => SendAction(PacketType.SvcStart);
     private void BtnStop_Click   (object s, RoutedEventArgs e) => SendAction(PacketType.SvcStop);
     private void BtnRestart_Click(object s, RoutedEventArgs e) => SendAction(PacketType.SvcRestart);

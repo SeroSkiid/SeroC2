@@ -128,7 +128,7 @@ public partial class WindowManagerWindow : ThemedWindow
     {
         _searchText = TxtSearch.Text;
         _view?.Refresh();
-        TxtCount.Text = $"({_windows.Count(x => FilterWindow(x))})";
+        TxtCount.Text = $"({_windows.Count(x => FilterWindow(x))}/{_windows.Count})";
     }
 
     private void Refresh()

@@ -86,7 +86,6 @@ public partial class InstalledAppsWindow : ThemedWindow
     {
         if (_disconnected) return;
         TxtStatus.Text = Lang.Get("STATUS_REFRESHING");
-        BtnRefresh.IsEnabled = false;
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.InstalledGetList });
     }
 
@@ -126,7 +125,6 @@ public partial class InstalledAppsWindow : ThemedWindow
                 ApplyFilter(TxtSearch.Text);
                 TxtCount.Text  = $"({d.Apps.Count})";
                 TxtStatus.Text = string.Format(Lang.Get("INS_UPDATED"), DateTime.Now.ToString("HH:mm:ss"), d.Apps.Count);
-                BtnRefresh.IsEnabled = true;
                 _ = RequestIconsAsync(d.Apps, cts.Token);
             });
         }
