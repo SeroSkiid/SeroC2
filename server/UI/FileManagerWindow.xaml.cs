@@ -1230,8 +1230,7 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
             });
-            bool isVideoExt = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
-            var json   = await _pendingPreview.Task.WaitAsync(isVideoExt ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
+            var json   = await _pendingPreview.Task.WaitAsync(isVideoPreview ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
             // Discard stale response — a newer preview request already took over.
             if (_previewSerial != mySerial) return;
             // Offload JSON decode + Base64 decode + BitmapImage creation to background thread
@@ -1269,7 +1268,6 @@ public partial class FileManagerWindow : ThemedWindow
             { TxtPreviewInfo.Text = string.Format(Lang.Get("FM_ERR_EMPTY_FILE"), vm.Name); ShowPreviewPanel("empty"); return; }
 
             bool isImage = isImageExt;
-            bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
             bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml"
                                 or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
 
@@ -1288,7 +1286,7 @@ public partial class FileManagerWindow : ThemedWindow
                     ShowPreviewPanel("empty");
                 }
             }
-            else if (isVideo)
+            else if (isVideoPreview)
             {
                 // Retire the previous temp file asynchronously — WMF may still hold its lock.
                 var oldTmp = _previewTempFile;
@@ -1345,14 +1343,17 @@ public partial class FileManagerWindow : ThemedWindow
             }
             else
             {
-                _previewIsPlaceholder = false;
                 TxtPreviewInfo.Text = $"{vm.Name}\n{vm.SizeDisplay}\n{vm.Modified}";
                 ShowPreviewPanel("empty");
             }
         }
         catch (OperationCanceledException) { /* superseded by a newer preview request — silent */ }
         catch (Exception ex) { TxtPreviewInfo.Text = ex.Message; ShowPreviewPanel("empty"); }
-        finally { if (_pendingPreview == myTcs) _pendingPreview = null; BtnPreview.IsEnabled = true; }
+        finally
+        {
+            if (_pendingPreview == myTcs) _pendingPreview = null;
+            BtnPreview.IsEnabled = GridFiles.SelectedItem is FileEntryVM fv && !fv.IsDir;
+        }
     }
 
     private void ShowPreviewPanel(string which)
