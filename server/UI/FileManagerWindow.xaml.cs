@@ -445,7 +445,7 @@ public partial class FileManagerWindow : ThemedWindow
                         lastError = ack?.Error ?? "Unknown error";
                     }
                 }
-                catch (OperationCanceledException) { break; } // client disconnected — stop loop
+                catch (OperationCanceledException) { failedCount++; break; } // client disconnected — stop loop
                 catch (Exception ex)
                 {
                     failedCount++;
