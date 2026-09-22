@@ -326,6 +326,7 @@ public partial class FileManagerWindow : ThemedWindow
         var sw = System.Diagnostics.Stopwatch.StartNew();
         TxtStatus.Text = string.Format(Lang.Get("FM_UPLOADING"), uploadName);
         ServerWindow.ReportGlobalActivity("Uploading", uploadName, "running");
+        _pendingAck = new TaskCompletionSource<string>(); // claim slot before any await so guard stays effective
         ShowTransfer(uploadName, Lang.Get("FM_READING"));
         try
         {
@@ -336,7 +337,6 @@ public partial class FileManagerWindow : ThemedWindow
             var payload = await Task.Run(() =>
                 JsonConvert.SerializeObject(new FmUploadData { Path = destPath, Data = Convert.ToBase64String(bytes) }));
             TxtTransferPct.Text = "50%";
-            _pendingAck = new TaskCompletionSource<string>();
             ShowTransfer(uploadName, Lang.Get("FM_SENDING"));
             await _server.SendToClient(_clientId, new Packet
             {
