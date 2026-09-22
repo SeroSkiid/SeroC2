@@ -251,6 +251,27 @@
                                                 <DataTrigger Binding="{Binding Class}" Value="SmartCardReader">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Security.svg'}"/>
                                                 </DataTrigger>
+                                                <!-- Bluetooth virtual/profile devices -->
+                                                <DataTrigger Binding="{Binding Class}" Value="BTHMIDI">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Bluetooth.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="BTHLEDevice">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Bluetooth.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="BluetoothDevice">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Bluetooth.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Generic/extension/unknown classes -->
+                                                <DataTrigger Binding="{Binding Class}" Value="Extension">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding Class}" Value="GenericDevice">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
+                                                </DataTrigger>
+                                                <!-- Catch-all: empty or unrecognised class name -->
+                                                <DataTrigger Binding="{Binding Class}" Value="">
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Cpu.svg'}"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </dx:DXImage.Style>

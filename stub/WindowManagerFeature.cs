@@ -141,6 +141,8 @@ internal static class WindowManagerFeature
         "csrss", "smss", "wininit", "winlogon", "lsass", "services", "svchost",
         "dwm", "explorer", "searchhost", "shellexperiencehost",
         "startmenuexperiencehost", "textinputhost",
+        "sihost", "applicationframehost", "runtimebroker", "taskhostw",
+        "fontdrvhost", "ctfmon", "spoolsv", "searchindexer",
     };
 
     internal static void DoAction(long handle, string action)
