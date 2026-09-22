@@ -780,12 +780,14 @@ public partial class FileManagerWindow : ThemedWindow
             else
             {
                 var err = ack?.Error ?? "Unknown error";
+                TxtStatus.Text = string.Format(Lang.Get("FM_ATTR_FAILED"), err);
                 ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "failed");
                 ServerWindow.LogGlobal($"[FM] Set attributes failed for '{path}' on client {_clientId}: {err}");
             }
         }
         catch (Exception ex)
         {
+            TxtStatus.Text = string.Format(Lang.Get("FM_ATTR_FAILED"), ex.Message);
             ServerWindow.ReportGlobalActivity("Set attributes", row.Name, "failed");
             ServerWindow.LogGlobal($"[FM] Set attributes failed/timed out for '{path}' on client {_clientId}: {ex.Message}");
         }
@@ -912,6 +914,7 @@ public partial class FileManagerWindow : ThemedWindow
             catch (Exception ex)
             {
                 _isPlayingAudio = false;
+                MnuFmPlayMusicSecret.Header = Lang.Get("FM_PLAY_MUSIC_SECRET");
                 TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
             }
             return;
