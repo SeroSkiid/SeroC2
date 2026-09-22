@@ -1194,6 +1194,11 @@ public partial class FileManagerWindow : ThemedWindow
         _pendingPreview = null;
         int mySerial = ++_previewSerial;
 
+        // Compute once here — ext is immutable; avoids re-evaluation after awaits below.
+        bool isVideo = _previewVideoExts.Contains(ext);
+        bool isImage = _previewImageExts.Contains(ext);
+        bool isText  = _previewTextExts.Contains(ext);
+
         if (ext is ".mkv" or ".webm")
         {
             // WMF has no built-in codec for MKV/WebM on stock Windows — block before downloading
@@ -1234,12 +1239,10 @@ public partial class FileManagerWindow : ThemedWindow
                 Type = PacketType.FmDownload,
                 Data = JsonConvert.SerializeObject(new FmDownloadData { Path = path })
             });
-            bool isVideo = _previewVideoExts.Contains(ext);
-            var json   = await _pendingPreview.Task.WaitAsync(isVideo ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
+            var json   = await myTcs.Task.WaitAsync(isVideo ? TimeSpan.FromSeconds(120) : TimeSpan.FromSeconds(30));
             // Discard stale response — a newer preview request already took over.
             if (_previewSerial != mySerial) return;
             // Offload JSON decode + Base64 decode + BitmapImage creation to background thread
-            bool isImage = _previewImageExts.Contains(ext);
             var (result, bytes, bmp) = await Task.Run(() =>
             {
                 var r = JsonConvert.DeserializeObject<FmFileDataResult>(json);
@@ -1271,8 +1274,6 @@ public partial class FileManagerWindow : ThemedWindow
             if (bytes == null) { TxtPreviewInfo.Text = Lang.Get("FM_ERR_DECODE"); ShowPreviewPanel("empty"); return; }
             if (bytes.Length == 0)
             { TxtPreviewInfo.Text = string.Format(Lang.Get("FM_ERR_EMPTY_FILE"), vm.Name); ShowPreviewPanel("empty"); return; }
-
-            bool isText = _previewTextExts.Contains(ext);
 
             _previewIsPlaceholder = false;
             if (isImage)
