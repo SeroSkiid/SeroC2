@@ -235,7 +235,7 @@ public partial class FileManagerWindow : ThemedWindow
                 return;
             }
 
-            if (!string.IsNullOrEmpty(_currentPath))
+            if (!string.IsNullOrEmpty(_currentPath) && result.Path != _currentPath)
                 _history.Push(_currentPath);
 
             _currentPath = result.Path;
@@ -289,7 +289,7 @@ public partial class FileManagerWindow : ThemedWindow
             ShowTransfer(row.Name, Lang.Get("FM_RECEIVING"));
             var json = await _pendingData.Task.WaitAsync(TimeSpan.FromSeconds(60));
             var result = JsonConvert.DeserializeObject<FmFileDataResult>(json);
-            if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error); return; }
+            if (result == null || !string.IsNullOrEmpty(result.Error)) { TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), result?.Error); ServerWindow.ReportGlobalActivity("Download failed", row.Name, "failed"); return; }
             ShowTransfer(row.Name, Lang.Get("FM_DECODING"));
             // Offload Base64 decode to background thread — large files block UI if decoded inline
             var bytes = await Task.Run(() => Convert.FromBase64String(result.Data));
