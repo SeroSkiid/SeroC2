@@ -27,9 +27,9 @@ if (-not $csproj) { Write-Err "No .csproj found in server/" }
 $assetsJson = Join-Path $Server "obj\project.assets.json"
 $noRestore  = (Test-Path $assetsJson) -and ((Get-Item $assetsJson).Length -gt 0)
 if ($noRestore) {
-    Write-Host "  NuGet cache hit — skipping restore (delete obj\ to force)" -ForegroundColor DarkGray
+    Write-Host "  NuGet cache hit - skipping restore (delete obj\ to force)" -ForegroundColor DarkGray
 } else {
-    Write-Host "  NuGet cache miss — restoring packages..." -ForegroundColor DarkGray
+    Write-Host "  NuGet cache miss - restoring packages..." -ForegroundColor DarkGray
 }
 
 $tmpOut = Join-Path $env:TEMP "sero_publish_$(Get-Random)"
