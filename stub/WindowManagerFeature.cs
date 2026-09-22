@@ -150,7 +150,7 @@ internal static class WindowManagerFeature
             var hwnd = new IntPtr(handle);
             switch (action)
             {
-                case "show":     ShowWindow(hwnd, SW_SHOW);     break;
+                case "show":     ShowWindow(hwnd, SW_SHOW); SetForegroundWindow(hwnd); break;
                 case "hide":     ShowWindow(hwnd, SW_HIDE);     break;
                 case "focus":    SetForegroundWindow(hwnd);     break;
                 case "restore":  ShowWindow(hwnd, SW_RESTORE);  break;
