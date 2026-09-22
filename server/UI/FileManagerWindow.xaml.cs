@@ -701,9 +701,9 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 if (_pendingAck != null) return false;
                 _pendingAck = new TaskCompletionSource<string>(); // claim slot before any await so guard stays effective
-                var encoded = await Task.Run(() => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(newText)));
                 try
                 {
+                    var encoded = await Task.Run(() => Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(newText)));
                     await _server.SendToClient(_clientId, new Packet
                     {
                         Type = PacketType.FmUpload,
