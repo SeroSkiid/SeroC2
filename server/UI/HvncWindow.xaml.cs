@@ -314,7 +314,10 @@ public partial class HvncWindow : ThemedWindow
 
                     if (pixels == null || _closed) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
                     int cw = w, ch = h, cs = stride;
-                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs));
+                    // ACK early — same pattern as H264 — so stub starts next capture while
+                    // this frame is being composited by WPF, eliminating render time from RTT.
+                    SendAck();
+                    Dispatcher.BeginInvoke(() => ShowFrame(pixels, cw, ch, cs, ackOnRender: false));
                 }
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
