@@ -96,12 +96,12 @@ Then tick **UPX compression** in the Builder before clicking Build. The `tools/`
 | HVNC | ✅ | Hidden virtual desktop — isolated session, full browser support, H264 stream |
 | Remote Shell | ✅ | Interactive cmd/PowerShell |
 | File Manager | ✅ | Navigate, download, upload, rename, delete, hash, exec, wallpaper, 7-zip |
-| File Search | ✅ | Recursive glob search on the victim's file system; results open directly in File Manager |
+| File Search | ✅ | Recursive glob search on the client's file system; results open directly in File Manager |
 | TCP Manager | ✅ | List all TCP connections per PID, force-close via SetTcpEntry, Block IP / Block Port toolbar buttons |
 | Startup Manager | ✅ | List/delete Registry Run, Startup folder, Scheduled Tasks, WMI Event Subscriptions — Authenticode signature + publisher per entry |
 | Microphone | ✅ | Real-time audio capture, waveform visualization, live listen in server, save WAV |
 | Speaker | ✅ | Victim playback device loopback — waveform visualization, save WAV |
-| Speak to Client | ✅ | Stream operator microphone to victim speakers in real time via `waveOut` |
+| Speak to Client | ✅ | Stream operator microphone to client speakers in real time via `waveOut` |
 | Geolocation | ✅ | Windows Location API (GPS / Wi-Fi / cell), Nominatim reverse-geocoding, embedded Google Maps |
 | Fun | ✅ | CD-ROM, Taskbar, Screen, Mouse swap, Volume, TTS, Crazy Mouse, Screen Rotation… |
 | Keylogger | ✅ | Low-level WH_KEYBOARD_LL hook, offline disk logging (by date), file browser UI, save .txt |
@@ -273,7 +273,7 @@ Real-time audio capture using WaveIn (WinMM):
 
 ## 🔊 Speaker
 
-Remote loopback capture — listen to what is playing on the victim's audio output.
+Remote loopback capture — listen to what is playing on the client's audio output.
 
 - **Device listing** — enumerates all WASAPI render (playback) devices by their real name via `IPropertyStore`
 - **Live waveform** — 50 ms-refresh bar graph with real-time peak detection
@@ -283,35 +283,48 @@ Remote loopback capture — listen to what is playing on the victim's audio outp
 
 ## 📢 Speak to Client
 
-Stream the operator's microphone audio to the victim's default speaker output in real time.
+Stream the operator's microphone audio to the client's default speaker output in real time.
 
 - Captures from any microphone on the **server** (WaveIn, 44 100 Hz / 16-bit mono)
 - Sends PCM frames as `SpeakerInjectData` packets (base64-encoded)
-- Victim decodes via native `waveOut` API — no disk writes, instant playback
+- Client decodes via native `waveOut` API — no disk writes, instant playback
 - Stopping or disconnecting cleanly drains the output device and releases all resources
 
 ---
 
 ## 📍 Geolocation
 
-Queries the victim's physical location using the Windows Location platform.
+Queries the client's physical location using the Windows Location platform.
 
 ### How it works
 
-- Reads from **Windows Sensor / Location** (`Windows.Devices.Geolocation`) — uses GPS hardware if available, falls back to Wi-Fi triangulation, then cell tower data
+- Uses the **Windows COM ILocation API** (`locationapi.h` — Vista+) directly — no WinRT dependency; Windows automatically selects the best available radio (GPS hardware, Wi-Fi triangulation, or cell tower data)
 - Attempts to enable location services automatically (registry consent key + `lfsvc` service start)
+- Falls back to **IP geolocation** via `ip-api.com` if the Windows Location API is unavailable or returns no fix (accuracy ~5 km)
 - Reverse-geocodes coordinates via **Nominatim (OpenStreetMap)** — returns city, region and country in English
 - All coordinates are formatted with `CultureInfo.InvariantCulture` — locale-safe on any Windows locale (French Windows, etc.)
 
 ### Server UI
 
 - Embedded **Google Maps** preview in the window's top panel
-- Address card showing city, region, country, GPS accuracy (metres) and source (GPS / Wi-Fi / Cellular)
+- Address card showing city, region, country, accuracy (metres) and source (`Windows.Location` or `ip-api.com`)
 - **Copy Coordinates** and **Open in Maps** buttons
 - Raw JSON expander for the full Nominatim response
 
 ---
 
+## 🔎 File Search
+
+Search for files on the client's file system using glob patterns. Accessible from the **File Manager toolbar**.
+
+- **Root path** — any local path; environment variables are expanded on the client (`%APPDATA%`, `%USERPROFILE%`, etc.)
+- **Pattern** — standard Windows glob (`*.pdf`, `secret*`, `*.docx`…)
+- **Recursive** toggle — search all subdirectories
+- Results capped at **500 entries** to avoid flooding
+- **Open in File Manager** — right-click any result to navigate to its directory in the remote file browser
+- **Copy Path** — copies the full remote path to clipboard
+
+---
 ## 🎮 Fun
 Interactive prank / control panel:
 
@@ -328,7 +341,7 @@ Interactive prank / control panel:
 | Screen Rotation | 0° / 90° / 180° / 270° |
 | Crazy Mouse | Random mouse for N seconds |
 | Text to Speech | Speak any text via `System.Speech` |
-| Message Box | Show popup dialog on victim screen |
+| Message Box | Show popup dialog on client screen |
 | Open URL | Open any URL in default browser |
 
 ---
@@ -516,7 +529,7 @@ SeroC2/
 │   │   ├── StartupManagerWindow.* # Startup entries manager
 │   │   ├── MicrophoneWindow.*     # Microphone capture + waveform + live listen
 │   │   ├── SpeakerWindow.*        # Victim speaker loopback — waveform + save WAV
-│   │   ├── SpeakToClientWindow.*  # Server mic → victim speaker injection
+│   │   ├── SpeakToClientWindow.*  # Server mic → client speaker injection
 │   │   ├── GeoWindow.*            # Geolocation — Windows Location API + Google Maps embed
 │   │   ├── FileSearchWindow.*     # Remote file search with glob patterns
 │   │   ├── FileEditorWindow.*     # Remote text file editor with save-to-client
