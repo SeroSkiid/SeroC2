@@ -1167,7 +1167,7 @@ public partial class FileManagerWindow : ThemedWindow
         // .mkv/.webm excluded — WMF has no built-in codec on stock Windows
         var ext = Path.GetExtension(vm.Name).ToLowerInvariant();
         bool isImage = ext is ".jpg" or ".jpeg" or ".png" or ".gif" or ".bmp" or ".ico";
-        bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs";
+        bool isText  = ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css";
         bool isVideo = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
         if ((isImage && vm.SizeRaw <= 20L * 1024 * 1024)
          || (isText  && vm.SizeRaw <= 4L  * 1024 * 1024)
@@ -1182,6 +1182,13 @@ public partial class FileManagerWindow : ThemedWindow
         var ext  = Path.GetExtension(vm.Name).ToLowerInvariant();
 
         bool isVideoPreview = ext is ".mp4" or ".avi" or ".mov" or ".wmv" or ".m4v";
+        if (ext is ".mkv" or ".webm")
+        {
+            // WMF has no built-in codec for MKV/WebM on stock Windows — block before downloading
+            TxtPreviewInfo.Text = Lang.Get("FM_CODEC_ERROR");
+            ShowPreviewPanel("empty");
+            return;
+        }
         if (isVideoPreview && vm.SizeRaw >= 30L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Video too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 30 MB.";
@@ -1194,7 +1201,7 @@ public partial class FileManagerWindow : ThemedWindow
             ShowPreviewPanel("empty");
             return;
         }
-        if ((ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs")
+        if ((ext is ".txt" or ".log" or ".ini" or ".cfg" or ".json" or ".xml" or ".csv" or ".bat" or ".ps1" or ".py" or ".cs" or ".md" or ".html" or ".css")
             && vm.SizeRaw > 4L * 1024 * 1024)
         {
             TxtPreviewInfo.Text = $"Text file too large for preview ({vm.SizeRaw / 1024 / 1024} MB). Max 4 MB.";
@@ -1309,7 +1316,7 @@ public partial class FileManagerWindow : ThemedWindow
                 // Binary detection: scan first 512 bytes for null chars and non-printable bytes
                 int chk = Math.Min(bytes.Length, 512);
                 int nonPrint = 0;
-                for (int i = 0; i < chk; i++) { byte c = bytes[i]; if (c == 0 || c < 9 || (c > 13 && c < 32 && c != 27)) nonPrint++; }
+                for (int i = 0; i < chk; i++) { byte c = bytes[i]; if (c < 9 || (c > 13 && c < 32 && c != 27)) nonPrint++; }
                 if ((double)nonPrint / chk >= 0.05)
                 {
                     TxtPreviewInfo.Text = Lang.Get("FM_BINARY_CONTENT");
