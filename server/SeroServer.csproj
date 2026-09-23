@@ -32,6 +32,7 @@
     <Resource Include="rdp.png" />
     <Resource Include="shell.png" />
     <Resource Include="registry.png" />
+    <Resource Include="7zip.png" />
     <Resource Include="Resources\crypto\btc.png" />
     <Resource Include="Resources\crypto\eth.png" />
     <Resource Include="Resources\crypto\ltc.png" />
