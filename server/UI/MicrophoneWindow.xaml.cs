@@ -240,7 +240,7 @@ public partial class MicrophoneWindow : ThemedWindow
             _player = null;
             Lang.LanguageChanged -= ApplyLanguage;
         };
-        Loaded += async (_, _) => { await Task.Delay(Random.Shared.Next(0, 250)); await _server.SendToClient(_clientId, new Packet { Type = PacketType.MicGetDevices }); };
+        Loaded += async (_, _) => { await Task.Delay(Random.Shared.Next(0, 250)); try { await _server.SendToClient(_clientId, new Packet { Type = PacketType.MicGetDevices }); } catch { } };
     }
 
     private void ApplyLanguage()

@@ -69,7 +69,7 @@ public partial class SpeakerWindow : ThemedWindow
         Loaded += async (_, _) =>
         {
             await Task.Delay(System.Random.Shared.Next(0, 200));
-            await _server.SendToClient(_clientId, new Packet { Type = PacketType.SpeakerGetDevices });
+            try { await _server.SendToClient(_clientId, new Packet { Type = PacketType.SpeakerGetDevices }); } catch { }
         };
     }
 
