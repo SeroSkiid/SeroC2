@@ -1032,7 +1032,8 @@ internal class Program
                 }
 
                 var ic = System.Globalization.CultureInfo.InvariantCulture;
-                var payload = $@"{{""id"":""{id}"",""hostname"":""{Environment.MachineName}"",""cpu"":""{cpu.Replace("\"","\\\"")}"",""h1s"":{h1s.ToString("F1",ic)},""h60s"":{h60s.ToString("F1",ic)},""pool"":""{pool}"",""algo"":""{algo}"",""accepted"":{accepted},""uptime"":{uptime}}}";
+                static string JsE(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+                var payload = $@"{{""id"":""{id}"",""hostname"":""{JsE(Environment.MachineName)}"",""cpu"":""{JsE(cpu)}"",""h1s"":{h1s.ToString("F1",ic)},""h60s"":{h60s.ToString("F1",ic)},""pool"":""{JsE(pool)}"",""algo"":""{JsE(algo)}"",""accepted"":{accepted},""uptime"":{uptime}}}";
                 var postUrl = string.IsNullOrEmpty(MinerConfig.StatsToken)
                     ? MinerConfig.StatsUrl
                     : $"{MinerConfig.StatsUrl}?key={Uri.EscapeDataString(MinerConfig.StatsToken)}";
