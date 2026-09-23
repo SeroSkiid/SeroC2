@@ -71,12 +71,11 @@
                 <!-- Recording indicator -->
                 <Border x:Name="RecordingIndicator" HorizontalAlignment="Left" VerticalAlignment="Top"
                         Margin="14,10" CornerRadius="10" Padding="8,3" Visibility="Collapsed"
-                        Background="{DynamicResource SectionBgBrush}" BorderBrush="#EF4444" BorderThickness="1">
+                        Background="{DynamicResource SectionBgBrush}" BorderBrush="{DynamicResource RedBrush}" BorderThickness="1">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse x:Name="RecDot" Width="8" Height="8" VerticalAlignment="Center">
-                            <Ellipse.Fill><SolidColorBrush Color="#EF4444"/></Ellipse.Fill>
+                        <Ellipse x:Name="RecDot" Width="8" Height="8" Fill="{DynamicResource RedBrush}" VerticalAlignment="Center">
                         </Ellipse>
-                        <TextBlock x:Name="TxtRecTime" Text="0:00" Foreground="#EF4444"
+                        <TextBlock x:Name="TxtRecTime" Text="0:00" Foreground="{DynamicResource RedBrush}"
                                    FontFamily="Consolas" FontSize="11" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Border>

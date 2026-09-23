@@ -98,6 +98,7 @@ public partial class ProcessManagerWindow : ThemedWindow
     private bool     _treeMode     = false;
     private bool     _disconnected = false;
     private volatile bool _pendingRefresh = false;
+    private bool _firstRefresh = true;
     private readonly DispatcherTimer _autoTimer;
 
     public ProcessManagerWindow(TlsServer server, string clientId, string label)
@@ -154,7 +155,9 @@ public partial class ProcessManagerWindow : ThemedWindow
     {
         if (_disconnected || _pendingRefresh) return;
         _pendingRefresh = true;
-        _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcGetList });
+        var data = _firstRefresh ? "fresh" : string.Empty;
+        _firstRefresh = false;
+        _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.ProcGetList, Data = data });
     }
 
     private void OnProcList(Packet pkt)
@@ -228,21 +231,21 @@ public partial class ProcessManagerWindow : ThemedWindow
                 TxtStatus.Foreground = (Brush)FindResource("FieldLabelBrush");
             });
 
-            // Phase 2: decode icons — only for processes that don't have one yet (avoids ~1MB re-decode every 2s)
+            // Phase 2: decode icons on background thread (BitmapImage.Freeze() makes it thread-safe)
             var iconData = d.Processes
                 .Where(p => !string.IsNullOrEmpty(p.IconB64))
                 .Select(p => (p.Pid, p.IconB64))
                 .ToList();
             if (iconData.Count > 0)
             {
+                var decoded = iconData.Select(t => (t.Pid, Icon: DecodeIcon(t.IconB64))).ToList();
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
                     var allByPid2 = _all.ToDictionary(x => x.Pid);
-                    foreach (var (pid, b64) in iconData)
+                    foreach (var (pid, icon) in decoded)
                     {
                         if (!allByPid2.TryGetValue(pid, out var vm)) continue;
-                        if (vm.IconImage != null) continue; // already decoded
-                        var icon = DecodeIcon(b64);
+                        if (vm.IconImage != null) continue;
                         if (icon != null) vm.IconImage = icon;
                     }
                 });

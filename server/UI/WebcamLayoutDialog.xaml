@@ -21,7 +21,7 @@
                 <Rectangle.Fill>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                         <GradientStop Color="{DynamicResource AccentColor}" Offset="0"/>
-                        <GradientStop Color="{StaticResource PurpleColor}" Offset="1"/>
+                        <GradientStop Color="{DynamicResource PurpleColor}" Offset="1"/>
                     </LinearGradientBrush>
                 </Rectangle.Fill>
             </Rectangle>

@@ -80,6 +80,10 @@ internal static class ProcessManagerFeature
     private const uint PROCESS_QUERY_INFORMATION = 0x0400;
 
     private static readonly ConcurrentDictionary<string, string> _iconCache = new();
+    private static readonly HashSet<string> _sentIconPaths = [];
+    private static readonly object _sentLock = new();
+
+    internal static void ResetSentIcons() { lock (_sentLock) _sentIconPaths.Clear(); }
 
     // Opens ONE handle per process to get both ParentPid and I/O counters,
     // halving the OpenProcess/CloseHandle kernel calls vs. calling each separately.
@@ -115,7 +119,13 @@ internal static class ProcessManagerFeature
         finally { CloseHandle(h); }
     }
 
-    internal static string GetProcessList()
+    internal static string GetProcessList(bool fresh = false)
+    {
+        if (fresh) ResetSentIcons();
+        return GetProcessListCore();
+    }
+
+    private static string GetProcessListCore()
     {
         var now = DateTime.UtcNow;
         var totalRamMb = GetTotalRamMb();
@@ -181,13 +191,18 @@ internal static class ProcessManagerFeature
             });
         }
 
-        // Assign icons from cache (always cached now)
-        foreach (var e in list)
+        // Assign icons — skip paths already sent to this session to avoid resending ~50-80KB every 2s
+        lock (_sentLock)
         {
-            if (!string.IsNullOrEmpty(e.ExePath))
-                e.IconB64 = _iconCache.GetOrAdd(e.ExePath, _ => StubIconHelper.GetGenericExeIcon());
-            else if (string.IsNullOrEmpty(e.IconB64))
-                e.IconB64 = StubIconHelper.GetGenericExeIcon();
+            foreach (var e in list)
+            {
+                var key = string.IsNullOrEmpty(e.ExePath) ? "\x00" : e.ExePath;
+                if (_sentIconPaths.Contains(key)) continue;
+                e.IconB64 = string.IsNullOrEmpty(e.ExePath)
+                    ? StubIconHelper.GetGenericExeIcon()
+                    : _iconCache.GetOrAdd(e.ExePath, _ => StubIconHelper.GetGenericExeIcon());
+                _sentIconPaths.Add(key);
+            }
         }
 
         // Remove stale samples for dead processes
@@ -233,9 +248,8 @@ internal static class ProcessManagerFeature
 
     private static string GetExePath(Process p)
     {
-        try { var f = p.MainModule?.FileName; if (!string.IsNullOrEmpty(f)) return f; }
-        catch { }
-        // Fallback: QueryFullProcessImageName needs only PROCESS_QUERY_LIMITED_INFORMATION (0x1000)
+        // QueryFullProcessImageName uses PROCESS_QUERY_LIMITED_INFORMATION which works for all
+        // processes including protected ones, avoiding hundreds of Win32Exception throws per refresh
         try
         {
             var h = OpenProcess(0x1000, false, p.Id);

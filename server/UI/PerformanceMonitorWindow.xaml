@@ -73,7 +73,7 @@
                         <Border x:Name="BarCpu" HorizontalAlignment="Left" Width="0" Height="10" CornerRadius="3">
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="{StaticResource VioletColor}" Offset="0"/>
+                                    <GradientStop Color="{DynamicResource VioletColor}" Offset="0"/>
                                     <GradientStop Color="{DynamicResource AccentColor}" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
@@ -128,8 +128,8 @@
                         <TextBlock x:Name="TxtNetLabel" Text="NETWORK" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                    VerticalAlignment="Center"/>
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                            <TextBlock Text="↑ " Foreground="{StaticResource GreenBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                            <TextBlock x:Name="TxtNetSent" FontSize="12" FontWeight="Bold" Foreground="{StaticResource GreenBrush}" FontFamily="Consolas" Margin="0,0,14,0"/>
+                            <TextBlock Text="↑ " Foreground="{DynamicResource GreenBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtNetSent" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource GreenBrush}" FontFamily="Consolas" Margin="0,0,14,0"/>
                             <TextBlock Text="↓ " Foreground="{DynamicResource AccentBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
                             <TextBlock x:Name="TxtNetRecv" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas"/>
                         </StackPanel>
@@ -155,10 +155,10 @@
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                             <TextBlock x:Name="TxtDiskPct" Text="" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource AccentBrush}"
                                        FontFamily="Consolas" Margin="0,0,14,0" Visibility="Collapsed"/>
-                            <TextBlock Text="R " Foreground="{StaticResource YellowBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                            <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="{StaticResource YellowBrush}" FontFamily="Consolas" Margin="0,0,14,0"/>
-                            <TextBlock Text="W " Foreground="{StaticResource RedBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
-                            <TextBlock x:Name="TxtDiskWrite" FontSize="12" FontWeight="Bold" Foreground="{StaticResource RedBrush}" FontFamily="Consolas"/>
+                            <TextBlock Text="R " Foreground="{DynamicResource YellowBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtDiskRead" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,14,0"/>
+                            <TextBlock Text="W " Foreground="{DynamicResource RedBrush}" FontSize="12" FontWeight="SemiBold" FontFamily="Consolas"/>
+                            <TextBlock x:Name="TxtDiskWrite" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource RedBrush}" FontFamily="Consolas"/>
                         </StackPanel>
                     </Grid>
                     <Border Grid.Row="1" x:Name="BarDiskRow" Height="10" Margin="0,0,0,6" Background="{DynamicResource InputBgBrush}" CornerRadius="3" Visibility="Collapsed">
@@ -166,7 +166,7 @@
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                     <GradientStop Color="#40F59E0B" Offset="0"/>
-                                    <GradientStop Color="{StaticResource YellowColor}" Offset="1"/>
+                                    <GradientStop Color="{DynamicResource YellowColor}" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>
@@ -192,7 +192,7 @@
                             <TextBlock x:Name="TxtGpuName" Text="" FontSize="9" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontFamily="Consolas" TextTrimming="CharacterEllipsis"/>
                         </StackPanel>
-                        <TextBlock x:Name="TxtGpuUsage" FontSize="20" FontWeight="Bold" Foreground="{StaticResource YellowBrush}"
+                        <TextBlock x:Name="TxtGpuUsage" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource YellowBrush}"
                                    HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas"/>
                     </Grid>
                     <Border Grid.Row="1" Height="10" Background="{DynamicResource InputBgBrush}" CornerRadius="3">
@@ -200,7 +200,7 @@
                             <Border.Background>
                                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
                                     <GradientStop Color="#40F59E0B" Offset="0"/>
-                                    <GradientStop Color="{StaticResource YellowColor}" Offset="1"/>
+                                    <GradientStop Color="{DynamicResource YellowColor}" Offset="1"/>
                                 </LinearGradientBrush>
                             </Border.Background>
                         </Border>

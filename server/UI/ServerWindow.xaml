@@ -1309,7 +1309,7 @@
             <Grid x:Name="ScreenPopupOverlay" Grid.RowSpan="2" Panel.ZIndex="200"
                   Background="#D0060810" Visibility="Collapsed"
                   MouseLeftButtonDown="ScreenPopupOverlay_Close">
-                <Border Background="#0C0E1E" CornerRadius="10" BorderThickness="1" BorderBrush="#2A3060"
+                <Border Background="{DynamicResource CardBgBrush}" CornerRadius="10" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
                         Padding="16" MinWidth="300" MaxWidth="1100"
                         MouseLeftButtonDown="ScreenPopupOverlay_StopBubble">
@@ -1324,7 +1324,7 @@
                         </Grid>
                         <Image x:Name="ScreenPopupImage" Stretch="Uniform"
                                MaxHeight="680" MaxWidth="1068"/>
-                        <TextBlock x:Name="ScreenPopupSub" Foreground="#6878A8" FontSize="10"
+                        <TextBlock x:Name="ScreenPopupSub" Foreground="{DynamicResource LabelBrush}" FontSize="10"
                                    FontFamily="Consolas" Margin="0,8,0,0"
                                    HorizontalAlignment="Center"/>
                     </StackPanel>
@@ -1429,7 +1429,7 @@
                                         <Grid Width="14" Height="14" VerticalAlignment="Center"
                                               Margin="0,0,6,0">
                                             <Ellipse x:Name="ServerDot" Width="7" Height="7"
-                                                     Fill="#EF4444" HorizontalAlignment="Center"
+                                                     Fill="{DynamicResource RedBrush}" HorizontalAlignment="Center"
                                                      VerticalAlignment="Center"/>
                                         </Grid>
                                         <TextBlock x:Name="TxtServerStatus" Text="Stopped"
@@ -1631,10 +1631,10 @@
                                             Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#22C55E" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource GreenBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblOnline" Text="ONLINE" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashOnline" Text="0" Foreground="#22C55E" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashOnline" Text="0" Foreground="{DynamicResource GreenBrush}" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
                                             <TextBlock x:Name="DashSubOnline" Text="connected now" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1657,10 +1657,10 @@
                                             Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xE945;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource YellowBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblNew24h" Text="NEW 24H" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashNew24h" Text="0" Foreground="#F59E0B" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashNew24h" Text="0" Foreground="{DynamicResource YellowBrush}" FontSize="34" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
                                             <TextBlock x:Name="DashSubNew24h" Text="connections today" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1670,10 +1670,10 @@
                                             Background="{DynamicResource CardBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}" Padding="16,15,16,15">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#5B9BD5" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xE121;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblUptime" Text="UPTIME" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashUptime" Text="--" Foreground="#5B9BD5" FontSize="20" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <TextBlock x:Name="DashUptime" Text="--" Foreground="{DynamicResource AccentBrush}" FontSize="20" FontWeight="Bold" Margin="0,5,0,0" TextWrapping="Wrap"/>
                                             <TextBlock x:Name="DashSubUptime" Text="server running" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,3,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1736,8 +1736,8 @@
                                                 <TextBlock Grid.Column="0" Text="WIN 10" Foreground="{DynamicResource LabelBrush}" FontSize="9" VerticalAlignment="Center"/>
                                                 <ProgressBar Grid.Column="1" x:Name="DashOsWin10Bar" Minimum="0" Maximum="100" Value="0"
                                                              Height="4" Margin="8,0" Style="{StaticResource FlatBar}"
-                                                             Foreground="#60A0FF" Background="{DynamicResource ProgressTrackBrush}"/>
-                                                <TextBlock Grid.Column="2" x:Name="DashWin10" Text="--" Foreground="#60A0FF"
+                                                             Foreground="{DynamicResource AccentBrush}" Background="{DynamicResource ProgressTrackBrush}"/>
+                                                <TextBlock Grid.Column="2" x:Name="DashWin10" Text="--" Foreground="{DynamicResource AccentBrush}"
                                                            FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
                                             </Grid>
 
@@ -1750,8 +1750,8 @@
                                                 <TextBlock Grid.Column="0" Text="OTHER" Foreground="{DynamicResource LabelBrush}" FontSize="9" VerticalAlignment="Center"/>
                                                 <ProgressBar Grid.Column="1" x:Name="DashOsOtherBar" Minimum="0" Maximum="100" Value="0"
                                                              Height="4" Margin="8,0" Style="{StaticResource FlatBar}"
-                                                             Foreground="#7080A0" Background="{DynamicResource ProgressTrackBrush}"/>
-                                                <TextBlock Grid.Column="2" x:Name="DashOsOther" Text="--" Foreground="#7080A0"
+                                                             Foreground="{DynamicResource LabelBrush}" Background="{DynamicResource ProgressTrackBrush}"/>
+                                                <TextBlock Grid.Column="2" x:Name="DashOsOther" Text="--" Foreground="{DynamicResource LabelBrush}"
                                                            FontSize="11" FontWeight="SemiBold" TextAlignment="Right"/>
                                             </Grid>
                                         </StackPanel>
@@ -1768,10 +1768,10 @@
                                             Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xE114;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#F59E0B" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xE114;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource YellowBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblWebcam" Text="WEBCAM" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashWebcam" Text="0" Foreground="#F59E0B" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
+                                            <TextBlock x:Name="DashWebcam" Text="0" Foreground="{DynamicResource YellowBrush}" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock x:Name="DashSubWebcam" Text="w/ camera" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1780,10 +1780,10 @@
                                             Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xEA18;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#EF4444" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xEA18;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource RedBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblAdmin" Text="ADMIN" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashAdmin" Text="0" Foreground="#EF4444" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
+                                            <TextBlock x:Name="DashAdmin" Text="0" Foreground="{DynamicResource RedBrush}" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock x:Name="DashSubAdmin" Text="elevated" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1792,10 +1792,10 @@
                                             Padding="14,12" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                         <StackPanel>
                                             <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
-                                                <TextBlock Text="&#xE8EC;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#C8991A" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="&#xE8EC;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource YellowBrush}" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="DashLblTagged" Text="TAGGED" Foreground="{DynamicResource LabelBrush}" FontSize="9" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                             </StackPanel>
-                                            <TextBlock x:Name="DashTagged" Text="0" Foreground="#C8991A" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
+                                            <TextBlock x:Name="DashTagged" Text="0" Foreground="{DynamicResource YellowBrush}" FontSize="22" FontWeight="Bold" Margin="0,5,0,0"/>
                                             <TextBlock x:Name="DashSubTagged" Text="marked clients" Foreground="{DynamicResource LabelBrush}" FontSize="9" Margin="0,2,0,0"/>
                                         </StackPanel>
                                     </Border>
@@ -1820,7 +1820,7 @@
                                                 Click="BtnDashMinerStats_Click" Style="{StaticResource SBtn}"
                                                 ToolTip="Open miner statistics window">
                                             <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="#F59E0B" FontSize="11" Margin="0,0,7,0" VerticalAlignment="Center"/>
+                                                <TextBlock Text="⛏" FontFamily="Segoe UI Symbol" Foreground="{DynamicResource YellowBrush}" FontSize="11" Margin="0,0,7,0" VerticalAlignment="Center"/>
                                                 <TextBlock x:Name="BtnDashMinerStatsLbl" Text="MINER STATS"
                                                            VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -1837,7 +1837,7 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#22C55E" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE839;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource GreenBrush}" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Online"/>
                         </StackPanel>
                     </TabItem.Header>
@@ -2009,12 +2009,12 @@
                                                     </StackPanel>
                                                     <DataTemplate.Triggers>
                                                         <DataTrigger Binding="{Binding StatusColor}" Value="Yellow">
-                                                            <Setter TargetName="PersonIcon" Property="Fill"       Value="#F59E0B"/>
-                                                            <Setter TargetName="StatusTxt"  Property="Foreground" Value="#F59E0B"/>
+                                                            <Setter TargetName="PersonIcon" Property="Fill"       Value="{DynamicResource YellowBrush}"/>
+                                                            <Setter TargetName="StatusTxt"  Property="Foreground" Value="{DynamicResource YellowBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding StatusColor}" Value="Grey">
-                                                            <Setter TargetName="PersonIcon" Property="Fill"       Value="#6B7280"/>
-                                                            <Setter TargetName="StatusTxt"  Property="Foreground" Value="#6B7280"/>
+                                                            <Setter TargetName="PersonIcon" Property="Fill"       Value="{DynamicResource LabelBrush}"/>
+                                                            <Setter TargetName="StatusTxt"  Property="Foreground" Value="{DynamicResource LabelBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding IsOperatorBusy}" Value="True">
                                                             <Setter TargetName="BusyDot" Property="Visibility" Value="Visible"/>
@@ -2035,11 +2035,11 @@
                                                 <DataTemplate>
                                                     <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                                                         <TextBlock x:Name="CamYesIcon" Text="✔" FontSize="12"
-                                                                   Foreground="#22C55E" FontFamily="Segoe UI Symbol"
+                                                                   Foreground="{DynamicResource GreenBrush}" FontFamily="Segoe UI Symbol"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                    Visibility="Collapsed"/>
                                                         <TextBlock x:Name="CamNoIcon" Text="✖" FontSize="12"
-                                                                   Foreground="#EF4444" FontFamily="Segoe UI Symbol"
+                                                                   Foreground="{DynamicResource RedBrush}" FontFamily="Segoe UI Symbol"
                                                                    HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                    Visibility="Collapsed"/>
                                                         <TextBlock x:Name="CamDash" Text="—" FontSize="11"
@@ -2087,7 +2087,7 @@
                                                                 HorizontalAlignment="Left" Margin="2,0" Visibility="Collapsed">
                                                             <StackPanel Orientation="Horizontal">
                                                                 <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}" Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                                <TextBlock Text="{Binding Tag}" Foreground="#D4A843"
+                                                                <TextBlock Text="{Binding Tag}" Foreground="{DynamicResource YellowBrush}"
                                                                            FontSize="10" FontWeight="SemiBold" FontFamily="Segoe UI"
                                                                            VerticalAlignment="Center"/>
                                                             </StackPanel>
@@ -2442,7 +2442,7 @@
                                                             HorizontalAlignment="Left" Margin="2,0" Visibility="Collapsed">
                                                         <StackPanel Orientation="Horizontal">
                                                             <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Price.svg'}" Width="9" Height="9" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                                                            <TextBlock Text="{Binding Tag}" Foreground="#D4A843"
+                                                            <TextBlock Text="{Binding Tag}" Foreground="{DynamicResource YellowBrush}"
                                                                        FontSize="10" FontWeight="SemiBold" FontFamily="Segoe UI"
                                                                        VerticalAlignment="Center"/>
                                                         </StackPanel>
@@ -2602,7 +2602,7 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#5B9BD5" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE8E3;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Builder"/>
                         </StackPanel>
                     </TabItem.Header>
@@ -2791,7 +2791,7 @@
                                                   ToolTip="Protects the stub process from being killed: sets an empty DACL (denies PROCESS_TERMINATE and PROCESS_SUSPEND_RESUME for Everyone) so Task Manager, Process Explorer, and taskkill.exe fail with Access Denied. Also spawns 4 guardian processes in dllhost.exe / SearchProtocolHost.exe with PPID spoofing that restart the stub if it is killed. Windows shutdown bypasses DACL cleanly ? no BSOD on reboot."
                                                   Checked="BldPersist_Changed" Unchecked="BldPersist_Changed" />
                                         <TextBlock x:Name="TxtMaxPersist" Margin="18,2,0,0" FontSize="10"
-                                                   Foreground="#22C55E" FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource GreenBrush}" FontWeight="SemiBold"
                                                    Text="? Max persistence" Visibility="Collapsed" />
                                     </StackPanel>
                                 </Border>
@@ -2810,7 +2810,7 @@
                                                 Background="#1AF59E0B" BorderBrush="#60F59E0B"
                                                 BorderThickness="1" CornerRadius="5"
                                                 Visibility="{Binding IsChecked, ElementName=BldUacBypass, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock x:Name="BldTxtUacWarning" FontSize="10" Foreground="#F59E0B" TextWrapping="Wrap"
+                                            <TextBlock x:Name="BldTxtUacWarning" FontSize="10" Foreground="{DynamicResource YellowBrush}" TextWrapping="Wrap"
                                                        Text="?  UAC bypass uses the native C++ loader ? the crypter will be applied automatically." />
                                         </Border>
                                         <CheckBox x:Name="BldCustomPacker" Style="{StaticResource SChk}" Margin="0,4,0,0"
@@ -2942,7 +2942,7 @@
                                                     FontSize="9" FontWeight="SemiBold" FontFamily="Segoe UI"
                                                     Padding="6,0" Cursor="Hand"
                                                     Background="#1AF59E0B" BorderBrush="#40F59E0B" BorderThickness="1"
-                                                    Foreground="#C8F59E0B"
+                                                    Foreground="{DynamicResource YellowBrush}"
                                                     ToolTip="Open XMRig latest release on GitHub"
                                                     Click="BldMnrDownloadXmrig_Click">
                                                 <Button.Template>
@@ -2961,7 +2961,7 @@
                                                     </ControlTemplate>
                                                 </Button.Template>
                                             </Button>
-                                            <TextBlock x:Name="MnrLblBinary" Text="XMRIG BINARY" Foreground="#99F59E0B"
+                                            <TextBlock x:Name="MnrLblBinary" Text="XMRIG BINARY" Foreground="{DynamicResource YellowBrush}"
                                                        FontSize="9" FontWeight="Bold" FontFamily="Consolas"
                                                        VerticalAlignment="Center"/>
                                         </DockPanel>
@@ -2975,7 +2975,7 @@
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
                                         <TextBlock x:Name="MnrSecNetwork" Text="NETWORK" FontSize="9" FontWeight="Bold"
-                                                   Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
+                                                   Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <TextBlock x:Name="MnrLblPool" Text="POOL URL" Style="{StaticResource SFieldLabel}"/>
                                         <TextBox x:Name="BldMnrPool" Style="{StaticResource STxt}"
                                                  Text="pool.supportxmr.com:3333" Margin="0,0,0,4"/>
@@ -3011,7 +3011,7 @@
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
                                         <TextBlock x:Name="MnrSecCpu" Text="CPU TUNING" FontSize="9" FontWeight="Bold"
-                                                   Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
+                                                   Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <Grid Margin="0,0,0,6">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
@@ -3043,7 +3043,7 @@
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
                                         <TextBlock x:Name="MnrSecDeploy" Text="DEPLOY" FontSize="9" FontWeight="Bold"
-                                                   Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
+                                                   Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <TextBlock x:Name="MnrLblInstall" Text="INSTALL NAME" Style="{StaticResource SFieldLabel}"/>
                                         <TextBox x:Name="BldMnrInstallName" Style="{StaticResource STxt}"
                                                  Text="svchost.exe" Margin="0,0,0,6"
@@ -3057,7 +3057,7 @@
                                                  ToolTip="HTTP port for miner stats reporting — must be open/forwarded to this machine"/>
                                         <!-- Integrated stats endpoint info -->
                                         <TextBlock x:Name="BldMnrStatsInfo" Margin="0,2,0,0" FontSize="10"
-                                                   Foreground="#60A0FF" FontFamily="Consolas" TextWrapping="Wrap"
+                                                   Foreground="{DynamicResource AccentBrush}" FontFamily="Consolas" TextWrapping="Wrap"
                                                    Text="Stats are collected automatically by the C2 server.&#10;Click MINER STATS in the dashboard to view."/>
                                     </StackPanel>
                                 </Border>
@@ -3067,7 +3067,7 @@
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
                                         <TextBlock x:Name="MnrSecProtection" Text="PROTECTION" FontSize="9" FontWeight="Bold"
-                                                   Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
+                                                   Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <CheckBox x:Name="BldMnrDisableSleep" Content="Disable sleep (keep system awake)"
                                                   Style="{StaticResource SChk}" IsChecked="True"/>
                                         <CheckBox x:Name="BldMnrStartup" Content="Persist via scheduled task"
@@ -3100,7 +3100,7 @@
                                         Background="{DynamicResource InputBgBrush}" BorderThickness="1" BorderBrush="{DynamicResource SectionBorderBrush}">
                                     <StackPanel>
                                         <TextBlock x:Name="MnrSecBuild" Text="BUILD" FontSize="9" FontWeight="Bold"
-                                                   Foreground="#C0F59E0B" FontFamily="Consolas" Margin="0,0,0,5"/>
+                                                   Foreground="{DynamicResource YellowBrush}" FontFamily="Consolas" Margin="0,0,0,5"/>
                                         <StackPanel Orientation="Horizontal">
                                             <Button x:Name="BtnMnrBuild" Content="BUILD" Width="120" Height="30"
                                                     Style="{StaticResource SGreenBtn}" Click="BldMnrBuild_Click"/>
@@ -3126,7 +3126,7 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#F59E0B" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE768;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource YellowBrush}" FontSize="11" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="AutoTask"/>
                         </StackPanel>
                     </TabItem.Header>
@@ -3321,19 +3321,19 @@
                                                    Margin="0,0,10,0" RenderOptions.BitmapScalingMode="HighQuality"/>
                                             <StackPanel VerticalAlignment="Center">
                                                 <TextBlock x:Name="LblClipperTitle" Text="CRYPTO CLIPPER" FontSize="10" FontWeight="Bold"
-                                                           FontFamily="Consolas" Foreground="#C8A060"/>
+                                                           FontFamily="Consolas" Foreground="{DynamicResource YellowBrush}"/>
                                                 <TextBlock x:Name="LblClipperSubtitle" Text="clipboard address interceptor" FontSize="9"
                                                            Foreground="{DynamicResource LabelBrush}" FontFamily="Consolas"
                                                            TextTrimming="CharacterEllipsis"/>
                                             </StackPanel>
                                             <Border x:Name="ClipperActiveBadge" Margin="12,0,0,0" CornerRadius="3"
-                                                    Background="#0A1E10" BorderBrush="#1A5E28" BorderThickness="1"
+                                                    Background="{DynamicResource SectionBgBrush}" BorderBrush="{DynamicResource GreenBrush}" BorderThickness="1"
                                                     Padding="8,3" Visibility="Collapsed" VerticalAlignment="Center">
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                                                    <Ellipse Width="5" Height="5" Fill="{DynamicResource GreenBrush}" VerticalAlignment="Center" Margin="0,0,5,0">
                                                         <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="6" ShadowDepth="0" Opacity="1"/></Ellipse.Effect>
                                                     </Ellipse>
-                                                    <TextBlock x:Name="LblClipperIntercepting" Text="INTERCEPTING" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Consolas"/>
+                                                    <TextBlock x:Name="LblClipperIntercepting" Text="INTERCEPTING" Foreground="{DynamicResource GreenBrush}" FontSize="9" FontWeight="Bold" FontFamily="Consolas"/>
                                                 </StackPanel>
                                             </Border>
                                             <TextBlock x:Name="ClipperCountTxt" Text=""
@@ -3363,7 +3363,7 @@
                                     <DockPanel>
                                         <Grid DockPanel.Dock="Top" Margin="12,8,12,6">
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                                <TextBlock Text="?" FontSize="7" Foreground="#22C55E" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                                <TextBlock Text="?" FontSize="7" Foreground="{DynamicResource GreenBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                                                 <TextBlock x:Name="LblClipperIntLog" Text="INTERCEPT LOG" FontSize="9" FontWeight="Bold"
                                                            Foreground="{DynamicResource ContentTextBrush}" FontFamily="Consolas" VerticalAlignment="Center"/>
                                             </StackPanel>
@@ -4153,7 +4153,7 @@
                                                            FontSize="12" VerticalAlignment="Center"/>
                                                 <!-- Chevron -->
                                                 <Path Grid.Column="2" Data="M0,0 L5,4 L10,0"
-                                                      Stroke="#606880" StrokeThickness="1.5"
+                                                      Stroke="{DynamicResource LabelBrush}" StrokeThickness="1.5"
                                                       HorizontalAlignment="Center" VerticalAlignment="Center"
                                                       IsHitTestVisible="False"/>
                                             </Grid>
@@ -4411,7 +4411,7 @@
                                                     <ColumnDefinition Width="82" />
                                                 </Grid.ColumnDefinitions>
                                                 <DockPanel Grid.Column="0" VerticalAlignment="Center" LastChildFill="True">
-                                                    <TextBlock DockPanel.Dock="Left" Text="&#xE894;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="13" Width="14" Margin="0,0,7,0" VerticalAlignment="Center" Foreground="#EF4444"/>
+                                                    <TextBlock DockPanel.Dock="Left" Text="&#xE894;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" FontSize="13" Width="14" Margin="0,0,7,0" VerticalAlignment="Center" Foreground="{DynamicResource RedBrush}"/>
                                                     <TextBlock x:Name="SndLbl_BuildError" Text="Build Error" Foreground="{DynamicResource ContentTextBrush}" VerticalAlignment="Center" FontSize="11" TextWrapping="Wrap"/>
                                                 </DockPanel>
                                                 <CheckBox Grid.Column="1" x:Name="SndChk_BuildError" Style="{StaticResource SChk}" VerticalAlignment="Center" Margin="8,0,0,0" Checked="SoundSetting_Changed" Unchecked="SoundSetting_Changed">
@@ -4541,7 +4541,7 @@
                 <TabItem>
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="#5B9BD5" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="&#xE946;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource AccentBrush}" FontSize="10" Margin="0,0,5,0" VerticalAlignment="Center"/>
                             <TextBlock Text="About"/>
                         </StackPanel>
                     </TabItem.Header>

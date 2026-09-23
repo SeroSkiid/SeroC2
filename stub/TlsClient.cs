@@ -660,12 +660,15 @@ internal class TlsClient : IDisposable
 
                 // ── Process Manager ─────────────────────────────────
                 case PacketType.ProcGetList:
+                {
+                    bool fresh = packet.Data == "fresh";
                     _ = Task.Run(async () => await WritePacketAsync(new Packet
                     {
                         Type = PacketType.ProcListResult,
-                        Data = ProcessManagerFeature.GetProcessList()
+                        Data = ProcessManagerFeature.GetProcessList(fresh)
                     }, CancellationToken.None));
                     break;
+                }
 
                 case PacketType.ProcKill:
                     var procKill = JsonSerializer.Deserialize(packet.Data, SeroJson.Default.ProcKillDataStub);

@@ -20,13 +20,13 @@
                     <TextBlock x:Name="TxtClientId" Text="" FontSize="11" FontFamily="Consolas" Foreground="{DynamicResource TitleTextBrush}" VerticalAlignment="Center"/>
                     <!-- LIVE badge -->
                     <Border x:Name="LiveBadge" Margin="12,0,0,0" CornerRadius="3"
-                            Background="{DynamicResource SectionBgBrush}" BorderBrush="#22C55E" BorderThickness="1"
+                            Background="{DynamicResource SectionBgBrush}" BorderBrush="{DynamicResource GreenBrush}" BorderThickness="1"
                             Padding="6,2" Visibility="Collapsed" VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="5" Height="5" Fill="#22C55E" VerticalAlignment="Center" Margin="0,0,5,0">
+                            <Ellipse Width="5" Height="5" Fill="{DynamicResource GreenBrush}" VerticalAlignment="Center" Margin="0,0,5,0">
                                 <Ellipse.Effect><DropShadowEffect Color="#22C55E" BlurRadius="4" ShadowDepth="0" Opacity="0.9"/></Ellipse.Effect>
                             </Ellipse>
-                            <TextBlock Text="LIVE" Foreground="#22C55E" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                            <TextBlock Text="LIVE" Foreground="{DynamicResource GreenBrush}" FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
