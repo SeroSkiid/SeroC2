@@ -48,6 +48,7 @@ public partial class WindowManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridWins);
+        TypeToSelect.Enable(GridWins, o => (o as WindowEntryVM)?.Title ?? "");
         _server   = server;
         _clientId = clientId;
         TxtTitle.Text = label;

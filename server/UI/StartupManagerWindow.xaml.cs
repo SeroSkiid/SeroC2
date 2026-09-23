@@ -21,6 +21,7 @@ public partial class StartupManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridStartup);
+        TypeToSelect.Enable(GridStartup, o => (o as StartupEntryVM)?.Name ?? "");
         _server   = server;
         _clientId = clientId;
         TxtTitle.Text = clientLabel;

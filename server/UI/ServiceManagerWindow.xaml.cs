@@ -86,6 +86,7 @@ public partial class ServiceManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridServices);
+        TypeToSelect.Enable(GridServices, o => (o as ServiceEntryVM)?.DisplayName ?? "");
         _server   = server;
         _clientId = clientId;
         TxtTitle.Text = label;

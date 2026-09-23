@@ -47,6 +47,7 @@ public partial class InstalledAppsWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridApps);
+        TypeToSelect.Enable(GridApps, o => (o as InstalledAppVM)?.Name ?? "");
         _server   = server;
         _clientId = clientId;
         TxtTitle.Text = label;

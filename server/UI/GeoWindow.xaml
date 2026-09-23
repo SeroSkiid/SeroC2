@@ -28,7 +28,10 @@
                     <Button x:Name="BtnOpenMap" Height="26" Padding="10,0"
                             Style="{StaticResource SBtn}" FontSize="11" Click="OpenMap_Click" IsEnabled="False">
                         <StackPanel Orientation="Horizontal">
-                            <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Open.svg'}" Width="12" Height="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                            <Canvas Width="12" Height="14" Margin="0,0,5,0" VerticalAlignment="Center">
+                                <Path Data="M6,0 C2.69,0 0,2.69 0,6 C0,10.5 6,14 6,14 C6,14 12,10.5 12,6 C12,2.69 9.31,0 6,0 Z" Fill="#EA4335"/>
+                                <Ellipse Canvas.Left="3.5" Canvas.Top="3.5" Width="5" Height="5" Fill="White"/>
+                            </Canvas>
                             <TextBlock x:Name="TxtBtnMap" Text="Open in Maps"/>
                         </StackPanel>
                     </Button>
@@ -54,7 +57,7 @@
             </Grid.RowDefinitions>
 
             <!-- ── Map area ── -->
-            <Grid Grid.Row="0" Background="{DynamicResource SidebarCtrlBgBrush}">
+            <Grid Grid.Row="0" Background="{DynamicResource SidebarCtrlBgBrush}" x:Name="MapGrid">
                 <!-- Idle placeholder -->
                 <StackPanel x:Name="PnlMapIdle" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Travel_MapPointer.svg'}" Width="56" Height="56" HorizontalAlignment="Center" Opacity="0.15"/>
@@ -77,6 +80,17 @@
 
                 <!-- Embedded map — WebBrowser with OSM tile HTML (no JS, no script errors) -->
                 <WebBrowser x:Name="MapBrowser" Visibility="Collapsed"/>
+
+                <!-- Zoom controls — shown only when map is visible -->
+                <StackPanel x:Name="PnlZoom" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                            Margin="0,0,8,8" Visibility="Collapsed">
+                    <Button x:Name="BtnZoomIn" Content="+" Width="26" Height="26"
+                            Style="{StaticResource SBtn}" Click="ZoomIn_Click"
+                            FontSize="13" FontWeight="Bold" Padding="0" ToolTip="Zoom in"/>
+                    <Button x:Name="BtnZoomOut" Content="−" Width="26" Height="26"
+                            Style="{StaticResource SBtn}" Click="ZoomOut_Click"
+                            FontSize="13" FontWeight="Bold" Padding="0" Margin="0,2,0,0" ToolTip="Zoom out"/>
+                </StackPanel>
             </Grid>
 
             <!-- Divider -->

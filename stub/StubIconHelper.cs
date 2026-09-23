@@ -79,19 +79,22 @@ internal static class StubIconHelper
         if (string.IsNullOrEmpty(path)) return "";
         path = path.TrimStart('@').Trim();
         path = Environment.ExpandEnvironmentVariables(path);
-        if (!System.IO.File.Exists(path)) return "";
+        bool fileExists = System.IO.File.Exists(path);
         try
         {
-            // ExtractIconEx doesn't hold the shell COM lock, enabling true parallelism
-            var smIcons = new nint[1];
-            if (ExtractIconEx(path, 0, null, smIcons, 1) > 0 && smIcons[0] != 0)
+            if (fileExists)
             {
-                try { return HIconToPngBase64(smIcons[0], 16); }
-                finally { DestroyIcon(smIcons[0]); }
+                // ExtractIconEx doesn't hold the shell COM lock, enabling true parallelism
+                var smIcons = new nint[1];
+                if (ExtractIconEx(path, 0, null, smIcons, 1) > 0 && smIcons[0] != 0)
+                {
+                    try { return HIconToPngBase64(smIcons[0], 16); }
+                    finally { DestroyIcon(smIcons[0]); }
+                }
             }
 
-            // Fallback: SHGetFileInfo on the real path gives shell-assigned icon
-            // (handles svchost.exe, dllhost.exe and other system processes with no embedded PE icon)
+            // SHGetFileInfo resolves icons through the Windows Shell — works for svchost.exe,
+            // dllhost.exe, and UWP apps in protected WindowsApps directories where File.Exists fails.
             const uint SHGFI_ICON      = 0x100;
             const uint SHGFI_SMALLICON = 0x001;
             var shfi = new SHFILEINFO();

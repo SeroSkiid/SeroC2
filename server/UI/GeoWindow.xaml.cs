@@ -16,6 +16,7 @@ public partial class GeoWindow : ThemedWindow
     private readonly string    _clientId;
     private double _lat, _lon;
     private bool   _hasData;
+    private int    _zoom = 14;
 
     public GeoWindow(TlsServer server, string clientId, string clientLabel)
     {
@@ -59,6 +60,7 @@ public partial class GeoWindow : ThemedWindow
         PnlMapIdle.Visibility  = Visibility.Visible;
         PnlMapError.Visibility = Visibility.Collapsed;
         MapBrowser.Visibility  = Visibility.Collapsed;
+        PnlZoom.Visibility     = Visibility.Collapsed;
         PnlData.Visibility     = Visibility.Collapsed;
         TxtIdle.Text           = Lang.Get("GEO_LOCATING");
 
@@ -109,13 +111,56 @@ public partial class GeoWindow : ThemedWindow
             // Load embedded map — OSM tiles via NavigateToString (no JS, no script error)
             PnlMapIdle.Visibility  = Visibility.Collapsed;
             PnlMapError.Visibility = Visibility.Collapsed;
-            ShowTileMap(data.Lat, data.Lon);
+            ShowTileMap(data.Lat, data.Lon, _zoom);
         });
     }
 
-    private void ShowTileMap(double lat, double lon)
+    protected override void OnSourceInitialized(EventArgs e)
     {
-        const int zoom = 14;
+        base.OnSourceInitialized(e);
+        if (PresentationSource.FromVisual(this) is System.Windows.Interop.HwndSource src)
+            src.AddHook(MapWheelHook);
+    }
+
+    private nint MapWheelHook(nint hwnd, int msg, nint wParam, nint lParam, ref bool handled)
+    {
+        const int WM_MOUSEWHEEL = 0x020A;
+        if (msg == WM_MOUSEWHEEL && _hasData && MapBrowser.Visibility == Visibility.Visible)
+        {
+            // Only zoom when cursor is over the map area
+            var screen = new System.Windows.Point(
+                unchecked((short)(lParam.ToInt32() & 0xFFFF)),
+                unchecked((short)((lParam.ToInt32() >> 16) & 0xFFFF)));
+            var local = PointFromScreen(screen);
+            var mapBottom = MapGrid.TranslatePoint(new System.Windows.Point(0, MapGrid.ActualHeight), this).Y;
+            if (local.Y >= 0 && local.Y <= mapBottom)
+            {
+                int delta = unchecked((short)((wParam.ToInt32() >> 16) & 0xFFFF));
+                if (delta > 0) ZoomIn(); else ZoomOut();
+            }
+        }
+        return IntPtr.Zero;
+    }
+
+    private void ZoomIn()
+    {
+        if (_zoom >= 18 || !_hasData) return;
+        _zoom++;
+        ShowTileMap(_lat, _lon, _zoom);
+    }
+
+    private void ZoomOut()
+    {
+        if (_zoom <= 3 || !_hasData) return;
+        _zoom--;
+        ShowTileMap(_lat, _lon, _zoom);
+    }
+
+    private void ZoomIn_Click(object s, RoutedEventArgs e) => ZoomIn();
+    private void ZoomOut_Click(object s, RoutedEventArgs e) => ZoomOut();
+
+    private void ShowTileMap(double lat, double lon, int zoom)
+    {
         const int w = 480, h = 220;
 
         double n = 1 << zoom;
@@ -162,6 +207,7 @@ public partial class GeoWindow : ThemedWindow
 
         MapBrowser.NavigateToString(sb.ToString());
         MapBrowser.Visibility = Visibility.Visible;
+        PnlZoom.Visibility    = Visibility.Visible;
     }
 
     private void ShowError(string msg)
@@ -170,6 +216,7 @@ public partial class GeoWindow : ThemedWindow
         TxtStatus.Text         = msg;
         PnlMapIdle.Visibility  = Visibility.Collapsed;
         MapBrowser.Visibility  = Visibility.Collapsed;
+        PnlZoom.Visibility     = Visibility.Collapsed;
         PnlMapError.Visibility = Visibility.Visible;
         PnlData.Visibility     = Visibility.Collapsed;
         BtnLocate.IsEnabled    = true;

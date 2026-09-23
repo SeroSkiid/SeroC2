@@ -39,6 +39,7 @@ public partial class DeviceManagerWindow : ThemedWindow
         TxtTitle.Text = label;
         GridDevs.ItemsSource = _devices;
         RubberBandSelector.Enable(GridDevs);
+        TypeToSelect.Enable(GridDevs, o => (o as DeviceEntryVM)?.Name ?? "");
         _server.RegisterHandler(clientId, PacketType.DevListResult, OnList);
         _server.ClientDisconnected += OnClientDisconnected;
         Lang.LanguageChanged += ApplyLanguage;

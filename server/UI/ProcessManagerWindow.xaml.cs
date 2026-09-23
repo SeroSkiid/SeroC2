@@ -104,6 +104,7 @@ public partial class ProcessManagerWindow : ThemedWindow
     {
         InitializeComponent();
         RubberBandSelector.Enable(GridProcs);
+        TypeToSelect.Enable(GridProcs, o => (o as ProcEntryVM)?.Name ?? "");
         _server   = server;
         _clientId = clientId;
         TxtTitle.Text = label;
@@ -386,11 +387,7 @@ public partial class ProcessManagerWindow : ThemedWindow
         });
     }
 
-    private void BtnRefresh_Click(object s, RoutedEventArgs e)
-    {
-        BtnRefresh.IsEnabled = false;
-        RequestRefresh();
-    }
+    private void BtnRefresh_Click(object s, RoutedEventArgs e) => RequestRefresh();
 
     private void BtnKill_Click(object s, RoutedEventArgs e)
     {
