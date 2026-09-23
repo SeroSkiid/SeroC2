@@ -153,6 +153,16 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmFileSearch  != null) MnuFmFileSearch.Header  = Lang.Get("FM_FILE_SEARCH_HERE");
         if (MnuFmCopyName    != null) MnuFmCopyName.Header    = Lang.Get("ACT_COPY_NAME");
         if (MnuFmCopyPath    != null) MnuFmCopyPath.Header    = Lang.Get("ACT_COPY_PATH");
+        if (BtnFileSearch    != null) BtnFileSearch.ToolTip   = Lang.Get("FM_SEARCH_TOOLTIP");
+        if (GridFiles?.Columns.Count >= 6)
+        {
+            GridFiles.Columns[0].Header = Lang.Get("FM_COL_NAME");
+            GridFiles.Columns[1].Header = Lang.Get("FM_COL_TYPE");
+            GridFiles.Columns[2].Header = Lang.Get("FM_COL_SIZE");
+            GridFiles.Columns[3].Header = Lang.Get("FM_COL_MODIFIED");
+            GridFiles.Columns[4].Header = Lang.Get("FM_COL_CREATED");
+            GridFiles.Columns[5].Header = Lang.Get("FM_COL_ATTR");
+        }
     }
 
     // Drives are populated from Navigate("") — stub returns drive list for empty path.
@@ -1149,7 +1159,7 @@ public partial class FileManagerWindow : ThemedWindow
     {
         var dlg = new Window
         {
-            Title = Lang.Get("DLG_INPUT_TITLE"), Width = 380, Height = 130,
+            Title = Lang.Get("DLG_INPUT_TITLE"), Width = 380, Height = 165,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
             ResizeMode = ResizeMode.NoResize,
             Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
