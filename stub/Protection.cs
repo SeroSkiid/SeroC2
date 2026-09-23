@@ -1376,7 +1376,7 @@ internal static partial class Protection
     ];
 
     private static readonly string[] SuspiciousUsers = [
-        "bruno", "john", "aria", "wilbert", "rodneyy", "janusz",
+        "bruno", "john", "maria", "wilbert", "rodneyy", "janusz",
         "wdagutilityaccount",
     ];
 
