@@ -124,20 +124,21 @@ public sealed class MinerStatsHost
                 MinerReport? report = null;
                 try { report = JsonSerializer.Deserialize<MinerReport>(body, _jsOpts); } catch { }
 
-                if (report?.id != null && (_miners.ContainsKey(report.id) || _miners.Count < 5000))
+                var id = Cap(report?.id, 64);
+                if (id != null && (_miners.ContainsKey(id) || _miners.Count < 5000))
                 {
                     var ip = ctx.Request.RemoteEndPoint?.Address?.ToString() ?? "?";
                     if (ip is "::1" or "127.0.0.1") ip = "localhost";
-                    _miners[report.id] = new MinerEntry
+                    _miners[id] = new MinerEntry
                     {
-                        Id       = report.id,
-                        Hostname = report.hostname ?? "?",
+                        Id       = id,
+                        Hostname = Cap(report!.hostname, 128) ?? "?",
                         Ip       = ip,
-                        Cpu      = report.cpu      ?? "?",
+                        Cpu      = Cap(report.cpu,      256) ?? "?",
                         H1s      = report.h1s,
                         H60s     = report.h60s,
-                        Pool     = report.pool     ?? "?",
-                        Algo     = report.algo     ?? "?",
+                        Pool     = Cap(report.pool,     256) ?? "?",
+                        Algo     = Cap(report.algo,      64) ?? "?",
                         Accepted = report.accepted,
                         Uptime   = report.uptime,
                         LastSeen = DateTime.UtcNow,
@@ -173,5 +174,11 @@ public sealed class MinerStatsHost
         var cutoff = DateTime.UtcNow.AddHours(-24);
         foreach (var kv in _miners)
             if (kv.Value.LastSeen < cutoff) _miners.TryRemove(kv.Key, out _);
+
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        foreach (var kv in _ipRate)
+            if (now - kv.Value.WindowStart >= RateWindowS) _ipRate.TryRemove(kv.Key, out _);
     }
+
+    private static string? Cap(string? s, int max) => s is { Length: > 0 } ? s[..Math.Min(s.Length, max)] : s;
 }
