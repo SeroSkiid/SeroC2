@@ -78,14 +78,15 @@ internal static class ProcessManagerFeature
         return result;
     }
 
-    // Per-process CPU sampling: (lastTotalCpuTime, lastSampleTime)
-    private static readonly Dictionary<int, (TimeSpan cpu, DateTime ts)> _cpuSamples = [];
+    // ConcurrentDictionary lets the parallel process loop update independent PID entries
+    // without a global lock — each PID is touched by exactly one thread at a time.
+    private static readonly ConcurrentDictionary<int, (TimeSpan cpu, DateTime ts)> _cpuSamples = new();
+    private static readonly ConcurrentDictionary<int, (ulong bytes, DateTime ts)>  _netSamples = new();
     private static readonly int _cpuCount = Environment.ProcessorCount;
-
-    // Per-process I/O sampling (ReadBytes + WriteBytes = disk + network activity)
-    private static readonly Dictionary<int, (ulong bytes, DateTime ts)> _netSamples = [];
-    private static readonly object _samplesLock = new();
     private const uint PROCESS_QUERY_INFORMATION = 0x0400;
+
+    private static int _tickCount;
+    private static Dictionary<int, string> _lastWindowTitles = [];
 
     private static readonly ConcurrentDictionary<string, string> _iconCache = new();
     private static readonly HashSet<string> _sentIconPaths = [];
@@ -118,17 +119,14 @@ internal static class ProcessManagerFeature
                 if (GetProcessIoCounters(h, out var io))
                 {
                     var totalIo = io.ReadBytes + io.WriteBytes;
-                    lock (_samplesLock)
+                    if (_netSamples.TryGetValue(pid, out var prev))
                     {
-                        if (_netSamples.TryGetValue(pid, out var prev))
-                        {
-                            var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
-                            var ms    = (now - prev.ts).TotalMilliseconds;
-                            _netSamples[pid] = (totalIo, now);
-                            netKbps = ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
-                        }
-                        else _netSamples[pid] = (totalIo, now);
+                        var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
+                        var ms    = (now - prev.ts).TotalMilliseconds;
+                        _netSamples[pid] = (totalIo, now);
+                        netKbps = ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
                     }
+                    else _netSamples[pid] = (totalIo, now);
                 }
             }
 
@@ -177,53 +175,66 @@ internal static class ProcessManagerFeature
     private static string GetProcessListCore()
     {
         var now = DateTime.UtcNow;
+        _tickCount++;
         var totalRamMb = GetTotalRamMb();
         var tcpCounts  = GetTcpByPid();
-        var windowTitles = GetWindowTitles(); // single EnumWindows call for all processes
-        var list = new List<ProcEntryStub>();
-        foreach (var p in Process.GetProcesses())
-        {
-            try
-            {
-                tcpCounts.TryGetValue(p.Id, out var remIps);
-                var (parentPid, netKbps, exePath, cpuTime) = GetProcessInfoNative(p.Id, now);
 
-                float cpuPct = 0f;
-                if (cpuTime != TimeSpan.Zero)
+        // Refresh window titles every 3 ticks (~6 s); titles rarely change between 2 s ticks.
+        if (_tickCount % 3 == 1) _lastWindowTitles = GetWindowTitles();
+        var windowTitles = _lastWindowTitles;
+
+        // Parallel scan: GetProcessInfoNative calls are independent per-PID and dominate
+        // the per-tick cost (~6 kernel calls × 200 processes). No lock needed because
+        // ConcurrentDictionary guarantees each unique PID key is touched by one thread only.
+        var processes = Process.GetProcesses();
+        var results   = new ProcEntryStub?[processes.Length];
+
+        Parallel.For(0, processes.Length,
+            new ParallelOptions { MaxDegreeOfParallelism = Math.Min(Environment.ProcessorCount * 2, 16) },
+            i =>
+            {
+                var p = processes[i];
+                try
                 {
-                    lock (_samplesLock)
+                    tcpCounts.TryGetValue(p.Id, out var remIps);
+                    var (parentPid, netKbps, exePath, cpuTime) = GetProcessInfoNative(p.Id, now);
+
+                    float cpuPct = 0f;
+                    if (cpuTime != TimeSpan.Zero)
                     {
-                        if (_cpuSamples.TryGetValue(p.Id, out var prev))
+                        if (_cpuSamples.TryGetValue(p.Id, out var prevCpu))
                         {
-                            var deltaCpu = (cpuTime - prev.cpu).TotalMilliseconds;
-                            var deltaMs  = (now - prev.ts).TotalMilliseconds;
+                            var deltaCpu = (cpuTime - prevCpu.cpu).TotalMilliseconds;
+                            var deltaMs  = (now - prevCpu.ts).TotalMilliseconds;
                             if (deltaMs > 0)
                                 cpuPct = (float)(deltaCpu / (deltaMs * _cpuCount) * 100.0);
                             cpuPct = Math.Max(0f, Math.Min(100f, cpuPct));
                         }
                         _cpuSamples[p.Id] = (cpuTime, now);
                     }
-                }
 
-                windowTitles.TryGetValue(p.Id, out var title);
-                list.Add(new ProcEntryStub
-                {
-                    Pid       = p.Id,
-                    ParentPid = parentPid,
-                    Name      = p.ProcessName,
-                    Memory    = p.WorkingSet64 / 1024,
-                    CpuUsage  = cpuPct,
-                    TcpConns  = remIps?.Count ?? 0,
-                    RemoteIps = remIps,
-                    NetKbps   = netKbps,
-                    Title     = title ?? "",
-                    ExePath   = exePath,
-                    // IconB64 populated below after parallel pre-warm
-                });
-            }
-            catch { list.Add(new ProcEntryStub { Pid = p.Id, Name = p.ProcessName }); }
-            finally { try { p.Dispose(); } catch { } }
-        }
+                    windowTitles.TryGetValue(p.Id, out var title);
+                    results[i] = new ProcEntryStub
+                    {
+                        Pid       = p.Id,
+                        ParentPid = parentPid,
+                        Name      = p.ProcessName,
+                        Memory    = p.WorkingSet64 / 1024,
+                        CpuUsage  = cpuPct,
+                        TcpConns  = remIps?.Count ?? 0,
+                        RemoteIps = remIps,
+                        NetKbps   = netKbps,
+                        Title     = title ?? "",
+                        ExePath   = exePath,
+                        // IconB64 populated below after parallel pre-warm
+                    };
+                }
+                catch { results[i] = new ProcEntryStub { Pid = p.Id, Name = p.ProcessName }; }
+                finally { try { p.Dispose(); } catch { } }
+            });
+
+        var list = new List<ProcEntryStub>(processes.Length);
+        foreach (var r in results) if (r != null) list.Add(r);
 
         // Pre-warm icon cache for new paths in parallel (SHGetFileInfo is the bottleneck on first open)
         var newPaths = list
@@ -256,13 +267,10 @@ internal static class ProcessManagerFeature
 
         // Remove stale samples for dead processes
         var livePids = new HashSet<int>(list.Select(x => x.Pid));
-        lock (_samplesLock)
-        {
-            foreach (var k in _cpuSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
-                _cpuSamples.Remove(k);
-            foreach (var k in _netSamples.Keys.Where(k => !livePids.Contains(k)).ToList())
-                _netSamples.Remove(k);
-        }
+        foreach (var k in _cpuSamples.Keys)
+            if (!livePids.Contains(k)) _cpuSamples.TryRemove(k, out _);
+        foreach (var k in _netSamples.Keys)
+            if (!livePids.Contains(k)) _netSamples.TryRemove(k, out _);
 
         list.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.OrdinalIgnoreCase));
         return JsonSerializer.Serialize(

@@ -238,7 +238,13 @@ public partial class ProcessManagerWindow : ThemedWindow
                 .ToList();
             if (iconData.Count > 0)
             {
-                var decoded = iconData.Select(t => (t.Pid, Icon: DecodeIcon(t.IconB64))).ToList();
+                // BitmapImage.Freeze() makes each instance cross-thread safe; no shared state
+                // between items, so PLINQ is safe here.
+                var decoded = iconData
+                    .AsParallel()
+                    .WithDegreeOfParallelism(Math.Min(4, Environment.ProcessorCount))
+                    .Select(t => (t.Pid, Icon: DecodeIcon(t.IconB64)))
+                    .ToList();
                 Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, () =>
                 {
                     var allByPid2 = _all.ToDictionary(x => x.Pid);
