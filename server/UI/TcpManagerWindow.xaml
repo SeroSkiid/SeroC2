@@ -148,6 +148,8 @@
                   CanUserAddRows="False" CanUserResizeRows="False"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  ScrollViewer.CanContentScroll="True"
+                  EnableColumnVirtualization="True"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ContextMenuOpening="GridTcp_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">

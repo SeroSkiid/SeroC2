@@ -35,10 +35,10 @@
                             <ContentPresenter VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                            <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                            </DataTrigger>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -110,6 +110,8 @@
                   CanUserAddRows="False" CanUserResizeRows="False"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  ScrollViewer.CanContentScroll="True"
+                  EnableColumnVirtualization="True"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ContextMenuOpening="GridStartup_ContextMenuOpening"
                   ColumnHeaderStyle="{StaticResource SColHeader}">

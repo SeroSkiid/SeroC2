@@ -123,6 +123,8 @@
                   ContextMenuOpening="GridProcs_ContextMenuOpening"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"
+                  ScrollViewer.CanContentScroll="True"
+                  EnableColumnVirtualization="True"
                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
                   ColumnHeaderStyle="{StaticResource SColHeader}"
                   PreviewKeyDown="GridProcs_PreviewKeyDown">
