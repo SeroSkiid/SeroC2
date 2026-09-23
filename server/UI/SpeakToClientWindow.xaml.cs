@@ -71,12 +71,23 @@ public partial class SpeakToClientWindow : ThemedWindow
         BtnSpeakStart.IsEnabled = false;
         BtnSpeakStop.IsEnabled  = true;
 
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.SpeakerInjectStart,
-            Data = JsonConvert.SerializeObject(new SpeakerInjectStartData
-                { SampleRate = SampleRate, Channels = Channels, BitsPerSample = BitsPerSample })
-        });
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.SpeakerInjectStart,
+                Data = JsonConvert.SerializeObject(new SpeakerInjectStartData
+                    { SampleRate = SampleRate, Channels = Channels, BitsPerSample = BitsPerSample })
+            });
+        }
+        catch
+        {
+            _speaking = false;
+            BtnSpeakStart.IsEnabled = true;
+            BtnSpeakStop.IsEnabled  = false;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+            return;
+        }
 
         _waveIn = new WaveInEvent
         {

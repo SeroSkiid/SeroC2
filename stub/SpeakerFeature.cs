@@ -342,7 +342,8 @@ internal static class SpeakerFeature
             startAc(ac);
             while (_running)
             {
-                if (getBuf(cap, out int frames, out nint dataPtr, out _, out _, out _) == 0 && frames > 0)
+                int hr = getBuf(cap, out int frames, out nint dataPtr, out _, out _, out _);
+                if (hr == 0 && frames > 0)
                 {
                     int bytes = frames * frameBytes;
                     var chunk = System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);
@@ -356,6 +357,7 @@ internal static class SpeakerFeature
                     }
                     finally { System.Buffers.ArrayPool<byte>.Shared.Return(chunk); }
                 }
+                else if (hr < 0) break; // fatal HRESULT (device removed / invalidated) — exit cleanly
                 else Thread.Sleep(10);
             }
 
