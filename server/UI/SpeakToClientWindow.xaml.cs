@@ -123,11 +123,15 @@ public partial class SpeakToClientWindow : ThemedWindow
         float peak = ComputePeak(args.Buffer, args.BytesRecorded);
         string b64  = Convert.ToBase64String(args.Buffer, 0, args.BytesRecorded);
 
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.SpeakerInjectData,
-            Data = JsonConvert.SerializeObject(new SpeakerDataPacket { Data = b64 })
-        });
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.SpeakerInjectData,
+                Data = JsonConvert.SerializeObject(new SpeakerDataPacket { Data = b64 })
+            });
+        }
+        catch { return; }
 
         long kb = _bytesSent / 1024;
         await Dispatcher.BeginInvoke(() =>

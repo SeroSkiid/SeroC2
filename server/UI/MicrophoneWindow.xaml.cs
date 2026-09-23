@@ -288,7 +288,7 @@ public partial class MicrophoneWindow : ThemedWindow
         lock (_waveform) { _waveform[_wavePos % _waveform.Length] = Math.Min(peak, 1f); _wavePos++; }
 
         // Capture to local — _player can be set null on UI thread at any moment
-        _player?.Enqueue(pcm);
+        try { _player?.Enqueue(pcm); } catch { }
 
         // Rate-limited status update — at most every 500ms to avoid flooding the UI thread
         long nowMs = Environment.TickCount64;

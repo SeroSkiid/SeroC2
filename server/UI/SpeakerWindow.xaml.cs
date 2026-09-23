@@ -114,7 +114,7 @@ public partial class SpeakerWindow : ThemedWindow
                 _chunks.RemoveAt(0);
             }
         }
-        _player?.Enqueue(raw);
+        try { _player?.Enqueue(raw); } catch { }
 
         float peak = 0;
         if (_captureFmt.BitsPerSample == 32)
