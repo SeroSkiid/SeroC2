@@ -85,7 +85,11 @@ public partial class SpeakToClientWindow : ThemedWindow
             BufferMilliseconds = 80,
         };
         _waveIn.DataAvailable    += OnMicData;
-        _waveIn.RecordingStopped += (_, _) => { };
+        _waveIn.RecordingStopped += (_, args) =>
+        {
+            if (args.Exception != null && _speaking)
+                Dispatcher.BeginInvoke(() => { StopInternal(); TxtStatus.Text = args.Exception.Message; });
+        };
         _waveIn.StartRecording();
 
         TxtStatus.Text = string.Format(Lang.Get("SPK_INJECTING"), 0);

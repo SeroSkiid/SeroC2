@@ -314,7 +314,7 @@ internal static class SpeakerFeature
             var getMixFmt = Marshal.GetDelegateForFunctionPointer<GetMixFormatDelegate>(Vtbl(ac, 8));
             getMixFmt(ac, out var fmtPtr);
             var init    = Marshal.GetDelegateForFunctionPointer<InitializeDelegate>(Vtbl(ac, 3));
-            long bufDur = 10_000_000;
+            long bufDur = 200_000; // 20ms — reduces first-audio latency vs the old 1s buffer
             init(ac, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_LOOPBACK, bufDur, 0, fmtPtr, nint.Zero);
 
             var capIid = IID_IAudioCaptureClient;

@@ -19,6 +19,8 @@ public partial class SpeakerWindow : ThemedWindow
     private volatile bool _listening;
     private volatile WaveOutPlayer? _player;
     private readonly List<byte[]> _chunks = [];
+    private long _chunkBytes;
+    private const long MaxChunkBytes = 256L * 1024 * 1024; // 256MB rolling cap
     private (int SampleRate, int Channels, int BitsPerSample) _captureFmt = (44100, 2, 32);
 
     private readonly DispatcherTimer _recTimer  = new() { Interval = TimeSpan.FromSeconds(1) };
@@ -102,7 +104,16 @@ public partial class SpeakerWindow : ThemedWindow
         var data = JsonConvert.DeserializeObject<SpeakerDataPacket>(pkt.Data);
         if (data == null || string.IsNullOrEmpty(data.Data)) return;
         var raw = Convert.FromBase64String(data.Data);
-        lock (_chunks) _chunks.Add(raw);
+        lock (_chunks)
+        {
+            _chunks.Add(raw);
+            _chunkBytes += raw.Length;
+            while (_chunkBytes > MaxChunkBytes && _chunks.Count > 1)
+            {
+                _chunkBytes -= _chunks[0].Length;
+                _chunks.RemoveAt(0);
+            }
+        }
         _player?.Enqueue(raw);
 
         float peak = 0;
@@ -134,7 +145,7 @@ public partial class SpeakerWindow : ThemedWindow
 
         _listening  = true;
         _captureFmt = (dev.SampleRate, dev.Channels, dev.BitsPerSample);
-        lock (_chunks) _chunks.Clear();
+        lock (_chunks) { _chunks.Clear(); _chunkBytes = 0; }
         _recSeconds = 0; _wavePos = 0;
         Array.Clear(_waveform);
         _player?.Dispose();

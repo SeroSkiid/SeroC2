@@ -191,6 +191,8 @@ public partial class MicrophoneWindow : ThemedWindow
     private volatile bool _recording;
     private volatile WaveOutPlayer? _player;
     private readonly List<byte[]> _chunks = [];
+    private long _chunkBytes;
+    private const long MaxChunkBytes = 256L * 1024 * 1024; // 256MB rolling cap
     private const int SampleRate = 16000;
     private const int Channels   = 1;
     private const int BitsPerSample = 16;
@@ -268,7 +270,16 @@ public partial class MicrophoneWindow : ThemedWindow
         var data = JsonConvert.DeserializeObject<MicDataPacket>(pkt.Data);
         if (data == null || string.IsNullOrEmpty(data.Data)) return;
         var pcm = Convert.FromBase64String(data.Data);
-        lock (_chunks) _chunks.Add(pcm);
+        lock (_chunks)
+        {
+            _chunks.Add(pcm);
+            _chunkBytes += pcm.Length;
+            while (_chunkBytes > MaxChunkBytes && _chunks.Count > 1)
+            {
+                _chunkBytes -= _chunks[0].Length;
+                _chunks.RemoveAt(0);
+            }
+        }
 
         // Update waveform peak — read shorts inline to avoid allocating a short[] every chunk
         float peak = 0;
@@ -295,7 +306,7 @@ public partial class MicrophoneWindow : ThemedWindow
         if (CmbDevice.SelectedItem is not MicDeviceItem dev) { TxtStatus.Text = Lang.Get("NO_DEVICE_SELECTED"); return; }
 
         _recording = true;
-        lock (_chunks) _chunks.Clear();
+        lock (_chunks) { _chunks.Clear(); _chunkBytes = 0; }
         _recSeconds = 0;
         _wavePos = 0;
         Array.Clear(_waveform);
