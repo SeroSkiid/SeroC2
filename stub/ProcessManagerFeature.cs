@@ -11,6 +11,14 @@ internal static class ProcessManagerFeature
     [DllImport("ntdll.dll")] private static extern int NtResumeProcess(IntPtr hProcess);
     [DllImport("kernel32.dll")] private static extern IntPtr OpenProcess(uint access, bool inherit, int pid);
     [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr h);
+    [DllImport("kernel32.dll")] private static extern bool GetProcessTimes(IntPtr h, out long created, out long exited, out long kernel, out long user);
+
+    private delegate bool EnumWindowsProc(IntPtr hwnd, IntPtr lParam);
+    [DllImport("user32.dll")] private static extern bool EnumWindows(EnumWindowsProc cb, IntPtr lp);
+    [DllImport("user32.dll")] private static extern uint GetWindowThreadProcessId(IntPtr hwnd, out uint pid);
+    [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr hwnd);
+    [DllImport("user32.dll")] private static extern int  GetWindowTextLength(IntPtr hwnd);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr hwnd, System.Text.StringBuilder sb, int n);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct IO_COUNTERS { public ulong ReadOps, WriteOps, OtherOps, ReadBytes, WriteBytes, OtherBytes; }
@@ -85,38 +93,79 @@ internal static class ProcessManagerFeature
 
     internal static void ResetSentIcons() { lock (_sentLock) _sentIconPaths.Clear(); }
 
-    // Opens ONE handle per process to get both ParentPid and I/O counters,
-    // halving the OpenProcess/CloseHandle kernel calls vs. calling each separately.
-    private static (int parentPid, float netKbps) GetProcessInfoNative(int pid, DateTime now)
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    private static extern bool QueryFullProcessImageName(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint sz);
+
+    // Single handle per process: NtQueryInfo + IoCounters + QueryFullProcessImageName + GetProcessTimes.
+    // Previously GetProcessInfoNative + GetExePath opened two separate handles per process.
+    private static (int parentPid, float netKbps, string exePath, TimeSpan cpuTime) GetProcessInfoNative(int pid, DateTime now)
     {
+        // Try full query first; fall back to limited for protected processes.
         var h = OpenProcess(PROCESS_QUERY_INFORMATION, false, pid);
-        if (h == IntPtr.Zero) return (0, 0f);
+        bool limited = h == IntPtr.Zero;
+        if (limited) h = OpenProcess(0x1000, false, pid); // PROCESS_QUERY_LIMITED_INFORMATION
+        if (h == IntPtr.Zero) return (0, 0f, "", TimeSpan.Zero);
         try
         {
-            int parentPid = NtQueryInformationProcess(h, 0, out var pbi,
-                Marshal.SizeOf<PROCESS_BASIC_INFORMATION>(), out _) == 0
-                ? (int)pbi.ParentPid : 0;
-
+            int parentPid = 0;
             float netKbps = 0f;
-            if (GetProcessIoCounters(h, out var io))
+            if (!limited)
             {
-                var totalIo = io.ReadBytes + io.WriteBytes;
-                lock (_samplesLock)
+                if (NtQueryInformationProcess(h, 0, out var pbi,
+                    Marshal.SizeOf<PROCESS_BASIC_INFORMATION>(), out _) == 0)
+                    parentPid = (int)pbi.ParentPid;
+
+                if (GetProcessIoCounters(h, out var io))
                 {
-                    if (_netSamples.TryGetValue(pid, out var prev))
+                    var totalIo = io.ReadBytes + io.WriteBytes;
+                    lock (_samplesLock)
                     {
-                        var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
-                        var ms    = (now - prev.ts).TotalMilliseconds;
-                        _netSamples[pid] = (totalIo, now);
-                        netKbps = ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                        if (_netSamples.TryGetValue(pid, out var prev))
+                        {
+                            var delta = totalIo >= prev.bytes ? totalIo - prev.bytes : 0UL;
+                            var ms    = (now - prev.ts).TotalMilliseconds;
+                            _netSamples[pid] = (totalIo, now);
+                            netKbps = ms > 100 ? (float)(delta / 1024.0 / (ms / 1000.0)) : 0f;
+                        }
+                        else _netSamples[pid] = (totalIo, now);
                     }
-                    else _netSamples[pid] = (totalIo, now);
                 }
             }
-            return (parentPid, netKbps);
+
+            var sb = new System.Text.StringBuilder(1024);
+            uint sz = 1024;
+            string exePath = QueryFullProcessImageName(h, 0, sb, ref sz) ? sb.ToString() : "";
+
+            TimeSpan cpuTime = TimeSpan.Zero;
+            if (GetProcessTimes(h, out _, out _, out long kernelTime, out long userTime))
+                cpuTime = TimeSpan.FromTicks(kernelTime + userTime);
+
+            return (parentPid, netKbps, exePath, cpuTime);
         }
-        catch { return (0, 0f); }
+        catch { return (0, 0f, "", TimeSpan.Zero); }
         finally { CloseHandle(h); }
+    }
+
+    // Single EnumWindows call → PID→title map, replacing p.MainWindowTitle per-process.
+    private static Dictionary<int, string> GetWindowTitles()
+    {
+        var map = new Dictionary<int, string>();
+        EnumWindows((hwnd, _) =>
+        {
+            if (!IsWindowVisible(hwnd)) return true;
+            GetWindowThreadProcessId(hwnd, out uint pid);
+            if (map.ContainsKey((int)pid)) return true;
+            int len = GetWindowTextLength(hwnd);
+            if (len > 0)
+            {
+                var sb = new System.Text.StringBuilder(len + 1);
+                GetWindowText(hwnd, sb, len + 1);
+                string title = sb.ToString();
+                if (!string.IsNullOrEmpty(title)) map[(int)pid] = title;
+            }
+            return true;
+        }, IntPtr.Zero);
+        return map;
     }
 
     internal static string GetProcessList(bool fresh = false)
@@ -129,34 +178,34 @@ internal static class ProcessManagerFeature
     {
         var now = DateTime.UtcNow;
         var totalRamMb = GetTotalRamMb();
-        var tcpCounts = GetTcpByPid();
+        var tcpCounts  = GetTcpByPid();
+        var windowTitles = GetWindowTitles(); // single EnumWindows call for all processes
         var list = new List<ProcEntryStub>();
         foreach (var p in Process.GetProcesses())
         {
             try
             {
+                tcpCounts.TryGetValue(p.Id, out var remIps);
+                var (parentPid, netKbps, exePath, cpuTime) = GetProcessInfoNative(p.Id, now);
+
                 float cpuPct = 0f;
-                try
+                if (cpuTime != TimeSpan.Zero)
                 {
-                    var totalCpu = p.TotalProcessorTime;
                     lock (_samplesLock)
                     {
                         if (_cpuSamples.TryGetValue(p.Id, out var prev))
                         {
-                            var deltaCpu = (totalCpu - prev.cpu).TotalMilliseconds;
+                            var deltaCpu = (cpuTime - prev.cpu).TotalMilliseconds;
                             var deltaMs  = (now - prev.ts).TotalMilliseconds;
                             if (deltaMs > 0)
                                 cpuPct = (float)(deltaCpu / (deltaMs * _cpuCount) * 100.0);
                             cpuPct = Math.Max(0f, Math.Min(100f, cpuPct));
                         }
-                        _cpuSamples[p.Id] = (totalCpu, now);
+                        _cpuSamples[p.Id] = (cpuTime, now);
                     }
                 }
-                catch { }
 
-                tcpCounts.TryGetValue(p.Id, out var remIps);
-                var (parentPid, netKbps) = GetProcessInfoNative(p.Id, now);
-                var exePath = GetExePath(p);
+                windowTitles.TryGetValue(p.Id, out var title);
                 list.Add(new ProcEntryStub
                 {
                     Pid       = p.Id,
@@ -167,7 +216,7 @@ internal static class ProcessManagerFeature
                     TcpConns  = remIps?.Count ?? 0,
                     RemoteIps = remIps,
                     NetKbps   = netKbps,
-                    Title     = p.MainWindowHandle != IntPtr.Zero ? p.MainWindowTitle : "",
+                    Title     = title ?? "",
                     ExePath   = exePath,
                     // IconB64 populated below after parallel pre-warm
                 });
@@ -243,27 +292,6 @@ internal static class ProcessManagerFeature
         finally { CloseHandle(h); }
     }
 
-    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
-    private static extern bool QueryFullProcessImageName(IntPtr h, uint flags, System.Text.StringBuilder buf, ref uint sz);
-
-    private static string GetExePath(Process p)
-    {
-        // QueryFullProcessImageName uses PROCESS_QUERY_LIMITED_INFORMATION which works for all
-        // processes including protected ones, avoiding hundreds of Win32Exception throws per refresh
-        try
-        {
-            var h = OpenProcess(0x1000, false, p.Id);
-            if (h == IntPtr.Zero) return "";
-            try
-            {
-                var sb = new System.Text.StringBuilder(1024);
-                uint sz = 1024;
-                return QueryFullProcessImageName(h, 0, sb, ref sz) ? sb.ToString() : "";
-            }
-            finally { CloseHandle(h); }
-        }
-        catch { return ""; }
-    }
 }
 
 internal class ProcEntryStub

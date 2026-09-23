@@ -7,7 +7,7 @@ namespace SeroServer.UI;
 // press the same letter again (within 1.5s) to cycle to the next match.
 internal static class TypeToSelect
 {
-    public static void Enable(DataGrid grid, Func<object, string> getKey)
+    public static void Enable(System.Windows.Controls.DataGrid grid, Func<object, string> getKey)
     {
         char     lastChar  = '\0';
         DateTime lastTime  = DateTime.MinValue;
