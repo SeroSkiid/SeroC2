@@ -220,26 +220,30 @@ public partial class SpeakerWindow : ThemedWindow
         // IEEE_FLOAT fmt chunk requires 18 bytes (extra 2-byte cbSize field); PCM is 16
         int fmtSize = fmt.BitsPerSample == 32 ? 18 : 16;
 
-        await Task.Run(() =>
+        try
         {
-            using var fs = File.Create(fileName);
-            using var bw = new BinaryWriter(fs);
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
-            bw.Write(4 + 8 + fmtSize + 8 + dataSize); // correct RIFF chunk size
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
-            bw.Write(fmtSize);
-            bw.Write(formatTag);
-            bw.Write((short)fmt.Channels);
-            bw.Write(fmt.SampleRate);
-            bw.Write(byteRate);
-            bw.Write((short)(fmt.Channels * fmt.BitsPerSample / 8));
-            bw.Write((short)fmt.BitsPerSample);
-            if (fmtSize == 18) bw.Write((short)0); // cbSize = 0 for IEEE_FLOAT
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
-            bw.Write(dataSize);
-            foreach (var chunk in data) bw.Write(chunk);
-        });
+            await Task.Run(() =>
+            {
+                using var fs = File.Create(fileName);
+                using var bw = new BinaryWriter(fs);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+                bw.Write(4 + 8 + fmtSize + 8 + dataSize); // correct RIFF chunk size
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+                bw.Write(fmtSize);
+                bw.Write(formatTag);
+                bw.Write((short)fmt.Channels);
+                bw.Write(fmt.SampleRate);
+                bw.Write(byteRate);
+                bw.Write((short)(fmt.Channels * fmt.BitsPerSample / 8));
+                bw.Write((short)fmt.BitsPerSample);
+                if (fmtSize == 18) bw.Write((short)0); // cbSize = 0 for IEEE_FLOAT
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+                bw.Write(dataSize);
+                foreach (var chunk in data) bw.Write(chunk);
+            });
+        }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "Sero", MessageBoxButton.OK, MessageBoxImage.Error); return; }
 
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), fileName);
     }

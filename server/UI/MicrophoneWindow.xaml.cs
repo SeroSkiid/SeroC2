@@ -383,26 +383,30 @@ public partial class MicrophoneWindow : ThemedWindow
         int dataSize = data.Sum(d => d.Length);
         int byteRate = SampleRate * Channels * (BitsPerSample / 8);
 
-        await Task.Run(() =>
+        try
         {
-            using var fs = File.Create(fileName);
-            using var bw = new BinaryWriter(fs);
-            // WAV header
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
-            bw.Write(36 + dataSize);
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
-            bw.Write(16);               // subchunk1 size
-            bw.Write((short)1);         // PCM
-            bw.Write((short)Channels);
-            bw.Write(SampleRate);
-            bw.Write(byteRate);
-            bw.Write((short)(Channels * BitsPerSample / 8));
-            bw.Write((short)BitsPerSample);
-            bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
-            bw.Write(dataSize);
-            foreach (var chunk in data) bw.Write(chunk);
-        });
+            await Task.Run(() =>
+            {
+                using var fs = File.Create(fileName);
+                using var bw = new BinaryWriter(fs);
+                // WAV header
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+                bw.Write(36 + dataSize);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("WAVE"));
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("fmt "));
+                bw.Write(16);               // subchunk1 size
+                bw.Write((short)1);         // PCM
+                bw.Write((short)Channels);
+                bw.Write(SampleRate);
+                bw.Write(byteRate);
+                bw.Write((short)(Channels * BitsPerSample / 8));
+                bw.Write((short)BitsPerSample);
+                bw.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+                bw.Write(dataSize);
+                foreach (var chunk in data) bw.Write(chunk);
+            });
+        }
+        catch (Exception ex) { MessageBox.Show(ex.Message, "Sero", MessageBoxButton.OK, MessageBoxImage.Error); return; }
 
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), fileName);
         MessageBox.Show(string.Format(Lang.Get("MIC_WAV_SAVED"), fileName, (dataSize / (double)byteRate).ToString("F1")),
