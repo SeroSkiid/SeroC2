@@ -428,8 +428,11 @@ internal static partial class Protection
             if (parentId <= 0) return false;
             using var parent = Process.GetProcessById(parentId);
             var name = parent.ProcessName.ToLowerInvariant();
-            string[] dbgNames = ["x64dbg", "x32dbg", "ollydbg", "windbg", "ida", "idaq",
-                "dnspy", "dotpeek", "pestudio", "die", "pe-bear", "processhacker"];
+            string[] dbgNames = ["x64dbg", "x32dbg", "ollydbg", "windbg", "cdb", "ntsd",
+                "ida", "idaq", "radare2", "cutter", "binaryninja",
+                "dnspy", "ilspy", "dotpeek", "pestudio", "die", "exeinfope", "pe-bear",
+                "adplus", "gflags", "livekd", "cheatengine", "apimonitor",
+                "processhacker", "systeminformer"];
             foreach (var n in dbgNames)
                 if (name.Contains(n)) return true;
         }
@@ -1339,19 +1342,39 @@ internal static partial class Protection
 
     // High-confidence: actual debuggers/reversing tools — 3 points each
     private static readonly string[] DebuggerProcesses = [
-        "ollydbg", "x64dbg", "x32dbg", "ida", "ida64", "idaq", "idaq64",
-        "windbg", "dnspy", "dotpeek", "pestudio", "die", "lordpe", "pe-bear",
-        "resourcehacker"
+        // Classic debuggers
+        "ollydbg", "x64dbg", "x32dbg", "windbg", "cdb", "ntsd",
+        // Disassemblers / decompilers
+        "ida", "ida64", "idaq", "idaq64", "radare2", "cutter", "binaryninja",
+        "dnspy", "ilspy", "dotpeek",
+        // Static analysis / PE tools
+        "pestudio", "die", "exeinfope", "lordpe", "pe-bear", "resourcehacker",
+        // Debugger companions / automation
+        "adplus", "gflags", "livekd",
+        // Memory scanners
+        "cheatengine",
+        // API-level monitoring (high confidence)
+        "apimonitor", "systeminformer",
     ];
 
     // Medium-confidence: monitoring/network tools — 1 point each
     private static readonly string[] MonitoringProcesses = [
-        "processhacker", "procmon", "procexp",
-        "wireshark", "fiddler", "charles", "tcpview",
-        "sandboxie", "cuckoo", "regmon", "filemon",
-        "autoruns", "tcpdump", "dumpcap", "httpdebugger",
-        "inetsim", "fakenet", "noriben", "sysmon",
-        "hollowshunter", "capemon",    // CAPE/CAPEv2 sandbox agents
+        // Process / memory inspection
+        "processhacker", "procmon", "procexp", "procdump", "vmmap", "rammap",
+        "handle", "listdlls", "strings", "pslist", "pskill", "pssuspend",
+        "psservice", "psloglist", "psinfo", "pstat",
+        // Network capture / proxy
+        "wireshark", "tshark", "windump", "dumpcap", "tcpdump",
+        "fiddler", "charles", "httpdebugger", "tcpview", "pktmon",
+        // Startup / registry
+        "autoruns", "regmon", "filemon",
+        // Sandbox agents / frameworks
+        "sandboxie", "cuckoo", "inetsim", "fakenet", "noriben", "sysmon",
+        "hollowshunter", "capemon",
+        // ETW / performance tracing
+        "xperf", "wpr", "wpa", "traceview", "umdh", "poolmon", "dbgview", "sigcheck",
+        // .NET diagnostics
+        "perfview", "dotnet-counters", "dotnet-trace", "dotnet-dump",
     ];
 
     private static readonly string[] SuspiciousUsers = [
