@@ -60,17 +60,18 @@ internal sealed class WaveOutPlayer : IDisposable
     private readonly Thread _thread;
     private volatile bool   _running;
 
-    public WaveOutPlayer(int sampleRate)
+    public WaveOutPlayer(int sampleRate, int channels = 1, int bitsPerSample = 16)
     {
         _hEvent = CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero); // auto-reset
+        int blockAlign = channels * bitsPerSample / 8;
         var fmt = new WAVEFORMATEX
         {
-            wFormatTag      = 1,
-            nChannels       = 1,
+            wFormatTag      = (ushort)(bitsPerSample == 32 ? 3 : 1), // 3 = IEEE_FLOAT, 1 = PCM
+            nChannels       = (ushort)channels,
             nSamplesPerSec  = (uint)sampleRate,
-            nAvgBytesPerSec = (uint)(sampleRate * 2),
-            nBlockAlign     = 2,
-            wBitsPerSample  = 16,
+            nAvgBytesPerSec = (uint)(sampleRate * blockAlign),
+            nBlockAlign     = (ushort)blockAlign,
+            wBitsPerSample  = (ushort)bitsPerSample,
         };
         _open    = _hEvent != IntPtr.Zero
                 && waveOutOpen(out _hwo, WAVE_MAPPER, ref fmt, _hEvent, IntPtr.Zero, CALLBACK_EVENT) == 0;

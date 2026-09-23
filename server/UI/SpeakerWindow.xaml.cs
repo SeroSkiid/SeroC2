@@ -17,6 +17,7 @@ public partial class SpeakerWindow : ThemedWindow
 
     // ── Loopback state ──────────────────────────────────────
     private volatile bool _listening;
+    private volatile WaveOutPlayer? _player;
     private readonly List<byte[]> _chunks = [];
     private (int SampleRate, int Channels, int BitsPerSample) _captureFmt = (44100, 2, 32);
 
@@ -58,6 +59,8 @@ public partial class SpeakerWindow : ThemedWindow
             _server.UnregisterHandler(clientId, PacketType.SpeakerData);
             _server.ClientDisconnected -= OnClientDisconnected;
             if (_listening) SendStop();
+            _player?.Dispose();
+            _player = null;
             Lang.LanguageChanged -= ApplyLanguage;
         };
 
@@ -100,6 +103,7 @@ public partial class SpeakerWindow : ThemedWindow
         if (data == null || string.IsNullOrEmpty(data.Data)) return;
         var raw = Convert.FromBase64String(data.Data);
         lock (_chunks) _chunks.Add(raw);
+        _player?.Enqueue(raw);
 
         int floatCount = raw.Length / 4;
         float peak = 0;
@@ -127,6 +131,8 @@ public partial class SpeakerWindow : ThemedWindow
         lock (_chunks) _chunks.Clear();
         _recSeconds = 0; _wavePos = 0;
         Array.Clear(_waveform);
+        _player?.Dispose();
+        _player = new WaveOutPlayer(_captureFmt.SampleRate, _captureFmt.Channels, _captureFmt.BitsPerSample);
         PnlIdle.Visibility           = Visibility.Collapsed;
         ListeningIndicator.Visibility = Visibility.Visible;
         BtnListen.IsEnabled = false;
@@ -147,6 +153,8 @@ public partial class SpeakerWindow : ThemedWindow
         _listening = false;
         _recTimer.Stop(); _waveTimer.Stop();
         SendStop();
+        _player?.Dispose();
+        _player = null;
         ListeningIndicator.Visibility = Visibility.Collapsed;
         BtnListen.IsEnabled = true;
         BtnStop.IsEnabled   = false;
@@ -163,6 +171,7 @@ public partial class SpeakerWindow : ThemedWindow
             if (_listening)
             {
                 _listening = false; _recTimer.Stop(); _waveTimer.Stop();
+                _player?.Dispose(); _player = null;
                 ListeningIndicator.Visibility = Visibility.Collapsed;
                 BtnListen.IsEnabled = true; BtnStop.IsEnabled = false;
             }
