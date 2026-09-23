@@ -1986,16 +1986,19 @@ public partial class ServerWindow : ThemedWindow
 
     private void GridClients_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        int count = GridClients.SelectedItems.Count;
-        if (count > 0)
+        Dispatcher.BeginInvoke(() =>
         {
-            TxtSelCount.Text       = $"{count} {Lang.Get("SEL_SELECTED")}";
-            SelCountBadge.Visibility = Visibility.Visible;
-        }
-        else
-        {
-            SelCountBadge.Visibility = Visibility.Collapsed;
-        }
+            int count = GridClients.SelectedItems.Count;
+            if (count > 0)
+            {
+                TxtSelCount.Text         = $"{count} {Lang.Get("SEL_SELECTED")}";
+                SelCountBadge.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                SelCountBadge.Visibility = Visibility.Collapsed;
+            }
+        }, System.Windows.Threading.DispatcherPriority.Background);
     }
 
     internal void OpenFeatureWindow<T>(string clientId, Func<T> factory) where T : Window

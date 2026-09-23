@@ -27,10 +27,10 @@
                             <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsMouseOver}" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowHoverBgBrush}"/>
                             </DataTrigger>
-                            <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=DataGridRow}, Path=IsSelected}" Value="True">
+                            <Trigger Property="IsSelected" Value="True">
                                 <Setter TargetName="CellBd" Property="Background" Value="{DynamicResource RowSelBgBrush}"/>
                                 <Setter Property="Foreground" Value="{DynamicResource RowSelTextBrush}"/>
-                            </DataTrigger>
+                            </Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -312,8 +312,7 @@
                             <MenuItem x:Name="MnuFmShowHide"    Header="Show / Hide"       Click="ShowHide_Click">     <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Appearance.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                             <MenuItem x:Name="MnuFmSetAttr"     Header="Set Attributes"    Click="SetAttr_Click">      <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"    Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                             <MenuItem x:Name="MnuFmWallpaper"   Header="Set as Wallpaper"  Click="Wallpaper_Click">    <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_DesktopWindows.svg'}" Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                            <MenuItem x:Name="MnuFmPlayMusic"       Header="Play Music"        Click="PlayMusic_Click">       <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Note.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
-                            <MenuItem x:Name="MnuFmPlayMusicSecret" Header="Play Secretly"     Click="PlayMusicSecret_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Bell.svg'}"         Width="14" Height="14"/></MenuItem.Icon></MenuItem>
+                            <MenuItem x:Name="MnuFmPlayMusicSecret" Header="Play Secretly"     Click="PlayMusicSecret_Click"> <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Note.svg'}"          Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                             <MenuItem x:Name="MnuFmZip"             Header="7-Zip (compress)"  Click="Zip_Click">          <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Shopping_Box.svg'}"         Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                             <MenuItem x:Name="MnuFmDownloadUrl" Header="Download from URL" Click="DownloadUrl_Click">  <MenuItem.Icon><dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"  Width="14" Height="14"/></MenuItem.Icon></MenuItem>
                             <Separator Background="{DynamicResource SectionBorderBrush}"/>
