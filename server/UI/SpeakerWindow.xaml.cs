@@ -157,11 +157,23 @@ public partial class SpeakerWindow : ThemedWindow
         _recTimer.Start();
         _waveTimer.Start();
 
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.SpeakerStart,
-            Data = JsonConvert.SerializeObject(new SpeakerStartData { DeviceIndex = dev.Index })
-        });
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.SpeakerStart,
+                Data = JsonConvert.SerializeObject(new SpeakerStartData { DeviceIndex = dev.Index })
+            });
+        }
+        catch
+        {
+            _listening = false;
+            _recTimer.Stop(); _waveTimer.Stop();
+            _player?.Dispose(); _player = null;
+            ListeningIndicator.Visibility = Visibility.Collapsed;
+            BtnListen.IsEnabled = true; BtnStop.IsEnabled = false;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        }
     }
 
     private void Stop_Click(object s, RoutedEventArgs e)

@@ -322,11 +322,23 @@ public partial class MicrophoneWindow : ThemedWindow
         _recTimer.Start();
         _waveTimer.Start();
 
-        await _server.SendToClient(_clientId, new Packet
+        try
         {
-            Type = PacketType.MicStart,
-            Data = JsonConvert.SerializeObject(new MicStartData { DeviceIndex = dev.Index, SampleRate = SampleRate })
-        });
+            await _server.SendToClient(_clientId, new Packet
+            {
+                Type = PacketType.MicStart,
+                Data = JsonConvert.SerializeObject(new MicStartData { DeviceIndex = dev.Index, SampleRate = SampleRate })
+            });
+        }
+        catch
+        {
+            _recording = false;
+            _recTimer.Stop(); _waveTimer.Stop();
+            _player?.Dispose(); _player = null;
+            RecordingIndicator.Visibility = Visibility.Collapsed;
+            BtnRecord.IsEnabled = true; BtnStop.IsEnabled = false;
+            TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
+        }
     }
 
     private void Stop_Click(object s, RoutedEventArgs e)
