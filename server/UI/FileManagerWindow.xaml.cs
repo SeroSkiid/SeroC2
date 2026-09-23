@@ -390,7 +390,7 @@ public partial class FileManagerWindow : ThemedWindow
         var msg = selected.Count == 1
             ? string.Format(Lang.Get("FM_CONFIRM_DELETE_1"), selected[0].Name)
             : string.Format(Lang.Get("FM_CONFIRM_DELETE_N"), selected.Count);
-        if (MessageBox.Show(msg, Lang.Get("MSG_CONFIRM"), MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
+        if (!ShowConfirmDialog(msg, Lang.Get("MSG_CONFIRM"))) return;
         
         int total = selected.Count;
         int successCount = 0;
@@ -628,7 +628,7 @@ public partial class FileManagerWindow : ThemedWindow
             {
                 try { Clipboard.SetText(r.Hash); } catch { }
                 var hashPrefix = r.Hash.Length >= 16 ? r.Hash[..16] : r.Hash;
-                MessageBox.Show($"SHA-256: {r.Hash}\n\n{Lang.Get("FM_COPIED_CLIPBOARD")}", row.Name, MessageBoxButton.OK, MessageBoxImage.Information);
+                ShowInfoDialog($"SHA-256: {r.Hash}\n\n{Lang.Get("FM_COPIED_CLIPBOARD")}", row.Name);
                 TxtStatus.Text = string.Format(Lang.Get("FM_HASH_RESULT"), hashPrefix);
                 ServerWindow.ReportGlobalActivity("Hash completed", row.Name, "success");
                 ServerWindow.LogGlobal($"[FM] Hash computed for '{path}' on client {_clientId}: {r.Hash}");
@@ -1154,6 +1154,84 @@ public partial class FileManagerWindow : ThemedWindow
     }
 
     // ── Helpers ─────────────────────────────────────
+
+    private static bool ShowConfirmDialog(string message, string title)
+    {
+        var dlg = new Window
+        {
+            Title = title, Width = 380, Height = 150,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            ResizeMode = ResizeMode.NoResize,
+            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
+                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 18, 34))
+        };
+        var textBrush   = Application.Current.TryFindResource("ContentTextBrush") as System.Windows.Media.Brush
+                       ?? System.Windows.Media.Brushes.White;
+        var labelBrush  = Application.Current.TryFindResource("FieldLabelBrush")  as System.Windows.Media.Brush
+                       ?? System.Windows.Media.Brushes.Gray;
+        var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(18, 16, 18, 12) };
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = message, Foreground = textBrush, FontSize = 12,
+            TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 0, 0, 14)
+        });
+        var row = new System.Windows.Controls.StackPanel
+        {
+            Orientation = System.Windows.Controls.Orientation.Horizontal,
+            HorizontalAlignment = HorizontalAlignment.Right
+        };
+        var btnYes = new System.Windows.Controls.Button
+        {
+            Content = Lang.Get("DLG_YES"), Width = 72,
+            Padding = new Thickness(10, 4, 10, 4), Margin = new Thickness(0, 0, 8, 0)
+        };
+        var btnNo = new System.Windows.Controls.Button
+        {
+            Content = Lang.Get("DLG_NO"), Width = 72,
+            Padding = new Thickness(10, 4, 10, 4)
+        };
+        bool result = false;
+        btnYes.Click += (_, _) => { result = true;  dlg.Close(); };
+        btnNo.Click  += (_, _) => { result = false; dlg.Close(); };
+        row.Children.Add(btnYes);
+        row.Children.Add(btnNo);
+        sp.Children.Add(row);
+        dlg.Content = sp;
+        dlg.ShowDialog();
+        return result;
+    }
+
+    private static void ShowInfoDialog(string message, string title)
+    {
+        var dlg = new Window
+        {
+            Title = title, Width = 420, Height = 160,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            ResizeMode = ResizeMode.NoResize,
+            Background = (Application.Current.TryFindResource("WindowBgBrush") as System.Windows.Media.Brush)
+                      ?? new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(18, 18, 34))
+        };
+        var textBrush  = Application.Current.TryFindResource("ContentTextBrush") as System.Windows.Media.Brush
+                      ?? System.Windows.Media.Brushes.White;
+        var monoFamily = new System.Windows.Media.FontFamily("Consolas");
+        var sp = new System.Windows.Controls.StackPanel { Margin = new Thickness(18, 16, 18, 12) };
+        sp.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = message, Foreground = textBrush, FontSize = 11,
+            FontFamily = monoFamily, TextWrapping = TextWrapping.Wrap,
+            Margin = new Thickness(0, 0, 0, 14)
+        });
+        var ok = new System.Windows.Controls.Button
+        {
+            Content = Lang.Get("DLG_OK"), Width = 72,
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Padding = new Thickness(10, 4, 10, 4)
+        };
+        ok.Click += (_, _) => { dlg.DialogResult = true; };
+        sp.Children.Add(ok);
+        dlg.Content = sp;
+        dlg.ShowDialog();
+    }
 
     private static string? PromptInput(string label, string defaultVal = "")
     {
