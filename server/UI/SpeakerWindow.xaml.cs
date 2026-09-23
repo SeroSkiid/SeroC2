@@ -105,10 +105,17 @@ public partial class SpeakerWindow : ThemedWindow
         lock (_chunks) _chunks.Add(raw);
         _player?.Enqueue(raw);
 
-        int floatCount = raw.Length / 4;
         float peak = 0;
-        for (int i = 0; i < floatCount; i++)
-            peak = Math.Max(peak, Math.Abs(BitConverter.ToSingle(raw, i * 4)));
+        if (_captureFmt.BitsPerSample == 32)
+        {
+            for (int i = 0; i + 3 < raw.Length; i += 4)
+                peak = Math.Max(peak, Math.Abs(BitConverter.ToSingle(raw, i)));
+        }
+        else // PCM-16
+        {
+            for (int i = 0; i + 1 < raw.Length; i += 2)
+                peak = Math.Max(peak, Math.Abs(BitConverter.ToInt16(raw, i)) / 32768f);
+        }
         lock (_waveform) _waveform[_wavePos % _waveform.Length] = Math.Min(peak, 1f);
         _wavePos++;
 

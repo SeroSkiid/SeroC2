@@ -319,7 +319,12 @@ internal static class SpeakerFeature
             var capIid = IID_IAudioCaptureClient;
             var getSvc = Marshal.GetDelegateForFunctionPointer<GetServiceDelegate>(Vtbl(ac, 14));
             getSvc(ac, ref capIid, out var cap);
-            if (cap == nint.Zero) { Marshal.Release(ac); return; }
+            if (cap == nint.Zero)
+            {
+                if (fmtPtr != nint.Zero) Marshal.FreeCoTaskMem(fmtPtr);
+                Marshal.Release(ac);
+                return;
+            }
 
             var startAc = Marshal.GetDelegateForFunctionPointer<StartDelegate>(Vtbl(ac, 10));
             var getBuf  = Marshal.GetDelegateForFunctionPointer<GetBufferDelegate>(Vtbl(cap, 3));
@@ -343,12 +348,12 @@ internal static class SpeakerFeature
                     try
                     {
                         Marshal.Copy(dataPtr, chunk, 0, bytes);
+                        relBuf(cap, frames, 0); // release WASAPI buffer before encoding
                         _buf.Data = Convert.ToBase64String(chunk, 0, bytes);
                         var payload = JsonSerializer.Serialize(_buf, SeroJson.Default.SpeakerDataStub);
                         _send?.Invoke(payload);
                     }
                     finally { System.Buffers.ArrayPool<byte>.Shared.Return(chunk); }
-                    relBuf(cap, frames, 0);
                 }
                 else Thread.Sleep(10);
             }

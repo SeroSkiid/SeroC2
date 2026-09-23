@@ -270,12 +270,10 @@ public partial class MicrophoneWindow : ThemedWindow
         var pcm = Convert.FromBase64String(data.Data);
         lock (_chunks) _chunks.Add(pcm);
 
-        // Update waveform peak — compute on network thread, store in array
-        var shorts = new short[pcm.Length / 2];
-        Buffer.BlockCopy(pcm, 0, shorts, 0, pcm.Length);
+        // Update waveform peak — read shorts inline to avoid allocating a short[] every chunk
         float peak = 0;
-        foreach (var s in shorts)
-            peak = Math.Max(peak, Math.Abs(s / 32768f));
+        for (int i = 0; i + 1 < pcm.Length; i += 2)
+            peak = Math.Max(peak, Math.Abs(BitConverter.ToInt16(pcm, i)) / 32768f);
         lock (_waveform) _waveform[_wavePos % _waveform.Length] = peak;
         _wavePos++;
 
