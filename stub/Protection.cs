@@ -1376,13 +1376,8 @@ internal static partial class Protection
     ];
 
     private static readonly string[] SuspiciousUsers = [
-        "sandbox", "virus", "malware", "sample",
-        "currentuser", "analyst", "tequilaboomboom",
-        "sand box", "maltest", "plmsqjvtest",
-        "bruno", "john",       // VirusTotal / Triage sandbox usernames
-        "wilbert", "rodneyy",  // known Triage sandbox usernames
-        "vmuser", "user1", "user123", "test", "testuser",
-        "wdagutilityaccount",  // Windows Defender Application Guard
+        "bruno", "john", "aria", "wilbert", "rodneyy", "janusz",
+        "wdagutilityaccount",
     ];
 
     private static readonly string[] SuspiciousMachineNames = [
