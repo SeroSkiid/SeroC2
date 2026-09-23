@@ -88,9 +88,9 @@ internal static class SpeakerFeature
     internal static string GetDevices()
     {
         var devs = new List<SpeakerDeviceStub>();
+        CoInitializeEx(nint.Zero, 0);
         try
         {
-            CoInitializeEx(nint.Zero, 0);
             var clsid = CLSID_MMDeviceEnumerator;
             var iid   = IID_IMMDeviceEnumerator;
             if (CoCreateInstance(ref clsid, nint.Zero, 1, ref iid, out var enm) != 0)
@@ -125,6 +125,7 @@ internal static class SpeakerFeature
             Marshal.Release(enm);
         }
         catch { }
+        finally { CoUninitialize(); }
         return JsonSerializer.Serialize(new SpeakerDevicesResultStub { Devices = devs }, SeroJson.Default.SpeakerDevicesResultStub);
     }
 

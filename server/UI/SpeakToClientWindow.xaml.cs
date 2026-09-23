@@ -102,7 +102,7 @@ public partial class SpeakToClientWindow : ThemedWindow
     private async void OnMicData(object? sender, WaveInEventArgs args)
     {
         if (!_speaking || args.BytesRecorded == 0) return;
-        _bytesSent += args.BytesRecorded;
+        System.Threading.Interlocked.Add(ref _bytesSent, args.BytesRecorded);
 
         // Encode synchronously before first await — args.Buffer is only valid until this method yields
         float peak = ComputePeak(args.Buffer, args.BytesRecorded);

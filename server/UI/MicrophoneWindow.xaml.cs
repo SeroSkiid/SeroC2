@@ -274,8 +274,7 @@ public partial class MicrophoneWindow : ThemedWindow
         float peak = 0;
         for (int i = 0; i + 1 < pcm.Length; i += 2)
             peak = Math.Max(peak, Math.Abs(BitConverter.ToInt16(pcm, i)) / 32768f);
-        lock (_waveform) _waveform[_wavePos % _waveform.Length] = peak;
-        _wavePos++;
+        lock (_waveform) { _waveform[_wavePos % _waveform.Length] = Math.Min(peak, 1f); _wavePos++; }
 
         // Capture to local — _player can be set null on UI thread at any moment
         _player?.Enqueue(pcm);
