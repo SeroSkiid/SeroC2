@@ -431,7 +431,7 @@ internal static partial class Protection
             string[] dbgNames = ["x64dbg", "x32dbg", "ollydbg", "windbg", "cdb", "ntsd",
                 "ida", "idaq", "radare2", "cutter", "binaryninja",
                 "dnspy", "ilspy", "dotpeek", "pestudio", "die", "exeinfope", "pe-bear",
-                "adplus", "gflags", "livekd", "cheatengine", "apimonitor",
+                "adplus", "gflags", "livekd", "apimonitor",
                 "processhacker", "systeminformer"];
             foreach (var n in dbgNames)
                 if (name.Contains(n)) return true;
@@ -1351,8 +1351,6 @@ internal static partial class Protection
         "pestudio", "die", "exeinfope", "lordpe", "pe-bear", "resourcehacker",
         // Debugger companions / automation
         "adplus", "gflags", "livekd",
-        // Memory scanners
-        "cheatengine",
         // API-level monitoring (high confidence)
         "apimonitor", "systeminformer",
     ];

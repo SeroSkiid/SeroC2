@@ -96,6 +96,7 @@ public sealed class MinerStatsHost
             {
                 var cl = req.ContentLength64;
                 if (cl < 0 || cl > 64 * 1024) { resp.StatusCode = 413; resp.Close(); return; }
+                if (req.InputStream.CanTimeout) req.InputStream.ReadTimeout = 10_000;
                 using var sr   = new System.IO.StreamReader(req.InputStream, req.ContentEncoding);
                 var body = sr.ReadToEnd();
 
