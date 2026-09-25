@@ -3807,7 +3807,7 @@
                             <Grid DockPanel.Dock="Top" Margin="6,0,6,8">
                                 <TextBlock x:Name="LblSystemLogs" Text="SYSTEM EVENT LOGS" Foreground="{DynamicResource LabelBrush}" FontSize="11" FontWeight="Bold" FontFamily="Segoe UI" VerticalAlignment="Center" Margin="4,0,0,0"/>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                    <Button Content="CLEAR" Height="22" Padding="10,0" Style="{StaticResource SBtn}" FontSize="10" FontWeight="SemiBold" Click="ClearLogs_Click"/>
+                                    <Button x:Name="BtnClearLogs" Content="CLEAR" Height="22" Padding="10,0" Style="{StaticResource SBtn}" FontSize="10" FontWeight="SemiBold" Click="ClearLogs_Click"/>
                                 </StackPanel>
                             </Grid>
 

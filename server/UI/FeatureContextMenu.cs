@@ -331,7 +331,19 @@ internal static class FeatureContextMenu
                 bmp.EndInit(); bmp.Freeze();
                 var img = new System.Windows.Controls.Image { Source = bmp, Width = 16, Height = 16, Stretch = System.Windows.Media.Stretch.Uniform };
                 System.Windows.Media.RenderOptions.SetBitmapScalingMode(img, System.Windows.Media.BitmapScalingMode.HighQuality);
-                return img;
+
+                var tint = new System.Windows.Shapes.Rectangle { Width = 16, Height = 16, IsHitTestVisible = false };
+                tint.SetResourceReference(System.Windows.Shapes.Rectangle.FillProperty, "ContentTextBrush");
+                tint.OpacityMask = new System.Windows.Media.VisualBrush
+                {
+                    Visual  = img,
+                    Stretch = System.Windows.Media.Stretch.Uniform
+                };
+
+                var grid = new System.Windows.Controls.Grid { Width = 16, Height = 16 };
+                grid.Children.Add(img);
+                grid.Children.Add(tint);
+                return grid;
             }
             var xaml = $"<dx:DXImage xmlns:dx=\"http://schemas.devexpress.com/winfx/2008/xaml/core\" " +
                        $"Source=\"pack://application:,,,/{path}\" Width=\"16\" Height=\"16\"/>";

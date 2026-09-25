@@ -939,10 +939,11 @@
             </Setter>
         </Style>
 
-        <!-- Global DataGrid: single-click select + rubber band -->
+        <!-- Global DataGrid: single-click select + rubber band + pixel-smooth wheel scroll -->
         <Style TargetType="DataGrid">
-            <Setter Property="RowHeaderWidth"    Value="0"/>
-            <Setter Property="HeadersVisibility" Value="All"/>
+            <Setter Property="RowHeaderWidth"                  Value="0"/>
+            <Setter Property="HeadersVisibility"               Value="All"/>
+            <Setter Property="VirtualizingPanel.ScrollUnit"    Value="Pixel"/>
             <EventSetter Event="PreviewMouseLeftButtonDown" Handler="DataGrid_SelectOnClick"/>
             <EventSetter Event="Loaded"                    Handler="DataGrid_EnableRubberBand"/>
         </Style>

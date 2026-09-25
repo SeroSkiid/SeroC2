@@ -8758,6 +8758,8 @@ Read-Host 'Press Enter to close'
         // ── Empty state placeholder ──
         if (TxtNoRecords    != null) TxtNoRecords.Text    = Lang.Get("NO_RECORDS");
         if (BtnClearOffline != null) BtnClearOffline.Content = $"\U0001F5D1  {Lang.Get("CLEAR_OFFLINE")}";
+        if (LblSystemLogs  != null) LblSystemLogs.Text  = Lang.Get("SYS_EVENT_LOGS");
+        if (BtnClearLogs   != null) BtnClearLogs.Content = Lang.Get("BTN_CLEAR_LOGS");
         if (TxtAllClientsCount != null && _store != null)
             TxtAllClientsCount.Text = $"{_store.AllClients.Count} {Lang.Get("RECORDS_COUNT")}";
 

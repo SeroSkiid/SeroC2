@@ -61,6 +61,7 @@ internal sealed class RubberBandAdorner : Adorner
         grid.PreviewMouseLeftButtonUp    += OnUp;
         grid.PreviewMouseRightButtonDown += OnCancel;
         grid.LostMouseCapture            += OnLostCapture;
+        grid.PreviewMouseWheel           += OnWheel;
         grid.Loaded += (_, _) => _sv = FindScrollViewer(grid);
     }
 
@@ -79,6 +80,17 @@ internal sealed class RubberBandAdorner : Adorner
     }
 
     // ── Mouse events ──────────────────────────────────────────────────────────
+
+    private void OnWheel(object _, MouseWheelEventArgs e)
+    {
+        _sv ??= FindScrollViewer(_grid);
+        if (_sv == null) return;
+        // e.Delta: positive = scroll up (decrease offset), negative = scroll down.
+        // SystemParameters.WheelScrollLines (default 3) * row height ≈ 3*22=66px is too large;
+        // 48px per notch (120 raw delta) matches WPF's default pixel-scroll step.
+        _sv.ScrollToVerticalOffset(_sv.VerticalOffset - e.Delta * 0.4);
+        e.Handled = true;
+    }
 
     private void OnDown(object _, MouseButtonEventArgs e)
     {
