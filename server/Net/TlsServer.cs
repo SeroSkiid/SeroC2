@@ -627,11 +627,14 @@ public class TlsServer
             if (_countryCache.TryGetValue(ip, out cached)) return cached;
 
             // ip-api.com free plan only supports HTTP (HTTPS requires paid plan)
-            var url  = $"http://ip-api.com/json/{ip}?fields=country,countryCode";
+            var url  = $"http://ip-api.com/json/{ip}?fields=status,country,countryCode";
             var json = await _http.GetStringAsync(url);
             var obj  = JsonSerializer.Deserialize(json, ServerJsonContext.Default.IpApiResponse);
-            var country = obj?.country ?? "Unknown";
-            var code    = obj?.countryCode ?? "";
+            // Only cache on success — don't permanently cache rate-limit (429) or error responses
+            if (obj == null || !string.Equals(obj.status, "success", StringComparison.OrdinalIgnoreCase))
+                return ("Unknown", "");
+            var country = obj.country ?? "Unknown";
+            var code    = obj.countryCode ?? "";
             var result  = (country, code);
             _countryCache.TryAdd(ip, result);
             return result;
@@ -667,6 +670,7 @@ public class TlsServer
 // Typed response for ip-api.com
 internal sealed class IpApiResponse
 {
+    public string? status      { get; set; }
     public string? country     { get; set; }
     public string? countryCode { get; set; }
 }

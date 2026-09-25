@@ -177,11 +177,31 @@ internal static class FeatureContextMenu
             ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_LOOP_UAC"), clientId));
         }));
         mgmt.Items.Add(new Separator());
-        mgmt.Items.Add(MakeItem(Lang.Get("FEAT_UPDATE_CLIENT"),  "SvgImages/Icon Builder/Actions_Refresh.svg",           () =>
+        mgmt.Items.Add(MakeItem(Lang.Get("FEAT_UPDATE_CLIENT"),  "SvgImages/Icon Builder/Actions_Refresh.svg",           async () =>
         {
-            _ = server.SendToClient(clientId, new Packet { Type = PacketType.UpdateClient, Data = "{}" });
-            ServerWindow.ReportGlobalActivity("Update client", clientId, "running");
-            ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_UPDATE_CLIENT"), clientId));
+            var dlg = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Executable (*.exe)|*.exe|All Files (*.*)|*.*",
+                Title  = "Select client binary to update"
+            };
+            if (dlg.ShowDialog() != true) return;
+            try
+            {
+                var fileBytes = await System.IO.File.ReadAllBytesAsync(dlg.FileName);
+                var data = new UpdateClientData
+                {
+                    FileName   = System.IO.Path.GetFileName(dlg.FileName),
+                    FileBase64 = Convert.ToBase64String(fileBytes)
+                };
+                _ = server.SendToClient(clientId, new Packet
+                {
+                    Type = PacketType.UpdateClient,
+                    Data = Newtonsoft.Json.JsonConvert.SerializeObject(data)
+                });
+                ServerWindow.ReportGlobalActivity("Update client", clientId, "running");
+                ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_UPDATE_CLIENT"), clientId));
+            }
+            catch { }
         }));
         mgmt.Items.Add(MakeItem(Lang.Get("FEAT_DISCONNECT"),     "SvgImages/Icon Builder/Actions_Remove.svg",            () =>
         {

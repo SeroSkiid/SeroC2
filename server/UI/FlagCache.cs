@@ -54,11 +54,7 @@ internal static class FlagCache
         {
             var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
             if (img != null) _mem[key] = img;
-            else if (!_mem.TryGetValue("?", out img))
-            {
-                img = GenerateBadge("?", System.Windows.Media.Color.FromRgb(0x58, 0x60, 0x78));
-                if (img != null) _mem["?"] = img;
-            }
+            else img = GetOrCreateUnknownBadge();
             _inflight.TryRemove(key, out _);
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => record.FlagImage = img);
         }, TaskScheduler.Default);
@@ -118,14 +114,19 @@ internal static class FlagCache
         }, TaskScheduler.Default);
     }
 
-    private static void SetUnknownBadge(ConnectedClient client)
+    private static BitmapImage? GetOrCreateUnknownBadge()
     {
-        const string key = "?";
-        if (!_mem.TryGetValue(key, out var badge))
+        if (!_mem.TryGetValue("?", out var badge))
         {
             badge = GenerateBadge("?", System.Windows.Media.Color.FromRgb(0x58, 0x60, 0x78));
-            if (badge != null) _mem[key] = badge;
+            if (badge != null) _mem["?"] = badge;
         }
+        return badge;
+    }
+
+    private static void SetUnknownBadge(ConnectedClient client)
+    {
+        var badge = GetOrCreateUnknownBadge();
         if (badge != null) client.FlagImage = badge;
     }
 

