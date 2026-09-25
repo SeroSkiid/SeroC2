@@ -4,8 +4,9 @@ internal static class PluginSources
 {
     internal const string BlockAvDns = """
 // Blocks AV cloud connectivity by redirecting their update/telemetry domains to 127.0.0.1
-// via the hosts file. Covers Defender, Avast, Kaspersky, ESET, Malwarebytes, Bitdefender,
-// Norton, McAfee, Sophos, Trend Micro, CrowdStrike, SentinelOne, RAV Endpoint Security, and more.
+// via the hosts file. Covers Avast, Kaspersky, ESET, Malwarebytes, Bitdefender,
+// Norton, McAfee, Sophos, Trend Micro, CrowdStrike, SentinelOne, Elastic Security,
+// Ivanti, RAV Endpoint Security, and more.
 // Flushes DNS cache via dnsapi.dll so changes take effect immediately.
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -33,6 +34,7 @@ static const char* s_domains[]={
     "malwarebytes.com","www.malwarebytes.com",
     "data-cdn.mbamupdates.com","downloads.malwarebytes.com",
     "telemetry.malwarebytes.com",
+    "mwbsys.com","keystone.mwbsys.com","protect.mwbsys.com","badlink.mwbsys.com",
     // Bitdefender
     "bitdefender.com","www.bitdefender.com",
     "upgrade.bitdefender.com","nimbus.bitdefender.net",
@@ -57,7 +59,9 @@ static const char* s_domains[]={
     "housecall.trendmicro.com",
     // CrowdStrike
     "crowdstrike.com","www.crowdstrike.com",
+    "falcon.crowdstrike.com","api.crowdstrike.com","firehose.crowdstrike.com",
     "ts01-b.cloudsink.net","lfodown01-b.cloudsink.net",
+    "lfodown02-b.cloudsink.net","lfodown03-b.cloudsink.net",
     // SentinelOne
     "sentinelone.com","www.sentinelone.com",
     "assets.sentinelone.com","psc.sentinelone.net",
@@ -224,6 +228,12 @@ static const char* s_domains[]={
     // BlackBerry / Cylance Guard / Protect
     "protect.cylance.com","my.cylance.com","data.cylance.com",
     "blackberrysecurity.com","www.blackberrysecurity.com",
+    // Elastic Security / Endgame EDR
+    "elastic.co","www.elastic.co","endpoint.elastic.co","endgame.com","www.endgame.com",
+    "api.elastic.co","fleet.elastic.co","artifacts.elastic.co",
+    // Ivanti Neurons / Ivanti Endpoint Security
+    "ivanti.com","www.ivanti.com","neurons.ivanti.com","cloud.ivanti.com",
+    "download.ivanti.com","update.ivanti.com",
     // Stairwell
     "stairwell.com","www.stairwell.com",
     // Intercept X / Sophos Central (extra domains)
