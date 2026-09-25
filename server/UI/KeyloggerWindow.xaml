@@ -196,7 +196,7 @@
 
                             <!-- Header + status -->
                             <DockPanel Grid.Row="0" Margin="0,0,0,5">
-                                <TextBlock Text="AUTO-UPLOAD" DockPanel.Dock="Left"
+                                <TextBlock x:Name="TxtAutoUploadLabel" Text="AUTO-UPLOAD" DockPanel.Dock="Left"
                                            Foreground="{DynamicResource TitleLabelBrush}"
                                            FontSize="9" FontWeight="Bold" FontFamily="Consolas"
                                            VerticalAlignment="Center" Margin="0,0,8,0"/>
@@ -214,19 +214,19 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                    <TextBlock Text="Host" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtFtpHostLabel" Text="Host" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <TextBox x:Name="TxtFtpHost" Height="24" FontSize="11"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,4,0">
-                                    <TextBlock Text="Port" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtFtpPortLabel" Text="Port" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <TextBox x:Name="TxtFtpPort" Height="24" FontSize="11" Text="21"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="2" Margin="0,0,4,0">
-                                    <TextBlock Text="User" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtFtpUserLabel" Text="User" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <TextBox x:Name="TxtFtpUser" Height="24" FontSize="11"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="3">
-                                    <TextBlock Text="Password" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtFtpPassLabel" Text="Password" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <PasswordBox x:Name="TxtFtpPass" Height="24" FontSize="11"/>
                                 </StackPanel>
                             </Grid>
@@ -240,11 +240,11 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" Margin="0,0,4,0">
-                                    <TextBlock Text="Remote Path" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtFtpPathLabel" Text="Remote Path" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <TextBox x:Name="TxtFtpPath" Height="24" FontSize="11" Text="/"/>
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Margin="0,0,4,0">
-                                    <TextBlock Text="Max Size (KB)" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
+                                    <TextBlock x:Name="TxtMaxSizeKbLabel" Text="Max Size (KB)" Foreground="{DynamicResource LabelBrush}" FontSize="9"/>
                                     <TextBox x:Name="TxtMaxSizeKb" Height="24" FontSize="11" Text="500"/>
                                 </StackPanel>
                                 <CheckBox x:Name="ChkClipboard" Grid.Column="2" Content="Clipboard"

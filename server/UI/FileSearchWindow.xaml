@@ -118,7 +118,8 @@
                       RowBackground="Transparent"
                       BorderThickness="0"
                       FontSize="11"
-                      FontFamily="Consolas">
+                      FontFamily="Consolas"
+                      ColumnHeaderStyle="{StaticResource SColHeader}">
                 <DataGrid.Columns>
                     <DataGridTextColumn x:Name="ColName"     Header="Name"     Binding="{Binding Name}"     Width="*"/>
                     <DataGridTextColumn x:Name="ColFullPath" Header="Full Path" Binding="{Binding FullPath}" Width="2*"/>
