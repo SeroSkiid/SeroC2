@@ -305,6 +305,7 @@ public partial class KeyloggerWindow : ThemedWindow
         };
         if (dlg.ShowDialog() != true) return;
         File.WriteAllText(dlg.FileName, TxtLog.Text, System.Text.Encoding.UTF8);
+        NotificationService.NotifyDownloadComplete();
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), dlg.FileName);
     }
 

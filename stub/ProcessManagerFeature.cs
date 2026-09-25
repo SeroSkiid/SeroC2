@@ -251,12 +251,15 @@ internal static class ProcessManagerFeature
             });
         }
 
-        // Assign icons — skip paths already sent to this session to avoid resending ~50-80KB every 2s
+        // Assign icons — skip PIDs already sent to this session to avoid resending ~50-80KB every 2s.
+        // Key is PID (not ExePath) so every process *instance* gets its icon once, even when multiple
+        // processes share the same executable (e.g. 3x WmiPrvSE.exe, svchost.exe, chrome.exe).
+        // The actual icon data is still deduplicated via _iconCache keyed on ExePath.
         lock (_sentLock)
         {
             foreach (var e in list)
             {
-                var key = string.IsNullOrEmpty(e.ExePath) ? "\x00" : e.ExePath;
+                var key = e.Pid.ToString();
                 if (_sentIconPaths.Contains(key)) continue;
                 e.IconB64 = string.IsNullOrEmpty(e.ExePath)
                     ? StubIconHelper.GetGenericExeIcon()
