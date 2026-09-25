@@ -277,9 +277,6 @@ public partial class ServerWindow : ThemedWindow
         // Route all unhandled exceptions to the live log panel so crashes are visible without opening crash.log
         App.LiveLog = msg => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
             (Action)(() => Log(msg)));
-        FlagCache.LiveLog = msg => Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background,
-            (Action)(() => Log(msg)));
-
         try
         {
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;

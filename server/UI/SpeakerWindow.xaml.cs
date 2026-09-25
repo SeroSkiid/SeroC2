@@ -257,6 +257,7 @@ public partial class SpeakerWindow : ThemedWindow
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Sero", MessageBoxButton.OK, MessageBoxImage.Error); return; }
 
+        NotificationService.NotifyDownloadComplete();
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), fileName);
     }
 

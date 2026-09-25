@@ -420,6 +420,7 @@ public partial class MicrophoneWindow : ThemedWindow
         }
         catch (Exception ex) { MessageBox.Show(ex.Message, "Sero", MessageBoxButton.OK, MessageBoxImage.Error); return; }
 
+        NotificationService.NotifyDownloadComplete();
         TxtStatus.Text = string.Format(Lang.Get("SAVED"), fileName);
         MessageBox.Show(string.Format(Lang.Get("MIC_WAV_SAVED"), fileName, (dataSize / (double)byteRate).ToString("F1")),
             "Sero — Microphone", MessageBoxButton.OK, MessageBoxImage.Information);

@@ -9,8 +9,6 @@ namespace SeroServer.UI;
 
 internal static class FlagCache
 {
-    internal static Action<string>? LiveLog;
-
     private static readonly ConcurrentDictionary<string, BitmapImage?> _mem = new(StringComparer.OrdinalIgnoreCase);
     // Tracks in-flight download tasks per country code to prevent thundering herd:
     // without this, 1000 clients from the same country would each spawn a Task.Run for the same download.
@@ -77,11 +75,9 @@ internal static class FlagCache
             return;
         }
         var key = code.ToLowerInvariant();
-        LiveLog?.Invoke($"[FLAG] QueueLoad: client={client.Id} code={code} ip={client.IP}");
 
         if (_mem.TryGetValue(key, out var hit))
         {
-            LiveLog?.Invoke($"[FLAG] Cache hit pour '{key}' — hit={(hit != null ? "ok" : "null")}");
             if (hit != null)
                 Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => client.FlagImage = hit);
             return;
@@ -89,7 +85,6 @@ internal static class FlagCache
 
         if (key == "lan" || key == "loc")
         {
-            LiveLog?.Invoke($"[FLAG] Génération badge local: {key}");
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () =>
             {
                 try
@@ -99,39 +94,24 @@ internal static class FlagCache
                         ? System.Windows.Media.Color.FromRgb(0x28, 0x60, 0x90)
                         : System.Windows.Media.Color.FromRgb(0x38, 0x70, 0x58);
                     var bmp = GenerateBadge(label, color);
-                    if (bmp != null)
-                    {
-                        _mem[key] = bmp;
-                        client.FlagImage = bmp;
-                        LiveLog?.Invoke($"[FLAG] Badge '{label}' créé et assigné à client {client.Id}");
-                    }
-                    else
-                    {
-                        LiveLog?.Invoke($"[FLAG] GenerateBadge a retourné null pour '{label}'");
-                    }
+                    if (bmp != null) { _mem[key] = bmp; client.FlagImage = bmp; }
                 }
-                catch (Exception ex)
-                {
-                    LiveLog?.Invoke($"[FLAG] Exception badge local: {ex.GetType().Name}: {ex.Message}");
-                }
+                catch { }
             });
             return;
         }
 
-        LiveLog?.Invoke($"[FLAG] Téléchargement drapeau pour '{key}'...");
         var task = _inflight.GetOrAdd(key, k => Task.Run(() => DownloadAsync(k)));
         _ = task.ContinueWith(t =>
         {
             var img = t.Status == TaskStatus.RanToCompletion ? t.Result : null;
             if (img == null)
             {
-                LiveLog?.Invoke($"[FLAG] Download échoué pour '{key}', badge inconnu");
                 _inflight.TryRemove(key, out _);
                 Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind,
                     () => SetUnknownBadge(client));
                 return;
             }
-            LiveLog?.Invoke($"[FLAG] Drapeau '{key}' téléchargé OK, assignation...");
             _mem[key] = img;
             _inflight.TryRemove(key, out _);
             Application.Current?.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.DataBind, () => client.FlagImage = img);
