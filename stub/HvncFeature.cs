@@ -391,13 +391,17 @@ internal static class HvncFeature
         _running = false;
         _ackWake.Release();
         while (_inputQueue.TryDequeue(out _)) { }
-        _captureThread?.Join(2000);
+        bool threadExited = _captureThread?.Join(5000) ?? true;
         _captureThread = null;
 
-        // Resources freed by CaptureLoop on exit; clean up any residual
-        FreeWinCache();
-        FreeComposite();
-        if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+        // CaptureLoop frees its own resources on exit. Only clean up here if the thread
+        // actually exited — calling Free* while the thread still runs causes GDI double-free.
+        if (threadExited)
+        {
+            FreeWinCache();
+            FreeComposite();
+            if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+        }
 
         if (_hDesktop != 0) { CloseDesktop(_hDesktop); _hDesktop = 0; }
         if (_gdipToken != 0) { GdiplusShutdown(_gdipToken); _gdipToken = 0; }

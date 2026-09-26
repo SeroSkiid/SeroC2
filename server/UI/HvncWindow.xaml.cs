@@ -384,11 +384,12 @@ public partial class HvncWindow : ThemedWindow
         {
             var p = Newtonsoft.Json.JsonConvert.DeserializeObject<HvncProgressData>(json);
             if (p == null) return;
-            bool done = p.Pct >= 100;
+            int pct = Math.Clamp(p.Pct, 0, 100);
+            bool done = pct >= 100;
             Dispatcher.BeginInvoke(() =>
             {
-                ProfileProgressBar.Value  = p.Pct;
-                ProfileProgressPct.Text   = $"{p.Pct}%";
+                ProfileProgressBar.Value  = pct;
+                ProfileProgressPct.Text   = $"{pct}%";
                 ProfileProgressLabel.Text = string.IsNullOrEmpty(p.Label) ? Lang.Get("HVNC_CLONING") : p.Label;
                 // Only manipulate overlay/button if it was already visible (clone was requested this launch).
                 // A stale progress packet from a previous session cannot lock BtnLaunch.
