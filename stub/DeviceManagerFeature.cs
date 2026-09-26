@@ -27,6 +27,8 @@ internal static class DeviceManagerFeature
     [DllImport("setupapi.dll", CharSet = CharSet.Unicode)]
     private static extern bool SetupDiGetDeviceInstanceIdW(IntPtr deviceInfoSet, ref SP_DEVINFO_DATA deviceInfoData,
         [Out] char[] deviceInstanceId, uint deviceInstanceIdSize, out uint requiredSize);
+    [DllImport("setupapi.dll", CharSet = CharSet.Unicode)]
+    private static extern bool SetupDiClassNameFromGuidW(ref Guid classGuid, char[] className, uint classNameSize, out uint requiredSize);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct SP_DEVINFO_DATA { public uint cbSize; public Guid ClassGuid; public uint DevInst; public IntPtr Reserved; }
@@ -56,6 +58,7 @@ internal static class DeviceManagerFeature
                 {
                     var name  = GetProp(hSet, ref dd, SPDRP_DEVICEDESC);
                     var cls   = GetProp(hSet, ref dd, SPDRP_CLASS);
+                    if (string.IsNullOrEmpty(cls)) cls = GetClassNameFromGuid(dd.ClassGuid);
                     var mfg   = GetProp(hSet, ref dd, SPDRP_MFG);
                     var devId = GetInstanceId(hSet, ref dd);
                     if (string.IsNullOrWhiteSpace(name)) continue;
@@ -116,6 +119,15 @@ internal static class DeviceManagerFeature
             if (!SetupDiGetDeviceInstanceIdW(hSet, ref dd, buf, (uint)buf.Length, out _)) return "";
         }
         return new string(buf).TrimEnd('\0');
+    }
+
+    private static string GetClassNameFromGuid(Guid classGuid)
+    {
+        if (classGuid == Guid.Empty) return "";
+        var buf = new char[64];
+        return SetupDiClassNameFromGuidW(ref classGuid, buf, (uint)buf.Length, out _)
+            ? new string(buf).TrimEnd('\0')
+            : "";
     }
 
     private static string Ack(bool ok, string err) =>

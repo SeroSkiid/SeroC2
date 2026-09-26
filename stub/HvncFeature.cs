@@ -107,6 +107,7 @@ internal static class HvncFeature
     [DllImport("gdi32.dll")]
     static extern nint CreateDIBSection(nint hdc, ref BITMAPINFO pbmi, uint usage,
         out nint ppvBits, nint hSection, uint offset);
+    [DllImport("dwmapi.dll")] static extern int DwmGetWindowAttribute(nint hwnd, uint dwAttribute, out RECT pvAttribute, int cbAttribute);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     static extern bool CreateProcessW(nint app, System.Text.StringBuilder cmd,
@@ -730,10 +731,21 @@ internal static class HvncFeature
             if (entry == null) continue;
             if (!PrintWindow(hwnd, entry.Hdc, PW_FULL)) continue;
 
-            // Clip source/dest intersection to canvas
-            int srcX = 0, srcY = 0;
-            int dstX = r.left, dstY = r.top;
-            int copyW = ww, copyH = wh;
+            // Trim invisible DWM extended frame border (causes white-pixel fringe on Chromium/Edge windows)
+            int bL = 0, bT = 0, bR = 0, bB = 0;
+            if (DwmGetWindowAttribute(hwnd, 9 /*DWMWA_EXTENDED_FRAME_BOUNDS*/, out RECT visR, 16) == 0)
+            {
+                bL = Math.Max(0, visR.left  - r.left);
+                bT = Math.Max(0, visR.top   - r.top);
+                bR = Math.Max(0, r.right    - visR.right);
+                bB = Math.Max(0, r.bottom   - visR.bottom);
+            }
+
+            // Clip source/dest intersection to canvas, skipping invisible border pixels
+            int srcX = bL, srcY = bT;
+            int dstX = r.left + bL, dstY = r.top + bT;
+            int copyW = ww - bL - bR, copyH = wh - bT - bB;
+            if (copyW <= 0 || copyH <= 0) continue;
 
             if (dstX < 0) { srcX -= dstX; copyW += dstX; dstX = 0; }
             if (dstY < 0) { srcY -= dstY; copyH += dstY; dstY = 0; }

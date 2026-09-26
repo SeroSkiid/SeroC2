@@ -122,7 +122,7 @@ public partial class ServiceManagerWindow : ThemedWindow
     private void ApplyLanguage()
     {
         Title = Lang.Get("FEAT_SERVICE_MGR");
-        if (TxtBtnRefreshSvc  != null) TxtBtnRefreshSvc.Text   = Lang.Get("ACT_REFRESH");
+        if (BtnRefresh != null) BtnRefresh.ToolTip = Lang.Get("ACT_REFRESH");
         if (TxtSvcSearchHint  != null) TxtSvcSearchHint.Text   = Lang.Get("SVC_SEARCH_HINT");
         if (ColSvcName        != null) ColSvcName.Header        = Lang.Get("WIN_COL_NAME");
         if (ColSvcDesc        != null) ColSvcDesc.Header        = Lang.Get("SVC_COL_DESC");

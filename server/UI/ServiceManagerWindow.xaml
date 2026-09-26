@@ -128,14 +128,9 @@
                     </Grid>
                 </Border>
                 <!-- Refresh only — actions via right-click -->
-                <Button x:Name="BtnRefresh" Grid.Column="1" Height="26" Padding="10,0"
-                        Style="{StaticResource SBtn}" FontSize="11" Click="BtnRefresh_Click"
-                        VerticalAlignment="Center">
-                    <StackPanel Orientation="Horizontal">
-                        <dx:DXImage Source="{dx:DXImageExtension 'SvgImages/Business Objects/BO_Audit_ChangeHistory.svg'}" Width="12" Height="12" Margin="0,0,5,0" VerticalAlignment="Center"/>
-                        <TextBlock x:Name="TxtBtnRefreshSvc" Text="Refresh" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </Button>
+                <Button x:Name="BtnRefresh" Grid.Column="1" Content="&#x27F3;" Height="27" Width="30"
+                        Style="{StaticResource SBtn}" FontSize="14" Padding="0" Click="BtnRefresh_Click"
+                        VerticalAlignment="Center" Margin="4,0"/>
             </Grid>
         </Border>
 

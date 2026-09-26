@@ -17,6 +17,9 @@ internal static class StubIconHelper
     private static extern nint SHGetFileInfo(string path, uint attr, ref SHFILEINFO shfi, uint cb, uint flags);
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern int ExtractIconEx(string lpszFile, int nIconIndex, nint[]? phiconLarge, nint[]? phiconSmall, int nIcons);
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct SHSTOCKICONINFO { public uint cbSize; public nint hIcon; public int iSysImageIndex; public int iIcon; [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)] public string szPath; }
+    [DllImport("shell32.dll")] private static extern int SHGetStockIconInfo(uint siid, uint uFlags, ref SHSTOCKICONINFO psii);
     [DllImport("user32.dll")]  private static extern bool DrawIconEx(nint hdc, int x, int y, nint hIcon, int cx, int cy, uint step, nint brush, uint flags);
     [DllImport("user32.dll")]  private static extern bool DestroyIcon(nint hIcon);
     [DllImport("gdi32.dll")]   private static extern nint CreateCompatibleDC(nint hdc);
@@ -59,19 +62,38 @@ internal static class StubIconHelper
     internal static string GetGenericExeIcon()
     {
         if (_genericExeIcon != null) return _genericExeIcon;
+        // Primary: SHGetFileInfo with virtual .exe path (SHGFI_USEFILEATTRIBUTES)
         try
         {
-            const uint FILE_ATTRIBUTE_NORMAL  = 0x80;
-            const uint SHGFI_USEFILEATTRIBUTES = 0x10;
             var shfi = new SHFILEINFO();
-            if (SHGetFileInfo("dummy.exe", FILE_ATTRIBUTE_NORMAL, ref shfi,
-                    (uint)Marshal.SizeOf<SHFILEINFO>(),
-                    SHGFI_USEFILEATTRIBUTES | 0x100 | 0x001) == 0 || shfi.hIcon == 0)
-                return _genericExeIcon = "";
-            try   { return _genericExeIcon = HIconToPngBase64(shfi.hIcon, 16); }
-            finally { DestroyIcon(shfi.hIcon); }
+            if (SHGetFileInfo("a.exe", 0x80 /*FILE_ATTRIBUTE_NORMAL*/, ref shfi,
+                    (uint)Marshal.SizeOf<SHFILEINFO>(), 0x10 | 0x100 | 0x001) != 0 && shfi.hIcon != 0)
+            {
+                try
+                {
+                    var r = HIconToPngBase64(shfi.hIcon, 16);
+                    if (!string.IsNullOrEmpty(r)) return _genericExeIcon = r;
+                }
+                finally { DestroyIcon(shfi.hIcon); }
+            }
         }
-        catch { return _genericExeIcon = ""; }
+        catch { }
+        // Fallback: SHGetStockIconInfo SIID_APPLICATION (2)
+        try
+        {
+            var sii = new SHSTOCKICONINFO { cbSize = (uint)Marshal.SizeOf<SHSTOCKICONINFO>() };
+            if (SHGetStockIconInfo(2 /*SIID_APPLICATION*/, 0x101 /*SHGSI_ICON|SHGSI_SMALLICON*/, ref sii) == 0 && sii.hIcon != 0)
+            {
+                try
+                {
+                    var r = HIconToPngBase64(sii.hIcon, 16);
+                    if (!string.IsNullOrEmpty(r)) return _genericExeIcon = r;
+                }
+                finally { DestroyIcon(sii.hIcon); }
+            }
+        }
+        catch { }
+        return _genericExeIcon = "";
     }
 
     internal static unsafe string ExtractExeIcon(string path)

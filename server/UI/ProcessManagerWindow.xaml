@@ -156,7 +156,7 @@
                                            RenderOptions.BitmapScalingMode="NearestNeighbor"
                                            SnapsToDevicePixels="True" VerticalAlignment="Center"/>
                                     <dx:DXImage x:Name="ProcFallback"
-                                                Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Forms_Application.svg'}"
+                                                Source="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"
                                                 Width="14" Height="14" VerticalAlignment="Center"
                                                 Visibility="Collapsed"/>
                                 </Grid>
