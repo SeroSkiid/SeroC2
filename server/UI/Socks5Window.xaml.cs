@@ -157,6 +157,8 @@ public partial class Socks5Window : ThemedWindow
     {
         string sessionId = Guid.NewGuid().ToString("N")[..8];
         bool _counted = false;
+        // Track before handshake so StopProxy can close a hanging read.
+        _pending[sessionId] = client;
         try
         {
             var stream = client.GetStream();
@@ -189,7 +191,6 @@ public partial class Socks5Window : ThemedWindow
                 await ReadExact(stream, buf, 4, addrBytes + 2); // addr + port
             }
             int connectLen = 4 + (buf[3] == 3 ? 1 + addrBytes + 2 : addrBytes + 2);
-            _pending[sessionId] = client;
 
             // Forward to stub
             await _server.SendToClient(_clientId, new Packet
@@ -227,18 +228,24 @@ public partial class Socks5Window : ThemedWindow
         catch { }
         finally
         {
-            _pending.TryRemove(sessionId, out _);
+            // Only send SocksClose if we are the ones removing the session.
+            // OnConnErr already removes and closes the session when the stub refuses the connection,
+            // so sending a duplicate SocksClose in that case is unnecessary.
+            bool weRemoved = _pending.TryRemove(sessionId, out _);
             try { client.Close(); } catch { }
             if (_counted)
             {
                 int cnt = Interlocked.Decrement(ref _connCount);
                 _ = Dispatcher.BeginInvoke(() => TxtConnCount.Text = $"{cnt} active");
             }
-            await _server.SendToClient(_clientId, new Packet
+            if (weRemoved)
             {
-                Type = PacketType.SocksClose,
-                Data = JsonConvert.SerializeObject(new SocksCloseData { SessionId = sessionId })
-            });
+                await _server.SendToClient(_clientId, new Packet
+                {
+                    Type = PacketType.SocksClose,
+                    Data = JsonConvert.SerializeObject(new SocksCloseData { SessionId = sessionId })
+                });
+            }
         }
     }
 

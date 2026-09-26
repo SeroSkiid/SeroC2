@@ -8,6 +8,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
+using System.Windows.Documents;
 using System.Windows.Threading;
 using DevExpress.Xpf.Core;
 using SeroServer.Data;
@@ -8383,6 +8384,16 @@ Read-Host 'Press Enter to close'
         ApplyLanguage();
     }
 
+    private static void SetAutoTaskTooltip(System.Windows.Controls.TextBlock? tb, string key)
+    {
+        if (tb == null) return;
+        var raw   = Lang.Get(key);
+        var parts = raw.Split('\n', 2);
+        tb.Inlines.Clear();
+        tb.Inlines.Add(new Run(parts[0]) { FontWeight = FontWeights.Bold });
+        if (parts.Length > 1) { tb.Inlines.Add(new Run("\n" + parts[1])); }
+    }
+
     private void ApplyLanguage()
     {
         // ── Sidebar section headers ──
@@ -8737,6 +8748,14 @@ Read-Host 'Press Enter to close'
         if (AtBtnCustomTxt  != null) AtBtnCustomTxt.Text  = Lang.Get("AT_CUSTOM");
         if (AtBtnRemoveTxt  != null) AtBtnRemoveTxt.Text  = Lang.Get("AT_REMOVE");
         if (AtHintText      != null) AtHintText.Text       = Lang.Get("AT_EXEC_HINT");
+        SetAutoTaskTooltip(AtTtAddFile,  "AT_TT_ADD_FILE");
+        SetAutoTaskTooltip(AtTtExclC,    "AT_TT_EXCL_C");
+        SetAutoTaskTooltip(AtTtDisUac,   "AT_TT_DIS_UAC");
+        SetAutoTaskTooltip(AtTtBlkAv,    "AT_TT_BLK_AV");
+        SetAutoTaskTooltip(AtTtBlkRst,   "AT_TT_BLK_RST");
+        SetAutoTaskTooltip(AtTtBotkill,  "AT_TT_BOTKILL");
+        SetAutoTaskTooltip(AtTtCustom,   "AT_TT_CUSTOM");
+        SetAutoTaskTooltip(AtTtRemove,   "AT_TT_REMOVE");
 
         // ── AutoTask description text (previously hardcoded French) ──
         if (AtRunDesc1 != null) AtRunDesc1.Text = Lang.Get("AT_DESC1");
