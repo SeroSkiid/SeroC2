@@ -260,6 +260,7 @@ public partial class HvncWindow : ThemedWindow
     private void ClipSync_Tick(object? sender, EventArgs e)
     {
         if (_closed) { _clipTimer?.Stop(); return; }
+        if (!_streaming) return;
         if (WindowState == WindowState.Minimized) return;
         string text;
         try { text = System.Windows.Clipboard.GetText(); }
