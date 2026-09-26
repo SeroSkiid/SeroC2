@@ -270,6 +270,14 @@ static const char* s_domains[]={
     "tria.ge","api.tria.ge",
     // MalwareBazaar / abuse.ch
     "bazaar.abuse.ch","malwarebazaar.abuse.ch","urlhaus.abuse.ch",
+    // FireEye / Mandiant (Google Security)
+    "fireeye.com","www.fireeye.com","update.fireeye.com",
+    "feproduct.fireeye.com","csfeproduct.fireeye.com",
+    "mandiant.com","www.mandiant.com","cloud.mandiant.com",
+    // Wazuh (SIEM/EDR open-source)
+    "wazuh.com","www.wazuh.com","cloud.wazuh.com",
+    // Xcitium (formerly Comodo EDR)
+    "xcitium.com","www.xcitium.com","cloud.xcitium.com",
     NULL
 };
 

