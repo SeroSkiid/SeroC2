@@ -740,9 +740,11 @@ internal static class HvncFeature
                 bR = Math.Max(0, r.right    - visR.right);
                 bB = Math.Max(0, r.bottom   - visR.bottom);
             }
-            // Also skip the 1-px visible accent border — DWMWA_EXTENDED_FRAME_BOUNDS includes it
-            // in the "visible" rect, but PrintWindow renders it white on the HVNC hidden desktop.
-            if (bT < 1) bT = 1;
+            // Always skip 1 extra row at top: the 1-px visible accent border is inside
+            // DWMWA_EXTENDED_FRAME_BOUNDS but PrintWindow renders it white on the HVNC
+            // hidden desktop. For maximized windows bT is already 8 (shadow), adding 1
+            // skips row 8 which is the accent line. For non-maximized bT=0 → becomes 1.
+            bT++;
 
             // Clip source/dest intersection to canvas, skipping invisible border pixels
             int srcX = bL, srcY = bT;

@@ -138,7 +138,7 @@
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="USB">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="Processor">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
@@ -192,13 +192,13 @@
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="USBDevice">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="USBHUB">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="WPD">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="BTH">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
@@ -231,7 +231,7 @@
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="Ports">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="SoftwareComponent">
                                                     <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Actions_Settings.svg'}"/>
@@ -299,20 +299,20 @@
                                                 </DataTrigger>
                                                 <!-- FireWire / IEEE 1394 -->
                                                 <DataTrigger Binding="{Binding Class}" Value="1394">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="61883">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="AVC">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <!-- USB Type-C port manager -->
                                                 <DataTrigger Binding="{Binding Class}" Value="UCM">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Class}" Value="UCMUSBPD">
-                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Usb.svg'}"/>
+                                                    <Setter Property="Source" Value="{dx:DXImageExtension 'SvgImages/Icon Builder/Electronics_Router.svg'}"/>
                                                 </DataTrigger>
                                                 <!-- SD / flash storage -->
                                                 <DataTrigger Binding="{Binding Class}" Value="SDHost">
