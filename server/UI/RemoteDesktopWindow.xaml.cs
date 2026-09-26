@@ -233,7 +233,10 @@ public partial class RemoteDesktopWindow : ThemedWindow
                 : Color.FromRgb(0x25, 0x28, 0x40));
             if (!streaming)
             {
-                TxtFps.Text = "";
+                TxtFps.Text        = "";
+                TxtResolution.Text = "";
+                TxtBandwidth.Text  = "? Mbps";
+                TxtPing.Text       = "? ms";
                 // Reset the bitmap so the next session always starts with a blank frame.
                 // Without this, EnsureFrame re-uses the old WriteableBitmap (same dimensions)
                 // and stale pixels from the previous session show as visual artifacts until

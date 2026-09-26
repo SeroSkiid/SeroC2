@@ -106,7 +106,7 @@
                   AlternatingRowBackground="Transparent"
                   GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="{DynamicResource InputBorderBrush}"
                   HeadersVisibility="Column"
-                  FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow"
+                  FontFamily="{DynamicResource ThemeFontFamily}" FontSize="12" SelectionMode="Extended" SelectionUnit="FullRow"
                   CanUserAddRows="False" CanUserResizeRows="False"
                   VirtualizingStackPanel.IsVirtualizing="True"
                   VirtualizingStackPanel.VirtualizationMode="Recycling"

@@ -58,6 +58,7 @@ public partial class StartupManagerWindow : ThemedWindow
     private async Task Refresh()
     {
         if (_disconnected) return;
+        BtnRefresh.IsEnabled = false;
         _refreshCts?.Cancel();
         _refreshCts?.Dispose();
         _refreshCts = new CancellationTokenSource();

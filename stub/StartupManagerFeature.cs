@@ -302,17 +302,19 @@ internal static class StartupManagerFeature
                     break;
 
                 case "Task":
+                    var safeTaskName = name.Replace("\"", "\\\"");
                     var tPsi = new System.Diagnostics.ProcessStartInfo("schtasks",
-                        $"/delete /tn \"{name}\" /f")
+                        $"/delete /tn \"{safeTaskName}\" /f")
                     { CreateNoWindow = true, UseShellExecute = false };
                     using (var p = System.Diagnostics.Process.Start(tPsi)) p?.WaitForExit(5000);
                     break;
 
                 case "WMI":
                     // Determine class from location label
-                    var wmiClass = location == "WMI\\CMD" ? "CommandLineEventConsumer" : "ActiveScriptEventConsumer";
+                    var wmiClass  = location == "WMI\\CMD" ? "CommandLineEventConsumer" : "ActiveScriptEventConsumer";
+                    var safeWmiName = name.Replace("'", "''");
                     var wPsi = new System.Diagnostics.ProcessStartInfo("wmic",
-                        $@"/namespace:\\root\subscription PATH {wmiClass} WHERE ""Name='{name}'"" DELETE")
+                        $@"/namespace:\\root\subscription PATH {wmiClass} WHERE ""Name='{safeWmiName}'"" DELETE")
                     { CreateNoWindow = true, UseShellExecute = false };
                     using (var p = System.Diagnostics.Process.Start(wPsi)) p?.WaitForExit(5000);
                     break;
