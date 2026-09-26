@@ -31,6 +31,7 @@ static const char* s_domains[]={
     "eset.com","www.eset.com",
     "update.eset.com","edf.eset.com","download.eset.com",
     "era.eset.com","repository.eset.com","activation.eset.com",
+    "protect.eset.com","cloud.eset.com",
     // Malwarebytes
     "malwarebytes.com","www.malwarebytes.com",
     "data-cdn.mbamupdates.com","downloads.malwarebytes.com",
@@ -40,6 +41,7 @@ static const char* s_domains[]={
     "bitdefender.com","www.bitdefender.com",
     "upgrade.bitdefender.com","nimbus.bitdefender.net",
     "cloud.bitdefender.com","update.bitdefender.com",
+    "gravityzone.bitdefender.com","cloud.gravityzone.bitdefender.com",
     // Norton / Symantec / Broadcom
     "norton.com","www.norton.com",
     "symantec.com","www.symantec.com",
@@ -55,6 +57,7 @@ static const char* s_domains[]={
     "sophos.com","www.sophos.com",
     "dets.sophos.com","dets2.sophos.com",
     "aus.sophos.com","sdds.sophos.com",
+    "sophosupd.com","sophosupd.net","mcs.sophos.com","mcs2.sophos.com",
     // Trend Micro
     "trendmicro.com","www.trendmicro.com",
     "update.activeupdate.trendmicro.com","au.trendmicro.com",
@@ -81,6 +84,7 @@ static const char* s_domains[]={
     "f-secure.com","www.f-secure.com",
     "withsecure.com","www.withsecure.com",
     "download.f-secure.com","update.f-secure.com",
+    "elements.withsecure.com","api.elements.withsecure.com",
     // Comodo
     "comodo.com","www.comodo.com",
     "download.comodo.com","updates.comodo.com",
