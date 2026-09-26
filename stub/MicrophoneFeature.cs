@@ -147,6 +147,16 @@ internal static class MicrophoneFeature
                 {
                     int bytes = hdr.dwBytesRecorded;
 
+                    // Copy audio data BEFORE re-queuing the buffer to WinMM.
+                    // After waveInAddBuffer the driver may start filling the buffer
+                    // immediately — reading lpData afterwards risks audio corruption.
+                    byte[]? captured = null;
+                    if (bytes > 0)
+                    {
+                        captured = System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);
+                        Marshal.Copy(hdr.lpData, captured, 0, bytes);
+                    }
+
                     hdr.dwFlags &= ~WHDR_DONE;
                     hdr.dwBytesRecorded = 0;
                     Marshal.StructureToPtr(hdr, hdrPtrs[idx], false);
@@ -154,17 +164,15 @@ internal static class MicrophoneFeature
                     waveInPrepareHeader(hwi, hdrPtrs[idx], hdrSize);
                     waveInAddBuffer(hwi, hdrPtrs[idx], hdrSize);
 
-                    if (bytes > 0)
+                    if (captured != null)
                     {
-                        var data = System.Buffers.ArrayPool<byte>.Shared.Rent(bytes);
                         try
                         {
-                            Marshal.Copy(hdr.lpData, data, 0, bytes);
-                            _micDataStub.Data = Convert.ToBase64String(data, 0, bytes);
+                            _micDataStub.Data = Convert.ToBase64String(captured, 0, bytes);
                             var payload = JsonSerializer.Serialize(_micDataStub, SeroJson.Default.MicDataStub);
                             _send?.Invoke(payload);
                         }
-                        finally { System.Buffers.ArrayPool<byte>.Shared.Return(data); }
+                        finally { System.Buffers.ArrayPool<byte>.Shared.Return(captured); }
                     }
 
                     idx = (idx + 1) % numBuffers;
