@@ -157,10 +157,12 @@ public partial class HvncWindow : ThemedWindow
             TxtPlaceholder.Visibility = streaming ? Visibility.Collapsed : Visibility.Visible;
             if (!streaming)
             {
-                TxtFps.Text       = "";
+                TxtFps.Text        = "";
                 TxtResolution.Text = "";
-                TxtBandwidth.Text = "? Mbps";
-                TxtPing.Text      = "? ms";
+                TxtBandwidth.Text  = "? Mbps";
+                TxtPing.Text       = "? ms";
+                _wb = null;
+                ImgFrame.Source = null;
             }
             if (streaming) ImgFrame.Focus(); // keyboard ready immediately without needing a click
         });
@@ -206,6 +208,7 @@ public partial class HvncWindow : ThemedWindow
     private void SendStop()
     {
         _ = _server.SendToClient(_clientId, new Packet { Type = PacketType.HvncStop, Data = "{}" });
+        lock (_decodeLock) { _h264Dec?.Dispose(); _h264Dec = null; }
         SetStreamingState(false);
         ServerWindow.ReportGlobalActivity("HVNC stopped", _clientId, "complete");
         ServerWindow.LogGlobal($"[HVNC] HVNC stream stopped on client {_clientId}.");
