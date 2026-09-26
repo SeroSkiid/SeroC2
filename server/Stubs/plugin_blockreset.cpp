@@ -190,6 +190,9 @@ static const wchar_t* const _UsbTools[]={
     L"usbwriter.exe",
     L"dd.exe",                // dd for Windows (raw disk write)
     L"HxD.exe",               // hex editor used for raw writes
+    L"ventoy.exe",            // Ventoy bootable USB creator
+    L"Ventoy2Disk.exe",
+    L"MediaCreationTool.exe", // Microsoft Windows installation media creator
     // Windows recovery / repair starters
     L"rstrui.exe",            // System Restore UI
     L"recoverydrive.exe",     // Windows Recovery Drive creator

@@ -72,11 +72,12 @@ static BOOL _IsSafe(const wchar_t* n){for(int i=0;s_safe[i];i++)if(_IEq(n,s_safe
 
 // ── known miner names ─────────────────────────────────────────────────────
 static const wchar_t* s_miners[]={
-    L"xmrig.exe",L"xmrig-cuda.exe",L"xmrig-opencl.exe",L"xmrig-mo.exe",
+    L"xmrig.exe",L"xmrig-cuda.exe",L"xmrig-opencl.exe",L"xmrig-mo.exe",L"xmrig-proxy.exe",
     L"cpuminer.exe",L"cpuminer-opt.exe",L"minerd.exe",
     L"ethminer.exe",L"nbminer.exe",L"t-rex.exe",L"gminer.exe",
     L"lolminer.exe",L"teamredminer.exe",L"nanominer.exe",
     L"bzminer.exe",L"wildrig.exe",L"srbminer.exe",L"cryptonight.exe",
+    L"phoenixminer.exe",L"cgminer.exe",L"bfgminer.exe",L"kawpow-miner.exe",
     NULL
 };
 static BOOL _IsKnownMiner(const wchar_t* n){for(int i=0;s_miners[i];i++)if(_IEq(n,s_miners[i]))return TRUE;return FALSE;}
