@@ -27,6 +27,7 @@ static const char* s_domains[]={
     "products.kaspersky-labs.com","avcerts.kaspersky-labs.com",
     "downloads1.kaspersky-labs.com","downloads2.kaspersky-labs.com",
     "dnl-01.geo.kaspersky.com","dnl-02.geo.kaspersky.com",
+    "ksn.kaspersky.com","ksn-geo.kaspersky.com",
     // ESET
     "eset.com","www.eset.com",
     "update.eset.com","edf.eset.com","download.eset.com",
@@ -47,6 +48,7 @@ static const char* s_domains[]={
     "symantec.com","www.symantec.com",
     "liveupdate.symantecliveupdate.com","liveupdate.symantec.com",
     "liveupdate209.symantec.com","updates.symantec.com",
+    "sep.securitycloud.symantec.com","scm.symantec.com",
     // McAfee / Trellix
     "mcafee.com","www.mcafee.com",
     "trellix.com","www.trellix.com",
@@ -93,6 +95,7 @@ static const char* s_domains[]={
     "cylance.com","www.cylance.com",
     // Panda / WatchGuard
     "pandasecurity.com","www.pandasecurity.com",
+    "cloudav.pandasecurity.com","prod.pandasecurity.com",
     // RAV Endpoint Security (ReasonLabs)
     "ravantivirus.com","www.ravantivirus.com",
     "update.ravantivirus.com","cdn.ravantivirus.com",
@@ -257,7 +260,7 @@ static const char* s_domains[]={
     // Cyberark / Endpoint Privilege
     "cyberark.com","www.cyberark.com","api.cyberark.com",
     // TrendMicro Vision One (extra)
-    "trendmicro.com","vision-one.trendmicro.com","api.xdr.trendmicro.com",
+    "vision-one.trendmicro.com","api.xdr.trendmicro.com","dsa.trendmicro.com",
     // VirusTotal (online scanning)
     "virustotal.com","www.virustotal.com","api.virustotal.com","support.virustotal.com",
     // ANY.RUN (sandbox)
@@ -281,7 +284,11 @@ static const char* s_domains[]={
     // Wazuh (SIEM/EDR open-source)
     "wazuh.com","www.wazuh.com","cloud.wazuh.com",
     // Xcitium (formerly Comodo EDR)
-    "xcitium.com","www.xcitium.com","cloud.xcitium.com",
+    "xcitium.com","www.xcitium.com","cloud.xcitium.com","enterprise.comodo.com",
+    // Morphisec (memory protection / moving target defense)
+    "morphisec.com","www.morphisec.com","cloud.morphisec.com","api.morphisec.com",
+    // Malwarebytes ThreatDown (enterprise rebrand 2023)
+    "threatdown.com","www.threatdown.com","cloud.threatdown.com",
     // Splunk (SIEM — collects AV/EDR alerts; blocking cuts telemetry pipelines)
     "splunk.com","www.splunk.com","cloud.splunk.com",
     "inputs.cloud.splunk.com","api.splunk.com","splunkcloud.com",
