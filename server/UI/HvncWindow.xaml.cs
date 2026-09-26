@@ -332,7 +332,7 @@ public partial class HvncWindow : ThemedWindow
                 catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
             });
         }
-        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); SendAck(); }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[HVNC] decode error: {ex.Message}"); Interlocked.Exchange(ref _renderBusy, 0); SendAck(); }
     }
 
     private void OnHvncH264Frame(string clientId, string json)
