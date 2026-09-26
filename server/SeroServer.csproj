@@ -13,9 +13,9 @@
     <ApplicationIcon>serofondtransparent.ico</ApplicationIcon>
     <!-- SQLitePCLRaw 2.1.10 advisory (GHSA-2m69-gcr7-jv3q) — not exploitable: local DB, no external SQL input -->
     <NoWarn>$(NoWarn);NU1903</NoWarn>
-    <Version>1.8.5</Version>
-    <AssemblyVersion>1.8.5.0</AssemblyVersion>
-    <FileVersion>1.8.5.0</FileVersion>
+    <Version>1.8.6</Version>
+    <AssemblyVersion>1.8.6.0</AssemblyVersion>
+    <FileVersion>1.8.6.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
