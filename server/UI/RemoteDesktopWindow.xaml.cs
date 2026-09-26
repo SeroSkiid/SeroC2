@@ -50,6 +50,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
     private bool _uiReady;
     private bool _autoStarted;
     private bool _uiHidden;
+    private int _staggerIdx;
 
     public RemoteDesktopWindow(TlsServer server, string clientId)
     {
@@ -59,6 +60,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
         InitializeComponent();
         WindowResizer.Enable(this);
         _uiReady = true;
+        _staggerIdx = Interlocked.Increment(ref _openCount);
 
         SldQuality.Value = UiPrefs.GetInt("RdpQuality", 75);
         TxtQuality.Text  = $"{(int)SldQuality.Value}";
@@ -621,8 +623,7 @@ public partial class RemoteDesktopWindow : ThemedWindow
             if (!_autoStarted && CmbMonitor.Items.Count > 0)
             {
                 _autoStarted = true;
-                int idx = Interlocked.Increment(ref _openCount);
-                int delay = 300 + (idx % 20) * 150;
+                int delay = 300 + (_staggerIdx % 20) * 150;
                 StartWithDelay(delay);
             }
         }
