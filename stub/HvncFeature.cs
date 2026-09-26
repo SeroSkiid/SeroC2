@@ -458,6 +458,9 @@ internal static class HvncFeature
 
     public static void SignalAck()
     {
+        // Soft cap — prevents burst accumulation when encoder is slower than network ACKs.
+        // TOCTOU is acceptable: a rare +1 overshoot causes at most one extra frame burst.
+        if (_pendingAcks >= 16) return;
         Interlocked.Increment(ref _pendingAcks);
         _ackWake.Release();
     }
@@ -708,14 +711,18 @@ internal static class HvncFeature
         return true;
     }
 
-    // Sample every 32nd 8-byte chunk — ~32K iterations at 1080p, negligible cost
+    // Sample every 32nd 8-byte chunk — ~32K iterations at 1080p, negligible cost.
+    // FNV-1a mixing avoids XOR zero-cancellation where symmetric regions produce hash=0
+    // regardless of content, which caused false "unchanged" skips on certain UI patterns.
     private static unsafe ulong CompHash(byte* bits, int w, int h)
     {
-        ulong h64 = 0;
+        const ulong FnvBasis = 14695981039346656037UL;
+        const ulong FnvPrime = 1099511628211UL;
+        ulong h64 = FnvBasis;
         ulong* p  = (ulong*)bits;
         int    n  = w * h / 2; // total 8-byte units
         for (int i = 0; i < n; i += 32)
-            h64 ^= p[i];
+            h64 = (h64 ^ p[i]) * FnvPrime;
         return h64;
     }
 
@@ -2048,12 +2055,16 @@ internal static class HvncFeature
         if (_hDesktop == 0) return;
         try
         {
-            // Expand environment variables first
+            // Expand environment variables first — query required size then allocate exactly
             if (path.Contains('%'))
             {
-                var buf = new System.Text.StringBuilder(1024);
-                ExpandEnvironmentStrings(path, buf, 1024);
-                path = buf.ToString();
+                uint needed = ExpandEnvironmentStrings(path, null!, 0);
+                if (needed > 0)
+                {
+                    var buf = new System.Text.StringBuilder((int)needed);
+                    ExpandEnvironmentStrings(path, buf, needed);
+                    path = buf.ToString();
+                }
             }
 
             // Resolve wildcard glob like app-*\Discord.exe

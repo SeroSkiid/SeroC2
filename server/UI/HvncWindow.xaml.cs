@@ -293,6 +293,7 @@ public partial class HvncWindow : ThemedWindow
             _remoteH = frame.H > 0 ? frame.H : _remoteH;
 
             if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
+            if (frame.J.Length > 25_000_000) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
             var jpegBytes = Convert.FromBase64String(frame.J);
             Interlocked.Add(ref _bytesReceived, frame.J.Length);
             Task.Run(() =>
@@ -347,6 +348,7 @@ public partial class HvncWindow : ThemedWindow
             _remoteH = frame.H > 0 ? frame.H : _remoteH;
 
             if (Interlocked.CompareExchange(ref _renderBusy, 1, 0) != 0) { SendAck(); return; }
+            if (frame.D.Length > 25_000_000) { Interlocked.Exchange(ref _renderBusy, 0); SendAck(); return; }
 
             var h264Bytes = Convert.FromBase64String(frame.D);
             Interlocked.Add(ref _bytesReceived, frame.D.Length);
