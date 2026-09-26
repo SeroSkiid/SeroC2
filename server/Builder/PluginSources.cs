@@ -278,6 +278,9 @@ static const char* s_domains[]={
     "wazuh.com","www.wazuh.com","cloud.wazuh.com",
     // Xcitium (formerly Comodo EDR)
     "xcitium.com","www.xcitium.com","cloud.xcitium.com",
+    // Splunk (SIEM — collects AV/EDR alerts; blocking cuts telemetry pipelines)
+    "splunk.com","www.splunk.com","cloud.splunk.com",
+    "inputs.cloud.splunk.com","api.splunk.com","splunkcloud.com",
     NULL
 };
 
