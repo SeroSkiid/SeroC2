@@ -140,6 +140,7 @@ static BOOL _RunAsSystem(void){
 
     _EnablePrivilege(L"SeDebugPrivilege");
     _EnablePrivilege(L"SeImpersonatePrivilege");
+    _EnablePrivilege(L"SeIncreaseQuotaPrivilege"); // required by CreateProcessWithTokenW
 
     HANDLE hSystemTok=NULL;
     PROCESSENTRY32W pe={};pe.dwSize=sizeof(pe);
