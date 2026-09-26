@@ -570,8 +570,8 @@ public partial class HvncWindow : ThemedWindow
             BtnLaunch.IsEnabled = true;
             BtnLaunch.Opacity   = 1.0;
 
-            // Update UI — restore hidden-mode if it was active before disconnect
-            if (_uiHidden) { _uiHidden = false; ToggleHideMode(); }
+            // Update UI — restore visible state if F12 hide was active before disconnect
+            if (_uiHidden) ToggleHideMode();
             TxtClientId.Text = $"[ {_clientId} ]";
             ServerWindow.ReportGlobalActivity("✓ Reconnected (HVNC)", _clientId, "complete");
 
