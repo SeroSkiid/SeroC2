@@ -155,7 +155,13 @@ public partial class HvncWindow : ThemedWindow
             TxtStatus.Text       = streaming ? Lang.Get("HVNC_STREAMING") : Lang.Get("STOPPED");
             LiveBadge.Visibility = streaming ? Visibility.Visible : Visibility.Collapsed;
             TxtPlaceholder.Visibility = streaming ? Visibility.Collapsed : Visibility.Visible;
-            if (!streaming) TxtFps.Text = "";
+            if (!streaming)
+            {
+                TxtFps.Text       = "";
+                TxtResolution.Text = "";
+                TxtBandwidth.Text = "? Mbps";
+                TxtPing.Text      = "? ms";
+            }
             if (streaming) ImgFrame.Focus(); // keyboard ready immediately without needing a click
         });
     }
