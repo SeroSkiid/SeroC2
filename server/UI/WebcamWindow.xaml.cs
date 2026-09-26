@@ -180,7 +180,14 @@ public partial class WebcamWindow : ThemedWindow
                 TxtPlaceholder.Visibility = Visibility.Collapsed;
                 LogPanel.Visibility = Visibility.Collapsed;
             }
-            if (!streaming) TxtFps.Text = "";
+            if (!streaming)
+            {
+                TxtFps.Text       = "";
+                TxtBandwidth.Text = "? Mbps";
+                TxtPing.Text      = "? ms";
+                _wb = null;
+                ImgFrame.Source = null;
+            }
         });
     }
 
