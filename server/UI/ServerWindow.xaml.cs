@@ -7967,7 +7967,7 @@ Read-Host 'Press Enter to close'
             var wr = w.Resources;
             foreach (var key in _allThemeKeys)
                 if (res.Contains(key)) wr[key] = res[key];
-            if (w is not ThemedWindow) w.FontFamily = themeFontFamily;
+            w.FontFamily = themeFontFamily;
         }
 
         // DevExpress defers some chrome updates to Normal priority (DispatcherPriority = 9).

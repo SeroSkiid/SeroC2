@@ -29,7 +29,7 @@
                                 </Ellipse.Effect>
                             </Ellipse>
                             <TextBlock Text="LIVE" Foreground="{DynamicResource GreenBrush}"
-                                       FontSize="9" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI"/>
+                                       FontSize="9" FontWeight="Bold" FontFamily="{DynamicResource ThemeFontFamily}"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -44,13 +44,13 @@
                             Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                             <TextBlock x:Name="TxtPing" Text="? ms" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono"
+                                       FontSize="10" FontFamily="Consolas"
                                        MinWidth="38" TextAlignment="Right" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TxtBandwidth" Text="? Mbps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono"
+                                       FontSize="10" FontFamily="Consolas"
                                        MinWidth="54" TextAlignment="Right" Margin="0,0,8,0"/>
                             <TextBlock x:Name="TxtFps" Text="? fps" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono"
+                                       FontSize="10" FontFamily="Consolas"
                                        MinWidth="44" TextAlignment="Right" Margin="0,0,8,0"/>
                             <TextBlock x:Name="SignalIcon" Text="&#xEB44;" FontFamily="Segoe MDL2 Assets, Segoe Fluent Icons" Foreground="{DynamicResource SidebarCtrlTextBrush}"
                                        FontSize="12" VerticalAlignment="Center"/>
@@ -85,11 +85,11 @@
                               Checked="ChkAutoStart_Changed" Unchecked="ChkAutoStart_Changed"/>
                     <Button x:Name="BtnStart" Content="START" MinWidth="64" Height="26"
                             Style="{StaticResource SGreenBtn}" Click="BtnStart_Click"
-                            FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
+                            FontSize="10" FontWeight="Bold" FontFamily="{DynamicResource ThemeFontFamily}" Padding="14,3"/>
                     <Button x:Name="BtnStop" Content="STOP" MinWidth="58" Height="26" Margin="5,0,0,0"
                             Style="{StaticResource SRedBtn}" Click="BtnStop_Click"
                             IsEnabled="False" Opacity="0.35"
-                            FontSize="10" FontWeight="Bold" FontFamily="Segoe UI Variable Text, Segoe UI" Padding="14,3"/>
+                            FontSize="10" FontWeight="Bold" FontFamily="{DynamicResource ThemeFontFamily}" Padding="14,3"/>
                 </StackPanel>
 
                 <!-- Wrappable controls: device / resolution / quality / fps -->
@@ -97,11 +97,11 @@
                     <!-- Device + resolution -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,20,4">
                         <TextBlock Text="DEVICE" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                   FontFamily="{DynamicResource ThemeFontFamily}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <ComboBox x:Name="CmbDevice" MinWidth="160" Width="Auto" MaxWidth="280" Height="26"
                                   Style="{StaticResource SCombo}"/>
                         <TextBlock Text="RES" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="12,0,8,0"/>
+                                   FontFamily="{DynamicResource ThemeFontFamily}" VerticalAlignment="Center" Margin="12,0,8,0"/>
                         <ComboBox x:Name="CmbResolution" Width="72" Height="26"
                                   Style="{StaticResource SCombo}" SelectedIndex="0">
                             <ComboBoxItem Content="Native"/>
@@ -115,22 +115,22 @@
                     <!-- Quality + FPS sliders -->
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,2,20,4">
                         <TextBlock Text="QUALITY" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                                   FontFamily="{DynamicResource ThemeFontFamily}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <Slider x:Name="SldQuality" Minimum="20" Maximum="95" Value="20" Width="72"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
                                 Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                             <TextBlock x:Name="TxtQuality" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                                       FontSize="10" FontFamily="Consolas" Width="18" TextAlignment="Center"/>
                         </Border>
                         <TextBlock Text="FPS" Foreground="{DynamicResource TitleTextBrush}" FontSize="9" FontWeight="SemiBold"
-                                   FontFamily="Segoe UI Variable Text, Segoe UI" VerticalAlignment="Center" Margin="14,0,8,0"/>
+                                   FontFamily="{DynamicResource ThemeFontFamily}" VerticalAlignment="Center" Margin="14,0,8,0"/>
                         <Slider x:Name="SldFps" Minimum="5" Maximum="60" Value="20" Width="58"
                                 Style="{StaticResource SlimSlider}"/>
                         <Border Margin="6,0,0,0" Padding="5,1" CornerRadius="3"
                                 Background="{DynamicResource SidebarCtrlBgBrush}" BorderBrush="{DynamicResource SectionBorderBrush}" BorderThickness="1">
                             <TextBlock x:Name="TxtFpsVal" Text="20" Foreground="{DynamicResource SidebarCtrlTextBrush}"
-                                       FontSize="10" FontFamily="Segoe UI Mono" Width="18" TextAlignment="Center"/>
+                                       FontSize="10" FontFamily="Consolas" Width="18" TextAlignment="Center"/>
                         </Border>
                     </StackPanel>
                     <!-- Scale quality toggle -->
@@ -153,7 +153,7 @@
                     <Ellipse x:Name="StatusDot" Width="6" Height="6" Fill="{DynamicResource InputBorderBrush}"
                              VerticalAlignment="Center" Margin="0,0,7,0"/>
                     <TextBlock x:Name="TxtStatus" Text="Waiting for device list..."
-                               Foreground="{DynamicResource TitleLabelBrush}" FontSize="10" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource TitleLabelBrush}" FontSize="10" FontFamily="{DynamicResource ThemeFontFamily}"
                                VerticalAlignment="Center"/>
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
@@ -177,7 +177,7 @@
             <TextBlock x:Name="TxtPlaceholder"
                        Text="Waiting for device list..."
                        Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="13" FontWeight="SemiBold"
-                       FontFamily="Segoe UI Variable Text, Segoe UI"
+                       FontFamily="{DynamicResource ThemeFontFamily}"
                        HorizontalAlignment="Center" VerticalAlignment="Center"
                        IsHitTestVisible="False"/>
 
@@ -210,9 +210,9 @@
                         </TextBlock.Triggers>
                     </TextBlock>
                     <TextBlock Text="Connection lost" Foreground="{DynamicResource ContentTextBrush}" FontSize="16"
-                               FontWeight="SemiBold" FontFamily="Segoe UI Variable Text, Segoe UI" HorizontalAlignment="Center"/>
+                               FontWeight="SemiBold" FontFamily="{DynamicResource ThemeFontFamily}" HorizontalAlignment="Center"/>
                     <TextBlock x:Name="TxtReconnectCountdown" Text="Reconnecting... (60s)"
-                               Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="12" FontFamily="Segoe UI Variable Text, Segoe UI"
+                               Foreground="{DynamicResource SidebarCtrlTextBrush}" FontSize="12" FontFamily="{DynamicResource ThemeFontFamily}"
                                HorizontalAlignment="Center" Margin="0,6,0,0"/>
                 </StackPanel>
             </Grid>

@@ -953,7 +953,7 @@
             <Setter Property="Height"          Value="26"/>
             <Setter Property="FontSize"        Value="10"/>
             <Setter Property="FontWeight"      Value="SemiBold"/>
-            <Setter Property="FontFamily"      Value="Segoe UI"/>
+            <Setter Property="FontFamily"      Value="{DynamicResource ThemeFontFamily}"/>
             <Setter Property="Cursor"          Value="Hand"/>
             <Setter Property="Background"      Value="{DynamicResource WindowBgBrush}"/>
             <Setter Property="BorderBrush"     Value="{DynamicResource SectionBorderBrush}"/>

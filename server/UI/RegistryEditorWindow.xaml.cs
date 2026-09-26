@@ -364,7 +364,7 @@ public partial class RegistryEditorWindow : ThemedWindow
             Background = R("WindowBgBrush", Color.FromRgb(0x0C, 0x0D, 0x18))
         };
         var sp  = new StackPanel { Margin = new Thickness(14) };
-        var lbl = new System.Windows.Controls.TextBlock { Text = prompt, Foreground = R("FieldLabelBrush", Colors.White), Margin = new Thickness(0,0,0,7), FontFamily = new System.Windows.Media.FontFamily("Segoe UI"), FontSize = 12 };
+        var lbl = new System.Windows.Controls.TextBlock { Text = prompt, Foreground = R("FieldLabelBrush", Colors.White), Margin = new Thickness(0,0,0,7), FontFamily = Application.Current.Resources["ThemeFontFamily"] as System.Windows.Media.FontFamily ?? new System.Windows.Media.FontFamily("Segoe UI"), FontSize = 12 };
         var txt = new System.Windows.Controls.TextBox   { Text = def ?? "", Background = R("InputBgBrush", Color.FromRgb(0x0A, 0x0C, 0x1C)), Foreground = R("ContentTextBrush", Colors.White), BorderBrush = R("AccentBrush", Color.FromRgb(0x4A, 0x85, 0xF5)), BorderThickness = new Thickness(1), Padding = new Thickness(6, 5, 6, 5), Margin = new Thickness(0,0,0,10), FontFamily = new System.Windows.Media.FontFamily("Consolas"), FontSize = 11 };
         var btn = new System.Windows.Controls.Button    { Content = Lang.Get("DLG_OK"), Width = 80, HorizontalAlignment = HorizontalAlignment.Right, Background = R("AccentBrush", Color.FromRgb(0x4A, 0x85, 0xF5)), Foreground = Brushes.White, BorderThickness = new Thickness(0), Padding = new Thickness(0, 6, 0, 6) };
         btn.Click += (_, _) => dlg.DialogResult = true;

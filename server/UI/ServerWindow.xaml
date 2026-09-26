@@ -1606,7 +1606,7 @@
                     </TabItem.Header>
                     <Border Margin="8" Padding="16,14" CornerRadius="{DynamicResource ContainerCornerRadius}"
                             Background="{DynamicResource SectionBgBrush}" BorderThickness="1"
-                            TextElement.FontFamily="Segoe UI">
+                            TextElement.FontFamily="{DynamicResource ThemeFontFamily}">
                         <Border.BorderBrush><DynamicResource ResourceKey="SectionBorderBrush"/></Border.BorderBrush>
                         <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
                             <StackPanel MinWidth="520">

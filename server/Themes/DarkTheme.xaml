@@ -27,7 +27,7 @@
 
     <Style x:Key="StandardTextBlockStyle" TargetType="TextBlock">
         <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
-        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontFamily" Value="{DynamicResource ThemeFontFamily}" />
         <Setter Property="FontSize" Value="12" />
     </Style>
 
